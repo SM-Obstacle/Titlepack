@@ -1,0 +1,19 @@
+#RequireContext CManiaAppTitle
+
+#Include "Libs/miltant/Nadeo_Fork/Common/Core/Pages.Script.txt"								as Pages
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/MenuController.Script.txt"					as MenuController
+
+#Const C_FirstPage			 "SectionsSelector"
+
+main() {
+	log("Main Obstacle Menu loaded!");
+
+	MenuController::LoadAll();
+	
+	Pages::GotoNext(C_FirstPage);
+	while(True) {
+		
+		yield;
+		MenuController::LoopAll();
+	}
+}
