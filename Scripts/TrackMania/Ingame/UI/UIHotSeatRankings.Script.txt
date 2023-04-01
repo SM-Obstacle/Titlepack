@@ -98,7 +98,7 @@ Void Private_CreateLayerDynaRanking(Integer _EnergyMax)
 			
 			<quad 	id="Quad_Jerrican"			pos="62.     23.8" z-index=".1" 	size="10. 10." halign="center" image="{{{IMG_Jerrican}}}" keepratio="Fit" />
 			<quad 	id="Quad_BGJerrican" 		pos="62.7    27.3" z-index=".1" 	size="15.2 17.3" halign="center" bgcolor="000" opacity="0.3"/>
-			<label 	id="Label_ModeName" 		pos="-0.8 12.0" z-index="1." 	size="40" 	halign="left" 	valign="center" textprefix="$t" text="{{{_("Hot Seat")}}}" textsize="4." />
+			<label 	id="Label_ModeName" 		pos="-0.8 12.0" z-index="1." 	size="40" 	halign="left" 	valign="center" text="{{{_("Hot Seat")}}}" textsize="4." />
 			<frameinstance modelid="Frame_Line" pos="35.5 6.8" z-index="1." id="Frame_LineUp"/>
 	""";
 		for(I, 0, C_MaxPlayerCount-1) {

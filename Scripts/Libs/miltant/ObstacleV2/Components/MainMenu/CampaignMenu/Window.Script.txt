@@ -1,0 +1,5 @@
+#Include "Libs/miltant/ObstacleV2/Components/UIBuilder/Windows.Script.txt"    as Window
+
+Text Build() {
+    return "";
+}

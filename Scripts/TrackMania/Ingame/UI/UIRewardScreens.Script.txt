@@ -144,7 +144,7 @@ Text Private_GetRewards2(Integer _NbPlayers)
 				<quad  id="Quad_LineHead1" halign="right" valign="bottom" size="6.7 0.6" pos="0 0"  opacity="0.5" bgcolor="fff" />
 				<frame id="Frame_Clip" clip="True" clipposn="-38. 25." clipsizen="76. 50.">
 					<label id="Label_Mode"  pos="-70 7.2" size="320 180" valign="bottom" halign="left" textsize="5" textpref="$t" text="{{{_("Game Mode")}}}"  textcolor="fff" textfont="{{{G_FontMain}}}"/>
-					<label id="Label_Mode2" pos="-45 7.2" size="320 180" valign="center" halign="left" textsize="3" textpref="$t" textprefix="$t"  textcolor="fff" textfont="{{{SubFont}}}" opacity="0."/>
+					<label id="Label_Mode2" pos="-45 7.2" size="320 180" valign="center" halign="left" textsize="3" textpref="$t"  textcolor="fff" textfont="{{{SubFont}}}" opacity="0."/>
 					<quad id="Quad_Mode"    pos="-70.5 6.8"  size="9 9"  valign="center" halign="center" image="{{{IMG_Mode}}}" opacity="0.0" keepratio="Fit"/>
 				</frame>
 			</frame>
@@ -1357,14 +1357,14 @@ Text Private_GetRewardsSplitscreen()
 			<quad id="Quad_Transition" pos="0 0 .1" size="{{{C_REWARDS_TRANSITION_SIZE_X}}} 180" valign="center" halign="left" bgcolor="000" />
 
 			<frame pos="0. -8." scale="0.6">
-				<label id="Label_Title"  pos="0 15.0 .5" size="320 180"  valign="bottom"  halign="center"  textfont="{{{G_FontMain}}}" textsize="16" text="" autonewline="1" linespacing="0.8" textprefix="$t" />
-				<label id="Label_Title2" pos="0 {{{C_REWARDS_TEXT_INTERVAL}}} .5" size="800 180" valign="bottom" halign="center" textfont="{{{G_FontMain}}}" textsize="16" text="" autonewline="1" linespacing="0.8" textprefix="$t" />
-				<label id="Label_Subtitle" pos="0 {{{-3.0*C_REWARDS_TEXT_INTERVAL}}} .5" size="320 180" valign="top" halign="center" textfont="{{{G_FontMain}}}" textsize="6.0" text="" textprefix="$t" />
+				<label id="Label_Title"  pos="0 15.0 .5" size="320 180"  valign="bottom"  halign="center"  textfont="{{{G_FontMain}}}" textsize="16" text="" autonewline="1" linespacing="0.8" />
+				<label id="Label_Title2" pos="0 {{{C_REWARDS_TEXT_INTERVAL}}} .5" size="800 180" valign="bottom" halign="center" textfont="{{{G_FontMain}}}" textsize="16" text="" autonewline="1" linespacing="0.8" />
+				<label id="Label_Subtitle" pos="0 {{{-3.0*C_REWARDS_TEXT_INTERVAL}}} .5" size="320 180" valign="top" halign="center" textfont="{{{G_FontMain}}}" textsize="6.0" text="" />
 			</frame>	
 				
 			<frame id="Frame_PressToContinue">
 				<quad id="Quad_PressToContinueButton" pos="{{{-C_REWARDS_PRESSTOCONTINUE_INTERVAL}}} {{{C_REWARDS_PRESSTOCONTINUE_POSY-1.}}} .5" size="{{{C_REWARDS_BUTTON_SIZE_X}}} {{{C_REWARDS_BUTTON_SIZE_X}}}" valign="center" halign="right" bgcolor="0f0" image="{{{IMGSelect}}}"textprefix="$t"/>	
-				<label id="Label_PressToContinue" pos="{{{C_REWARDS_PRESSTOCONTINUE_INTERVAL}}} {{{C_REWARDS_PRESSTOCONTINUE_POSY}}} .5" size="320 180" valign="center" halign="left" textfont="{{{G_FontMain}}}" textsize="6" text="" hidden="1" textprefix="$t" />
+				<label id="Label_PressToContinue" pos="{{{C_REWARDS_PRESSTOCONTINUE_INTERVAL}}} {{{C_REWARDS_PRESSTOCONTINUE_POSY}}} .5" size="320 180" valign="center" halign="left" textfont="{{{G_FontMain}}}" textsize="6" text="" hidden="1" />
 			</frame>
 			
 		</frame>

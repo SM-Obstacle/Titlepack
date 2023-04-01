@@ -12,6 +12,7 @@
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/smokegun/ObstacleLib.Script.txt" as Obstacle
 
+
 /***************************************
     CONSTANTS
 ***************************************/
@@ -26,6 +27,9 @@ declare CSmObject[] G_AnchorsObjects;
 Void LoadItems() {
     G_ItemIdents[Constants::C_ItemOffzone] = ItemList_Add(Constants::C_ItemOffzone);
     G_ItemIdents[Constants::C_ItemAmmo] = ItemList_Add(Constants::C_ItemAmmo);
+    foreach (item in Constants::C_ItemCustomOffzones) {
+        G_ItemIdents[item] = ItemList_Add(item);
+    }
 }
 
 Void Init() {
@@ -47,8 +51,7 @@ Void Place() {
 
         G_AnchorsObjects.add(Object);
         Object.SetAnchor(AnchorLandmark.ObjectAnchor);
-        declare Ident AnchorLandmarkId for Object;
-        AnchorLandmarkId = AnchorLandmark.Id;
+        
         declare Text ItemName for Object;
         ItemName = ObjectName;
 
@@ -140,6 +143,11 @@ Boolean PickupItems(CSmModeEvent _Event) {
                     AddPlayerAmmo(_Event.Player, SM::GetWeapon(_Event.Player.CurWeapon), Amount);
                 }
             }
+        }
+
+        default: { // Custom offzone
+            Obstacle::ObsRespawnPlayer(_Event.Player);
+            return False;
         }
 
     }

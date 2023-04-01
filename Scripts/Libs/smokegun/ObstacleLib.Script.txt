@@ -25,7 +25,6 @@
 
 #Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
 
-#Include "Libs/smokegun/UI/TimeDiff.Script.txt" as TimeDiff
 #Include "Libs/smokegun/Settings.Script.txt" as Settings
 #Include "Libs/smokegun/Score.Script.txt" as ObsScores
 
@@ -683,7 +682,6 @@ Void Private_HandleFinish(CSmPlayer _Player, Ident _GoalId) {
     Player::setCpProgress(_Player, -1);
 
     // Update time diff before updating best run
-    TimeDiff::UpdateLayer(_Player, Time, BestRun);
     declare netwrite Net_NewGoal for _Player = 0;
     Net_NewGoal = Now;
 
@@ -805,8 +803,6 @@ Void Private_HandleCheckpoint(CSmPlayer _Player, Ident _CheckpointId) {
 
     declare BestTime = Player::getBestTime(_Player, _CheckpointId);
     if (time > BestTime) Variant = 1;
-
-    TimeDiff::UpdateLayer(_Player, time, BestTime);
 
     UI.SendNotice("",
             CUIConfig::ENoticeLevel::PlayerInfo, _Player.User, CUIConfig::EAvatarVariant::Default,

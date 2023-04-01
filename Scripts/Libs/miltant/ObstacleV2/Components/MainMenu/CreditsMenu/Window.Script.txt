@@ -1,0 +1,25 @@
+Text Build() {
+    declare ML_Text = """
+    <frame pos="-20 90">
+        <label id="Label_IconMenu" size="6 6"
+         textsize="4.2"
+        textcolor="fff" text="rgr"/>
+    </frame>
+
+	<script><![CDATA[
+		#Include "MathLib" as ML
+		#Include "AnimLib" as AL
+
+		main() {
+			while(True) {
+				yield;
+
+				if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+			}
+		}
+	]]></script>
+    """;
+
+    return ML_Text;
+}

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<manialink version="3">
+<frame pos="-160 90" class="screen_context">
+	<frame pos="23.51 -26.35" id="Frame_Tabs">
+		<quad pos="2.49 -1.98" size="8.33 9.33" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_players.png"/>
+		<quad pos="0 0" size="13.28 13.09" bgcolor="FFFFFF44"/>
+		<quad pos="1.99 -15.65" size="9.33 9.33" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_checkpoint.png"/>
+		<quad pos="0 -13.65" size="13.28 13.09" bgcolor="FFFFFF44"/>
+		<quad pos="1.99 -29.15" size="9.5 9.5" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_leaderboard.png"/>
+		<quad pos="0 -27.3" size="13.28 13.09" bgcolor="FFFFFF44"/>
+		<quad pos="1.99 -42.98" size="9.33 9.17" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_binds.png"/>
+		<quad pos="0 -40.95" size="13.28 13.09" bgcolor="FFFFFF44"/>
+		<quad pos="2.16 -56.65" size="9.17 9" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_mx.png"/>
+		<quad pos="0 -54.6" size="13.28 13.09" bgcolor="FFFFFF44"/>
+	</frame>
+	
+	<frame id="Frame_TabPages" size="246.73 128.16" pos="37.34 -26.35">
+		<frame class="TabPage" id="Frame_TabMapInfo">
+			<frame id="Frame_CP" size="51 120.51">
+				<framemodel id="Model_Button_CP">
+					<frame size="49.17 10">
+						<label text="CP 10" size="12 10" pos="3 -5" valign="center2" halign="left"/>
+						<label text="-40.525" size="16 10" pos="33 -5" halign="right" valign="center2" textsize="1"/>
+						<quad pos="38.17 -0.83" size="8.33 8.33" image="file://Media/Images/Obstacle/Interface/Button_CP_Icon.png" modulatecolor="212325FF"/>
+						<quad size="49.17 10" image="file://Media/Images/Obstacle/Interface/Button_CP.png"/>
+					</frame>
+				</framemodel>
+				
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -7.65"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -20.48"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -33.31"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -46.14"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -58.97"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -71.8"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -84.63"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -97.46"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -110.29"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -123.12"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -135.95"/>
+				<frameinstance modelid="Model_Button_CP" pos="3.16 -148.78"/>
+			</frame>
+			
+			<quad size="0.33 128.16" pos="58.66 0" bgcolor="FFFFFFFF"/>
+			
+			<frame id="Frame_CPS" size="179.33 112.86" pos="62.5 -7.65">
+				<framemodel id="Model_Card">
+					<frame size="31.33 39.67">
+						<label text="ZenyoX" size="25 10" pos="15.67 -5" valign="center2" halign="center"/>
+						
+						<label text="-13.46" size="16 7" pos="3 -13" halign="left" valign="center2" textsize="1"/>
+						<label text="-14.14" size="16 7" pos="3 -17.5" halign="left" valign="center2" textsize="1"/>
+						<label text="-24.89" size="16 7" pos="3 -22" halign="left" valign="center2" textsize="1"/>
+						<label text="-32.67" size="16 7" pos="3 -26.5" halign="left" valign="center2" textsize="1"/>
+						<label text="-35.45" size="16 7" pos="3 -31" halign="left" valign="center2" textsize="1"/>
+						<label text="-40.55" size="16 7" pos="3 -35.5" halign="left" valign="center2" textsize="1"/>
+						
+						<quad size="31.33 39.67" image="file://Media/Images/Obstacle/Interface/CP_Card_Middle.png"/>
+					</frame>
+				</framemodel>
+				
+				<frameinstance modelid="Model_Card" pos="3.16 0"/>
+				<frameinstance modelid="Model_Card" pos="38.66 0"/>
+				<frameinstance modelid="Model_Card" pos="74.16 0"/>
+				<frameinstance modelid="Model_Card" pos="109.66 0"/>
+				<frameinstance modelid="Model_Card" pos="145.16 0"/>
+				
+				<frameinstance modelid="Model_Card" pos="3.16 -43.84"/>
+				<frameinstance modelid="Model_Card" pos="38.66 -43.84"/>
+				<frameinstance modelid="Model_Card" pos="74.16 -43.84"/>
+				<frameinstance modelid="Model_Card" pos="109.66 -43.84"/>
+				<frameinstance modelid="Model_Card" pos="145.16 -43.84"/>
+				
+				<frameinstance modelid="Model_Card" pos="3.16 -87.68"/>
+				<frameinstance modelid="Model_Card" pos="38.66 -87.68"/>
+				<frameinstance modelid="Model_Card" pos="74.16 -87.68"/>
+				<frameinstance modelid="Model_Card" pos="109.66 -87.68"/>
+				<frameinstance modelid="Model_Card" pos="145.16 -87.68"/>
+			</frame>
+			
+			<quad size="246.73 128.16" bgcolor="FFFFFF44"/>
+		</frame>
+	</frame>
+	<quad size="246.73 0.33" pos="37.34 -26.02" bgcolor="FFFFFFFF"/>
+</frame>
+</manialink>

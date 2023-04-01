@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<manialink version="3">
+<frame pos="-160 90">
+	<label pos="276 -142" size="14 5" text="21x" halign="center" valign="center2" rot="-45"/>
+	<quad pos="276.67 -143" size="15 15" image="file://Media/Images/Obstacle/Interface/ammo/4.png"/>
+	<quad pos="280.7 -147" size="7.17 7.17" image="file://Media/Manialinks/ShootMania/Common/ArrowWhite.dds"/>
+	
+	<label pos="312.2 -142.2" size="14 5" text="50%" halign="center" valign="center2" rot="45"/>
+	<quad pos="296.5 -143" size="15 15" image="file://Media/Images/Obstacle/Interface/ammo/1.png"/>
+	<quad pos="300 -147" size="7.17 7.17" image="file://Media/Manialinks/Common/Module/PlayerState/IconActionRun.dds"/>
+	
+	<label pos="294.085 -164" size="14 5" text="390" halign="center" valign="center2"/>
+	<label pos="294.085 -167.2" size="12 3" text="$tkm/h" halign="center" valign="center2" textsize="1"/>
+	<quad pos="272.67 -139" size="42.83 37.67" image="file://Media/Images/Obstacle/Interface/Hive.png"/>
+</frame>
+</manialink>

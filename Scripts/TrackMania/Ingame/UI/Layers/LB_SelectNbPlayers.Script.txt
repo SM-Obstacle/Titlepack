@@ -37,7 +37,7 @@ Text Build() {
 <manialink version="3" name="L_UIMedalSelection">
 
 	<framemodel id="Frame_ButtonInput">
-		<label id="Label_Select"  halign="left"   valign="center" z-index="2" pos="{{{-SizeButtonX + 3.}}} -4.0" textsize="1.8" textprefix="$t" textcolor="fff" text="{{{_("Select")}}}" size="{{{SizeXQuad-4.}}}"/>
+		<label id="Label_Select"  halign="left"   valign="center" z-index="2" pos="{{{-SizeButtonX + 3.}}} -4.0" textsize="1.8" textcolor="fff" text="{{{_("Select")}}}" size="{{{SizeXQuad-4.}}}"/>
 		<quad halign="right" valign="bottom" size="{{{SizeButtonX}}} {{{WidthButton}}}"  z-index="0" pos="0.0 0.0"                                               opacity="0.5" bgcolor="fff" />
 		<quad halign="left"  valign="top"    size="{{{WidthButton}}} {{{SizeButtonY}}} " z-index="0" pos="0.0 {{{WidthButton}}}"                                 opacity="0.5" bgcolor="fff" />
 		<quad halign="left"  valign="top"    size="{{{SizeButtonX}}} {{{WidthButton}}}"  z-index="0" pos="{{{-SizeButtonX}}} {{{-SizeButtonY+WidthButton*2.}}}"  opacity="0.5" bgcolor="fff" />

@@ -1,0 +1,34 @@
+#Include "Libs/miltant/ObstacleV2/Components/UIBuilder/Menus.Script.txt"                as Menus
+#Include "Libs/miltant/ObstacleV2/Components/UIBuilder/Windows.Script.txt"              as Windows
+
+#Include "Libs/miltant/ObstacleV2/Components/MainMenu/CreditsMenu/Window.Script.txt"    as Window
+
+Menus::K_Section Load() {
+    declare Menus::K_Section JoinUsItem;
+    JoinUsItem.Name = "join_us";
+    JoinUsItem.DisplayName = "Join the team";
+    JoinUsItem.Icon = "";
+    JoinUsItem.OpenUrl = "http://www.obstacle.ovh/join_the_team";
+    Menus::CreateMenu(JoinUsItem);
+
+
+    declare Windows::K_Window CreditsWindow;
+    CreditsWindow.Name = "credits";
+    CreditsWindow.Manialink = Window::Build();
+    Windows::CreateWindow(CreditsWindow);
+
+    declare Menus::K_Section CreditsItem;
+    CreditsItem.Name = "credits";
+    CreditsItem.DisplayName = "Credits";
+    CreditsItem.Icon = "";
+    CreditsItem.Menu = ["join_us"];
+    CreditsItem.Window = CreditsWindow.Name;
+
+
+    return CreditsItem;
+}
+
+
+Void Loop() {
+
+}

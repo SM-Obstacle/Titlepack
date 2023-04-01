@@ -1,7 +1,7 @@
 #Extends "Modes/ShootMania/Base/ModeShootMania.Script.txt"
 
 #Const CompatibleMapTypes "ObstacleArena,ObstacleTitleArena,ObstacleTitleArenaOld,TimeAttackArena,ObstacleBetaArena,Randomizer"
-#Const Version           "1.2"
+#Const Version           "2a"
 #Const ScriptName        "Modes/ShootMania/Obstacle.Script.txt"
 
 
@@ -18,17 +18,8 @@
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
+#Include "Libs/miltant/UI/SpectatorBar.Script.txt" as SpecBar
 #Include "Libs/miltant/UI/Markers.Script.txt" as Markers
-#Include "Libs/smokegun/UI/RecordsWidget.Script.txt" as RecordsWidget
-#Include "Libs/smokegun/UI/TimeDiff.Script.txt" as TimeDiff
-#Include "Libs/smokegun/UI/Chrono.Script.txt" as Chrono
-#Include "Libs/miltant/UI/Glitches.Script.txt" as Glitches
-#Include "Libs/smokegun/UI/CpProgress.Script.txt" as CpProgress
-#Include "Libs/smokegun/UI/SpectatorCount.Script.txt" as SpectatorCount
-#Include "Libs/smokegun/UI/NextMapVote.Script.txt" as NextMapVote
-#Include "Libs/smokegun/UI/RespawnBehavior.Script.txt" as RespawnBehavior
-#Include "Libs/smokegun/UI/SpecKeys.Script.txt" as SpecKeys
-#Include "Libs/smokegun/UI/SurvivalRanking.Script.txt" as SurvivalRanking
 
 #Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
 //#Include "Libs/miltant/KeysSettings.Script.txt" as KeysSettings
@@ -41,6 +32,7 @@
 #Include "Libs/miltant/Randomizer.Script.txt" as RNG
 
 #Include "Libs/smokegun/Score.Script.txt" as ObsScores
+#Include "Libs/miltant/PlaygroundClient.Script.txt" as PlaygroundClient
 
 // ---------------------------------- //
 // Settings
@@ -71,7 +63,6 @@
 // ---------------------------------- //
 // Constants
 // ---------------------------------- //
-#Const C_HudModulePath "Obstacle/UI.Module.Gbx"
 #Const C_SettingsUpdateInterval 1000
 
 
@@ -94,6 +85,7 @@ Log::RegisterScript(ScriptName, Version);
 
 ***Match_Settings***
 ***
+MB_Settings_UseDefaultLadder = False;
 MB_Settings_UseDefaultHud = False;
 MB_Settings_UseDefaultTimer = False;
 MB_Settings_UseDefaultObjects = False;
@@ -138,31 +130,7 @@ Press {{{OpenSpecial4Text}}}F5{{{CloseText}}} to disable/enable respawning from 
 
 ModeInfo::SetRules(ModeRules);
 ModeInfo::SetStatusMessage(_("Finish the map as fast as possible."));
-***
 
-***Match_LoadHud***
-***
-Hud_Load(C_HudModulePath);
-
-foreach (Module in Hud.Modules) {
-    switchtype (Module) {
-        case CModulePlaygroundScoresTable: Hud.ScoresTable = (Module as CModulePlaygroundScoresTable);
-        default: {}
-    }
-}
-
-if (Hud != Null && Hud.ScoresTable != Null) {
-    Hud.ScoresTable.Scores_Sort(CModulePlaygroundScoresTable::EScoreSortOrder::SMPoints);
-
-    Tabs::Load();
-    declare TabsLayer <=> Tabs::CreateTabPaneLayer(
-        [ "ScoresTab" => "Rankings"
-        , "CPTimes" => "Race"]
-       // , "KeysSettings" => "Inputs"]
-        , 15, 7, False);
-    TabsLayer.Type = CUILayer::EUILayerType::AltMenu;
-    UIManager.UIAll.UILayers.add(TabsLayer);
-}
 ***
 
 ***Match_SpawnScreen***
@@ -194,6 +162,8 @@ CreateUI();
 if (Settings::GetEnableRecords()) {
     API::Init();
 }
+
+PlaygroundClient::Init();
 
 Obstacle::LoadActions();
 ***
@@ -267,10 +237,9 @@ if (Obstacle::IsRandomizerMap()) {
     }
 
     G_EnableRecords = False;
-    Layers::Detach("Records");
+    
 } else if (Settings::GetEnableRecords() && G_EnableRecords) {
-    Layers::Create("Records", RecordsWidget::GetLayer());
-    Layers::Attach("Records");
+    
 }
 
 UIManager.UIAll.MarkersXML = Markers::GetXML();
@@ -295,12 +264,14 @@ if (S_TimeLimit > 0) {
 
 ***Match_Yield***
 ***
-SpectatorCount::Yield();
-NextMapVote::Yield(S_NextMapVotingRatio);
+declare rien = 0;
 ***
 
 ***Match_PlayLoop***
 ***
+
+UIManager.UIAll.OverlayHideCountdown = True;
+UIManager.UIAll.OverlayHideGauges = True;
 //Replay_SaveInterface();
 
 if (LastUpdate + C_SettingsUpdateInterval < Now) {
@@ -375,6 +346,7 @@ foreach (Event in PendingEvents) {
         }
 
         case CSmModeEvent::EType::OnHit: {
+            log(Event);
             // Disable the loose of armor when hit
             Events::Invalid(Event);
         }
@@ -531,104 +503,109 @@ foreach (Cap in PendingCaptures) {
     }
 }
 
+declare HandledPlaground = False;
 foreach (Player in Players) {
+    if (Player.IsBot) {
 
-    switch (Player.SpawnStatus) {
+    } else {
+        switch (Player.SpawnStatus) {
 
-        case CSmPlayer::ESpawnStatus::NotSpawned: {
-            if (!Player::isInitialized(Player)) {
-                Obstacle::NewPlayer(Player);
-            }
-
-            if (!Player.RequestsSpectate && ObsScores::PlayerShouldSpawn(Player)) {
-                Obstacle::ObsRespawnPlayer(Player);
-            }
-        }
-
-        case CSmPlayer::ESpawnStatus::Spawning: {
-            if (Player.Position == <0., 0., 0.>) {
-                if (Player::getLastSpawnPosition(Player) != <0., 0., 0.>) {
-                    Player::setLastSpawnPosition(Player, <0., 0., 0.>);
+            case CSmPlayer::ESpawnStatus::NotSpawned: {
+                if (!Player::isInitialized(Player)) {
+                    Obstacle::NewPlayer(Player);
                 }
-            } else if (Player.Post == CSmPlayer::EPost::Char && Player::getLastSpawnPosition(Player) != Player.Position) {
-                if (Player::getLastSpawnPosition(Player) == <0., 0., 0.>)
-                    Player::setLastSpawnPosition(Player, Player.Position);
-                else {
-                    declare UI <=> UIManager.GetUI(Player);
-                    declare netread Boolean _AltMenu_Visible for UI = False;
 
-                    log(_AltMenu_Visible);
-                    if  (_AltMenu_Visible){
-                        Player::setUsedAltGlitch(Player, True);
+                if (!Player.RequestsSpectate && ObsScores::PlayerShouldSpawn(Player)) {
+                    Obstacle::ObsRespawnPlayer(Player);
+                }
+            }
+
+            case CSmPlayer::ESpawnStatus::Spawning: {
+                if (Player.Position == <0., 0., 0.>) {
+                    if (Player::getLastSpawnPosition(Player) != <0., 0., 0.>) {
+                        Player::setLastSpawnPosition(Player, <0., 0., 0.>);
+                    }
+                } else if (Player.Post == CSmPlayer::EPost::Char && Player::getLastSpawnPosition(Player) != Player.Position) {
+                    if (Player::getLastSpawnPosition(Player) == <0., 0., 0.>)
+                        Player::setLastSpawnPosition(Player, Player.Position);
+                    else {
+                        declare UI <=> UIManager.GetUI(Player);
+                        declare netread Boolean _AltMenu_Visible for UI = False;
+
+                        log(_AltMenu_Visible);
+                        if  (_AltMenu_Visible){
+                            Player::setUsedAltGlitch(Player, True);
+                        }
                     }
                 }
             }
-        }
 
-        case CSmPlayer::ESpawnStatus::Spawned: {
+            case CSmPlayer::ESpawnStatus::Spawned: {
+                PlaygroundClient::Loop(Player);
+                HandledPlaground = True;
 
-            if (UsePvPWeapons != G_LastUsePvPWeapons) {
-                if (UsePvPWeapons)
-                    Player::setUsedPvPWeapons(Player, True);
-            }
-            if (UsePvPCollisions != G_LastUsePvPCollisions) {
-                if (UsePvPCollisions)
-                    Player::setUsedPvPCollisions(Player, True);
-            }
-
-            if (G_WayPointSpawn != NullId && Player::getLastCheckpoint(Player) == NullId) {
-                declare Editor_WayPointSpawn_isCheckpoint for This = False;
-                if (Editor_WayPointSpawn_isCheckpoint)
-                    Obstacle::JumpToCheckpointIdent_ByPassSpawn(Player, G_WayPointSpawn);
-
-                G_WayPointSpawn = NullId;
-            }
-            
-            SpecKeys::UpdateLayer(Player);
-
-            // Unlimited stam
-            declare StaminaUnlimited for Player = False;
-            if (StaminaUnlimited && Player.Stamina != ML::TruncInteger(Player.StaminaMaxValue / 1.8)) {
-                Player.Stamina = ML::TruncInteger(Player.StaminaMaxValue / 1.8);
-            }
-
-            // Effects on respawn
-            declare PlayerHasRespawned for Player = False;
-            if (PlayerHasRespawned) {
-                if (S_FullAmmoSpawn) {
-                    Weapons::FillUpPlayerAmmo(Player);
+                if (UsePvPWeapons != G_LastUsePvPWeapons) {
+                    if (UsePvPWeapons)
+                        Player::setUsedPvPWeapons(Player, True);
+                }
+                if (UsePvPCollisions != G_LastUsePvPCollisions) {
+                    if (UsePvPCollisions)
+                        Player::setUsedPvPCollisions(Player, True);
                 }
 
-                PlayerHasRespawned = False;
-            }
+                if (G_WayPointSpawn != NullId && Player::getLastCheckpoint(Player) == NullId) {
+                    declare Editor_WayPointSpawn_isCheckpoint for This = False;
+                    if (Editor_WayPointSpawn_isCheckpoint)
+                        Obstacle::JumpToCheckpointIdent_ByPassSpawn(Player, G_WayPointSpawn);
 
-            // Manage item effects
-            declare ItemBuff = Player::getBuffTimes(Player);
-            foreach (Name => Time in ItemBuff) {
-                if (Time < Now) continue;
-                switch (Name) {
-                    // Progressively grant ammo
-                    case Constants::C_ItemAmmo: {
-                        declare AmmoItemBuffDuration for Player = 0.;
-                        if (AmmoItemBuffDuration <= 0.) continue;
-                        declare AmmoItemBuffAmount for Player = 1.;
+                    G_WayPointSpawn = NullId;
+                }
 
-                        declare AmmoItemStart = Time - AmmoItemBuffDuration * 1000;
-                        declare TickDuration = 1000. * AmmoItemBuffDuration / AmmoItemBuffAmount;
-                        declare AmmoItemBuffTicks for Player = 0;
+                // Unlimited stam
+                declare StaminaUnlimited for Player = False;
+                if (StaminaUnlimited && Player.Stamina != ML::TruncInteger(Player.StaminaMaxValue / 1.8)) {
+                    Player.Stamina = ML::TruncInteger(Player.StaminaMaxValue / 1.8);
+                }
 
-                        if (Now > AmmoItemStart + AmmoItemBuffTicks * TickDuration)
-                        {
-                            AddPlayerAmmo(Player, SM::GetWeapon(Player.CurWeapon), 1.);
-                            AmmoItemBuffTicks += 1;
+                // Effects on respawn
+                declare PlayerHasRespawned for Player = False;
+                if (PlayerHasRespawned) {
+                    if (S_FullAmmoSpawn) {
+                        Weapons::FillUpPlayerAmmo(Player);
+                    }
+
+                    PlayerHasRespawned = False;
+                }
+
+                // Manage item effects
+                declare ItemBuff = Player::getBuffTimes(Player);
+                foreach (Name => Time in ItemBuff) {
+                    if (Time < Now) continue;
+                    switch (Name) {
+                        // Progressively grant ammo
+                        case Constants::C_ItemAmmo: {
+                            declare AmmoItemBuffDuration for Player = 0.;
+                            if (AmmoItemBuffDuration <= 0.) continue;
+                            declare AmmoItemBuffAmount for Player = 1.;
+
+                            declare AmmoItemStart = Time - AmmoItemBuffDuration * 1000;
+                            declare TickDuration = 1000. * AmmoItemBuffDuration / AmmoItemBuffAmount;
+                            declare AmmoItemBuffTicks for Player = 0;
+
+                            if (Now > AmmoItemStart + AmmoItemBuffTicks * TickDuration)
+                            {
+                                AddPlayerAmmo(Player, SM::GetWeapon(Player.CurWeapon), 1.);
+                                AmmoItemBuffTicks += 1;
+                            }
                         }
                     }
                 }
             }
         }
-
     }
 }
+if (!HandledPlaground)
+    PlaygroundClient::Loop();
 
 G_LastUsePvPCollisions = UsePvPCollisions;
 G_LastUsePvPWeapons = UsePvPWeapons;
@@ -689,41 +666,12 @@ Void DoNothing(){}
 Void CreateUI() {
     CustomUI::Load();
     
-    Layers::Create("Chrono", Chrono::GetLayer());
-    Layers::Create("Glitches", Glitches::GetLayer());
-    Layers::Create("TimeDiff", TimeDiff::GetLayer());
-    Layers::Create("CpProgress", CpProgress::GetLayer());
-    Layers::Create("CPTimes", CPTimes::GetLayer());
-    //Layers::Create("KeysSettings", KeysSettings::GetLayer());
-    Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
-    Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));
-    Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer());
-    Layers::Create("SpecKeys", SpecKeys::GetLayer());
-
-    Layers::Create("Markers");
+    Layers::Create("SpecBar", SpecBar::GetLayer());
+    Layers::Attach("SpecBar");
+    
+    Layers::Create("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
     Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
-    Layers::Create("Items", Items::CreateLayerItems());
-
-    Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
-
-    if (Settings::GetEnableRecords()) {
-        Layers::Create("Records", RecordsWidget::GetLayer());
-        Layers::Attach("Records");
-    }
-
-    Layers::Attach("Chrono");
-    Layers::Attach("Glitches");
-    Layers::Attach("TimeDiff");
-    Layers::Attach("CpProgress");
-    Layers::Attach("CPTimes");
-    //Layers::Attach("KeysSettings");
-    Layers::Attach("Items");
     Layers::Attach("Markers");
-    Layers::Attach("SpectatorCount");
-    Layers::Attach("NextMapVote");
-    Layers::Attach("RespawnBehavior");
-    Layers::Attach("SpecKeys");
-    Layers::Attach("SurvivalRanking");
 
     //Layers::AttachReplay("SpecKeys");
     CustomUI::Build();
@@ -731,27 +679,10 @@ Void CreateUI() {
 }
 
 Void DestroyUI() {
-    Layers::Detach("Chrono");
-    Layers::Detach("Glitches");
-    Layers::Detach("TimeDiff");
-    Layers::Detach("CpProgress");
-    Layers::Detach("CPTimes");
-    //Layers::Detach("KeysSettings");
+    Layers::Detach("SpecBar");
     Layers::Detach("Markers");
-    Layers::Detach("Items");
-
-    if (Settings::GetEnableRecords()){
-        Layers::Detach("Records");
-    }
-
-    Layers::Detach("SpectatorCount");
-    Layers::Detach("NextMapVote");
-    Layers::Detach("RespawnBehavior");
-    Layers::Detach("SpecKeys");
-    Layers::Detach("SurvivalRanking");
 
     //Layers::DetachReplay("SpecKeys");
-
     CustomUI::Unload();
     UIManager.UILayerDestroyAll();
 }
@@ -827,10 +758,5 @@ Void UpdateSettings() {
 
     if (S_ForceRNGSeed != Settings::GetForceRNGSeed()) {
         Settings::SetForceRNGSeed(S_ForceRNGSeed);
-    }
-
-    if (S_CheckpointMarkersCount != Settings::GetCheckpointMarkersCount()) {
-        Settings::SetCheckpointMarkersCount(S_CheckpointMarkersCount);
-        Layers::Update("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
     }
 }

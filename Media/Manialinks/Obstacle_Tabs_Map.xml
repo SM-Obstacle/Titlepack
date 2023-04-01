@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<manialink version="3">
+<frame pos="-160 90" class="screen_context">
+	<frame pos="23.51 -26.35" id="Frame_Tabs">
+		<quad pos="2.49 -1.98" size="8.33 9.33" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_players.png"/>
+		<quad pos="0 0" size="13.28 13.09" bgcolor="FFFFFF44"/>
+		<quad pos="1.99 -15.65" size="9.33 9.33" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_checkpoint.png"/>
+		<quad pos="0 -13.65" size="13.28 13.09" bgcolor="FFFFFF44"/>
+		<quad pos="1.99 -29.15" size="9.5 9.5" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_leaderboard.png"/>
+		<quad pos="0 -27.3" size="13.28 13.09" bgcolor="FFFFFF44"/>
+		<quad pos="1.99 -42.98" size="9.33 9.17" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_binds.png"/>
+		<quad pos="0 -40.95" size="13.28 13.09" bgcolor="FFFFFF44"/>
+		<quad pos="2.16 -56.65" size="9.17 9" keepratio="Fit" image="file://Media/Images/Obstacle/Interface/tab_mx.png"/>
+		<quad pos="0 -54.6" size="13.28 13.09" bgcolor="FFFFFF44"/>
+	</frame>
+	
+	<frame id="Frame_TabPages" size="246.73 128.16" pos="37.34 -26.35">
+		<frame class="TabPage" id="Frame_TabMapInfo">
+			<frame id="Frame_Title" size="246.73 17">
+				<label z-index="0" size="240 11" text="Zen's Paradise | zenyox" halign="center" textsize="7" pos="123 -7.5" valign="center2"/>
+			</frame>
+			
+			<frame id="Frame_Content" size="246.73 128.16">
+				<frame id="Frame_Karma" pos="5.49 -18.15" size="54.67 91">
+					<frame id="Frame_Karma_Route">
+						<label pos="27.33 -5" size="54.67 10" text="Route" halign="center" valign="center2" textsize="5"/>
+					</frame>
+					<quad size="54.67 91" image="file://Media/Images/Obstacle/Interface/background_dark_column.png"/>
+				</frame>
+				
+				<frame id="Frame_Medals" pos="186.49 -18.15" size="54.67 91">
+					<frame id="Frame_Medals_Title">
+						<label pos="27.33 -5" size="54.67 10" text="Medals" halign="center" valign="center2" textsize="5"/>
+					</frame>
+					<quad pos="0 0" z-index="0" size="54.67 91" image="file://Media/Images/Obstacle/Interface/background_dark_column.png"/>
+				</frame>
+				
+				<frame id="Frame_Comments" pos="84.66 -18.48" size="78.17 118">
+					<frame id="Frame_Comment_Author" size="77.17 35.83">
+						<label  pos="38.59 -6" size="77.17 10" text="Author Comment" halign="center" valign="center2" textsize="3"/>
+						<label pos="2.6 -24" size="72 20" text="Yes, that's great, we just the need to guy with the good voice :). If we can do it, i can be on youtube, but also in the game, if everything works ingame. Yes, that's great, we just the need to guy with the good voice :). If we can do it, i can be on youtube, but also in the game, if everything works ingame." textfont="Gotham/Gotham-Book" autonewline="1" maxline="6" textsize="1" valign="center2" halign="left"/>
+						<quad size="77.17 35.83" image="file://Media/Images/Obstacle/Interface/background_author_comment.png" pos="0 0"/>
+					</frame>
+					
+					<frame id="Frame_Comment_Players" pos="0 -38.67" size="78.5 53.67">
+						<label size="80 10" text="Players Comments" halign="center" valign="center2" pos="41 -6" textsize="3"/>
+						
+						<frame size="78.5 41.67" pos="4 -12" id="Frame_Comments_List">
+							<frame size="80 20" class="comment">
+								<frame size="75 15" pos="0 -2.33">
+									<label  pos="2.5 -7.5" size="70 13" text="Lyyras - 01/01/2023 s
+		Ta map a niqué ma nouvelle année, j'ai voté full négatif ..." halign="left" valign="center2" textsize="1" autonewline="1" maxline="3"/>
+									<quad size="70.5 14.33" image="file://Media/Images/Obstacle/Interface/background_dark_column.png"/>
+								</frame>
+							</frame>
+							
+							<frame size="80 20" pos="0 -20" class="comment">
+								<frame size="75 15" pos="0 -2.33">
+									<label  pos="2.5 -7.5" size="70 13" text="Wejdene - 03/01/2023 s
+		Tu hors de ma vue" halign="left" valign="center2" textsize="1" autonewline="1" maxline="3"/>
+									<quad size="70.5 14.33" image="file://Media/Images/Obstacle/Interface/background_dark_column.png"/>
+								</frame>
+							</frame>
+						</frame>
+						
+						<quad size="77.5 52.67" image="file://Media/Images/Obstacle/Interface/background_player_comments.png"/>
+					</frame>
+				
+					<frame id="Frame_Medals" pos="-0.33 -93.84" size="77.83 7.17">
+						<entry size="67 7" default="type here" halign="left" pos="2 -4" valign="center2" style="TextStaticVerySmall" textsize="1"/>
+						<quad pos="0 0" z-index="0" size="77.83 7.17" image="file://Media/Images/Obstacle/Interface/chat_comment.png"/>
+					</frame>
+				</frame>
+			</frame>
+				
+			<quad size="246.73 128.16" bgcolor="FFFFFF44" pos="0 0"/>
+		</frame>
+	</frame>
+</frame>
+</manialink>

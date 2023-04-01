@@ -1,0 +1,90 @@
+#Include "Libs/miltant/ObstacleV2/Components/UIBuilder/Menus.Script.txt" as Menus
+
+
+Menus::K_Section Load() {
+    declare Menus::K_Section TASItem;
+    TASItem.Name = "tas_editor";
+    TASItem.DisplayName = "TAS";
+    TASItem.Icon = "";
+    Menus::CreateMenu(TASItem);
+    
+    declare Menus::K_Section ReplayItem;
+    ReplayItem.Name = "replay_editor";
+    ReplayItem.DisplayName = "Replay";
+    ReplayItem.Icon = "";
+    Menus::CreateMenu(ReplayItem);
+
+    declare Menus::K_Section GhostItem;
+    GhostItem.Name = "ghost_editor";
+    GhostItem.DisplayName = "Ghost";
+    GhostItem.Icon = "⚑";
+    Menus::CreateMenu(GhostItem);
+
+    declare Menus::K_Section ItemItem;
+    ItemItem.Name = "item_editor";
+    ItemItem.DisplayName = "Item";
+    ItemItem.Icon = "";
+    Menus::CreateMenu(ItemItem);
+    
+    declare Menus::K_Section InterfaceItem;
+    InterfaceItem.Name = "interface_editor";
+    InterfaceItem.DisplayName = "Interface";
+    InterfaceItem.Icon = "";
+    Menus::CreateMenu(InterfaceItem);
+    
+    declare Menus::K_Section ActionItem;
+    ActionItem.Name = "action_editor";
+    ActionItem.DisplayName = "Action";
+    ActionItem.Icon = "";
+    Menus::CreateMenu(ActionItem);
+
+
+    declare Menus::K_Section EditorsItem;
+    EditorsItem.Name = "editors";
+    EditorsItem.DisplayName = "Editors";
+    EditorsItem.Icon = "";
+    EditorsItem.Menu = ["tas_editor", "replay_editor", "item_editor", "interface_editor", "ghost_editor", "action_editor"];
+
+    return EditorsItem;
+}
+
+
+Void Loop() {
+    foreach(Event in PendingEvents) {
+        switch(Event.Type) {
+            case CManiaAppEvent::EType::LayerCustomEvent: {
+                switch(Event.CustomEventType) {
+                    case "item_click" : {
+                        if (Event.CustomEventData.count > 0) {
+                            switch (Event.CustomEventData[0]) {
+                                case "tas_editor": {
+                                    // todo browser
+                                }
+
+                                case "replay_editor": {
+                                    // todo browser
+                                }
+
+                                case "item_editor": {
+                                    TitleControl.OpenEditor(CTitleControl::EEditorType::ItemEditor);
+                                }
+
+                                case "interface_editor": {
+                                    TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+                                }
+
+                                case "ghost_editor": {
+                                    // todo browser
+                                }
+
+                                case "action_editor": {
+                                    TitleControl.OpenEditor(CTitleControl::EEditorType::ActionMaker);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

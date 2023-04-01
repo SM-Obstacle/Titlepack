@@ -1,0 +1,61 @@
+#Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
+
+#Const  Version     "2023-22-01"
+#Const  ScriptName  "SpectatorBar.Script.txt"
+
+Text GetLayer() {
+    CustomUI::Add("Frame_Spectators", <-160., 82.>, <90., 15.>);
+    return """
+<manialink version="3" name="Obstacle:SpecBar">
+    <frame id="Frame_Spectators" class="LibCustomUI_Module" hidden="1">
+        <frame pos="-160 82">
+            <quad z-index="0" size="48 15" bgcolor="FFFA" image="file://Media/Images/Obstacle/Interface/gradient_specbar.png" keepratio="Clip" pos="0 0"/>
+            <quad id="Quad_Banner" z-index="0" size="90 15" bgcolor="F0FA" image="file://Media/Images/Obstacle/Interface/background_specbar_default.png"/>
+            
+            <frame z-index="1">
+                <label id="Label_Nickname" pos="45 -7.5" z-index="0" size="50 10" text="" halign="center" valign="center2" style="TextCardScores2" textfont="Oswald" textsize="5"/>
+                <quad pos="35 0" z-index="0" size="55 0.5" bgcolor="FFFF"/>
+                <quad pos="55 -14.5" z-index="0" size="35 0.5" bgcolor="FFFF"/>
+                <quad pos="89.5 0" z-index="0" size="0.5 15" bgcolor="FFFF"/>
+                <quad pos="77 -4.5" z-index="0" size="8 6" bgcolor="FFFF" style="Bgs1" substyle="BgColorContour"/>
+                <quad id="Quad_CountryFlag" pos="77.57 -5" z-index="0" size="7 5.14" bgcolor="5598"/>
+            </frame>
+        </frame>
+    </frame>
+<script><!--
+    #Include "TextLib" as TL
+    #Include "MathLib" as ML
+
+    main() {
+        {{{CustomUI::InjectMLInit()}}}
+        wait(InputPlayer != Null && Page != Null);
+
+        declare Frame_Spectators      <=> (Page.GetFirstChild("Frame_Spectators") as CMlFrame);
+        declare Label_Nickname      <=> (Page.GetFirstChild("Label_Nickname") as CMlLabel);
+        declare Quad_CountryFlag      <=> (Page.GetFirstChild("Quad_CountryFlag") as CMlQuad);
+        declare Quad_Banner      <=> (Page.GetFirstChild("Quad_Banner") as CMlQuad);
+
+        declare Last_LocalPlayer = NullId;
+
+        while (True) {
+            yield;
+
+            if (IsSpectator && GUIPlayer != Null) {
+                if (Last_LocalPlayer != GUIPlayer.Id) {
+                    Label_Nickname.SetText(GUIPlayer.User.Name);
+                    Quad_CountryFlag.ChangeImageUrl(GUIPlayer.User.CountryFlagUrl);
+                }
+    
+                Last_LocalPlayer = GUIPlayer.Id;
+                
+                Frame_Spectators.Show();
+            } else {
+                Frame_Spectators.Hide();
+            }
+
+            {{{CustomUI::InjectMLLoop()}}}
+        }
+    }
+--></script>
+</manialink>""";
+}

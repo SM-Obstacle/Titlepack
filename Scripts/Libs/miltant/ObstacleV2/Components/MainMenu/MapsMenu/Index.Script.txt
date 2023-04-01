@@ -1,0 +1,31 @@
+#Include "Libs/miltant/ObstacleV2/Components/UIBuilder/Menus.Script.txt" as Menus
+
+
+Menus::K_Section Load() {
+    declare Menus::K_Section ImportItem;
+    ImportItem.Name = "import_map";
+    ImportItem.DisplayName = "Import";
+    ImportItem.Icon = "⚑";
+    Menus::CreateMenu(ImportItem);
+    
+    declare Menus::K_Section CreateItem;
+    CreateItem.Name = "create_map";
+    CreateItem.DisplayName = "Create";
+    CreateItem.Icon = "";
+    Menus::CreateMenu(CreateItem);
+
+
+
+    declare Menus::K_Section MapsItem;
+    MapsItem.Name = "maps";
+    MapsItem.DisplayName = "Maps";
+    MapsItem.Icon = "";
+    MapsItem.Menu = ["import_map", "create_map"];
+
+    return MapsItem;
+}
+
+
+Void Loop() {
+    //foreach pending events, if event name == menu item name, forward the event to the appropriate controller 
+}

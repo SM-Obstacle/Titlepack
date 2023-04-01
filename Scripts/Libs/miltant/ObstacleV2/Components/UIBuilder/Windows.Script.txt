@@ -1,0 +1,76 @@
+#Include "Libs/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"						as Layers
+#Include "TextLib" as TL
+
+
+#Struct K_Window {
+	Text Name;
+	
+	Text Manialink;
+}
+
+declare K_Window[Text] G_Windows;
+declare Text G_Current_Window;
+
+
+Text Build(K_Window _Menu) {
+	declare ML_Text = """
+<manialink version="3" name="L_Window">
+{{{_Menu.Manialink}}}
+</manialink>
+	""";
+
+	return ML_Text;
+}
+
+Void CreateWindow(K_Window _Window) {
+	if (!G_Windows.existskey(_Window.Name)) {
+		G_Windows[_Window.Name] = _Window;
+		declare LayerName = "L_Window_" ^ _Window.Name;
+		declare Text MLText = Build(_Window);
+
+		Layers::Create(LayerName, MLText);
+		Layers::SetAnimationType(LayerName, CUILayer::EUILayerAnimation::RightSlow);
+	}
+}
+
+K_Window GetWindow(Text _Name) {
+	return G_Windows[_Name];
+}
+
+Void Unload() {
+	Layers::Detach(G_Current_Window);
+	G_Current_Window = "";
+}
+
+Void Load(Text _Window) {
+	Unload();
+
+	if (G_Windows.existskey(_Window)) {
+		declare LayerName = "L_Window_" ^ _Window;
+
+		Layers::Attach(LayerName);
+		G_Current_Window = LayerName;
+	}
+}
+
+
+Void Loop() {
+	foreach(Event in PendingEvents) {
+		switch(Event.Type) {
+			case CManiaAppEvent::EType::LayerCustomEvent: {
+				switch(Event.CustomEventType) {
+					case "window_load" : {
+						if (Event.CustomEventData.count > 0) {
+							Load(Event.CustomEventData[0]);
+						}
+					}
+					case "window_unload" : {
+						if (Event.CustomEventData.count > 0) {
+							Unload();
+						}
+					}
+				}
+			}
+		}
+	}
+}

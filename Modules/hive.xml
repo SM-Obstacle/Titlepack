@@ -1,0 +1,43 @@
+<manialink version="3">
+	<frame id="Frame_PlayerState" scriptevents="1" hidden="0">
+		<frame id="Frame_Component1" pos="-48 -84" halign="center" valign="center">
+			<frame halign="center" valign="center" z-index="0.2" hidden="1" id="Frame_ComponentValues">
+				<label halign="right" valign="center" translate="0" text="?" textsize="5" textcolor="ffffff" textfont="OswaldMono" textemboss="1" id="Label_ComponentValueCurrent"/>
+				<label valign="center" translate="0" text=" /?" textsize="5" textcolor="ffffff" textfont="OswaldMono" textemboss="1" hidden="0" id="Label_ComponentValueMax"/>
+			</frame>
+			<frame halign="center" valign="center" id="Frame_ComponentGauge">
+				<gauge z-index="0.1" rot="180" size="40 9" halign="center" valign="center" drawbg="0" ratio="1" color="ffffff" grading="1" hidden="0" id="Gauge_Component"/>
+				<quad size="40 9" halign="center" valign="center" bgcolor="ffffff" modulatecolor="ffffff" image="file://Media/Manialinks/Common/Module/PlayerState/GaugeBackground.dds" hidden="0" id="Quad_ComponentBackground"/>
+			</frame>
+			<quad valign="center" pos="20 0" z-index="0.5" size="15 15" bgcolor="ffffff" modulatecolor="ffffff" image="file://Media/Manialinks/Common/Module/PlayerState/IconWeaponRocket.dds" keepratio="fit" hidden="0" id="Quad_ComponentIcon"/>
+			<quad valign="center" pos="20 0" z-index="0.4" size="15 15" bgcolor="ffffff" modulatecolor="ffffff" image="" keepratio="fit" hidden="1" id="Quad_ComponentIconBackground"/>
+			<label halign="center" valign="bottom" pos="0 4.5" z-index="0.3" text="WEAPON" textsize="5" textcolor="ffffff" textfont="OswaldMono" hidden="1" id="Label_ComponentCustomText"/>
+		</frame>
+		<frame id="Frame_Component2" pos="0 -70.5" halign="center" valign="center">
+			<frame halign="center" valign="center" z-index="0.2" hidden="1" id="Frame_ComponentValues">
+				<label halign="right" valign="center" translate="0" text="?" textsize="5" textcolor="ffffff" textfont="OswaldMono" textemboss="1" id="Label_ComponentValueCurrent"/>
+				<label valign="center" translate="0" text=" /?" textsize="5" textcolor="ffffff" textfont="OswaldMono" textemboss="1" hidden="0" id="Label_ComponentValueMax"/>
+			</frame>
+			<frame halign="center" valign="center" id="Frame_ComponentGauge">
+				<gauge z-index="0.1" size="40 9" halign="center" valign="center" drawbg="0" ratio="1" color="ffffff" grading="1" hidden="0" id="Gauge_Component"/>
+				<quad size="40 9" halign="center" valign="center" bgcolor="ffffff" modulatecolor="ffffff" image="file://Media/Manialinks/Common/Module/PlayerState/GaugeBackground.dds" hidden="0" id="Quad_ComponentBackground"/>
+			</frame>
+			<quad halign="center" pos="0 -4.5" z-index="0.5" size="15 15" bgcolor="ffffff" modulatecolor="ffffff" image="file://Media/Manialinks/Common/Module/PlayerState/IconArmor.dds" keepratio="fit" hidden="0" id="Quad_ComponentIcon"/>
+			<quad halign="center" pos="0 -4.5" z-index="0.4" size="15 15" bgcolor="ffffff" modulatecolor="ffffff" image="" keepratio="fit" hidden="1" id="Quad_ComponentIconBackground"/>
+			<label halign="center" valign="bottom" pos="0 4.5" z-index="0.3" text="ARMOR" textsize="5" textcolor="ffffff" textfont="OswaldMono" hidden="1" id="Label_ComponentCustomText"/>
+		</frame>
+		<frame id="Frame_Component3" pos="48 -84" halign="center" valign="center">
+			<frame halign="center" valign="center" z-index="0.2" hidden="1" id="Frame_ComponentValues">
+				<label halign="right" valign="center" translate="0" text="?" textsize="5" textcolor="ffffff" textfont="OswaldMono" textemboss="1" id="Label_ComponentValueCurrent"/>
+				<label valign="center" translate="0" text=" /?" textsize="5" textcolor="ffffff" textfont="OswaldMono" textemboss="1" hidden="0" id="Label_ComponentValueMax"/>
+			</frame>
+			<frame halign="center" valign="center" id="Frame_ComponentGauge">
+				<gauge z-index="0.1" size="40 9" halign="center" valign="center" drawbg="0" ratio="1" color="ffffff" grading="1" hidden="0" id="Gauge_Component"/>
+				<quad size="40 9" halign="center" valign="center" bgcolor="ffffff" modulatecolor="ffffff" image="file://Media/Manialinks/Common/Module/PlayerState/GaugeBackground.dds" hidden="0" id="Quad_ComponentBackground"/>
+			</frame>
+			<quad halign="right" valign="center" pos="-20 0" z-index="0.5" size="15 15" bgcolor="ffffff" modulatecolor="ffffff" image="file://Media/Manialinks/Common/Module/PlayerState/IconActionBase.dds" keepratio="fit" hidden="0" id="Quad_ComponentIcon"/>
+			<quad halign="right" valign="center" pos="-20 0" z-index="0.4" size="15 15" bgcolor="ffffff" modulatecolor="ffffff" image="" keepratio="fit" hidden="1" id="Quad_ComponentIconBackground"/>
+			<label halign="center" valign="bottom" pos="0 4.5" z-index="0.3" text="STAMINA" textsize="5" textcolor="ffffff" textfont="OswaldMono" hidden="1" id="Label_ComponentCustomText"/>
+		</frame>
+	</frame>
+</manialink>

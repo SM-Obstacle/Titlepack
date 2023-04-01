@@ -1,275 +1,466 @@
 #Include "TextLib" as TL
+#Include "Libs/smokegun/ObstacleLib.Script.txt" as ObstacleLib
 #Include "Libs/smokegun/Tools.Script.txt" as Tools
 #Include "Libs/miltant/Randomizer.Script.txt" as RNG
 
-
-Text Private_LandmarkToText(CSmMapLandmark _Landmark, Boolean _Short)
-{
-	declare prefix = "";
-	if (Tools::IsPortal(_Landmark)) {
-		if (_Short) prefix = "TP ";
-		else prefix = "PORTAL ";
-	}
-	else if (Tools::IsCheckpoint(_Landmark))
-		prefix = "CP ";
-	else if (Tools::IsACandidateGoal(_Landmark))
-		return "GOAL";
-	else
-		return TL::ToUpperCase(_Landmark.Tag);
-
-	declare Order = RNG::GetOrder(_Landmark);
-	if (Order != 0)
-		return prefix^" "^Order;
-	return prefix;
-}
-
 Text GetXML() {
-	declare MarkersXML = "";
-	foreach (Landmark in MapLandmarks) {
-		if (!Tools::IsCheckpoint(Landmark) && !Tools::IsACandidateGoal(Landmark) && !Tools::IsPortal(Landmark)) continue;
+    declare MarkersXML = "";
+    foreach (Landmark in MapLandmarks) {
+        if (!Tools::IsCheckpoint(Landmark) && !Tools::IsACandidateGoal(Landmark) && !Tools::IsPortal(Landmark)) continue;
 
-		MarkersXML ^= """
-			<marker box="0 1.5 0"
-				manialinkframeid="{{{Landmark.Id}}}"
-				pos="{{{Tools::GetPos(Landmark.Position)}}}"
-				gauge="-1."
-			/>
-		""";
-	}
+        MarkersXML ^= """
+            <marker box="0 1.5 0"
+                manialinkframeid="{{{Landmark.Id}}}"
+                pos="{{{Tools::GetPos(Landmark.Position)}}}"
+            />
+        """;
+    }
 
-	return MarkersXML;
+    return MarkersXML;
 }
 
-Text GetLayer(Integer MarkerCount) {
-	if (MarkerCount == 0) return "";
+Text GetLayer(Integer _MarkerCount) {
+    if (_MarkerCount == 0) return "";
 
-	declare ML = """
+    declare ML = """
 <manialink version="3" name="Obstacle:Markers">
-	<framemodel id="mm">
-		<frame id="Content">
-			<label id="Foreground" pos="0 -0.2" z-index="2" size="20 10"
-				textfont="OswaldMono" halign="center" valign="center2"
-				textsize="2" textcolor="fff"/>
+    <framemodel>
+        <frame id="Content">
+            <frame id="Foreground" pos="-9.75 3.75">
+                <frame id="Weapon">
+                    <label id="EmptyRefill" textfont="OswaldMono" halign="center" valign="center2" textsize="1" pos="8 -1.5"/>
+                    <label id="Amount" textfont="OswaldMono" halign="center" valign="center2" textsize="0" pos="8 -3.5"/>
+                    <label id="Regen" textfont="OswaldMono" halign="center" valign="center2" textsize="0" pos="8 -5.5"/>
+                    <quad id="Icon" size="7.5 7.5" image="file://Media/Manialinks/Common/Module/PlayerState/IconWeaponRocket.dds"/>
+                </frame>
+                <frame id="Stamina" pos="8.25">
+                    <label id="EmptyRefill" textfont="OswaldMono" halign="center" valign="center2" textsize="1" pos="7.75 -1.5"/>
+                    <label id="Amount" textfont="OswaldMono" halign="center" valign="center2" textsize="0" pos="7.75 -3.5"/>
+                    <label id="Regen" textfont="OswaldMono" halign="center" valign="center2" textsize="0" pos="7.75 -5.5"/>
+                    <quad size="6 6" image="file://Media/Manialinks/Common/Module/PlayerState/IconActionRun.dds" pos="0.75 -0.75"/>
+                </frame>
 
-			<quad id="Background_Gray" pos="0 0" z-index="0" size="10 5"
-				halign="center" valign="center" style="Bgs1InRace"
-				substyle="BgCardList"/>""";
+                <label id="CPText" size="17 5" pos="9.75 -3.75"
+                    textfont="OswaldMono" halign="center" valign="center2"
+                    textsize="2" hidden="1"/>
+            </frame>
 
-		if (MarkerCount > 1) {
-			ML ^= """
-			<quad id="Background_HighLight" pos="0 0" z-index="0" size="10 5"
-				halign="center" valign="center" style="BgsPlayerCard" hidden="1"
-				substyle="BgRacePlayerName"/>
+            <quad id="Background_Gray" size="18.5 7.5"
+                halign="center" valign="center" style="Bgs1InRace"
+                substyle="BgCardList"/>
+        </frame>
+    </framemodel>
+    <frame id="Checkpoints">
+        """;
+    foreach (Landmark in MapLandmarks) {
+        if (
+            !RNG::IsEnabled(Landmark)
+            || ! (
+                Tools::IsCheckpoint(Landmark) ||
+                Tools::IsACandidateGoal(Landmark) ||
+                Tools::IsPortal(Landmark)
+            )
+        ) continue;
 
-			<frame id="Gauge_Wrapper" pos="0 -1.3" z-index="1" clip="True" clipposn="0" clipsizen="10 10">
-				<quad size="0.5 0.8" pos="-4.9 -0.28" halign="left" id="Gauge_L"
-					image="file://Media/Images/Obstacle/Script/markers_gauge_l.png"/>
-				<quad size="8.8 0.9" pos="-4.4 -0.18" halign="left" id="Gauge_Fill"
-					image="file://Media/Images/Obstacle/Script/markers_gauge_fill.png"/>
-				<quad size="0.5 0.8" pos="4.4 -0.28" halign="left" id="Gauge_R"
-					image="file://Media/Images/Obstacle/Script/markers_gauge_r.png"/>
-			</frame>""";
-		}
-		ML ^= """
-		</frame>
-	</framemodel>
-	<frame id="Checkpoints" hidden="1">
-		""";
+        declare AdditionalArg = "";
+        if (ObstacleLib::IsRandomizerMap()) {
+            if (!Tools::IsACandidateGoal(Landmark)) {
+                AdditionalArg = """data-o="{{{RNG::GetOrder(Landmark)}}}" """;
+            }
+        }
+        // empty modelid on purpose to shorten the generated manialink length
+        ML ^= """<frame><frameinstance {{{AdditionalArg}}}modelid="" id="{{{Landmark.Id}}}"/></frame>""";
+    }
 
-	foreach (Landmark in MapLandmarks) {
-		if (!Tools::IsCheckpoint(Landmark) && !Tools::IsACandidateGoal(Landmark) && !Tools::IsPortal(Landmark)) continue;
-		ML ^= """<frame><frameinstance modelid="mm" id="{{{Landmark.Id}}}" data-txt="{{{Private_LandmarkToText(Landmark, MarkerCount > 1)}}}"/></frame>""";
-	}
-
-	ML ^= """
-	</frame>
-	<script><!--
+    ML ^= """
+    </frame>
+    <script><![CDATA[
 #Include "TextLib" as TL
 #Include "MathLib" as ML
 
 // Kinda From Tools.Script.txt
 
-Boolean IsEnabled(CSmMapLandmark _Landmark) {
-	declare metadata LibMapType_MapTypeVersion for Map = 0;
-    if (LibMapType_MapTypeVersion <= 2) {
-        return _Landmark.Tag != "No-Function";
+Boolean IsGoal(CSmMapLandmark _Landmark) {
+    declare metadata LibMapType_MapTypeVersion for Map = 0;
+
+    if (LibMapType_MapTypeVersion <= 2)
+        return _Landmark.Tag == "Goal";
+
+    declare metadata Meta_CPType for _Landmark = 0;
+    return _Landmark.Tag == "Goal" || Meta_CPType == 2;
+}
+
+Boolean IsCheckpoint(CSmMapLandmark _Landmark) {
+    declare metadata LibMapType_MapTypeVersion for Map = 0;
+    if (LibMapType_MapTypeVersion <= 2)
+        return "Checkpoint" == TL::SubText(_Landmark.Tag, 0, 10);
+
+    declare metadata Meta_CPType for _Landmark = 0;
+    return _Landmark.Tag == "Checkpoint"
+           && (Meta_CPType == 0 || Meta_CPType == 1);
+}
+
+Boolean IsPortal(CSmMapLandmark _Landmark) {
+    declare metadata LibMapType_MapTypeVersion for Map = 0;
+
+    if (LibMapType_MapTypeVersion <= 2)
+        return _Landmark.Tag == "Portal" || _Landmark.Tag == "CheckpointType3";
+    declare metadata Meta_IsPortal for _Landmark = False;
+    return Meta_IsPortal;
+}
+
+CSmMapLandmark[Ident][Integer] LoadCP() {
+
+    declare Frame_Checkpoints = (Page.GetFirstChild("Checkpoints") as CMlFrame);
+    Frame_Checkpoints.Visible = True;
+
+    declare CSmMapLandmark[Ident][Integer] LandmarksCache = [];
+    
+    foreach (CP_Marker_Frame in Frame_Checkpoints.Controls) {
+        declare CP_Frame = (CP_Marker_Frame as CMlFrame);
+        declare CP_Marker = (CP_Frame.Controls[0] as CMlFrame);
+        CP_Marker.Visible = False;
+
+        declare CSmMapLandmark Landmark;
+
+        foreach (l in MapLandmarks) {
+            if (""^ l.Id == CP_Marker.ControlId) {
+                Landmark <=> l;
+                break;
+            }
+        }
+        
+        declare CP_Order = Landmark.Order;
+        if (CP_Marker.DataAttributeExists("o")) {
+            CP_Order = TL::ToInteger(CP_Marker.DataAttributeGet("o"));
+        }
+
+        if (!LandmarksCache.existskey(CP_Order))
+            LandmarksCache[CP_Order] = [];
+        LandmarksCache[CP_Order][CP_Frame.Id] <=> Landmark;
     }
 
-	declare metadata Meta_Enabled for _Landmark = True;
-	declare metadata Meta_Randomize for _Landmark = False;
-	""";
+    for (Order, 0, LandmarksCache.count - 1) {
+        foreach (Frame_Id => Landmark in LandmarksCache[Order]){
+            declare CP_Marker_Frame = (Frame_Checkpoints.Controls[Frame_Id] as CMlFrame);
+            declare CP_Foreground = (CP_Marker_Frame.GetFirstChild("Foreground") as CMlFrame);
+            declare CP_Weapon = (CP_Foreground.GetFirstChild("Weapon") as CMlFrame);
+            declare CP_Stamina = (CP_Foreground.GetFirstChild("Stamina") as CMlFrame);
+            declare CP_Text = (CP_Foreground.GetFirstChild("CPText") as CMlLabel);
 
-	if (RNG::GetEnabledGoal() != NullId) {
-		ML ^= """if (Meta_Randomize) {
-			return ""^_Landmark.Id == "{{{RNG::GetEnabledGoal()}}}" || ""^_Landmark.Id == "{{{RNG::GetEnabledSpawn()}}}";
-		} else """;
-	}
+            declare CP_Background_Gray = (CP_Marker_Frame.GetFirstChild("Background_Gray") as CMlQuad);
+            
+            if (IsGoal(Landmark)) {
+                CP_Text.SetText("Goal");
+                CP_Background_Gray.Size.X = 9.;
+            } else if (IsPortal(Landmark)) {
+                CP_Text.SetText("Portal " ^ Order);
+                CP_Background_Gray.Size.X = 13.5;
+            } else {
+                CP_Text.SetText(TL::ToUpperCase(Landmark.Tag));
+            }
 
-	ML ^= """
-	if (Meta_Enabled) {
-		return True;
-	}
-	return False;
+            if (IsGoal(Landmark) || IsPortal(Landmark) || !IsCheckpoint(Landmark)) {
+                CP_Weapon.Hide();
+                CP_Stamina.Hide();
+                CP_Text.Show();
+                
+                if (IsGoal(Landmark)) {
+                    CP_Background_Gray.Size.X = 9.;
+                } else if (IsPortal(Landmark)) {
+                    CP_Background_Gray.Size.X = 13.5;
+                }
+            } else {
+                declare Display_Weapon = False;
+                declare Display_Weapon_Amount = False;
+                declare Display_Weapon_Gain = False;
+                declare Display_RefillWeapon = False;
+                declare Display_EmptyWeapon = False;
+            
+                declare Display_Stamina = False;
+                declare Display_Stamina_Amount = False;
+                declare Display_Stamina_Gain = False;
+                declare Display_RefillStamina = False;
+                declare Display_EmptyStamina = False;
+
+
+                declare metadata Meta_Weapon for Landmark = 1; // Laser, Rocket, Nucleus, Arrow, Missile
+                declare metadata Meta_Weapon_Amount for Landmark = 4;
+                declare metadata Meta_Weapon_Gain for Landmark = 1.0;
+                declare metadata Meta_RefillWeapon for Landmark = False;
+                declare metadata Meta_EmptyWeapon for Landmark = False;
+            
+                declare metadata Meta_Stamina for Landmark = 0; // 1 = limited, 2 = unlimited
+                declare metadata Meta_Stamina_Amount for Landmark = 1.0;
+                declare metadata Meta_Stamina_Gain for Landmark = 1.0;
+                declare metadata Meta_RefillStamina for Landmark = False;
+                declare metadata Meta_EmptyStamina for Landmark = False;
+
+                if (Order > 0) {
+                    foreach (Landmark_CP in LandmarksCache[Order - 1]) {
+                        declare metadata Meta_Weapon as Compare_Weapon for Landmark_CP = 1; // Laser, Rocket, Nucleus, Arrow, Missile
+                        declare metadata Meta_Weapon_Amount as Compare_Weapon_Amount for Landmark_CP = 4;
+                        declare metadata Meta_Weapon_Gain as Compare_Weapon_Gain for Landmark_CP = 1.0;
+                    
+                        declare metadata Meta_Stamina as Compare_Stamina for Landmark_CP = 0; // 1 = limited, 2 = unlimited
+                        declare metadata Meta_Stamina_Amount as Compare_Stamina_Amount for Landmark_CP = 1.0;
+                        declare metadata Meta_Stamina_Gain as Compare_Stamina_Gain for Landmark_CP = 1.0;
+
+                        if (Meta_Weapon != Compare_Weapon)
+                            Display_Weapon = True;
+
+                        if (Meta_Weapon_Amount != Compare_Weapon_Amount) {
+                            Display_Weapon_Amount = True;
+                            Display_Weapon = True;
+                        }
+
+                        if (Meta_Weapon_Gain != Compare_Weapon_Gain) {
+                            Display_Weapon_Gain = True;
+                            Display_Weapon = True;
+                        }
+
+                        if (Meta_Stamina != Compare_Stamina)
+                            Display_Stamina = True;
+
+                        if (Meta_Stamina_Amount != Compare_Stamina_Amount) {
+                            Display_Stamina_Amount = True;
+                            Display_Stamina = True;
+                        }
+
+                        if (Meta_Stamina_Gain != Compare_Stamina_Gain) {
+                            Display_Stamina_Gain = True;
+                            Display_Stamina = True;
+                        }
+                    }
+                } else {
+                    foreach (Spawn in MapLandmarks_PlayerSpawn) {
+                        declare metadata Meta_Weapon as Compare_Weapon for Spawn = 1; // Laser, Rocket, Nucleus, Arrow, Missile
+                        declare metadata Meta_Weapon_Amount as Compare_Weapon_Amount for Spawn = 4;
+                        declare metadata Meta_Weapon_Gain as Compare_Weapon_Gain for Spawn = 1.0;
+                    
+                        declare metadata Meta_Stamina as Compare_Stamina for Spawn = 0; // 1 = limited, 2 = unlimited
+                        declare metadata Meta_Stamina_Amount as Compare_Stamina_Amount for Spawn = 1.0;
+                        declare metadata Meta_Stamina_Gain as Compare_Stamina_Gain for Spawn = 1.0;
+
+                        if (Meta_Weapon != Compare_Weapon)
+                            Display_Weapon = True;
+
+                        if (Meta_Weapon_Amount != Compare_Weapon_Amount) {
+                            Display_Weapon_Amount = True;
+                            Display_Weapon = True;
+                        }
+
+                        if (Meta_Weapon_Gain != Compare_Weapon_Gain) {
+                            Display_Weapon_Gain = True;
+                            Display_Weapon = True;
+                        }
+
+                        if (Meta_Stamina != Compare_Stamina)
+                            Display_Stamina = True;
+
+                        if (Meta_Stamina_Amount != Compare_Stamina_Amount) {
+                            Display_Stamina_Amount = True;
+                            Display_Stamina = True;
+                        }
+
+                        if (Meta_Stamina_Gain != Compare_Stamina_Gain) {
+                            Display_Stamina_Gain = True;
+                            Display_Stamina = True;
+                        }
+                    }
+                }
+
+                if (Display_Weapon) {
+                    declare CP_Weapon_EmptyRefill = (CP_Weapon.GetFirstChild("EmptyRefill") as CMlLabel);
+                    declare CP_Weapon_Amount = (CP_Weapon.GetFirstChild("Amount") as CMlLabel);
+                    declare CP_Weapon_Regen = (CP_Weapon.GetFirstChild("Regen") as CMlLabel);
+                    declare CP_Weapon_Icon = (CP_Weapon.GetFirstChild("Icon") as CMlQuad);
+
+                    if (Display_Weapon_Amount)
+                        CP_Weapon_Amount.SetText(""^ Meta_Weapon_Amount);
+
+                        declare Weapon_Name = "Rocket";
+                        switch (Meta_Weapon) {
+                            case 0: {
+                                Weapon_Name = "Laser";
+                            }
+                            case 2: {
+                                Weapon_Name = "Nucleus";
+                            }
+                            case 3: {
+                                Weapon_Name = "Arrow";
+                            }
+                            default: {}
+                        }
+                        CP_Weapon_Icon.ChangeImageUrl("file://Media/Manialinks/Common/Module/PlayerState/IconWeapon" ^ Weapon_Name ^ ".dds");
+
+                        if (Meta_Weapon_Gain < 9.995) {
+                            if (Display_Weapon_Amount)
+                                CP_Weapon_Amount.SetText(""^ Meta_Weapon_Amount);
+                            
+                            if (Display_Weapon_Gain)
+                                CP_Weapon_Regen.SetText(ML::NearestInteger(Meta_Weapon_Gain * 100) ^ "%");
+                            
+                            if (Meta_RefillWeapon) {
+                                CP_Weapon_EmptyRefill.SetText("$o+");
+                            }
+                            if (Meta_EmptyWeapon) {
+                                CP_Weapon_EmptyRefill.SetText("$o$w-");
+                            }
+                        } else {
+                            CP_Weapon_Amount.SetText("$tinf");
+                            CP_Weapon_Amount.TextSizeReal = 1.;
+                        }
+                } else {
+                    CP_Weapon.Hide();
+                }
+
+                if (Display_Stamina) {
+                    declare CP_Stamina_EmptyRefill = (CP_Stamina.GetFirstChild("EmptyRefill") as CMlLabel);
+                    declare CP_Stamina_Amount = (CP_Stamina.GetFirstChild("Amount") as CMlLabel);
+                    declare CP_Stamina_Regen = (CP_Stamina.GetFirstChild("Regen") as CMlLabel);
+
+                    if (Meta_Stamina == 1) {
+                        if (Display_Stamina_Amount)
+                            CP_Stamina_Amount.SetText(ML::NearestInteger(Meta_Stamina_Amount * 100) ^ "%");
+                        
+                        if (Display_Stamina_Gain)
+                            CP_Stamina_Regen.SetText(ML::NearestInteger(Meta_Stamina_Gain * 100) ^ "%");
+                        
+                        if (Meta_RefillStamina) {
+                            CP_Stamina_EmptyRefill.SetText("$o+");
+                        }
+                        if (Meta_EmptyStamina) {
+                            CP_Stamina_EmptyRefill.SetText("$o$w-");
+                        }
+                    } else {
+                        CP_Stamina_Amount.SetText("$tinf");
+                        CP_Stamina_Amount.TextSizeReal = 1.;
+                    }
+                } else {
+                    CP_Stamina.Hide();
+                }
+
+                if (!Display_Weapon && !Display_Stamina) {
+                    CP_Text.SetText("CP " ^ Order);
+                    CP_Background_Gray.Size.X = 10.;
+                    CP_Text.Show();
+                }
+            }
+        }
+    }
+
+    return LandmarksCache;
 }
 
 main() {
-	wait(InputPlayer != Null && Page != Null);
+    wait(InputPlayer != Null && Page != Null);
 
-	declare Frame_Checkpoints = (Page.GetFirstChild("Checkpoints") as CMlFrame);
-	declare netread Integer Net_CheckpointsTotal for Teams[0];    declare LastCpProgress = -1;
+    declare Frame_Checkpoints = (Page.GetFirstChild("Checkpoints") as CMlFrame);
+    declare netread Integer Net_CheckpointsTotal for Teams[0];
+    declare LastCpProgress = -1;
 
-	declare Latest_Distance_Update = Now;
-	declare CMlFrame[Ident] NextLandmarksGaugeCache = [];
-	declare CSmMapLandmark[Ident][Integer] LandmarksCache = [];
+    declare Latest_Distance_Update = Now;
+    declare CMlFrame[Ident] NextLandmarksGaugeCache = [];
+    declare CSmMapLandmark[Ident][Integer] LandmarksCache = LoadCP();
+    
+    while (True) {
+        yield;
 
-	Frame_Checkpoints.Visible = True;
+        declare LocalPlayer <=> InputPlayer;
+        if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
+        if (LocalPlayer == Null) continue;
 
-	foreach (CP_Marker_Frame in Frame_Checkpoints.Controls) {
-		declare CP_Frame = (CP_Marker_Frame as CMlFrame);
-		declare CP_Marker = (CP_Frame.Controls[0] as CMlFrame);
-		declare CP_Foreground = (CP_Frame.GetFirstChild("Foreground") as CMlLabel);
-		
-		CP_Marker.Visible = False;
-		if (CP_Marker.DataAttributeExists("txt")) {
-			declare Description = CP_Marker.DataAttributeGet("txt");
-			CP_Foreground.SetText(Description);
+        declare netread Integer Net_CpProgress for LocalPlayer;
+        declare netread Text[] LastCheckpointsIdsStr for LocalPlayer;
+        declare netread Integer[] PreviousCheckpointsOrder for LocalPlayer;
+        
+        if (Latest_Distance_Update + 50 < Now) {
+            Latest_Distance_Update = Now;
 
-			declare Text[] Parts = TL::Split(" ", Description);
-			declare CP_Order = TL::ToInteger(Parts[Parts.count - 1]);
-			if (Parts.count == 1)
-				CP_Order = 0;
+            foreach (Id => Marker_Frame in NextLandmarksGaugeCache) {
+                declare PlayerPosProjection = LocalPlayer.Position;
+                PlayerPosProjection.Y = 0.;
 
-			if (Parts[0] == "PORTAL") {
-				declare CP_Background_Gray = CP_Frame.GetFirstChild("Background_Gray");
-				CP_Background_Gray.Size.X = 15.;
-			}
+                declare CPPosProjection = MapLandmarks[Id].Position;
+                CPPosProjection.Y = 0.;
 
-			foreach (Landmark in MapLandmarks) {
-				if (""^Landmark.Id == CP_Marker.ControlId) {
-					if (!LandmarksCache.existskey(CP_Order))
-						LandmarksCache[CP_Order] = [];
-					LandmarksCache[CP_Order][CP_Frame.Id] <=> Landmark;
-					break;
-				}
-			}
-		}
-	}
-	
-	while (True) {
-		yield;
-
-		declare LocalPlayer <=> InputPlayer;
-		if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
-		if (LocalPlayer == Null) continue;
-
-		declare netread Integer Net_CpProgress for LocalPlayer;
-		declare netread Text[] LastCheckpointsIdsStr for LocalPlayer;
-		declare netread Integer[] PreviousCheckpointsOrder for LocalPlayer;
-""";
-
-	if (MarkerCount > 1) {
-		ML ^= """
-		if (Latest_Distance_Update + 50 < Now) {
-			Latest_Distance_Update = Now;
-
-			foreach (Id => Gauge_Frame in NextLandmarksGaugeCache) {
-				declare PlayerPosProjection = LocalPlayer.Position;
-				PlayerPosProjection.Y = 0.;
-
-				declare CPPosProjection = MapLandmarks[Id].Position;
-				CPPosProjection.Y = 0.;
-
-				declare Distance = ML::Distance(PlayerPosProjection, CPPosProjection);
+                declare Distance = ML::Distance(PlayerPosProjection, CPPosProjection);
 
 
-				declare CP_Background_Gray = Gauge_Frame.GetFirstChild("Background_Gray");
-				declare CP_Background_HighLight = Gauge_Frame.GetFirstChild("Background_HighLight");
-				declare MarkerSize = CP_Background_Gray.Size.X;
-				if (CP_Background_HighLight != Null && CP_Background_HighLight.Visible) {
-					MarkerSize = CP_Background_HighLight.Size.X;
-				}
+                declare CP_Foreground = (Marker_Frame.GetFirstChild("Foreground") as CMlFrame);
+                declare CP_Weapon = (CP_Foreground.GetFirstChild("Weapon") as CMlFrame);
+                declare CP_Stamina = (CP_Foreground.GetFirstChild("Stamina") as CMlFrame);
+                declare CP_Text = (CP_Foreground.GetFirstChild("CPText") as CMlLabel);
 
-				declare Gauge = (Gauge_Frame.GetFirstChild("Gauge_Wrapper") as CMlFrame);
-				Gauge.ClipWindowRelativePosition.X = - MarkerSize * (ML::Clamp(Distance, 8., 384.) - 8) / 376.;
-			}
-		}""";
-	}
+                if (Distance > 30) {
+                    CP_Weapon.Hide();
+                    CP_Stamina.Hide();
+                    CP_Text.Show();
+                } else {
+                    CP_Weapon.Show();
+                    CP_Stamina.Show();
+                    CP_Text.Hide();
+                }
+            }
+        }
+        
+        if (LastCpProgress != Net_CpProgress) {
+            LastCpProgress = Net_CpProgress;
+            NextLandmarksGaugeCache.clear();
 
-	ML ^= """
-		if (LastCpProgress != Net_CpProgress) {
-			LastCpProgress = Net_CpProgress;
-			NextLandmarksGaugeCache.clear();
+            // Update the visibility of each marker
+            foreach (CP_Marker_Frame in Frame_Checkpoints.Controls) {
+                declare CP_Frame = (CP_Marker_Frame as CMlFrame);
+                declare CP_Marker = (CP_Frame.Controls[0] as CMlFrame);
+                declare CP_Background_Gray = CP_Frame.GetFirstChild("Background_Gray");
+                declare CP_Text = (CP_Marker.GetFirstChild("CPText") as CMlLabel);
 
-			// Update the visibility of each marker
-			foreach (CP_Marker_Frame in Frame_Checkpoints.Controls) {
-				declare CP_Frame = (CP_Marker_Frame as CMlFrame);
-				declare CP_Marker = (CP_Frame.Controls[0] as CMlFrame);
-				declare CP_Background_Gray = CP_Frame.GetFirstChild("Background_Gray");
-""";if(MarkerCount>1){ML^="""declare CP_Background_HighLight = CP_Frame.GetFirstChild("Background_HighLight");""";}ML^="""
+                declare Text[] Parts = TL::Split(" ", CP_Text.Value);
+                declare CP_Type = Parts[0];
 
-				if (!CP_Marker.DataAttributeExists("txt"))
-					continue;
-				declare Text[] Parts = TL::Split(" ", CP_Marker.DataAttributeGet("txt"));
-				declare CP_Type = Parts[0];
+                declare Order = TL::ToInteger(Parts[Parts.count - 1]);
+                if (Parts.count == 1)
+                    Order = 0;
 
-				declare Order = TL::ToInteger(Parts[Parts.count - 1]);
-				if (Parts.count == 1)
-					Order = 0;
+                if (!LandmarksCache[Order].existskey(CP_Frame.Id))
+                    continue;
+                declare CSmMapLandmark CP_Landmark <=> LandmarksCache[Order][CP_Frame.Id];
 
-				if (!LandmarksCache[Order].existskey(CP_Frame.Id))
-					continue;
-				declare CSmMapLandmark CP_Landmark <=> LandmarksCache[Order][CP_Frame.Id];
+                if (CP_Type == "Goal")
+                {
+                    CP_Frame.Visible = (Net_CpProgress + {{{_MarkerCount}}} > Net_CheckpointsTotal);
+                    CP_Background_Gray.Visible = (Net_CpProgress == Net_CheckpointsTotal) && ({{{_MarkerCount}}} == 1);
+                }
+                else if (CP_Type == "CP" || CP_Type == "Portal")
+                {
+                    if (Order == 0) {
+                        CP_Frame.Visible = True;
 
-				if (CP_Type == "GOAL")
-				{
-					if (IsEnabled(CP_Landmark)) {
-						CP_Frame.Visible = (Net_CpProgress + {{{MarkerCount}}} > Net_CheckpointsTotal);
+                        if (CP_Landmark.Order == 0) {
+                            if (LastCheckpointsIdsStr.exists(""^CP_Landmark.Id))
+                                CP_Frame.Visible = False;
+                        } else {
+                            if (PreviousCheckpointsOrder.exists(CP_Landmark.Order))
+                                CP_Frame.Visible = False;
+                        }
+                    } else {
+                        CP_Frame.Visible = (Order == 0 || Order > Net_CpProgress) && Order < Net_CpProgress + 1 + {{{_MarkerCount}}};
 
-""";if(MarkerCount>1){ML^="""CP_Background_HighLight.Visible = (Net_CpProgress == Net_CheckpointsTotal) && ({{{MarkerCount}}} > 1);""";}ML^="""
-						CP_Background_Gray.Visible = (Net_CpProgress == Net_CheckpointsTotal) && ({{{MarkerCount}}} == 1);
-					} else {
-						CP_Frame.Visible = False;
-					}
-				}
-				else if (CP_Type == "CP" || CP_Type == "PORTAL")
-				{
-					if (Order == 0) {
-						CP_Frame.Visible = True;
+                        CP_Background_Gray.Visible = (Net_CpProgress == Order - 1) && ({{{_MarkerCount}}} == 1);
+                    }
+                }
 
-						if (CP_Landmark.Order == 0) {
-							if (LastCheckpointsIdsStr.exists(""^CP_Landmark.Id))
-								CP_Frame.Visible = False;
-						} else {
-							if (PreviousCheckpointsOrder.exists(CP_Landmark.Order))
-								CP_Frame.Visible = False;
-						}
-					} else {
-						CP_Frame.Visible = (Order == 0 || Order > Net_CpProgress) && Order < Net_CpProgress + 1 + {{{MarkerCount}}};
-
-""";if(MarkerCount>1){ML^="""CP_Background_HighLight.Visible = (Net_CpProgress == Order - 1) && ({{{MarkerCount}}} > 1);""";}ML^="""
-						CP_Background_Gray.Visible = (Net_CpProgress == Order - 1) && ({{{MarkerCount}}} == 1);
-					}
-				}
-		""";
-
-		if (MarkerCount > 1) {
-			ML ^= """
-				if (CP_Frame.Visible) {
-					declare Gauge_Frame = (CP_Frame.GetFirstChild("Gauge_Wrapper") as CMlFrame);
-					//TODO.Visible = CP_Background_HighLight.Visible;
-
-					NextLandmarksGaugeCache[CP_Landmark.Id] = CP_Frame;
-				}""";
-		}
-
-		ML ^= """
-			}
-		}
-	}
+                if (CP_Frame.Visible) {
+                    NextLandmarksGaugeCache[CP_Landmark.Id] = CP_Frame;
+                }
+            }
+        }
+    }
 }
-	--></script>
+    ]]></script>
 </manialink>
-	""";
+    """;
 
-	return ML;
+    return ML;
 }

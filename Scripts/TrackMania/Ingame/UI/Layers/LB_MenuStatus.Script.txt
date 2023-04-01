@@ -52,7 +52,7 @@ Text Build() {
 		<quad id="Quad_ButtonMouse"    halign="center" valign="center" size="{{{SizeXQuad}}} {{{SizeYQuad}}}" pos="0 1" opacity="0.0" bgcolor="000" scriptevents="1" />
 		<quad id="Quad_ButtonImg"      halign="center" valign="center" size="{{{SizeXQuad}}} {{{SizeYQuad}}}" z-index="1" pos="0 0" opacity="0.2" bgcolor="000"/>
 		<quad id="Quad_Bg1"            halign="center" valign="center" size="{{{SizeXQuad}}} {{{SizeYQuad}}}" z-index="0" pos="0 0" opacity="0.1" style="Bgs1" substyle="BgDialogBlur" bluramount="0.1"/>
-		<label id="Label_Button"       halign="left"   valign="center" z-index="2" pos="-45.0 0.6" textsize="3.6" textcolor="fff" opacity="1." size="{{{SizeXQuad-4.}}}" textprefix="$t"/>
+		<label id="Label_Button"       halign="left"   valign="center" z-index="2" pos="-45.0 0.6" textsize="3.6" textcolor="fff" opacity="1." size="{{{SizeXQuad-4.}}}"/>
 		<quad id="Quad_OpponentImg"   halign="right" valign="center"  size="{{{SizeXQuad}}} {{{SizeYQuad}}}" z-index="2" pos="{{{SizeXQuad/2.}}} 0" keepratio="Fit"/>
 	</framemodel>
 
@@ -72,8 +72,8 @@ Text Build() {
 	<frame id="Frame_All" z-index="-20">
 		<quad z-index="-4" pos="0. 0." size="320 180" valign="center" halign="center" style="Bgs1" substyle="BgDialogBlur" opacity="0." bluramount="0."/>
 		<quad halign="center" valign="center" pos="-82.9 44"   size="1 16" z-index="2" opacity="1." bgcolor="fff" id="Frame_Foot"/>
-		<label id="Label_Title"  z-index="2" pos="-78.7 48.4" size="102" valign="center" halign="left" textsize="11.5" textprefix="$t" text="HotSeat"  textcolor="fff" textfont="{{{MainFont}}}"/>
-		<label id="Label_Title2" z-index="2" pos="-78.1 39.4" size="102" valign="center" halign="left" textsize="6"  textprefix="$t" text=""         textcolor="fff" textfont="{{{MainFont}}}"/>
+		<label id="Label_Title"  z-index="2" pos="-78.7 48.4" size="102" valign="center" halign="left" textsize="11.5" text="HotSeat"  textcolor="fff" textfont="{{{MainFont}}}"/>
+		<label id="Label_Title2" z-index="2" pos="-78.1 39.4" size="102" valign="center" halign="left" textsize="6"  text=""         textcolor="fff" textfont="{{{MainFont}}}"/>
 		
 		<frameinstance modelid="Frame_Line" z-index="3." pos="-14.2 33.7" id="Frame_LineUp"/>
 		<frameinstance modelid="Frame_Line" z-index="3." pos="-14.2 -15.5"/>
@@ -82,10 +82,10 @@ Text Build() {
 			<quad id="Quad_ButtonImg" halign="center" valign="center" size="{{{SizeXQuad}}} {{{SizeYQuad+1.6}}}" z-index="1" pos="0 0" opacity="0.2" bgcolor="000"/>
 			<quad id="Quad_Bg1"       halign="center" valign="center" size="{{{SizeXQuad}}} {{{SizeYQuad+1.6}}}" z-index="0" pos="0 0" opacity="0.1" style="Bgs1" substyle="BgDialogBlur" bluramount="0.1"/>
 			<frame id="Frame_ChangeName" hidden="1">
-				<label id="Label_Button"  halign="left"   valign="center" z-index="2" pos="-45.0 0.0" textsize="1.8" textprefix="$t" textcolor="fff" text="{{{_("Change Name")}}}" size="{{{SizeXQuad-4.}}}"/>
+				<label id="Label_Button"  halign="left"   valign="center" z-index="2" pos="-45.0 0.0" textsize="1.8" textcolor="fff" text="{{{_("Change Name")}}}" size="{{{SizeXQuad-4.}}}"/>
 				<frameinstance modelid="Frame_ButtonInput" z-index="3." pos="-8. 4.0" />
 			</frame>
-			<label id="Label_Continue"  halign="left"   valign="center" z-index="2" pos="10.0 0.0" textsize="1.8" textprefix="$t" textcolor="fff" text="{{{_("Continue")}}}" size="{{{SizeXQuad-4.}}}"/>
+			<label id="Label_Continue"  halign="left"   valign="center" z-index="2" pos="10.0 0.0" textsize="1.8" textcolor="fff" text="{{{_("Continue")}}}" size="{{{SizeXQuad-4.}}}"/>
 			<frameinstance modelid="Frame_ButtonInput" z-index="3." pos="47. 4.0" />
 		</frame>
 		

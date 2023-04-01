@@ -1,0 +1,180 @@
+/****************************************
+*   Obstacle Library                    *
+*   Author:     miltant                 *
+*                                       *
+*    Decentralised network playground   *
+*      for single player gamemodes      *
+****************************************/
+
+#Include "TextLib" as TL
+#Include "MathLib" as ML
+
+/***************************************
+    CONSTANTS
+***************************************/
+
+#Const  Version     "2023-02-19"
+#Const  ScriptName  "PlaygroundClient.Script.txt"
+
+#Const C_RequestTypeSelf 0
+#Const C_RequestTypeForeign 1
+
+
+/***************************************
+    STRUCTS
+***************************************/
+
+
+#Struct SRequestData {
+    Text Url;
+    Text Data;
+    Integer Type;
+}
+
+/*********************************************
+  GLOBALES
+**********************************************/
+
+declare SRequestData[] G_RequestPool;
+declare SRequestData[Ident] G_AnswerPool;
+declare Text    G_PostHeaders;
+declare Integer G_SimulutaneousDiscardTreshold;
+
+declare Integer G_BatchSize;
+declare Text[] G_CurrentBatch;
+declare Integer G_CurrentBatchIndex;
+
+declare Text[] G_FutureTimeline;
+
+
+/***************************************
+    FUNCTIONS
+***************************************/
+
+Text GetUpdateUrl() {
+    return "http://localhost:3000/";
+}
+
+Ident MakePost(Text _Url, Text _Data) {
+    if (Http.SlotsAvailable > 0) {
+        log(ScriptName ^ " Sending request to "^_Url);
+        declare request <=> Http.CreatePost(_Url, _Data, G_PostHeaders);
+        return request.Id;
+    }
+    return NullId;
+}
+
+Void Private_SendPost(Text _Url, Text _Data, Integer _Type) {
+    declare SRequestData RequestData;
+    RequestData.Url = _Url;
+    RequestData.Data = _Data;
+    RequestData.Type = _Type;
+
+    declare reqId = MakePost(_Url, _Data);
+    if (reqId == NullId) {
+        if (G_RequestPool.count > G_SimulutaneousDiscardTreshold) {
+            declare ClearedSpace = False;
+            foreach (Key => Req in G_RequestPool) {
+                if (Req.Type == C_RequestTypeSelf) {
+                    ClearedSpace = True;
+                    G_RequestPool.removekey(Key);
+                }
+            }
+            if (ClearedSpace) {
+                log(ScriptName ^ " Saturated network, flushing old packets");
+                reqId = MakePost(_Url, _Data);
+            }
+        }
+
+        if (reqId != NullId && G_RequestPool.count <= G_SimulutaneousDiscardTreshold) {
+            log(ScriptName ^ " Queue up "^_Url^" (count: "^G_RequestPool.count^")");
+            G_RequestPool.add(RequestData);
+        } else {
+            log(ScriptName ^ " Saturated network, giving up packets");
+        }
+       return;
+    }
+    G_AnswerPool[reqId] = RequestData;
+}
+
+Void SendPost(Text _Url, Text _Data) {
+    Private_SendPost(_Url, _Data, C_RequestTypeForeign);
+}
+
+Void ReadAnswers() {
+    
+    declare Ident[] ToDelete = [];
+
+    foreach (reqId => ReqData in G_AnswerPool) {
+
+        if (!Http.Requests.existskey(reqId)) {
+            ToDelete.add(reqId);
+            continue;
+        }
+
+        declare request <=> Http.Requests[reqId];
+        if (!request.IsCompleted) continue;
+
+        if (request.StatusCode == 200) {
+
+            if (ReqData.Type == C_RequestTypeSelf) {
+                //declare response = Xml.Create(request.Result);
+                //
+                //Xml.Destroy(response);
+            }
+
+        } else {
+            // network error
+        }
+
+        ToDelete.add(reqId);
+    }
+
+    foreach (reqId in ToDelete) {
+        if (!Http.Requests.existskey(reqId)) {
+            continue;
+        }
+        declare request <=> Http.Requests[reqId];
+        declare Removed = G_AnswerPool.removekey(reqId);
+        Http.Destroy(request);
+    }
+
+    if (G_RequestPool.count > 0) {
+        declare Integer[] ToRemove = [];
+        declare ToSendCount = ML::Min(Http.SlotsAvailable, G_RequestPool.count);
+
+        for (I, 0, ToSendCount-1) {
+            declare RequestData = G_RequestPool[I];
+            declare reqId = MakePost(RequestData.Url, RequestData.Data);
+            G_AnswerPool[reqId] = RequestData;
+        }
+
+        for (I, 0, ToSendCount-1) {
+            declare Removed = G_RequestPool.removekey(0);
+        }
+    }
+}
+
+Text GetCurrentBatchJson() {
+    return "TODO";
+}
+
+Void Init() {
+    G_PostHeaders = "";
+    G_BatchSize = 100;
+    G_SimulutaneousDiscardTreshold = 10;
+}
+
+Void Loop() {
+    ReadAnswers();
+
+    if (G_CurrentBatchIndex >= G_BatchSize) {
+        Private_SendPost(GetUpdateUrl(), GetCurrentBatchJson(), C_RequestTypeSelf);
+        G_CurrentBatchIndex = 0;
+    }
+    G_CurrentBatchIndex += 1;
+}
+
+Void Loop(CSmPlayer _Player) {
+    Loop();
+}

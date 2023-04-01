@@ -274,7 +274,7 @@ Text Private_GetMLRace(Real _Scale, Vec2 _PosRatio, Real _SpecialScale, Vec2 _Cl
 <manialink version="3" name="L_UIIngame">
 	<framemodel id="FrameModel_PlayerInfo">
 		<label id="Label_PlayerName" halign="left"   valign="center" z-index="1." pos="-12. 0.5" textsize="2" size="22.5" text="" textfont="{{{G_FontMain}}}"/>
-		<label id="Label_PlayerTime" halign="left"   valign="center" z-index="1." pos="12.7 0.5" textsize="4" scale="0.9" textprefix="$t" size="25" text="0:36:45"   textfont="{{{G_FontMain}}}"/>
+		<label id="Label_PlayerTime" halign="left"   valign="center" z-index="1." pos="12.7 0.5" textsize="4" scale="0.9" size="25" text="0:36:45"   textfont="{{{G_FontMain}}}"/>
 		<quad  id="Quad_Flag"        halign="center" valign="center" z-index="1" pos="-19.0 0" size="6.0 5" bgcolor="009" keepratio="Fit"/>
 		
 		<frame id="Frame_ClipWayPointLeft" pos="0 0" clip="True" clippos="-20 0" clipsizen="100 7" >
@@ -313,7 +313,7 @@ Text Private_GetMLRace(Real _Scale, Vec2 _PosRatio, Real _SpecialScale, Vec2 _Cl
 			</frame>
 
 			<label id="Label_MapName"  halign="left" valign="center" z-index="2" pos="9 0" size="34" textsize="12" text="" textfont="{{{G_FontMain}}}" textcolor="fff"/>
-			<label id="Label_MapName2" halign="left" valign="center" z-index="2" pos="9 -9.7" size="30" textsize="4" text="{{{"By Nadeo"}}}" textfont="{{{G_SubFont}}}" textcolor="fff" textprefix="$t"/>
+			<label id="Label_MapName2" halign="left" valign="center" z-index="2" pos="9 -9.7" size="30" textsize="4" text="{{{"By Nadeo"}}}" textfont="{{{G_SubFont}}}" textcolor="fff"/>
 			<quad halign="center" valign="center" size="0.7 17.2" z-index="2" pos="5.2 -4.1" opacity="1." bgcolor="fff" id="Frame_Foot"/>
 
 			<quad halign="right" valign="center" z-index="0" pos="1.9 -4.6" size="13 18" image="{{{IMGPATH^Ingame_Medal}}}" opacity="1.0" colorize="{{{Colors::GetColorXml("Gold")}}}" keepratio="Fit"/>
@@ -1457,11 +1457,11 @@ Text Private_GetPressToRestart()
 	<frame id="Frame_PressToRestart" pos="115 -68 10." hidden="0" scale="0.8">
 		<quad id="ButtonRespawn" image="{{{UIButtons::GetImage(CManiaAppEvent::EMenuNavAction::Action2)}}}" 
 			pos="-5 1.5 0" 	halign="right" valign="center" size="6 6"/>
-		<label id="LabelRespawn" text="{{{_("|Infinitive|Respawn")}}}" {{{TextStyle}}} textprefix="$t" 
+		<label id="LabelRespawn" text="{{{_("|Infinitive|Respawn")}}}" {{{TextStyle}}} 
 			pos="-13 2 0" 	halign="right" valign="center" textcolor="fff"/>
 		<quad id="ButtonRestart" image="{{{UIButtons::GetIngameRestartImage()}}}" 
 			pos="0 -5.5 0" 	halign="right" valign="center" size="6 6"/>
-		<label id="LabelRestart" text="{{{_("|Infinitive|Restart")}}}" {{{TextStyle}}} textprefix="$t" 
+		<label id="LabelRestart" text="{{{_("|Infinitive|Restart")}}}" {{{TextStyle}}} 
 			pos="-8 -5 0" 	halign="right" valign="center" textcolor="fff"/>
 		
 	<!--		
@@ -1571,11 +1571,11 @@ Text Private_CampaignHelper()
 	<frame id="Frame_PressToRestart" pos="15 -40." hidden="1" scale="0.8">
 		<quad id="ButtonRespawn" image="{{{UIButtons::GetImage(CManiaAppEvent::EMenuNavAction::Action2)}}}" 
 			pos="0 1.5 0" 	halign="right" valign="center" size="6 6"/>
-		<label id="LabelRespawn" text="{{{_("|Infinitive|Respawn")}}}" {{{TextStyle}}} textprefix="$t" 
+		<label id="LabelRespawn" text="{{{_("|Infinitive|Respawn")}}}" {{{TextStyle}}} 
 			pos="-8 2 0" 	halign="right" valign="center" textcolor="fff"/>
 		<quad id="ButtonRestart" image="{{{UIButtons::GetIngameRestartImage()}}}" 
 			pos="0 -5.5 0" 	halign="right" valign="center" size="6 6"/>
-		<label id="LabelRestart" text="{{{_("|Infinitive|Restart")}}}" {{{TextStyle}}} textprefix="$t" 
+		<label id="LabelRestart" text="{{{_("|Infinitive|Restart")}}}" {{{TextStyle}}} 
 			pos="-8 -5 0" 	halign="right" valign="center" textcolor="fff"/>
 
 	</frame>

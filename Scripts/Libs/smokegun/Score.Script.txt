@@ -22,7 +22,6 @@ voir pour le rendre compatible au sprint
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/smokegun/Player.Script.txt" as Player
 #Include "Libs/smokegun/Settings.Script.txt" as Settings
-#Include "Libs/smokegun/UI/SurvivalRanking.Script.txt" as SurvivalRanking
 #Include "Libs/smokegun/Structs.Script.txt" as Structs
 
 #Const  Version     "2021-07-11"
@@ -140,7 +139,6 @@ Void Private_UpdateRanking() {
                 Scores::SetPlayerMapPoints(Score, G_SurvivalPlayers[I].Lives - G_SurvivalPlayers[I].WillLoose);
             }
         }
-        SurvivalRanking::UpdateLayer();
     }
 
 }
@@ -191,8 +189,6 @@ Void Survival_Init() {
 
         UIManager.UIAll.SendChat("$z- "^Player.User.Name);
     }
-
-    SurvivalRanking::OnSurvivalStart();
 }
 
 Void Survival_PrintRankings() {
@@ -231,8 +227,6 @@ Void Survival_End() {
     UIManager.UIAll.SendChat("$zThere is only one player left!");
     Survival_PrintRankings();
     G_SurvivalPlayers.clear();
-
-    SurvivalRanking::OnSurvivalEnd();
 }
 
 // Determine if the script should spawn the player (used for survival only)
@@ -267,7 +261,6 @@ Void OnMapBegin() {
     }
     else
     {
-        SurvivalRanking::OnSurvivalEnd();
     }
 }
 

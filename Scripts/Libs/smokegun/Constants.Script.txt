@@ -10,6 +10,10 @@
 // Items
 #Const C_ItemOffzone "Obstacle\\OffzoneShield.Item.gbx"
 #Const C_ItemAmmo "Obstacle\\Ammo.Item.gbx"
+#Const C_ItemCustomOffzones [
+    "Offzone\\Offzone.Item.gbx"
+
+]
 #Const C_InvisibleSkin "Skins\\Models\\ArenaPlayer\\Invisible.zip"
 #Const C_ObstacleModel "Items\\Speed.Item.Gbx"
 

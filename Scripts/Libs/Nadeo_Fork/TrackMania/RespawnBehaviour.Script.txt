@@ -1,0 +1,121 @@
+/**
+ *	Respawn behaviour library
+ */
+#Const	Version			"2017-08-21"
+#Const	ScriptName	"Libs/Nadeo/TrackMania/RespawnBehaviour.Script.txt"
+
+// ---------------------------------- //
+// Constants
+// ---------------------------------- //
+#Const C_RespawnBehaviour_Default 0
+#Const C_RespawnBehaviour_Normal 1
+#Const C_RespawnBehaviour_DoNothing 2
+#Const C_RespawnBehaviour_GiveUpBeforeFirstCheckPoint 3
+#Const C_RespawnBehaviour_AlwaysGiveUp 4
+
+// ---------------------------------- //
+// Globales
+// ---------------------------------- //
+declare Boolean G_AllowRespawn; //< Game mode setting value
+declare CTmMode::ETMRespawnBehaviour G_RespawnBehaviour; //< Wished respawn behaviour
+declare Integer G_OverrideRespawnBehaviour; //< Overriding respawn behaviour
+
+// ---------------------------------- //
+// Functions
+// ---------------------------------- //
+// ---------------------------------- //
+// Public
+// ---------------------------------- //
+// ---------------------------------- //
+/**	Return the version number of the script
+ *
+ *	@return														The version number of the script
+ */
+Text GetScriptVersion() {
+	return Version;
+}
+
+// ---------------------------------- //
+/**	Return the name of the script
+ *
+ *	@return														The name of the script
+ */
+Text GetScriptName() {
+	return ScriptName;
+}
+
+// ---------------------------------- //
+/** Set the wished respawn behaviour
+ *
+ *	@param	_RespawnBehaviour					The new respawn behaviour
+ */
+Void Set(CTmMode::ETMRespawnBehaviour _RespawnBehaviour) {
+	G_RespawnBehaviour = _RespawnBehaviour;
+	
+	if (G_OverrideRespawnBehaviour != C_RespawnBehaviour_Default) {
+		switch (G_OverrideRespawnBehaviour) {
+			case C_RespawnBehaviour_Normal: {
+				RespawnBehaviour = CTmMode::ETMRespawnBehaviour::Normal;
+			}
+			case C_RespawnBehaviour_DoNothing: {
+				RespawnBehaviour = CTmMode::ETMRespawnBehaviour::DoNothing;
+			}
+			case C_RespawnBehaviour_GiveUpBeforeFirstCheckPoint: {
+				RespawnBehaviour = CTmMode::ETMRespawnBehaviour::GiveUpBeforeFirstCheckPoint;
+			}
+			case C_RespawnBehaviour_AlwaysGiveUp: {
+				RespawnBehaviour = CTmMode::ETMRespawnBehaviour::AlwaysGiveUp;
+			}
+			default: {
+				RespawnBehaviour = CTmMode::ETMRespawnBehaviour::Normal;
+			}
+		}
+	} else if (G_AllowRespawn) {
+		RespawnBehaviour = G_RespawnBehaviour;
+	} else {
+		RespawnBehaviour = CTmMode::ETMRespawnBehaviour::AlwaysGiveUp;
+	}
+}
+
+// ---------------------------------- //
+/** Get the wished respawn behaviour
+ *
+ *	@return														The wished respawn behaviour
+ */
+CTmMode::ETMRespawnBehaviour Get() {
+	return G_RespawnBehaviour;
+}
+
+// ---------------------------------- //
+/** Function to call at each yield
+ *	to update the library
+ */
+Void Yield(Boolean _AllowRespawn, Integer _RespawnBehaviour) {
+	if (G_AllowRespawn != _AllowRespawn) {
+		G_AllowRespawn = _AllowRespawn;
+		Set(Get());
+	}
+	
+	if (G_OverrideRespawnBehaviour != _RespawnBehaviour) {
+		G_OverrideRespawnBehaviour = _RespawnBehaviour;
+		Set(Get());
+	}
+}
+// Overload Yield()
+Void Yield(Boolean _AllowRespawn) {
+	Yield(_AllowRespawn, C_RespawnBehaviour_Default);
+}
+
+// ---------------------------------- //
+/// Unload the library
+Void Unload() {
+	G_AllowRespawn = True;
+	G_RespawnBehaviour = CTmMode::ETMRespawnBehaviour::GiveUpBeforeFirstCheckPoint;
+	G_OverrideRespawnBehaviour = C_RespawnBehaviour_Default;
+}
+
+// ---------------------------------- //
+/// Load the library
+Void Load() {
+	Unload();
+}

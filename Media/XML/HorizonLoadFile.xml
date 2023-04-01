@@ -3,7 +3,7 @@
 		<News color=""/>
 		<Logo path="file://Media\Images\Logos\Logos.png" />
 		<Background path="" />
-		<BackgroundImage path="file://Media\Images\Logos\PackImage.webm" />
+		<BackgroundImage path="file://Media\Images\Obstacle\Menu\background.png" />
 		<Music path="file://Media\Musics\Storm\Race\!Night\DAY_01_Track_03.ogg" />
 		<Style MainTitlePolice="TextTitle3" SectionsPolice="TextRaceMessageBig" />
 		<Station stationlogos="file://Media\Images\Logos\Logos.png" stationimage="file://Media\Images\Logos\PackImage.webm"/>
