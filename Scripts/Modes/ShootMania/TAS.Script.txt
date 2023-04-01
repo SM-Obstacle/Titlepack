@@ -1,0 +1,669 @@
+#Extends "Modes/ShootMania/Base/ModeShootMania.Script.txt"
+
+#Const CompatibleMapTypes "ObstacleArena,ObstacleTitleArena,ObstacleTitleArenaOld,TimeAttackArena,ObstacleBetaArena,Randomizer"
+#Const Version           "1.0" // extends Obstacle 1.10
+#Const ScriptName        "Modes/ShootMania/TAS.Script.txt"
+
+// ---------------------------------- //
+// Libraries
+// ---------------------------------- //
+#Include "TextLib" as TL
+#Include "MathLib" as ML
+
+#Include "Libs/miltant/Nadeo_Fork/TabsServer.Script.txt" as Tabs
+
+#Include "Libs/smokegun/Player.Script.txt" as Player
+#Include "Libs/smokegun/ObstacleLib.Script.txt" as Obstacle
+#Include "Libs/smokegun/Constants.Script.txt" as Constants
+
+#Include "Libs/miltant/UI/Markers.Script.txt" as Markers
+#Include "Libs/smokegun/UI/TimeDiff.Script.txt" as TimeDiff
+#Include "Libs/miltant/UI/TASTools.Script.txt" as TASTools
+#Include "Libs/miltant/UI/Glitches.Script.txt" as Glitches
+#Include "Libs/smokegun/UI/CpProgress.Script.txt" as CpProgress
+#Include "Libs/smokegun/UI/SpectatorCount.Script.txt" as SpectatorCount
+#Include "Libs/smokegun/UI/NextMapVote.Script.txt" as NextMapVote
+#Include "Libs/smokegun/UI/RespawnBehavior.Script.txt" as RespawnBehavior
+#Include "Libs/smokegun/UI/SpecKeys.Script.txt" as SpecKeys
+#Include "Libs/smokegun/UI/SurvivalRanking.Script.txt" as SurvivalRanking
+
+#Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
+
+#Include "Libs/smokegun/Items.Script.txt" as Items
+#Include "Libs/smokegun/Weapons.Script.txt" as Weapons
+#Include "Libs/smokegun/Settings.Script.txt" as Settings
+#Include "Libs/smokegun/Tools.Script.txt" as Tools
+#Include "Libs/miltant/Randomizer.Script.txt" as RNG
+
+#Include "Libs/smokegun/Score.Script.txt" as ObsScores
+
+// ---------------------------------- //
+// Settings
+// ---------------------------------- //
+#Setting S_TimeLimit -1 as _("Time limit")
+#Setting S_FastRespawn True as _("Fast respawn on the checkpoint")
+#Setting S_AllowJump True as _("Enable checkpoint jumping")
+#Setting S_ForceInvisibleSkin False as "Force invisible skin"
+#Setting S_EnablePlayerHighlight False as "Highlight players"
+
+#Setting S_NextMapVotingRatio 0.7 as "<hidden>"
+#Setting S_FullAmmoSpawn True as "<hidden>"
+#Setting S_LegacyRespawn False as "<hidden>"
+#Setting S_CheckpointMarkersCount 1 as "Count of different checkpoint markers"
+
+#Setting S_ForceRNGSeed "" as "Seed to use for randomizer maps (Integer)"
+
+#Setting S_ScriptEnvironment "development"
+
+#Command Command_TogglePvPWeapons (Boolean) as _("Set PvP Weapons (on/off)")
+#Command Command_TogglePvPCollisions (Boolean) as _("Set PvP Collisions (on/off)")
+
+// ---------------------------------- //
+// Constants
+// ---------------------------------- //
+#Const C_HudModulePath "Obstacle/UI.Module.Gbx"
+#Const C_SettingsUpdateInterval 1000
+#Const C_StatusMessage "Setup your inputs and zoom quick!"
+
+
+declare Ident   G_InvisibleSkinId;
+declare Ident   G_ObstacleModelId;
+declare Ident   G_WayPointSpawn;
+declare Boolean[Ident] G_PendingRS;
+
+declare Boolean G_LastUsePvPWeapons;
+declare Boolean G_LastUsePvPCollisions;
+
+declare Boolean G_TAS_Recording;
+declare Boolean G_TAS_Playing;
+
+***Match_LogVersions***
+***
+Log::RegisterScript(ScriptName, Version);
+***
+
+***Match_Settings***
+***
+MB_Settings_UseDefaultHud = False;
+MB_Settings_UseDefaultTimer = False;
+MB_Settings_UseDefaultObjects = False;
+
+UseClans = False;
+UseSameWallJump = True;
+UsePvPWeapons = False;
+UsePvPCollisions = False;
+G_LastUsePvPWeapons = False;
+G_LastUsePvPCollisions = False;
+
+
+UIManager.UIAll.OverlayHide321Go = True;
+***
+
+***Match_Rules***
+***
+ModeInfo::SetName("Obstacle");
+ModeInfo::SetType(ModeInfo::Type_FreeForAll());
+
+declare OpenSpecial1Text = "$<$00f";
+declare OpenSpecial2Text = "$<$88f";
+declare OpenSpecial3Text = "$<$0f0";
+declare OpenSpecial4Text = "$<$f80";
+declare OpenBoldText = "$<$o";
+declare OpenSettingText = "$<$08f";
+declare CloseText = "$>";
+
+declare ModeRules = """
+Finish the {{{OpenSpecial2Text}}}Obstacle Course{{{CloseText}}} as fast as possible.
+To validate a race you must touch the {{{OpenSpecial2Text}}}Goal{{{CloseText}}} after going through all the {{{OpenSpecial2Text}}}Checkpoints{{{CloseText}}}.
+You can start over and improve your time as often as you want during {{{OpenSettingText^S_TimeLimit^CloseText}}} minutes.
+The player with the best time wins the map.
+Press the {{{OpenBoldText}}}Respawn{{{CloseText}}} button (default: {{{OpenSpecial2Text}}}Backspace{{{CloseText}}}) or die to {{{OpenSpecial3Text}}}Respawn{{{CloseText}}} at the last reached checkpoint.
+Press the {{{OpenBoldText}}}Give Up{{{CloseText}}} button (default: {{{OpenSpecial2Text}}}Delete{{{CloseText}}}) to {{{OpenSpecial3Text}}}Restart{{{CloseText}}} from the beginning.
+
+Press {{{OpenSpecial4Text}}}F3{{{CloseText}}} when you're ready for the next Map (Press F3 again to change your decision).
+Press {{{OpenSpecial4Text}}}F4{{{CloseText}}} to disable/enable respawning at checkpoints.
+Press {{{OpenSpecial4Text}}}F5{{{CloseText}}} to disable/enable respawning from the start.
+""";
+
+
+ModeInfo::SetRules(ModeRules);
+ModeInfo::SetStatusMessage(C_StatusMessage);
+***
+
+***Match_LoadHud***
+***
+Hud_Load(C_HudModulePath);
+
+foreach (Module in Hud.Modules) {
+    switchtype (Module) {
+        case CModulePlaygroundScoresTable: Hud.ScoresTable = (Module as CModulePlaygroundScoresTable);
+        default: {}
+    }
+}
+
+if (Hud != Null && Hud.ScoresTable != Null) {
+    Hud.ScoresTable.Scores_Sort(CModulePlaygroundScoresTable::EScoreSortOrder::SMPoints);
+
+    Tabs::Load();
+    declare TabsLayer <=> Tabs::CreateTabPaneLayer(
+        [ "ScoresTab" => "Rankings"
+        , "CPTimes" => "Race"]
+        , 15, 7, False);
+    TabsLayer.Type = CUILayer::EUILayerType::AltMenu;
+    UIManager.UIAll.UILayers.add(TabsLayer);
+}
+***
+
+***Match_SpawnScreen***
+***
+SpawnScreen::CreateScores("Score.Points");
+***
+
+***Match_InitServer***
+***
+ItemList_Begin();
+G_InvisibleSkinId = ItemList_AddWithSkin("DefaultPlayerModel", Constants::C_InvisibleSkin);
+//G_ObstacleModelId = ItemList_AddWithSkin(Constants::C_ObstacleModel, "Profile");
+//G_ObstacleModelId = ItemList_AddWithSkin("DefaultPlayerModel", Constants::C_ObstacleModel);
+Items::LoadItems();
+ItemList_End();
+***
+
+***Match_StartServer***
+***
+UpdateSettings();
+
+SM::SetupDefaultVisibility();
+CreateUI();
+
+Obstacle::LoadActions();
+***
+
+***Match_InitMap***
+***
+declare PrevTimeLimit = -1;
+declare LastUpdate = -1;
+declare NextLowTimeMessage = 0;
+***
+
+***Match_StartMap***
+***
+// This needs to be called before PrepareMap to have the right settings
+UpdateSettings();
+
+// map is invalid
+if (!Obstacle::PrepareMap(ModeInfo::GetName()))
+{
+    MB_Private_StopMap();
+}
+
+if (Obstacle::IsPvPWeaponsMap()) {
+    UsePvPWeapons = True;
+}
+if (Obstacle::IsPvPCollisionsMap()) {
+    UsePvPCollisions = True;
+}
+if (Obstacle::IsSameWallJumpMap()) {
+    UseSameWallJump = True;
+} else {
+    UseSameWallJump = False;
+}
+
+if (Obstacle::IsRandomizerMap()) {
+    declare Text Seed = "";
+
+    if (Settings::GetForceRNGSeed() == "") {
+        Seed = RNG::RandomizeLandmarksWithSeed(
+            Obstacle::GetRNGLandmarks(), Obstacle::GetRNGTargetNumbers(),
+            Obstacle::GetSpawnLandmarks(), Obstacle::GetGoalLandmarks(),
+            ""
+        );
+
+        UIManager.UIAll.SendChat("""Map randomized with the seed $<$f80{{{Seed}}}$>.""");
+    } else if (Settings::GetForceRNGSeed() == "0") {
+        RNG::ClearLandmarks();
+        UIManager.UIAll.SendChat("""Randomizer map: checkpoints left with no particular order accordingly to the value of the setting ForceRNGSeed.""");
+    } else {
+        Seed = RNG::RandomizeLandmarksWithSeed(
+            Obstacle::GetRNGLandmarks(), Obstacle::GetRNGTargetNumbers(),
+            Obstacle::GetSpawnLandmarks(), Obstacle::GetGoalLandmarks(),
+            Settings::GetForceRNGSeed()
+        );
+
+        UIManager.UIAll.SendChat("""Map randomized with the seed $<$f80{{{Seed}}}$> (forced by script settings).""");
+    }
+}
+
+UIManager.UIAll.MarkersXML = Markers::GetXML();
+Layers::Update("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
+
+Items::Place();
+
+foreach (Player in AllPlayers) {
+    Player::setInitialized(Player, False);
+    Obstacle::NewPlayer(Player);
+}
+
+StartTime = Now;
+if (S_TimeLimit > 0) {
+    EndTime = (StartTime + S_TimeLimit * 1000 * 60);
+} else {
+    EndTime = -1;
+}
+***
+
+***Match_Yield***
+***
+TASTools::Yield();
+SpectatorCount::Yield();
+NextMapVote::Yield(S_NextMapVotingRatio);
+***
+
+***Match_PlayLoop***
+***
+//Replay_SaveInterface();
+
+if (LastUpdate + C_SettingsUpdateInterval < Now) {
+    LastUpdate = Now;
+    UpdateSettings();
+}
+
+Obstacle::UpdatePlayersSkin(G_InvisibleSkinId);
+
+if (EndTime > 0 && Now > EndTime) {
+    Message::SendBigMessage(_("Time limit reached"),    2000, 3, CUIConfig::EUISound::Silence, 0);
+    MB_Private_StopMatch();
+}
+
+if ((EndTime - StartTime) > 60000 && Now > EndTime - 300500 && Now < EndTime - 290000 && Now > NextLowTimeMessage) {
+    UIManager.UIAll.SendChat("Warning: the map ends in $<$f805$> minutes!");
+    NextLowTimeMessage = Now + 305000;
+}
+
+declare CSmModeEvent[] PendingRespawns;
+declare CSmModeEvent[] PendingCaptures;
+
+foreach (Event in PendingEvents) {
+    switch (Event.Type) {
+        case CSmModeEvent::EType::OnArmorEmpty: {
+            // Discard the defaut behaviour (e.g Player is eliminated)
+            Events::Invalid(Event);
+
+            declare CSmPlayer Victim = Null;
+
+            switchtype (Event.VictimEntity) {
+                case CSmPlayer: {
+                    Victim = (Event.VictimEntity as CSmPlayer);
+                }
+                default: {
+                    continue;
+                }
+            }
+
+            // Dont respawn if the player has the offzone item
+            if (Victim.IsInOffZone) {
+                declare ItemBuffs = Player::getBuffTimes(Victim);
+                if (ItemBuffs.existskey(Constants::C_ItemOffzone) && ItemBuffs[Constants::C_ItemOffzone] >= Now) {
+                    continue;
+                }
+            }
+
+            Obstacle::ObsRespawnPlayer(Victim);
+        }
+
+        case CSmModeEvent::EType::OnHit: {
+            // Disable the loose of armor when hit
+            Events::Invalid(Event);
+        }
+
+        case CSmModeEvent::EType::OnActionCustomEvent : {
+            // :'(
+        }
+
+        case CSmModeEvent::EType::OnPlayerTouchesObject: {
+            if (Event.Object != Null && Event.Player != Null && Items::PickupItems(Event)) {
+                Events::Valid(Event);
+            }
+            else {
+                Events::Invalid(Event);
+            }
+        }
+
+        case CSmModeEvent::EType::OnCommand: {
+            if (Event.CommandName == "Command_BeginSurvival") {
+                if (Settings::GetScoreMode() != Constants::C_Score_Survival) {
+                    ObsScores::Survival_Begin(Event.CommandValueInteger);
+                    MB_Private_StopMap();
+                }
+            }
+            else if (Event.CommandName == "Command_EndSurvival") {
+                if (Settings::GetScoreMode() == Constants::C_Score_Survival) {
+                    ObsScores::Survival_ForceEnd();
+                }
+            }
+            else if (Event.CommandName == "Command_TogglePvPWeapons") {
+                UsePvPWeapons = Event.CommandValueBoolean;
+            }
+            else if (Event.CommandName == "Command_TogglePvPCollisions") {
+                UsePvPCollisions = Event.CommandValueBoolean;
+            }
+        }
+
+        case CSmModeEvent::EType::OnPlayerRequestRespawn: {
+            PendingRespawns.add(Event);
+        }
+
+        case CSmModeEvent::EType::OnPlayerTriggersSector: {
+            PendingCaptures.add(Event);
+        }
+
+        default: {
+            Events::Valid(Event);
+        }
+
+    }
+}
+
+foreach (Player => GiveUp in G_PendingRS) {
+    //todo: asserts exists
+    Obstacle::ObsRespawnPlayer(Players[Player], GiveUp);
+}
+
+G_PendingRS.clear();
+
+
+foreach (RS in PendingRespawns) {
+    declare CSmModeEvent CaptureToPerform = Null;
+
+    foreach (Cap in PendingCaptures) {
+        if (Cap.Player == RS.Player) {
+            CaptureToPerform <=> Cap;
+            PendingCaptures.remove(Cap);
+            break;
+        }
+    }
+
+    if (CaptureToPerform == Null) {
+        Obstacle::ObsRespawnPlayer(RS.Player, RS.GiveUp);
+        
+    } else if(Tools::IsGoal(RS.Player.CapturedLandmark)) {
+        Obstacle::HandleCapture(CaptureToPerform.Player);
+        Events::Valid(CaptureToPerform);
+
+        Obstacle::ObsRespawnPlayer(RS.Player, RS.GiveUp);
+    } else if (Player::allowRSBug(RS.Player)) {
+        Obstacle::ObsRespawnPlayer(RS.Player, RS.GiveUp);
+
+        Obstacle::HandleCapture(CaptureToPerform.Player);
+        Events::Valid(CaptureToPerform);
+        Player::setUsedRSBug(CaptureToPerform.Player, True);
+    } else {
+        G_PendingRS[RS.Player.Id] = RS.GiveUp; // to be performed next tick
+
+        Obstacle::HandleCapture(CaptureToPerform.Player);
+        Events::Valid(CaptureToPerform);
+    }
+
+    Events::Invalid(RS);
+}
+
+foreach (Cap in PendingCaptures) {
+    declare TookGoal = Obstacle::HandleCapture(Cap.Player);
+    if (TookGoal) {
+        Obstacle::ObsRespawnPlayer(Cap.Player, True);
+    }
+    Events::Valid(Cap);
+}
+
+foreach (Player in Players) {
+
+    switch (Player.SpawnStatus) {
+
+        case CSmPlayer::ESpawnStatus::NotSpawned: {
+            if (!Player::isInitialized(Player)) {
+                Obstacle::NewPlayer(Player);
+            }
+
+            if (!Player.RequestsSpectate && ObsScores::PlayerShouldSpawn(Player)) {
+                Obstacle::ObsRespawnPlayer(Player);
+            }
+        }
+
+        case CSmPlayer::ESpawnStatus::Spawning: {
+            if (Player.Position == <0., 0., 0.>) {
+                if (Player::getLastSpawnPosition(Player) != <0., 0., 0.>) {
+                    Player::setLastSpawnPosition(Player, <0., 0., 0.>);
+                }
+            } else if (Player.Post == CSmPlayer::EPost::Char && Player::getLastSpawnPosition(Player) != Player.Position) {
+                if (Player::getLastSpawnPosition(Player) == <0., 0., 0.>)
+                    Player::setLastSpawnPosition(Player, Player.Position);
+                else {
+                    declare Delta = Player::getLastSpawnPosition(Player) - Player.Position;
+                    declare HasSignificantlyMoved = (ML::Abs(Delta.X) > .1 || ML::Abs(Delta.Y) > .1 || ML::Abs(Delta.Z) > .1);
+                    // players can be pushed by some geometry elements
+                    declare UI <=> UIManager.GetUI(Player);
+                    declare netread Boolean _AltMenuActive for UI;
+
+                    if  (HasSignificantlyMoved && _AltMenuActive){
+                        Player::setUsedAltGlitch(Player, True);
+                    }
+                }
+            }
+        }
+
+        case CSmPlayer::ESpawnStatus::Spawned: {
+            if (UsePvPWeapons != G_LastUsePvPWeapons){
+                if (UsePvPWeapons)
+                    Player::setUsedPvPWeapons(Player, True);
+            }
+            if (UsePvPCollisions != G_LastUsePvPCollisions){
+                if (UsePvPCollisions)
+                    Player::setUsedPvPCollisions(Player, True);
+            }
+            
+            SpecKeys::UpdateLayer(Player);
+
+            // Unlimited stam
+            declare StaminaUnlimited for Player = False;
+            if (StaminaUnlimited && Player.Stamina != ML::TruncInteger(Player.StaminaMaxValue / 1.8)) {
+                Player.Stamina = ML::TruncInteger(Player.StaminaMaxValue / 1.8);
+            }
+
+            // Effects on respawn
+            declare PlayerHasRespawned for Player = False;
+            if (PlayerHasRespawned) {
+                if (S_FullAmmoSpawn) {
+                    Weapons::FillUpPlayerAmmo(Player);
+                }
+
+                PlayerHasRespawned = False;
+            }
+
+            // Manage item effects
+            declare ItemBuff = Player::getBuffTimes(Player);
+            foreach (Name => Time in ItemBuff) {
+                if (Time < Now) continue;
+                switch (Name) {
+                    // Progressively grant ammo
+                    case Constants::C_ItemAmmo: {
+                        declare AmmoItemBuffDuration for Player = 0.;
+                        if (AmmoItemBuffDuration <= 0.) continue;
+                        declare AmmoItemBuffAmount for Player = 1.;
+
+                        declare AmmoItemStart = Time - AmmoItemBuffDuration * 1000;
+                        declare TickDuration = 1000. * AmmoItemBuffDuration / AmmoItemBuffAmount;
+                        declare AmmoItemBuffTicks for Player = 0;
+
+                        if (Now > AmmoItemStart + AmmoItemBuffTicks * TickDuration)
+                        {
+                            AddPlayerAmmo(Player, SM::GetWeapon(Player.CurWeapon), 1.);
+                            AmmoItemBuffTicks += 1;
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+G_LastUsePvPCollisions = UsePvPCollisions;
+G_LastUsePvPWeapons = UsePvPWeapons;
+***
+
+
+***Match_EndMap***
+***
+EndTime = -1;
+
+Items::Destroy();
+UIManager.UIAll.MarkersXML = "";
+SM::UnspawnAllPlayers();
+
+ObsScores::OnMapEnd();
+***
+
+***Match_BeforeCloseLadder***
+***
+declare CSmScore[] Unranked = [];
+
+declare WorstRun = -1;
+foreach (Score in Scores) {
+    declare BestRun for Score = 1;
+    if (BestRun > 0) {
+        Score.LadderRankSortValue = BestRun;
+
+        if (BestRun > WorstRun) WorstRun = BestRun;
+    }
+    else {
+        Unranked.add(Score);
+    }
+}
+
+foreach (Score in Unranked) {
+    Score.LadderRankSortValue = WorstRun + 1;
+}
+***
+
+***Match_AfterCloseLadder***
+***
+DoNothing();
+***
+
+***Match_EndServer***
+***
+SpawnScreen::DestroyRules();
+SpawnScreen::DestroyMapInfo();
+DestroyUI();
+***
+
+// ---------------------------------- //
+// Functions
+// ---------------------------------- //
+// ---------------------------------- //
+Void DoNothing(){}
+
+Void CreateUI() {
+    Layers::Create("TASTools", TASTools::GetLayer());
+    Layers::Create("Glitches", Glitches::GetLayer());
+    Layers::Create("TimeDiff", TimeDiff::GetLayer());
+    Layers::Create("CpProgress", CpProgress::GetLayer());
+    Layers::Create("CPTimes", CPTimes::GetLayer());
+    Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
+    Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));
+    Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer());
+    Layers::Create("SpecKeys", SpecKeys::GetLayer());
+
+    Layers::Create("Markers");
+    Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
+    Layers::Create("Items", Items::CreateLayerItems());
+
+    Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
+
+    Layers::Attach("TASTools");
+    Layers::Attach("Glitches");
+    Layers::Attach("TimeDiff");
+    Layers::Attach("CpProgress");
+    Layers::Attach("CPTimes");
+    Layers::Attach("Items");
+    Layers::Attach("Markers");
+    Layers::Attach("SpectatorCount");
+    Layers::Attach("NextMapVote");
+    Layers::Attach("RespawnBehavior");
+    Layers::Attach("SpecKeys");
+    Layers::Attach("SurvivalRanking");
+
+    //Layers::AttachReplay("SpecKeys");
+}
+
+Void DestroyUI() {
+    Layers::Detach("TASTools");
+    Layers::Detach("Glitches");
+    Layers::Detach("TimeDiff");
+    Layers::Detach("CpProgress");
+    Layers::Detach("CPTimes");
+    Layers::Detach("Markers");
+    Layers::Detach("Items");
+
+    Layers::Detach("SpectatorCount");
+    Layers::Detach("NextMapVote");
+    Layers::Detach("RespawnBehavior");
+    Layers::Detach("SpecKeys");
+    Layers::Detach("SurvivalRanking");
+
+    //Layers::DetachReplay("SpecKeys");
+
+    UIManager.UILayerDestroyAll();
+}
+
+Void UpdateSettings() {
+    if (S_TimeLimit != Settings::GetTimeLimit()) {
+        Settings::SetTimeLimit(S_TimeLimit);
+
+        if (Hud != Null && Hud.ScoresTable != Null) {
+            Hud.ScoresTable.SetFooterText(TL::Compose("%1 "^Tools::TimeLimitToText(S_TimeLimit), _("Time limit : ")));
+        }
+
+        if (S_TimeLimit > 0) {
+            EndTime = StartTime + (S_TimeLimit * 60 * 1000);
+        } else {
+            EndTime = -1;
+        }
+    }
+
+    if (S_FastRespawn != Settings::GetFastRespawn()) {
+        Settings::SetFastRespawn(S_FastRespawn);
+    }
+
+    if (S_AllowJump != Settings::GetAllowJump()) {
+        Settings::SetAllowJump(S_AllowJump);
+    }
+
+    if (S_NextMapVotingRatio != Settings::GetNextMapVotingRatio()) {
+        Settings::SetNextMapVotingRatio(S_NextMapVotingRatio);
+    }
+
+    if (S_FullAmmoSpawn != Settings::GetFullAmmoSpawn()) {
+        Settings::SetFullAmmoSpawn(S_FullAmmoSpawn);
+    }
+
+    if (S_LegacyRespawn != Settings::GetLegacyRespawn()) {
+        Settings::SetLegacyRespawn(S_LegacyRespawn);
+    }
+    if (S_ForceInvisibleSkin != Settings::GetForceInvisibleSkin()) {
+        Settings::SetForceInvisibleSkin(S_ForceInvisibleSkin);
+    }
+
+    if (S_EnablePlayerHighlight != Settings::GetEnablePlayerHighlight()) {
+        Settings::SetEnablePlayerHighlight(S_EnablePlayerHighlight);
+    }
+
+    if (S_ForceRNGSeed != Settings::GetForceRNGSeed()) {
+        Settings::SetForceRNGSeed(S_ForceRNGSeed);
+    }
+
+    if (S_CheckpointMarkersCount != Settings::GetCheckpointMarkersCount()) {
+        Settings::SetCheckpointMarkersCount(S_CheckpointMarkersCount);
+        Layers::Update("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
+    }
+}

@@ -733,6 +733,7 @@
 			<asset id="LocalNetwork" isdefault="yes" titlename="Local Network" makername="Local Network" isvisibleinmaker="True" isactivated="True"/>
 	<asset id="Modes\ShootMania\Obstacle.Script.txt" isdefault="no" titlename="Modes\ShootMania\Obstacle.Script.txt" makername="Modes\ShootMania\Obstacle.Script.txt" isvisibleinmaker="yes"/>
 	<asset id="Modes\ShootMania\Sprint.Script.txt" isdefault="no" titlename="Modes\ShootMania\Sprint.Script.txt" makername="Modes\ShootMania\Sprint.Script.txt" isvisibleinmaker="yes"/>
+	<asset id="Modes\ShootMania\TAS.Script.txt" isdefault="no" titlename="Modes\ShootMania\TAS.Script.txt" makername="Modes\ShootMania\TAS.Script.txt" isvisibleinmaker="yes"/>
 
 	</LocalPlay>
 	<Editors logo="file://Media/MEDIABROWSER_HiddenResources/Common/Images/Menus/Buttons/Logo_Editor.dds" activated="True" color="fed" mapeditor="">
