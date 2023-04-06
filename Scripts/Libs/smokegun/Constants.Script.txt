@@ -13,6 +13,10 @@
 #Const C_InvisibleSkin "Skins\\Models\\ArenaPlayer\\Invisible.zip"
 #Const C_ObstacleModel "Items\\Speed.Item.Gbx"
 
+#Const C_Offzone01 "Offzone\\Visible\\Offzone#01.Item.gbx"
+#Const C_Offzone10 "Offzone\\Visible\\Offzone#10.Item.gbx"
+#Const C_Offzone20 "Offzone\\Visible\\Offzone#20.Item.gbx"
+
 //
 #Const C_HostUrl "https://api.obstacle.ovh/"
 #Const C_WebsiteUrl "https://www.obstacle.ovh"

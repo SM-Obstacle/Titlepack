@@ -1,0 +1,70 @@
+#Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
+
+#Const  Version     "2023-05-04"
+#Const  ScriptName  "JumpBack.Script.txt"
+
+Text GetLayer() {
+    CustomUI::Add("Frame_JumpBack", <120., -30.>, <35., 10.>);
+    return """
+<manialink version="3" name="Obstacle:JumpBack">
+    <frame id="Frame_JumpBack" class="LibCustomUI_Module">
+        <frame pos="120 -30" id="Frame_Wrapper">
+            <label size="30 8" text="Continue my run"/>
+            <quad size="35 10" style="BgRaceScore2" substyle="BgCardPlayer" id="Quad_JumpBack" scriptevents="1" pos="-2 3"/>
+        </frame>
+    </frame>
+<script><!--
+    #Include "TextLib" as TL
+    #Include "MathLib" as ML
+
+    Integer GetTime(CPlayer _Player) {
+        if (_Player == Null)
+            return 0;
+        declare netread Net_StartTime for _Player = 0;
+        return GameTime - Net_StartTime;
+    }
+
+    main() {
+        {{{CustomUI::InjectMLInit()}}}
+        wait(InputPlayer != Null && Page != Null);
+
+        declare Frame_JumpBack      <=> (Page.GetFirstChild("Frame_JumpBack") as CMlFrame);
+        declare Frame_Wrapper       <=> (Frame_JumpBack.GetFirstChild("Frame_Wrapper") as CMlFrame);
+
+        while (True) {
+            yield;
+
+            if (!PageIsVisible)
+                continue;
+
+            if (GUIPlayer != InputPlayer) {
+                Frame_Wrapper.Hide();
+                continue;
+            }
+
+            declare netread Net_UsedJump for InputPlayer = False;
+
+            if (!Net_UsedJump) {
+                Frame_Wrapper.Hide();
+                continue;
+            }
+
+            Frame_Wrapper.Show();
+
+            foreach (Event in PendingEvents) {
+                switch (Event.Type) {
+                    case CMlScriptEvent::Type::MouseClick: {
+                        if (Event.Control.ControlId == "Quad_JumpBack") {
+                            SendCustomEvent("jumpback_request", [InputPlayer.Login]);
+                        }
+                    }
+                }
+            }
+
+                
+            {{{CustomUI::InjectMLLoop()}}}
+        }
+    }
+--></script>
+</manialink>""";
+}

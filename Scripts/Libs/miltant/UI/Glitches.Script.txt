@@ -1,7 +1,6 @@
-#Include "Libs/smokegun/Tools.Script.txt" as Tools
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 
-#Const  Version     "2022-25-11"
+#Const  Version     "2023-05-04"
 #Const  ScriptName  "Glitches.Script.txt"
 
 

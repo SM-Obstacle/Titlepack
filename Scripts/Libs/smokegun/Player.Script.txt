@@ -76,11 +76,6 @@ Boolean usedJump(CSmPlayer _Player) {
     return Net_UsedJump;
 }
 
-Void setUsedJump(CSmPlayer _Player, Boolean _Value) {
-    declare netwrite Boolean Net_UsedJump for _Player = False;
-    Net_UsedJump = _Value;
-}
-
 Boolean allowRSBug(CSmPlayer _Player) {
     declare UI <=> UIManager.GetUI(_Player);
     if (UI == Null)
@@ -308,6 +303,83 @@ Void setLastCPTimes(CSmPlayer _Player, Ident _Key, Integer _Value) {
 Void clearLastCPTimes(CSmPlayer _Player) {
     declare Integer[Ident] CheckpointsTimeLast for _Player.Score;
     CheckpointsTimeLast.clear();
+}
+
+Void saveLastLegitPosition(CSmPlayer _Player) {
+    if (!usedJump(_Player)) {
+        declare Ident Save_LastCheckpoint for _Player;
+        declare Boolean Save_UsedRSBug for _Player;
+        declare Boolean Save_UsedAltGlitch for _Player;
+        declare Boolean Save_UsedPvPWeapons for _Player;
+        declare Boolean Save_UsedPvPCollisions for _Player;
+        declare Boolean Save_UsedSpeedHack for _Player;
+        declare Integer Save_CpProgress for _Player;
+
+        Save_LastCheckpoint = getLastCheckpoint(_Player);
+        Save_UsedRSBug = usedRSBug(_Player);
+        Save_UsedAltGlitch = usedAltGlitch(_Player);
+        Save_UsedPvPWeapons = usedPvPWeapons(_Player);
+        Save_UsedPvPCollisions = usedPvPCollisions(_Player);
+        Save_UsedSpeedHack = usedSpeedHack(_Player);
+        Save_CpProgress = getCpProgress(_Player);
+        
+        declare Ident[] LastCheckpointsIds for _Player;
+        declare netwrite Text[] LastCheckpointsIdsStr for _Player;
+        declare netwrite Integer[] PreviousCheckpointsOrder for _Player;
+        declare Integer[Ident] CheckpointsTimeLast for _Player.Score;
+
+        declare Ident[] Save_LastCheckpointsIds for _Player;
+        declare Text[] Save_LastCheckpointsIdsStr for _Player;
+        declare Integer[] Save_PreviousCheckpointsOrder for _Player;
+        declare Integer[Ident] Save_CheckpointsTimeLast for _Player;
+
+        Save_LastCheckpointsIds = LastCheckpointsIds;
+        Save_LastCheckpointsIdsStr = LastCheckpointsIdsStr;
+        Save_PreviousCheckpointsOrder = PreviousCheckpointsOrder;
+        Save_CheckpointsTimeLast = CheckpointsTimeLast;
+
+        log("prog : " ^ Save_CpProgress ^ "/" ^ Save_CpProgress ^ " last : " ^ Save_LastCheckpoint ^ " ids : " ^ LastCheckpointsIds ^ " str : " ^ LastCheckpointsIdsStr ^ " int : " ^ PreviousCheckpointsOrder);
+    }
+}
+
+Void setUsedJump(CSmPlayer _Player, Boolean _Value) {
+    saveLastLegitPosition(_Player);
+    declare netwrite Boolean Net_UsedJump for _Player = False;
+    Net_UsedJump = _Value;
+}
+
+Void loadLastLegitPosition(CSmPlayer _Player) {
+    declare Ident Save_LastCheckpoint for _Player = NullId;
+    declare Boolean Save_UsedRSBug for _Player = False;
+    declare Boolean Save_UsedAltGlitch for _Player = False;
+    declare Boolean Save_UsedPvPWeapons for _Player = False;
+    declare Boolean Save_UsedPvPCollisions for _Player = False;
+    declare Boolean Save_UsedSpeedHack for _Player = False;
+    declare Integer Save_CpProgress for _Player = -1;
+
+    setLastCheckpoint(_Player, Save_LastCheckpoint);
+    setUsedRSBug(_Player, Save_UsedRSBug);
+    setUsedAltGlitch(_Player, Save_UsedAltGlitch);
+    setUsedPvPWeapons(_Player, Save_UsedPvPWeapons);
+    setUsedPvPCollisions(_Player, Save_UsedPvPCollisions);
+    setUsedSpeedHack(_Player, Save_UsedSpeedHack);
+    setCpProgress(_Player, Save_CpProgress);
+    setUsedJump(_Player, False);
+    
+    declare Ident[] LastCheckpointsIds for _Player;
+    declare netwrite Text[] LastCheckpointsIdsStr for _Player;
+    declare netwrite Integer[] PreviousCheckpointsOrder for _Player;
+        declare Integer[Ident] CheckpointsTimeLast for _Player.Score;
+
+    declare Ident[] Save_LastCheckpointsIds for _Player;
+    declare Text[] Save_LastCheckpointsIdsStr for _Player;
+    declare Integer[] Save_PreviousCheckpointsOrder for _Player;
+        declare Integer[Ident] Save_CheckpointsTimeLast for _Player;
+
+    LastCheckpointsIds = Save_LastCheckpointsIds;
+    LastCheckpointsIdsStr = Save_LastCheckpointsIdsStr;
+    PreviousCheckpointsOrder = Save_PreviousCheckpointsOrder;
+    CheckpointsTimeLast = Save_CheckpointsTimeLast;
 }
 
 // Declare player's variable
