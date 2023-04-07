@@ -26,6 +26,10 @@ declare CSmObject[] G_AnchorsObjects;
 Void LoadItems() {
     G_ItemIdents[Constants::C_ItemOffzone] = ItemList_Add(Constants::C_ItemOffzone);
     G_ItemIdents[Constants::C_ItemAmmo] = ItemList_Add(Constants::C_ItemAmmo);
+    
+    G_ItemIdents[Constants::C_Offzone01] = ItemList_Add(Constants::C_Offzone01);
+    G_ItemIdents[Constants::C_Offzone10] = ItemList_Add(Constants::C_Offzone10);
+    G_ItemIdents[Constants::C_Offzone20] = ItemList_Add(Constants::C_Offzone20);
 }
 
 Void Init() {
@@ -93,6 +97,25 @@ Boolean PickupItems(CSmModeEvent _Event) {
     }
 
     switch (ItemName) {
+
+        case Constants::C_Offzone01: {
+            if (ItemBuffTimes.existskey(Constants::C_ItemOffzone) && ItemBuffTimes[Constants::C_ItemOffzone] < Now) {
+                Obstacle::ObsRespawnPlayer(_Event.Player, False);
+            }
+        }
+
+        case Constants::C_Offzone10: {
+            if (ItemBuffTimes.existskey(Constants::C_ItemOffzone) && ItemBuffTimes[Constants::C_ItemOffzone] < Now) {
+                Obstacle::ObsRespawnPlayer(_Event.Player, False);
+            }
+        }
+
+        case Constants::C_Offzone20: {
+            if (ItemBuffTimes.existskey(Constants::C_ItemOffzone) && ItemBuffTimes[Constants::C_ItemOffzone] < Now) {
+                Obstacle::ObsRespawnPlayer(_Event.Player, False);
+            }
+        }
+
         case Constants::C_ItemOffzone: {
             declare Duration for _Event.Object = 5.;
             Player::setBuffTime(_Event.Player, ItemName, Now + ML::NearestInteger(Duration * 1000.));

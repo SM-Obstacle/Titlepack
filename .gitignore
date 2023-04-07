@@ -1,15 +1,5 @@
-Blocks/
-Items/
-Materials/
-Skins/
 .vscode/
 Media/Manialinks/Keyboard
-*.Map.Gbx
 __pycache__
-Trackmania
-Nadeo
-MEDIABROWSER_HiddenResources
-Station
-Font
-Apps
-Maps/
+Items/
+Maps/ahmad/

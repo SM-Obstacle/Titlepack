@@ -457,6 +457,7 @@ Void Private_FullRestart(CSmPlayer _Player, Integer _Delay) {
         Player::setUsedPvPCollisions(_Player, UsePvPCollisions);
         Player::setUsedSpeedHack(_Player, False);
         
+        Player::setLastCheckpoint(_Player, NullId);
         Player::setCpProgress(_Player, 0);
         Player::setRespawnCount(_Player, 0);
         Player::setStartTime(_Player, _Player.StartTime);
@@ -664,6 +665,18 @@ Void JumpToCheckpoint(CSmPlayer _Player, Integer _Target) {
     } else {
         UI.SendChat("$f11Cannot find Spawn for Checkpoint "^_Target^"!$z");
     }
+}
+
+
+/**
+ * Jump a player back to their last legitimate position
+ *
+ * Arguments: CSmPlayer _Player Player to teleport
+ */
+
+Void JumpBack(CSmPlayer _Player) {
+    Player::loadLastLegitPosition(_Player);
+    ObsRespawnPlayer(_Player);
 }
 
 /**

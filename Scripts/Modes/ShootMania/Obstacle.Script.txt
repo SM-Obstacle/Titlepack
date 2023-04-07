@@ -23,6 +23,7 @@
 #Include "Libs/smokegun/UI/TimeDiff.Script.txt" as TimeDiff
 #Include "Libs/smokegun/UI/Chrono.Script.txt" as Chrono
 #Include "Libs/miltant/UI/Glitches.Script.txt" as Glitches
+#Include "Libs/miltant/UI/JumpBack.Script.txt" as JumpBack
 #Include "Libs/smokegun/UI/CpProgress.Script.txt" as CpProgress
 #Include "Libs/smokegun/UI/SpectatorCount.Script.txt" as SpectatorCount
 #Include "Libs/smokegun/UI/NextMapVote.Script.txt" as NextMapVote
@@ -338,6 +339,10 @@ foreach (Event in UIManager.PendingEvents) {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 declare CP = TL::ToInteger(Event.CustomEventData[1]);
                 Obstacle::JumpToCheckpoint(Player, CP);
+            }
+            case "jumpback_request": {
+                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+                Obstacle::JumpBack(Player);
             }
         }
     }
@@ -691,6 +696,7 @@ Void CreateUI() {
     
     Layers::Create("Chrono", Chrono::GetLayer());
     Layers::Create("Glitches", Glitches::GetLayer());
+    Layers::Create("JumpBack", JumpBack::GetLayer());
     Layers::Create("TimeDiff", TimeDiff::GetLayer());
     Layers::Create("CpProgress", CpProgress::GetLayer());
     Layers::Create("CPTimes", CPTimes::GetLayer());
@@ -710,9 +716,9 @@ Void CreateUI() {
         Layers::Create("Records", RecordsWidget::GetLayer());
         Layers::Attach("Records");
     }
-
     Layers::Attach("Chrono");
     Layers::Attach("Glitches");
+    Layers::Attach("JumpBack");
     Layers::Attach("TimeDiff");
     Layers::Attach("CpProgress");
     Layers::Attach("CPTimes");
@@ -733,6 +739,7 @@ Void CreateUI() {
 Void DestroyUI() {
     Layers::Detach("Chrono");
     Layers::Detach("Glitches");
+    Layers::Detach("JumpBack");
     Layers::Detach("TimeDiff");
     Layers::Detach("CpProgress");
     Layers::Detach("CPTimes");
