@@ -337,8 +337,6 @@ Void saveLastLegitPosition(CSmPlayer _Player) {
         Save_LastCheckpointsIdsStr = LastCheckpointsIdsStr;
         Save_PreviousCheckpointsOrder = PreviousCheckpointsOrder;
         Save_CheckpointsTimeLast = CheckpointsTimeLast;
-
-        log("prog : " ^ Save_CpProgress ^ "/" ^ Save_CpProgress ^ " last : " ^ Save_LastCheckpoint ^ " ids : " ^ LastCheckpointsIds ^ " str : " ^ LastCheckpointsIdsStr ^ " int : " ^ PreviousCheckpointsOrder);
     }
 }
 
