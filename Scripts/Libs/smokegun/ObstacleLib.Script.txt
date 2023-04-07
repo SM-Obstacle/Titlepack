@@ -82,6 +82,10 @@ Boolean IsSameWallJumpMap() {
     declare metadata Meta_SameWallJump for Map = True;
     return Meta_SameWallJump;
 }
+Integer ForceFastRSMap() {
+    declare metadata Integer Meta_ForceFastRS for Map = 0;
+    return Meta_ForceFastRS;
+}
 
 Integer GetCheckpointsTotal() {
     return G_CheckpointsTotal;
@@ -383,7 +387,7 @@ Void Private_RestartEffect(CSmPlayer _Player, Ident _SpawnId) {
 }
 
 /**
- * Logic to respawn a player when he already have checkpoints and doesnt want to restart from the beginning
+ * Logic to respawn a player when they already have checkpoints and don't want to restart from the beginning
  *
  * Arguments: CSmPlayer _Player         Player to respawn
  *            Integer   _Delay          Activation delay for SM::Spawn
@@ -400,6 +404,10 @@ Void Private_CpRestart(CSmPlayer _Player, Integer _Delay, Ident _LastCheckpoint,
 
     // Check if fast respawn is possible
     if (CanFastRespawn) {
+        if (ForceFastRSMap() == 2) {
+            CanFastRespawn = False;
+        }
+
         declare metadata DefaultTag for  Checkpoint = "";
         if (DefaultTag != "Checkpoint" && DefaultTag != "" || Tools::IsPortal(Checkpoint))
             CanFastRespawn = False;

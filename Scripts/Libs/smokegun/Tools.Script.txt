@@ -191,8 +191,14 @@ Ident GetClosestSpawn(Ident _CheckPointId, Integer _PlayerCPProgress) {
             Max = Order;
     }
 
-    if (Max == -1)
-        return NullId;
+    if (Max == -1) {
+        declare metadata Integer Meta_ForceFastRS for Map = 0;
+        if (Meta_ForceFastRS == 1) {
+            return RNG::GetEnabledSpawn();
+        } else {
+            return NullId;
+        }
+    }
     
     return Private_GetClosestSpawn(_CheckPointId, SpawnIdsByOrder[Max]);
 }
