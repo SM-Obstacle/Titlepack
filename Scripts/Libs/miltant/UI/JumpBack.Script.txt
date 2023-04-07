@@ -4,13 +4,13 @@
 #Const  ScriptName  "JumpBack.Script.txt"
 
 Text GetLayer() {
-    CustomUI::Add("Frame_JumpBack", <120., -30.>, <35., 10.>);
+    CustomUI::Add("JumpBack", <-103.5, 90.>, <25., 5.>, "top", "left");
     return """
 <manialink version="3" name="Obstacle:JumpBack">
-    <frame id="Frame_JumpBack" class="LibCustomUI_Module">
-        <frame pos="120 -30" id="Frame_Wrapper">
-            <label size="30 8" text="Continue my run"/>
-            <quad size="35 10" style="BgRaceScore2" substyle="BgCardPlayer" id="Quad_JumpBack" scriptevents="1" pos="-2 3"/>
+    <frame id="JumpBack" class="LibCustomUI_Module">
+        <frame pos="-103.5 90" id="Frame_Wrapper">
+            <label size="25 5." pos="11 -2.5" textsize="1" halign="center" valign="center2" textfont="OswaldMono" text="Continue my run"/>
+            <quad size="25 5." pos="-2 0.5" style="BgRaceScore2" substyle="BgCardPlayer" id="Quad_JumpBack" scriptevents="1"/>
         </frame>
     </frame>
 <script><!--
@@ -28,7 +28,7 @@ Text GetLayer() {
         {{{CustomUI::InjectMLInit()}}}
         wait(InputPlayer != Null && Page != Null);
 
-        declare Frame_JumpBack      <=> (Page.GetFirstChild("Frame_JumpBack") as CMlFrame);
+        declare Frame_JumpBack      <=> (Page.GetFirstChild("JumpBack") as CMlFrame);
         declare Frame_Wrapper       <=> (Frame_JumpBack.GetFirstChild("Frame_Wrapper") as CMlFrame);
 
         while (True) {

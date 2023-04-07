@@ -11,7 +11,7 @@ Void Yield() {}
 Void UpdateLayer() {}
 
 Text GetLayer() {
-    CustomUI::Add("RespawnBehavior", <-78.5, 90.>, <30., 5.>);
+    CustomUI::Add("RespawnBehavior", <-78.5, 90.>, <30., 5.>, "top", "left");
     return """
 <manialink version="3" name="Obstacle:RespawnBehavior">
     <frame id="RespawnBehavior" class="LibCustomUI_Module">
