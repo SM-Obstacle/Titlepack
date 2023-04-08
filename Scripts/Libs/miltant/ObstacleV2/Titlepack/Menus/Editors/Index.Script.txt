@@ -1,0 +1,84 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+#Include "Libs/miltant/ObstacleV2/Styles.Script.txt"								as Styles
+
+
+Text GetName() {
+	return "editors";
+}
+
+Text Build() {
+    return """
+<manialink version="3" name="L_Menus">
+    {{{Styles::GetStyleSheet()}}}
+    <frame pos="-100 50">
+        <label text="Editors" pos="72.33 -5.6" textsize="5" id="Label_Home" scriptevents="1"/> 
+        <quad size="320 16.67" bgcolor="0009"/>
+    </frame>
+
+    <script><![CDATA[
+        #Include "MathLib" as ML
+        #Include "AnimLib" as AL
+
+        main() {
+            // declare Frame_Menus = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
+            // foreach (MenuContainer in Frame_Menus.Controls) {
+            //     declare Frame_MenuItem = (MenuContainer as CMlFrame);
+            //     declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
+
+            //     declare Text ItemId for Quad_Trigger;
+            //     ItemId = Frame_MenuItem.DataAttributeGet("name");
+            // }
+
+            while(True) {
+                yield;
+
+                if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+                foreach(Event in PendingEvents) {
+                    switch(Event.Type) {
+                        case CMlScriptEvent::Type::MouseClick: {
+                            declare Text ItemId for Event.Control;
+                            
+                            if (ItemId != "") {
+                                SendCustomEvent("menu_item_click", [ItemId]);
+                            }
+                        }
+
+                        case CMlScriptEvent::Type::MouseOver: {
+                            declare Text ItemId for Event.Control;
+                            
+                            if (ItemId != "") {
+                                declare Frame_MenuItem = (Event.Control.Parent as CMlFrame);
+
+                                declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
+                                Quad_Trigger.Scale = 1.1;
+                                Quad_Trigger.ModulateColor = <75 / 255., 89 / 255., 125 / 255.>; // 4B597D
+                            }
+                        }
+
+                        case CMlScriptEvent::Type::MouseOut: {
+                            declare Text ItemId for Event.Control;
+                            
+                            if (ItemId != "") {
+                                declare Frame_MenuItem = (Event.Control.Parent as CMlFrame);
+
+                                declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
+                                Quad_Trigger.Scale = 1.;
+                                Quad_Trigger.ModulateColor = <155 / 255., 155 / 255., 158 / 255.>;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]]></script>
+</manialink>""";
+}
+
+Void Load() {
+    declare Windows::K_Window Window;
+    Window.Name = GetName();
+    Window.Manialink = Build();
+
+	Windows::CreateWindow(Window);
+}

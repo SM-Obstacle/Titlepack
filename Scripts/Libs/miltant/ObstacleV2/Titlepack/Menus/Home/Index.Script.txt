@@ -1,0 +1,135 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+#Include "Libs/miltant/ObstacleV2/Styles.Script.txt"								as Styles
+
+
+Text GetName() {
+	return "home";
+}
+
+Text Build() {
+    return """
+<manialink version="3" name="L_Menus">
+    {{{Styles::GetStyleSheet()}}}
+    <frame pos="-160 73.33">
+        <frame pos="6.67 -26" id="Frame_Menus" size="70 112">
+            <frame data-name="open_news" pos="0 0" size="70 86">
+                <quad size="70 85" scriptevents="1" id="Quad_Target"
+                    class="hover-zoom" data-target="Quad_News"
+                    data-default-anim="<quad scale=&quot;1.&quot;/>" data-target-anim="<quad scale=&quot;1.066&quot;/>"/>
+
+                <label text="Home" textsize="5" class="lato" halign="center" valign="center2" pos="35 -4.5" id="Label_News"/> 
+                <quad size="70 9" image="file://Media/Images/Obstacle/Home/BPatchNote.png"/>
+
+                <frame pos="0 -10.67" size="70 74.67">
+                    <quad size="70 74.67" image="file://Media/Images/Obstacle/Home/ContoursNews.png"/>
+                    <frame pos="34.67 -37.67" clip="1" clipsizen="69.33 74">
+                        <quad size="70 74.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_News"/>
+                    </frame>
+                </frame>
+            </frame>
+
+            <frame data-name="open_server" pos="0 -87">
+                <quad size="70 24.33" scriptevents="1" id="Quad_Target"
+                    class="hover-zoom" data-target="Quad_News"
+                    data-default-anim="<quad scale=&quot;1.&quot;/>" data-target-anim="<quad scale=&quot;1.066&quot;/>"/>
+
+                <label class="lato" text="top server" textprefix="$t" pos="35 -3.8" halign="center" textsize="5"/>
+                <label class="lato" text="Max map   " textprefix="$t" pos="35 -16.42" halign="center" valign="center2"/>
+                <quad size="49.33 7.5" halign="center" valign="center2" pos="35 -16.42" image="file://Media/Images/Obstacle/Home/BServer.png"/>
+                <quad size="70 24.33" image="file://Media/Images/Obstacle/Home/FServer.png"/>
+            </frame>
+        </frame>
+    </frame>
+
+    <script><![CDATA[
+        #Include "MathLib" as ML
+        #Include "AnimLib" as AL
+
+        main() {
+            
+			declare Frame_Menus = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
+			foreach (MenuContainer in Frame_Menus.Controls) {
+				declare Frame_MenuItem = (MenuContainer as CMlFrame);
+				declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
+
+				declare Text ItemId for Quad_Trigger;
+				if (Frame_MenuItem.DataAttributeExists("name")) {
+					ItemId = Frame_MenuItem.DataAttributeGet("name");
+				}
+			}
+
+            while(True) {
+                yield;
+
+                if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+                foreach(Event in PendingEvents) {
+                    switch(Event.Type) {
+                        case CMlScriptEvent::Type::MouseClick: {
+                            declare Text ItemId for Event.Control;
+                            
+                            if (ItemId != "") {
+                                SendCustomEvent("menu_item_click", [ItemId]);
+                            }
+                        }
+
+                        case CMlScriptEvent::Type::MouseOver: {
+                            Page.GetClassChildren("hover-zoom", Page.MainFrame, True);
+                            foreach (Control in Page.GetClassChildren_Result) {
+                                if (Control.Id == Event.Control.Id) {
+                                    AnimMgr.Add(
+                                        Page.GetFirstChild(Control.DataAttributeGet("target")),
+                                        Control.DataAttributeGet("target-anim"),
+                                        200, CAnimManager::EAnimManagerEasing::QuadIn);
+                                }
+                            }
+
+                            declare Text ItemId for Event.Control;
+                            
+                            if (ItemId != "") {
+                                declare Frame_MenuItem = (Event.Control.Parent as CMlFrame);
+
+                                declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
+                                Quad_Trigger.Scale = 1.1;
+                                Quad_Trigger.ModulateColor = <75 / 255., 89 / 255., 125 / 255.>; // 4B597D
+                            }
+                        }
+
+                        case CMlScriptEvent::Type::MouseOut: {
+                            Page.GetClassChildren("hover-zoom", Page.MainFrame, True);
+                            foreach (Control in Page.GetClassChildren_Result) {
+                                if (Control.Id == Event.Control.Id) {
+                                    log(Page.GetFirstChild(Control.DataAttributeGet("target")).ControlId);
+                                    AnimMgr.Add(
+                                        Page.GetFirstChild(Control.DataAttributeGet("target")),
+                                        Control.DataAttributeGet("default-anim"),
+                                        200, CAnimManager::EAnimManagerEasing::QuadOut);
+                                }
+                            }
+
+                            declare Text ItemId for Event.Control;
+                            
+                            if (ItemId != "") {
+                                declare Frame_MenuItem = (Event.Control.Parent as CMlFrame);
+
+                                declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
+                                Quad_Trigger.Scale = 1.;
+                                Quad_Trigger.ModulateColor = <155 / 255., 155 / 255., 158 / 255.>;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]]></script>
+</manialink>""";
+}
+
+Void Load() {
+    declare Windows::K_Window Window;
+    Window.Name = GetName();
+    Window.Manialink = Build();
+    Window.Animation = CUILayer::EUILayerAnimation::LeftFast;
+
+	Windows::CreateWindow(Window);
+}

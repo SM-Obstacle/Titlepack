@@ -1,0 +1,115 @@
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+
+// ---------------------------------- //
+// Tooltip Start
+// ---------------------------------- //
+Void LibManialink_TooltipShow(Text _Id, CMlControl _Control, Text _Text) {
+  Page.GetClassChildren("LibManialink_Tooltip", Page.MainFrame, True);
+  foreach (Control in Page.GetClassChildren_Result) {
+    if (Control.ControlId != _Id) continue;
+    
+    declare Frame_Tooltip <=> (Control as CMlFrame);
+    if (Frame_Tooltip == Null) return;
+    declare Tooltip_Message   <=> (Frame_Tooltip.GetFirstChild("Tooltip_Message")   as CMlLabel);
+    declare Tooltip_BoundingBox <=> (Frame_Tooltip.GetFirstChild("Tooltip_BoundingBox") as CMlQuad);
+    
+    declare Vec3 Pos;
+    Pos.X = (_Control.AbsolutePosition.X - Frame_Tooltip.AbsolutePosition.X) + Frame_Tooltip.RelativePosition.X;
+    Pos.Y = (_Control.AbsolutePosition.Y - Frame_Tooltip.AbsolutePosition.Y) + Frame_Tooltip.RelativePosition.Y;
+    Pos.Z = (_Control.AbsolutePosition.Z - Frame_Tooltip.AbsolutePosition.Z) + Frame_Tooltip.RelativePosition.Z + 1.;
+    
+    if (_Control.HorizontalAlign == CMlControl::AlignHorizontal::HCenter) {
+      Pos.X -= (_Control.Size.X / 2.);
+    } else if (_Control.HorizontalAlign == CMlControl::AlignHorizontal::Right) {
+      Pos.X -= (_Control.Size.X);
+    }
+    
+    if (_Control.VerticalAlign == CMlControl::AlignVertical::Top) {
+      Pos.Y -= _Control.Size.Y;
+    } else if (_Control.VerticalAlign == CMlControl::AlignVertical::VCenter || _Control.VerticalAlign == CMlControl::AlignVertical::VCenter2) {
+      Pos.Y -= _Control.Size.Y / 2.;
+    }
+    
+    if (Tooltip_BoundingBox != Null) {
+      if (Tooltip_BoundingBox.HorizontalAlign == CMlControl::AlignHorizontal::HCenter) {
+        Pos.X += (Tooltip_BoundingBox.Size.X / 2.);
+      } else if (Tooltip_BoundingBox.HorizontalAlign == CMlControl::AlignHorizontal::Right) {
+        Pos.X += (Tooltip_BoundingBox.Size.X);
+      }
+      
+      if (Tooltip_BoundingBox.VerticalAlign == CMlControl::AlignVertical::Bottom) {
+        Pos.Y -= Tooltip_BoundingBox.Size.Y;
+      } else if (Tooltip_BoundingBox.VerticalAlign == CMlControl::AlignVertical::VCenter) {
+        Pos.Y -= Tooltip_BoundingBox.Size.Y / 2.;
+      }
+    }
+    
+    if (Tooltip_BoundingBox != Null) {
+      declare PosMax = <160., 90.>;
+      declare PosMin = <-160., -90.>;
+      
+      if (Tooltip_BoundingBox.HorizontalAlign == CMlControl::AlignHorizontal::HCenter) {
+        PosMax.X = ((160. - Tooltip_BoundingBox.Size.X / 2.) - Frame_Tooltip.AbsolutePosition.X) + Frame_Tooltip.RelativePosition.X;
+        PosMin.X = ((-160. + Tooltip_BoundingBox.Size.X / 2.) - Frame_Tooltip.AbsolutePosition.X) + Frame_Tooltip.RelativePosition.X;
+      } else if (Tooltip_BoundingBox.HorizontalAlign == CMlControl::AlignHorizontal::Right) {
+        PosMin.X = ((-160. + Tooltip_BoundingBox.Size.X) - Frame_Tooltip.AbsolutePosition.X) + Frame_Tooltip.RelativePosition.X;
+      } else {
+        PosMax.X = ((160. - Tooltip_BoundingBox.Size.X) - Frame_Tooltip.AbsolutePosition.X) + Frame_Tooltip.RelativePosition.X;
+      }
+      
+      if (Tooltip_BoundingBox.VerticalAlign == CMlControl::AlignVertical::VCenter) {
+        PosMax.Y = ((90. - Tooltip_BoundingBox.Size.Y / 2.) - Frame_Tooltip.AbsolutePosition.Y) + Frame_Tooltip.RelativePosition.Y;
+        PosMin.Y = ((-90. + Tooltip_BoundingBox.Size.Y / 2.) - Frame_Tooltip.AbsolutePosition.Y) + Frame_Tooltip.RelativePosition.Y;
+      } else if (Tooltip_BoundingBox.VerticalAlign == CMlControl::AlignVertical::Bottom) {
+        PosMax.Y = ((90. - Tooltip_BoundingBox.Size.Y) - Frame_Tooltip.AbsolutePosition.Y) + Frame_Tooltip.RelativePosition.Y;
+      } else {
+        PosMin.Y = ((-90. + Tooltip_BoundingBox.Size.Y) - Frame_Tooltip.AbsolutePosition.Y) + Frame_Tooltip.RelativePosition.Y;
+      }
+      
+      if (Pos.X > PosMax.X) Pos.X = PosMax.X;
+      if (Pos.X < PosMin.X) Pos.X = PosMin.X;
+      if (Pos.Y > PosMax.Y) Pos.Y = PosMax.Y;
+      if (Pos.Y < PosMin.Y) Pos.Y = PosMin.Y;
+    }
+      
+    Frame_Tooltip.RelativePosition = Pos;
+    Frame_Tooltip.Visible = True;
+    if (Tooltip_Message != Null) Tooltip_Message.Value = _Text;
+  }
+}
+
+Void LibManialink_TooltipHide(Text _Id) {
+  Page.GetClassChildren("LibManialink_Tooltip", Page.MainFrame, True);
+  foreach (Control in Page.GetClassChildren_Result) {
+    if (Control.ControlId != _Id) continue;
+    Control.Visible = False;
+  }
+}
+
+Void LibManialink_TooltipLoop() {
+  foreach (Event in PendingEvents) {
+    if (Event.Type == CMlEvent::Type::MouseOver) {
+      if (Event.Control.HasClass("LibManialink_TooltipShow")) {
+        declare Text LibManialink_TooltipMessage for Event.Control;
+        LibManialink_TooltipShow(Event.ControlId, Event.Control, LibManialink_TooltipMessage);
+      }
+    } else if (Event.Type == CMlEvent::Type::MouseOut) {
+      if (Event.Control.HasClass("LibManialink_TooltipShow")) {
+        LibManialink_TooltipHide(Event.ControlId);
+      }
+    }
+  }
+}
+
+Void LibManialink_SetTooltipMessage(Text _Id, Text _Message) {
+  Page.GetClassChildren("LibManialink_TooltipShow", Page.MainFrame, True);
+  foreach (Control in Page.GetClassChildren_Result) {
+    if (Control.ControlId != _Id) continue;
+    declare Text LibManialink_TooltipMessage for Control;
+    LibManialink_TooltipMessage = _Message;
+  }
+}
+// ---------------------------------- //
+// Tooltip Stop
+// ---------------------------------- //
