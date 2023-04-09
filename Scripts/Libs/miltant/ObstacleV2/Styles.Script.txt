@@ -1,6 +1,0 @@
-Text GetStyleSheet() {
-    return """<stylesheet>
-        <style class="lato" textcolor="FFFF" textfont="light"/>
-        <style class="lator" textcolor="FFFF" textfont="regular"/>
-    </stylesheet>""";
-}
