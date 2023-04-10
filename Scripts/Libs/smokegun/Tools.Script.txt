@@ -199,7 +199,7 @@ Ident GetClosestSpawn(Ident _CheckPointId, Integer _PlayerCPProgress) {
             return NullId;
         }
     }
-    
+
     return Private_GetClosestSpawn(_CheckPointId, SpawnIdsByOrder[Max]);
 }
 

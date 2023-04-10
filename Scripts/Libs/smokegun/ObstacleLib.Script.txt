@@ -402,12 +402,14 @@ Void Private_CpRestart(CSmPlayer _Player, Integer _Delay, Ident _LastCheckpoint,
     declare Checkpoint <=> MapLandmarks[_LastCheckpoint];
     declare CanFastRespawn = Settings::GetFastRespawn();
 
+    if (_Increment) {
+        CanFastRespawn = True;
+    } if (CanFastRespawn && ForceFastRSMap() == 2) {
+        CanFastRespawn = False;
+    }
+
     // Check if fast respawn is possible
     if (CanFastRespawn) {
-        if (ForceFastRSMap() == 2) {
-            CanFastRespawn = False;
-        }
-
         declare metadata DefaultTag for  Checkpoint = "";
         if (DefaultTag != "Checkpoint" && DefaultTag != "" || Tools::IsPortal(Checkpoint))
             CanFastRespawn = False;
@@ -602,8 +604,6 @@ Boolean JumpToCheckpointIdent_ByPassSpawn(CSmPlayer _Player, Ident _Target) {
 
 Boolean JumpToCheckpointIdent(CSmPlayer _Player, Ident _Target) {
     declare Spawn = Tools::GetClosestSpawn(_Target, Player::getCpProgress(_Player));
-    if (Spawn == NullId)
-        return False;
 
     Player::setUsedJump(_Player, True);
     Player::clearLastCPTimes(_Player);
