@@ -675,18 +675,6 @@ Void JumpToCheckpoint(CSmPlayer _Player, Integer _Target) {
     }
 }
 
-
-/**
- * Jump a player back to their last legitimate position
- *
- * Arguments: CSmPlayer _Player Player to teleport
- */
-
-Void JumpBack(CSmPlayer _Player) {
-    Player::loadLastLegitPosition(_Player);
-    ObsRespawnPlayer(_Player);
-}
-
 /**
  * Logic when a player capture the goal
  *
@@ -779,6 +767,24 @@ Void Private_CheckpointEffect(CSmPlayer _Player, Ident _CheckpointId) {
         if (Tools::IsPortal(Checkpoint))
             Private_UsePortal(_Player, _CheckpointId);
     }
+}
+
+
+/**
+ * Jump a player back to their last legitimate position
+ *
+ * Arguments: CSmPlayer _Player Player to teleport
+ */
+
+Void JumpBack(CSmPlayer _Player) {
+    Player::loadLastLegitPosition(_Player);
+
+    declare LastCP = Player::getV2PortalCache(_Player);
+    if (LastCP == NullId)
+        LastCP = Player::getLastCheckpoint(_Player);
+
+    Private_CheckpointEffect(_Player, LastCP);
+    ObsRespawnPlayer(_Player);
 }
 
 /**
