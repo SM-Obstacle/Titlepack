@@ -5,7 +5,6 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
 #Include "Libs/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"					as Layers
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
-#Include "TextLib" 																as TL
 
 Text Build() {
 	declare ML_Text =  """
@@ -20,7 +19,8 @@ Text Build() {
 			data-target-anim="<quad modulatecolor=&quot;4b597d&quot; scale=&quot;1.066&quot;/>"/>
 	</framemodel>
 	<frame pos="-160 90">
-		<label text="" class="lato" pos="72.33 -5.6" textsize="5" id="Label_Home" data-name="home" scriptevents="1"
+		<label text="" class="lato" pos="75.5 -8.9" halign="center" valign="center2"
+			textsize="5" id="Label_Home" data-name="home" scriptevents="1"
 			data-target="Label_Home"
 			data-default-anim="<label scale=&quot;1.&quot;/>" data-target-anim="<label scale=&quot;1.066&quot;/>"/>
 
@@ -109,6 +109,7 @@ Void Loop() {
 
 				case "editors": {
 					Windows::Load(Editors::GetName());
+					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
 
 				case "profile": {

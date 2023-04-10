@@ -1,5 +1,4 @@
-#Include "Libs/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"						as Layers
-#Include "TextLib" as TL
+#Include "Libs/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"	as Layers
 
 
 #Struct K_Window {
@@ -14,7 +13,7 @@ declare Text G_Current_Window;
 
 Text Build(K_Window _Menu) {
 	declare ML_Text = """
-<manialink version="3" name="L_Window">
+<manialink version="3" name="L_Window_{{{_Menu.Name}}}">
 {{{_Menu.Manialink}}}
 </manialink>
 	""";
