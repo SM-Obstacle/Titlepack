@@ -82,6 +82,10 @@ Boolean IsSameWallJumpMap() {
     declare metadata Meta_SameWallJump for Map = True;
     return Meta_SameWallJump;
 }
+Integer ForceFastRSMap() {
+    declare metadata Integer Meta_ForceFastRS for Map = 0;
+    return Meta_ForceFastRS;
+}
 
 Integer GetCheckpointsTotal() {
     return G_CheckpointsTotal;
@@ -383,7 +387,7 @@ Void Private_RestartEffect(CSmPlayer _Player, Ident _SpawnId) {
 }
 
 /**
- * Logic to respawn a player when he already have checkpoints and doesnt want to restart from the beginning
+ * Logic to respawn a player when they already have checkpoints and don't want to restart from the beginning
  *
  * Arguments: CSmPlayer _Player         Player to respawn
  *            Integer   _Delay          Activation delay for SM::Spawn
@@ -397,6 +401,12 @@ Void Private_CpRestart(CSmPlayer _Player, Integer _Delay, Ident _LastCheckpoint,
 
     declare Checkpoint <=> MapLandmarks[_LastCheckpoint];
     declare CanFastRespawn = Settings::GetFastRespawn();
+
+    if (_Increment) {
+        CanFastRespawn = True;
+    } if (CanFastRespawn && ForceFastRSMap() == 2) {
+        CanFastRespawn = False;
+    }
 
     // Check if fast respawn is possible
     if (CanFastRespawn) {
@@ -594,8 +604,6 @@ Boolean JumpToCheckpointIdent_ByPassSpawn(CSmPlayer _Player, Ident _Target) {
 
 Boolean JumpToCheckpointIdent(CSmPlayer _Player, Ident _Target) {
     declare Spawn = Tools::GetClosestSpawn(_Target, Player::getCpProgress(_Player));
-    if (Spawn == NullId)
-        return False;
 
     Player::setUsedJump(_Player, True);
     Player::clearLastCPTimes(_Player);
@@ -665,18 +673,6 @@ Void JumpToCheckpoint(CSmPlayer _Player, Integer _Target) {
     } else {
         UI.SendChat("$f11Cannot find Spawn for Checkpoint "^_Target^"!$z");
     }
-}
-
-
-/**
- * Jump a player back to their last legitimate position
- *
- * Arguments: CSmPlayer _Player Player to teleport
- */
-
-Void JumpBack(CSmPlayer _Player) {
-    Player::loadLastLegitPosition(_Player);
-    ObsRespawnPlayer(_Player);
 }
 
 /**
@@ -771,6 +767,24 @@ Void Private_CheckpointEffect(CSmPlayer _Player, Ident _CheckpointId) {
         if (Tools::IsPortal(Checkpoint))
             Private_UsePortal(_Player, _CheckpointId);
     }
+}
+
+
+/**
+ * Jump a player back to their last legitimate position
+ *
+ * Arguments: CSmPlayer _Player Player to teleport
+ */
+
+Void JumpBack(CSmPlayer _Player) {
+    Player::loadLastLegitPosition(_Player);
+
+    declare LastCP = Player::getV2PortalCache(_Player);
+    if (LastCP == NullId)
+        LastCP = Player::getLastCheckpoint(_Player);
+
+    Private_CheckpointEffect(_Player, LastCP);
+    ObsRespawnPlayer(_Player);
 }
 
 /**

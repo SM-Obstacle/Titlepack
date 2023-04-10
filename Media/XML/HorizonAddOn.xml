@@ -17,7 +17,6 @@
 			<asset id="LocalNetwork" isdefault="yes" titlename="Local Network" isvisibleinmaker="True"/>
 	<asset id="LocalPlay_UGCAsset-0" isdefault="no" titlename="Modes\ShootMania\Obstacle.Script.txt"/>
 	<asset id="LocalPlay_UGCAsset-1" isdefault="no" titlename="Modes\ShootMania\Sprint.Script.txt"/>
-	<asset id="LocalPlay_UGCAsset-2" isdefault="no" titlename="Modes\ShootMania\TAS.Script.txt"/>
 
 	</LocalPlay>
 	<Editors logo="file://Media/MEDIABROWSER_HiddenResources/Common/Images/Menus/Buttons/Logo_Editor.dds" activated="True" color="fed" mapeditor="">

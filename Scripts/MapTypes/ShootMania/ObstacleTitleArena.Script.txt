@@ -324,7 +324,11 @@ Void Unload()
 
 Void Init()
 {
-    MapType::SetVersion(3);
+    log(MapType::GetVersion());
+    if (MapType::GetVersion() == 0) { // new map
+        declare metadata Integer Meta_ForceFastRS for Map = 1;
+        MapType::SetVersion(3);
+    }
     CustomEditAnchorData = True;
 
     declare Ident[] NewAnchorCache;
@@ -415,9 +419,12 @@ Void EditMap()
     declare metadata Boolean Meta_PvP_Weapons for Map = False;
     declare metadata Boolean Meta_PvP_Collisions for Map = False;
     declare metadata Boolean Meta_SameWallJump for Map = True;
+    declare metadata Integer Meta_ForceFastRS for Map = 0;
+
     declare PvP_Weapons for ManialinkPage = Meta_PvP_Weapons;
     declare PvP_Collisions for ManialinkPage = Meta_PvP_Collisions;
     declare SameWallJump for ManialinkPage = Meta_SameWallJump;
+    declare ForceFastRS for ManialinkPage = Meta_ForceFastRS;
 
     /// --- Manialink
     declare Properties = """
@@ -426,6 +433,7 @@ Void EditMap()
             {{{Property("-20 -2.5", "PvP Weapons", Checkbox("13 0", "Checkbox_PvP_Weapons"))}}}
             {{{Property("12.5 -2.5", "PvP Collisions", Checkbox("13 0", "Checkbox_PvP_Collisions"))}}}
             {{{Property("-20 -10", "Same-Wall WJ", Checkbox("13 0", "Checkbox_SameWallJump"))}}}
+            {{{Property("-20 -17.5", "Fast Respawn", Checkbox("13 0", "Checkbox_ForceFastRS"))}}}
         </frame>
     """;
 
@@ -440,10 +448,12 @@ Void EditMap()
         declare Boolean PvP_Weapons for Page;
         declare Boolean PvP_Collisions for Page;
         declare Boolean SameWallJump for Page;
+        declare Integer ForceFastRS for Page;
 
         declare Label_PvP_Weapons <=> (Page.GetFirstChild("Checkbox_PvP_Weapons") as CMlLabel);
         declare Label_PvP_Collisions <=> (Page.GetFirstChild("Checkbox_PvP_Collisions") as CMlLabel);
         declare Label_SameWallJump <=> (Page.GetFirstChild("Checkbox_SameWallJump") as CMlLabel);
+        declare Label_ForceFastRS <=> (Page.GetFirstChild("Checkbox_ForceFastRS") as CMlLabel);
 
         if (!PvP_Weapons && Label_PvP_Weapons.Value != "") {
             Label_PvP_Weapons.SetText("");
@@ -466,6 +476,16 @@ Void EditMap()
             Label_SameWallJump.SetText("✖");
         }
 
+        if (ForceFastRS == 0 && Label_ForceFastRS.Value != "?") {
+            Label_ForceFastRS.SetText("?");
+        }
+        if (ForceFastRS == 1 && Label_ForceFastRS.Value != "✖") {
+            Label_ForceFastRS.SetText("✖");
+        }
+        if (ForceFastRS == 2 && Label_ForceFastRS.Value != "") {
+            Label_ForceFastRS.SetText("");
+        }
+
         SendCustomEvent("Event_Save_Map", Text[]);
     }
 
@@ -473,6 +493,8 @@ Void EditMap()
         declare Boolean PvP_Weapons for Page = False;
         declare Boolean PvP_Collisions for Page = False;
         declare Boolean SameWallJump for Page = False;
+        declare Integer ForceFastRS for Page = 0;
+
         declare NeedUpdate = False;
         UpdateView();
 
@@ -495,6 +517,15 @@ Void EditMap()
 
                         case "Checkbox_SameWallJump":
                             SameWallJump = !SameWallJump;
+
+                        case "Checkbox_ForceFastRS": {
+                            switch (ForceFastRS) {
+                                case 2:
+                                    ForceFastRS = 1;
+                                default:
+                                    ForceFastRS = 2;
+                            }
+                        }
                     }
 
                     NeedUpdate = True;
@@ -513,14 +544,17 @@ Void SaveMapSettings()
     declare metadata Boolean Meta_PvP_Weapons for Map;
     declare metadata Boolean Meta_PvP_Collisions for Map;
     declare metadata Boolean Meta_SameWallJump for Map;
+    declare metadata Integer Meta_ForceFastRS for Map;
 
     declare Boolean PvP_Weapons for ManialinkPage;
     declare Boolean PvP_Collisions for ManialinkPage;
     declare Boolean SameWallJump for ManialinkPage;
+    declare Integer ForceFastRS for ManialinkPage;
 
     Meta_PvP_Weapons = PvP_Weapons;
     Meta_PvP_Collisions = PvP_Collisions;
     Meta_SameWallJump = SameWallJump;
+    Meta_ForceFastRS = ForceFastRS;
 }
 
 
@@ -1602,6 +1636,10 @@ Void Loop()
                         HighlightAnchor(Anchor);
                         EditSpawn(Anchor);
                     }
+                    case "Gate": {
+                        //EditGate(Anchor);
+                    }
+
                     case "Ammo":
                         EditAmmoItem(Anchor);
                     case "OffzoneShield":

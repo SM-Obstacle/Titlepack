@@ -44,7 +44,7 @@ Text GetLayer(Real _NextMapVotingRatio) {
     <frame id="Frame_NextMapVote" class="LibCustomUI_Module">
         <frame pos="-49 90">
             <label id="Label_NextMapVoting" pos="0 -2" size="25 4" textsize="1" halign="left" valign="center2" textfont="OswaldMono" textcolor="080"/>
-            <quad z-index="-1" pos="12.5 -2" size="27 5" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center"/>
+            <quad pos="12.5 -2" size="27 5" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center" id="Quad_VoteSkip" scriptevents="1"/>
         </frame>
     </frame>
 
@@ -77,13 +77,17 @@ Text GetLayer(Real _NextMapVotingRatio) {
 
             // Process events
             foreach (Event in PendingEvents) {
-                if (Event.Type == CMlEvent::Type::KeyPress && Event.CharPressed == "2621440") {
-                    // F3 - Change next map vote
-                    if (C_UseNextMapVoting) {
-                        if (Net_NextMapVote == 1) {
-                            Net_NextMapVote = 0;
-                        } else {
-                            Net_NextMapVote = 1;
+                switch (Event.Type) {
+                    case CMlScriptEvent::Type::MouseClick: {
+                        if (Event.Control.ControlId == "Quad_VoteSkip") {
+                            // Change next map vote
+                            if (C_UseNextMapVoting) {
+                                if (Net_NextMapVote == 1) {
+                                    Net_NextMapVote = 0;
+                                } else {
+                                    Net_NextMapVote = 1;
+                                }
+                            }
                         }
                     }
                 }
