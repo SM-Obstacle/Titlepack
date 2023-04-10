@@ -122,11 +122,6 @@ Boolean PickupItems(CSmModeEvent _Event) {
         }
 
         case Constants::C_ItemAmmo: {
-
-            if (_Event.Player.CurAmmo == _Event.Player.CurAmmoMax) {
-                return False;
-            }
-
             // Use cooldown on offzone shield too???
             declare Cooldown for _Event.Object = 500;
             if (Cooldown <= 0) {
