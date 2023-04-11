@@ -17,7 +17,7 @@
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2021-07-11"
+#Const  Version     "2023-04-10"
 #Const  ScriptName  "Player.Script.txt"
 
 
@@ -346,7 +346,7 @@ Void setUsedJump(CSmPlayer _Player, Boolean _Value) {
     Net_UsedJump = _Value;
 }
 
-Void loadLastLegitPosition(CSmPlayer _Player) {
+Ident loadLastLegitPosition(CSmPlayer _Player) {
     declare Ident Save_LastCheckpoint for _Player = NullId;
     declare Boolean Save_UsedRSBug for _Player = False;
     declare Boolean Save_UsedAltGlitch for _Player = False;
@@ -378,6 +378,8 @@ Void loadLastLegitPosition(CSmPlayer _Player) {
     LastCheckpointsIdsStr = Save_LastCheckpointsIdsStr;
     PreviousCheckpointsOrder = Save_PreviousCheckpointsOrder;
     CheckpointsTimeLast = Save_CheckpointsTimeLast;
+
+    return Save_LastCheckpoint;
 }
 
 // Declare player's variable

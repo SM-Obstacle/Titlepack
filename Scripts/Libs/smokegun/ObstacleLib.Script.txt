@@ -34,7 +34,7 @@
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2021-10-19"
+#Const  Version     "2023-04-10"
 #Const  ScriptName  "ObstacleLib.Script.txt"
 
 
@@ -777,11 +777,7 @@ Void Private_CheckpointEffect(CSmPlayer _Player, Ident _CheckpointId) {
  */
 
 Void JumpBack(CSmPlayer _Player) {
-    Player::loadLastLegitPosition(_Player);
-
-    declare LastCP = Player::getV2PortalCache(_Player);
-    if (LastCP == NullId)
-        LastCP = Player::getLastCheckpoint(_Player);
+    declare LastCP = Player::loadLastLegitPosition(_Player);
 
     Private_CheckpointEffect(_Player, LastCP);
     ObsRespawnPlayer(_Player);

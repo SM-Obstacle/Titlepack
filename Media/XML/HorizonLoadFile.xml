@@ -725,13 +725,13 @@
 </campaign>
 </Solo>
 	<Multiplayer logo="file://Media/MEDIABROWSER_HiddenResources/Common/Images/Menus/Buttons/Logo_Online.dds" activated="True" color="eff" allowallmodes="True" displaytitleserversonly="True">
-			<asset id="Modes\ShootMania\Obstacle.Script.txt" isdefault="yes" titlename="Modes\ShootMania\Obstacle.Script.txt" makername="Modes\ShootMania\Obstacle.Script.txt" isvisibleinmaker="yes"/>
+			<asset id="Modes\ShootMania\Obstacle.Script.txt" isdefault="no" titlename="Modes\ShootMania\Obstacle.Script.txt" makername="Modes\ShootMania\Obstacle.Script.txt" isvisibleinmaker="yes"/>
 	<asset id="Modes\ShootMania\Sprint.Script.txt" isdefault="no" titlename="Modes\ShootMania\Sprint.Script.txt" makername="Modes\ShootMania\Sprint.Script.txt" isvisibleinmaker="yes"/>
 
 	</Multiplayer>
 	<LocalPlay logo="file://Media/MEDIABROWSER_HiddenResources/Common/Images/Menus/Buttons/Logo_LocalPlay.dds" activated="True" color="efe">
-			<asset id="LocalNetwork" isdefault="yes" titlename="Local Network" makername="Local Network" isvisibleinmaker="True" isactivated="True"/>
-	<asset id="Modes\ShootMania\Obstacle.Script.txt" isdefault="yes" titlename="Modes\ShootMania\Obstacle.Script.txt" makername="Modes\ShootMania\Obstacle.Script.txt" isvisibleinmaker="yes"/>
+			<asset id="LocalNetwork" isdefault="yes" titlename="LocalNetwork" makername="Local Network" isvisibleinmaker="True" isactivated="True"/>
+	<asset id="Modes\ShootMania\Obstacle.Script.txt" isdefault="no" titlename="Modes\ShootMania\Obstacle.Script.txt" makername="Modes\ShootMania\Obstacle.Script.txt" isvisibleinmaker="yes"/>
 	<asset id="Modes\ShootMania\Sprint.Script.txt" isdefault="no" titlename="Modes\ShootMania\Sprint.Script.txt" makername="Modes\ShootMania\Sprint.Script.txt" isvisibleinmaker="yes"/>
 
 	</LocalPlay>
