@@ -3,9 +3,58 @@
 #Include "Libs/miltant/Nadeo_Fork/Common/Core/Pages.Script.txt"								as Pages
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/MenuController.Script.txt"					as MenuController
 
+#Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
+#Include "Libs/ahmad3/Auth.Script.txt" as ObsAuth
+#Include "Libs/smokegun/Constants.Script.Txt" as Constants
+
 #Const C_FirstPage			 "SectionsSelector"
 
+declare Text G_CurrentBan;
+
+Boolean Private_CheckBanned(Text _Login, Text _Secret) {
+	declare payload = """{
+		"secret": {{{Json::GetText(_Secret)}}},
+		"login": {{{Json::GetText(_Login)}}}
+	}""";
+
+	declare req = Http.CreatePost(
+		Constants::C_HostUrl ^ "player/is_banned",
+		payload,
+		"Content-Type: application/json\nAccept: application/xml");
+
+	wait(req.IsCompleted);
+	log("Ban info: " ^ req.StatusCode ^ " " ^ req.Result);
+	
+	// this condition is necessary even if the token is updated before
+	// because the server may have closed meanwhile
+	// thus lost the token so we need to register a new one
+	if (req.StatusCode == 401) {
+		// updating token
+		ObsAuth::LogMessage("Updating token...");
+		return Private_CheckBanned(_Login, ObsAuth::UpdateToken());
+	}
+	
+	if (req.StatusCode != 200) {
+		log("Error when checking if player is banned");
+		return False;
+	}
+
+	declare response = Xml.Create(req.Result);
+	declare banned = response.Root.GetFirstChild("banned").TextContents == "true";
+	// todo: format banishment (see obs API doc)
+	G_CurrentBan = response.Root.GetFirstChild("current_ban").TextContents;
+	return banned;
+}
+
 main() {
+	declare obsToken = ObsAuth::CheckToken();
+
+	if (Private_CheckBanned(LocalUser.Login, obsToken)) {
+		// todo: display ban infos: G_CurrentBan
+		Dialog_Message("You are banned from this mode! Go out!!!");
+		return;
+	}
+	
 	log("Main Obstacle Menu loaded!");
 
 	MenuController::LoadAll();
