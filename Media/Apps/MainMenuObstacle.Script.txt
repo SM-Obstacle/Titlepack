@@ -30,7 +30,6 @@ Boolean Private_CheckBanned(Text _Login, Text _Secret) {
 	// thus lost the token so we need to register a new one
 	if (req.StatusCode == 401) {
 		// updating token
-		ObsAuth::LogMessage("Updating token...");
 		return Private_CheckBanned(_Login, ObsAuth::UpdateToken());
 	}
 	

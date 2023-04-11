@@ -5,7 +5,6 @@
  *   Util functions for auth system              *
  ************************************************/
 
-#Include "TextLib" as TextLib
 #Include "MathLib" as MathLib
 #Include "TimeLib" as TimeLib
 
@@ -37,9 +36,10 @@ Void LogError(Text _Msg) {
 }
 
 Text UpdateToken() {
+	LogMessage("Updating token...");
+
 	declare persistent Text obsToken for LocalUser;
 	declare persistent Text obsTokenAt for LocalUser = "0";
-	// obsTokenAt = "0"; // uncomment this line to reset the token
 	
 	declare login = LocalUser.Login;
 	declare Text state = login ^ Now;
