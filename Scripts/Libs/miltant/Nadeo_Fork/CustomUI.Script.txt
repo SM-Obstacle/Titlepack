@@ -220,9 +220,15 @@ main() {
 			LibCustomUI_ModulesPositions[Label_Handler.ControlId] = <0., 0., 0.>;
 			Control.RelativePosition = <0., 0., 0.>;
 		}
+		
 		if (Persistent_LibCustomUI_ModulesSpecOnly.exists(Label_Handler.ControlId)) {
 			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = True;
 			LibCustomUI_ModulesSpecOnly.add(Label_Handler.ControlId);
+			SetHelperModuleVisibility(Control, True, True);
+		} else if (Control.HasClass("SpecOnly")) {
+			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = True;
+			LibCustomUI_ModulesSpecOnly.add(Label_Handler.ControlId);
+			Persistent_LibCustomUI_ModulesSpecOnly.add(Label_Handler.ControlId);
 			SetHelperModuleVisibility(Control, True, True);
 		} else if (Persistent_LibCustomUI_ModulesVisibilities.existskey(Label_Handler.ControlId)) {
 			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = Persistent_LibCustomUI_ModulesVisibilities[Label_Handler.ControlId];

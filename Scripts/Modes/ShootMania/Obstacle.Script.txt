@@ -61,13 +61,13 @@
 #Setting S_CheckpointMarkersCount 1 as "Count of different checkpoint markers"
 
 #Setting S_ForceRNGSeed "" as "Seed to use for randomizer maps (Integer)"
+#Setting S_PvPWeapons False as "Force PvP Weapons"
+#Setting S_PvPCollisions False as "Force PvP Collisions"
 
 #Setting S_ScriptEnvironment "development"
 
 #Command Command_BeginSurvival (Integer) as _("Begin survival cup (max lives)")
 #Command Command_EndSurvival (Integer) as _("End survival cup")
-#Command Command_TogglePvPWeapons (Boolean) as _("Set PvP Weapons (on/off)")
-#Command Command_TogglePvPCollisions (Boolean) as _("Set PvP Collisions (on/off)")
 
 // ---------------------------------- //
 // Constants
@@ -101,10 +101,10 @@ MB_Settings_UseDefaultObjects = False;
 
 UseClans = False;
 UseSameWallJump = True;
-UsePvPWeapons = False;
-UsePvPCollisions = False;
-G_LastUsePvPWeapons = False;
-G_LastUsePvPCollisions = False;
+UsePvPWeapons = S_PvPWeapons;
+UsePvPCollisions = S_PvPCollisions;
+G_LastUsePvPWeapons = S_PvPWeapons;
+G_LastUsePvPCollisions = S_PvPCollisions;
 G_IsCampaign = False;
 
 UIManager.UIAll.OverlayHide321Go = False;
@@ -408,12 +408,6 @@ foreach (Event in PendingEvents) {
                 if (Settings::GetScoreMode() == Constants::C_Score_Survival) {
                     ObsScores::Survival_ForceEnd();
                 }
-            }
-            else if (Event.CommandName == "Command_TogglePvPWeapons") {
-                UsePvPWeapons = Event.CommandValueBoolean;
-            }
-            else if (Event.CommandName == "Command_TogglePvPCollisions") {
-                UsePvPCollisions = Event.CommandValueBoolean;
             }
         }
 
@@ -834,6 +828,16 @@ Void UpdateSettings() {
 
     if (S_ForceRNGSeed != Settings::GetForceRNGSeed()) {
         Settings::SetForceRNGSeed(S_ForceRNGSeed);
+    }
+    
+    if (S_PvPWeapons != Settings::GetForcePvPWeapons()) {
+        Settings::SetForcePvPWeapons(S_PvPWeapons);
+        UsePvPWeapons = S_PvPWeapons || Obstacle::IsPvPWeaponsMap();
+    }
+
+    if (S_PvPCollisions != Settings::GetForcePvPCollisions()) {
+        Settings::SetForcePvPCollisions(S_PvPCollisions);
+        UsePvPCollisions = S_PvPCollisions || Obstacle::IsPvPCollisionsMap();
     }
 
     if (S_CheckpointMarkersCount != Settings::GetCheckpointMarkersCount()) {

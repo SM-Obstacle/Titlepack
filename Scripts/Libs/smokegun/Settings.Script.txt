@@ -1,4 +1,4 @@
-// Generated from Settings.py and Settings.tmpl
+// Generated from Settings.py and Settings.tmpl (not, actually)
 
 
 declare Integer G_TimeLimit;
@@ -30,6 +30,8 @@ declare Real G_NextMapVotingRatio;
 declare Text G_BestNewRecordMsg;
 declare Text G_WorseNewRecordMsg;
 declare Text G_ForceRNGSeed;
+declare Boolean G_ForcePvPWeapons;
+declare Boolean G_ForcePvPCollisions;
 
 
 Integer GetTimeLimit() {
@@ -241,4 +243,22 @@ Text GetForceRNGSeed() {
 
 Void SetForceRNGSeed(Text _Value) {
 	G_ForceRNGSeed = _Value;
+}
+
+
+Boolean GetForcePvPWeapons() {
+	return G_ForcePvPWeapons;
+}
+
+Void SetForcePvPWeapons(Boolean _Value) {
+	G_ForcePvPWeapons = _Value;
+}
+
+
+Boolean GetForcePvPCollisions() {
+	return G_ForcePvPCollisions;
+}
+
+Void SetForcePvPCollisions(Boolean _Value) {
+	G_ForcePvPCollisions = _Value;
 }
