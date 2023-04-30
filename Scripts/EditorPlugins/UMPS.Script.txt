@@ -1,0 +1,2105 @@
+#RequireContext CMapEditorPlugin
+
+#Include "TextLib" as TextLib
+#Include "MathLib" as MathLib
+#Include "TimeLib" as TimeLib
+
+#Const C_Plugin_Name "Universe Map Plugin Set"
+#Const C_Plugin_Name_Short "UMPS"
+#Const C_Plugin_Version "1.0.5"
+#Const C_Plugin_Author "BigBang1112"
+
+#Struct SSceneryPainterSettings {
+	Boolean Enabled;
+	Boolean Windowed;
+	Vec2 WindowPosition;
+	Integer Density;
+	Text[] Blocks;
+	Boolean Replace;
+	Integer Key;
+	Vec3 Color;
+}
+
+#Struct SReplacerSettings {
+	Boolean Enabled;
+	Boolean Windowed;
+	Vec2 WindowPosition;
+	Text ToReplace;
+	Text ReplaceWith;
+}
+
+#Struct STestSettings {
+	Boolean Enabled;
+	Boolean Windowed;
+	Vec2 WindowPosition;
+}
+
+#Struct SAutosaveSettings {
+	Boolean Enabled;
+	Boolean Windowed;
+	Vec2 WindowPosition;
+	Text Location;
+	Real Interval;
+}
+
+#Struct SSkinPainterSettings {
+	Boolean Enabled;
+	Boolean Windowed;
+	Vec2 WindowPosition;
+}
+
+#Struct SUPSSettings {
+	Boolean Open;
+	SSceneryPainterSettings SceneryPainter;
+	SReplacerSettings Replacer;
+	STestSettings Test;
+	SAutosaveSettings Autosave;
+	SSkinPainterSettings SkinPainter;
+}
+
+::CardinalDirections GetRandomDirection() {
+	switch(MathLib::Rand(0, 3)) {
+		case 0: { return ::CardinalDirections::North; }
+		case 1: { return ::CardinalDirections::East; }
+		case 2: { return ::CardinalDirections::South; }
+		case 3: { return ::CardinalDirections::West; }
+	}
+	return ::CardinalDirections::North;
+}
+
+::CardinalDirections ToCardinalDirections(CBlock::CardinalDirections _Dir) {
+	switch(_Dir) {
+		case CBlock::CardinalDirections::North: { return ::CardinalDirections::North; }
+		case CBlock::CardinalDirections::East: { return ::CardinalDirections::East; }
+		case CBlock::CardinalDirections::South: { return ::CardinalDirections::South; }
+		case CBlock::CardinalDirections::West: { return ::CardinalDirections::West; }
+	}
+	return ::CardinalDirections::North;
+}
+
+Int3 GetNearestCoordFromVec3(Vec3 _Position) {
+	declare BlockSize = CollectionSquareSize;
+	declare GroundY = CollectionGroundY;
+	declare Height = CollectionSquareHeight;
+	return <MathLib::NearestInteger(_Position.X / BlockSize) - 1,
+		MathLib::NearestInteger(_Position.Y / Height) + GroundY - 1,
+		MathLib::NearestInteger(_Position.Z / BlockSize) - 1>;
+}
+
+***SceneryPainter_Init***
+***
+if(Settings.SceneryPainter.Blocks.count == 0)
+	Settings.SceneryPainter.Blocks = ["", "", "", "", ""];
+	
+if(Settings.SceneryPainter.Density == 0)
+	Settings.SceneryPainter.Density = 1;
+
+if(Settings.SceneryPainter.Key == 0)
+	Settings.SceneryPainter.Key = 68; // Left Shift
+	
+if(Settings.SceneryPainter.Color == <0.,0.,0.>)
+	Settings.SceneryPainter.Color = <0.,1.,1.>;
+
+declare Int3 SP_PreviousCursorCoord;
+declare Boolean SP_PreviousKeyPress;
+declare ::PlaceMode SP_PreviousPlaceMode;
+	
+declare Int3[] SP_RealCoords;
+
+declare Integer SP_MaxRadius for ManialinkPage;
+SP_MaxRadius = 10;
+
+declare Boolean SP_IsPainting for ManialinkPage;
+***
+
+***SceneryPainter_Loop***
+***
+HideEditorInterface = False;
+
+if(Input.IsKeyPressed(Settings.SceneryPainter.Key) != SP_PreviousKeyPress) {
+	SP_PreviousKeyPress = Input.IsKeyPressed(Settings.SceneryPainter.Key);
+	if(SP_PreviousKeyPress) SP_PreviousPlaceMode = PlaceMode;
+	else {
+		PlaceMode = SP_PreviousPlaceMode;
+		CustomSelectionCoords.clear();
+	}
+}
+
+declare Integer SP_Radius for ManialinkPage;
+
+if(Input.IsKeyPressed(Settings.SceneryPainter.Key)) {
+	if(SP_PreviousCursorCoord != Cursor.Coord) {
+		SP_PreviousCursorCoord = Cursor.Coord;
+	}
+	
+	PlaceMode = ::PlaceMode::Plugin;
+	HideEditorInterface = True;
+	
+	SP_Radius = MathLib::Clamp(Cursor.Coord.Y - GetMouseCoordOnGround().Y + 1, 0, SP_MaxRadius);
+	
+	declare Radius = SP_Radius;
+	declare RadiusY = 0;
+	SP_RealCoords.clear();
+	CustomSelectionRGB = Settings.SceneryPainter.Color * .25;
+	CustomSelectionCoords.clear();
+	for(X, -Radius, Radius) {
+		for(Y, -RadiusY, RadiusY) {
+			for(Z, -Radius, Radius) {
+				if(X * X + Z * Z <= Radius * Radius) {
+					declare Coord = <Cursor.Coord.X + X, GetGroundHeight(Cursor.Coord.X + X, Cursor.Coord.Z + Z), Cursor.Coord.Z + Z>;
+					SP_RealCoords.add(Coord);
+					declare Block = GetBlock(Coord);
+					if(Block != Null)
+						foreach(Unit in Block.BlockUnits)
+							CustomSelectionCoords.add(Coord + Unit.AbsoluteOffset);
+				}
+			}
+		}
+	}
+	
+	if(Input.MouseLeftButton) {
+		CustomSelectionRGB = Settings.SceneryPainter.Color * .5;
+		SP_IsPainting = True;
+		for(I, 1, Settings.SceneryPainter.Density) {
+			declare RandomCoordIndex = MathLib::Rand(0, SP_RealCoords.count-1);
+			if(SP_RealCoords.existskey(RandomCoordIndex)) {
+				declare RandomCoord = SP_RealCoords[RandomCoordIndex];
+				declare CBlockModel RandomModel;
+				RandomModel = GetBlockModelFromName(Settings.SceneryPainter.Blocks[MathLib::Rand(0, Settings.SceneryPainter.Blocks.count-1)]);
+				declare RandomDirection = GetRandomDirection();
+				if(RandomModel != Null) {
+					if((GetBlock(RandomCoord) != Null && !GetBlock(RandomCoord).BlockModel.IsRoad)
+					|| Settings.SceneryPainter.Replace) { // If the block to be scenerized is not a road, unless replace mode
+						if(!PlaceBlock(RandomModel, RandomCoord, RandomDirection)) { // Place the block, and if not placed
+							//CustomSelectionCoords.remove(RandomCoord);		Cool effect which tends to crash the game
+							if(Settings.SceneryPainter.Replace) {
+								declare Removed = RemoveBlock(RandomCoord);
+								declare Placed = PlaceBlock(RandomModel, RandomCoord, RandomDirection);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	else SP_IsPainting = False;
+	Cursor.Brightness = 0.;
+}
+else {
+	SP_Radius = -1;
+	Cursor.Brightness = 1.;
+}
+***
+
+***Replacer_Event***
+***
+if(Event.Type == CMapEditorPluginEvent::Type::LayerCustomEvent) {
+	switch(Event.CustomEventType) {
+		case "Replacer_Replace": {
+			declare ToReplace = Settings.Replacer.ToReplace;
+			declare ReplaceWith = Settings.Replacer.ReplaceWith;
+			
+			CustomSelectionCoords.clear();
+			CustomSelectionRGB = <.5,.2,.0>;
+			
+			for(I,0,Blocks.count-1) {
+				declare Block <=> Blocks[I];
+				if(Block != Null && ToReplace != "" && ToReplace == Block.BlockModel.Name) {
+					declare Int3[] Units;
+					foreach(Unit in Block.BlockUnits)
+						Units.add(Unit.AbsoluteOffset);
+				
+					declare SolidBlock = GetBlock(Block.BlockModel, Block.Coord, ToCardinalDirections(Block.Direction));
+					if(SolidBlock != Null && SolidBlock.Id == Block.Id) {
+						if(SolidBlock.BlockModel.IsRoad) {
+							foreach(Unit in Units)
+								CustomSelectionCoords.add(Block.Coord + Unit);
+						}
+						else { // If the block is not a road
+							declare Coord = Block.Coord;
+							declare Dir = ToCardinalDirections(Block.Direction);
+							
+							declare Removed = RemoveBlock(Block.BlockModel, Coord, Dir);
+							if(ReplaceWith != "") {
+								if(Removed) {
+									declare Placed = PlaceBlock(GetBlockModelFromName(ReplaceWith), Coord, Dir);
+									if(!Placed) // If the block is solid, removed but new block wasn't placed successfully
+										foreach(Unit in Units)
+											CustomSelectionCoords.add(Coord);
+								}
+								else // If the block is solid but somehow wasn't removed
+									foreach(Unit in Units)
+										CustomSelectionCoords.add(Coord + Unit);
+							}
+						}
+					}
+					else // If the block is a ghost block
+						foreach(Unit in Units)
+							CustomSelectionCoords.add(Block.Coord + Unit);
+				}
+			}
+		}
+		case "Replacer_DeselectFailed": {
+			CustomSelectionCoords.clear();
+		}
+	}	
+}
+***
+
+***Test_Init***
+***
+declare Text[] Test_Checkpoints for ManialinkPage;
+declare Boolean Test_UpdateCheckpoints for ManialinkPage;
+
+declare PreviousKeyT = False;
+***
+
+***Test_Start***
+***
+log("""[{{{C_Plugin_Name_Short}}}] Starting Test subplugin...""");
+Test_Checkpoints = GetCheckpointBlocks();
+***
+
+***Test_Event***
+***
+if(Event.Type == CMapEditorPluginEvent::Type::LayerCustomEvent) {
+	switch(Event.CustomEventType) {
+		case "Test_TestFromStart": {
+			TestMapFromStart();
+		}
+		case "Test_TestFromCheckpoint": {
+			declare BlockId = Event.CustomEventData[0];
+			foreach(Block in Blocks) {
+				if(Block.Id^"" == BlockId) {
+					TestMapFromCoord(Block.Coord, ToCardinalDirections(Block.Direction));
+					break;
+				}
+			}
+		}
+		case "Test_Focus": {
+			declare BlockId = Event.CustomEventData[0];
+			foreach(Block in Blocks) {
+				if(Block.Id^"" == BlockId) {
+					Camera.Watch(Block);
+					Camera.Zoom(CMapEditorCamera::EZoomLevel::Close);
+					break;
+				}
+			}
+		}
+	}	
+}
+else if(Event.Type == CMapEditorPluginEvent::Type::MapModified) {
+	Test_Checkpoints = GetCheckpointBlocks();
+	Test_UpdateCheckpoints = True;
+}
+***
+
+***Test_Loop***
+***
+if(Input.IsKeyPressed(123) != PreviousKeyT) { // T
+	PreviousKeyT = Input.IsKeyPressed(123);
+	if(False && PreviousKeyT) {
+		TestMapFromStart();
+	}
+}
+***
+
+***Autosave_Init***
+***
+if(Settings.Autosave.Location == "")
+	Settings.Autosave.Location = "Autosaves";
+	
+if(Settings.Autosave.Interval == 0)
+	Settings.Autosave.Interval = 5.;
+
+declare Integer AutosaveTimestamp for ManialinkPage;
+AutosaveTimestamp = -1;
+***
+
+***Autosave_Start***
+***
+log("""[{{{C_Plugin_Name_Short}}}] Starting Autosave subplugin...""");
+AutosaveTimestamp = Now;
+***
+
+***Autosave_Loop***
+***
+if(AutosaveTimestamp >= 0 && Now - AutosaveTimestamp >= Settings.Autosave.Interval*1000*60) {
+	AutosaveTimestamp = Now;
+	
+	declare Stamp = TimeLib::GetCurrent();
+	declare StampText = TimeLib::FormatDate(Stamp, TimeLib::EDateFormats::DateShort)^" "^TimeLib::FormatDate(Stamp, TimeLib::EDateFormats::Time);
+	declare AutosaveMapName = MapName^"$z - "^StampText;
+	AutosaveMapName = TextLib::Replace(AutosaveMapName, ".", "_");
+	AutosaveMapName = TextLib::Replace(AutosaveMapName, ":", "_");
+	
+	declare PreviousMapName = Map.MapName;
+	SaveMap(Settings.Autosave.Location^"/"^AutosaveMapName);
+	wait(IsEditorReadyForRequest);
+	Map.MapName = PreviousMapName;
+	log("""[{{{C_Plugin_Name_Short}}}::Autosave] Autosaved...""");
+}
+***
+
+***SkinPainter_Init***
+***
+declare Boolean StartSkinPainting for ManialinkPage;
+declare Text[] Skins for ManialinkPage;
+declare Integer[] SelectedSkins for ManialinkPage;
+
+declare PreviousStartSkinPainting = StartSkinPainting;
+declare PreviousLeftMouse = False;
+declare LastPlaceMode = PlaceMode;
+***
+
+***SkinPainter_Loop***
+***
+
+if(StartSkinPainting != PreviousStartSkinPainting) {
+	PreviousStartSkinPainting = StartSkinPainting;
+	if(StartSkinPainting) {
+		LastPlaceMode = PlaceMode;
+	}
+	else {
+		PlaceMode = LastPlaceMode;
+		HideEditorInterface = False;
+		Cursor.Brightness = 1.;
+	}
+}
+
+if(StartSkinPainting) {
+	PlaceMode = ::PlaceMode::Plugin;
+	HideEditorInterface = True;
+	
+	declare CBlock[] PaintableBlocks;
+	PaintableBlocks.clear();
+
+	foreach(Block in Blocks) {
+		if(Cursor.BlockModel != Null && Block != Null && Block.BlockModel.Name == Cursor.BlockModel.Name) {
+			foreach(Unit in Block.BlockUnits) {
+				if(Block.Coord + Unit.AbsoluteOffset == Cursor.Coord) {
+					PaintableBlocks.add(Block);
+					Cursor.Brightness = 0.;
+					break;
+				}
+			}
+		}
+	}
+
+	CustomSelectionRGB = Settings.SceneryPainter.Color * .5;
+	CustomSelectionCoords.clear();
+	foreach(Block in PaintableBlocks) {
+		if(Input.MouseLeftButton) {
+			PreviousLeftMouse = Input.MouseLeftButton;
+			if(Input.MouseLeftButton) {
+				if(SelectedSkins.count > 0)
+					SetBlockSkin(Block, Skins[SelectedSkins[MathLib::Rand(0, SelectedSkins.count-1)]]);
+				else
+					SetBlockSkin(Block, "");
+			}
+		}
+		foreach(Unit in Block.BlockUnits) {
+			CustomSelectionCoords.add(Block.Coord + Unit.AbsoluteOffset);
+		}
+	}
+
+	if(PaintableBlocks.count == 0) {
+		Cursor.Brightness = 1.;
+	}
+}
+***
+
+Text[] GetCheckpointBlocks() {
+	declare Text[] Checkpoints;
+	foreach(Block in Blocks)
+		if(Block.BlockModel.WaypointType == CBlockModel::EWayPointType::Checkpoint)
+			Checkpoints.add(Block.Id^"");
+	return Checkpoints;
+}
+
+Void LoadSettings() {
+	declare SUPSSettings Settings for ManialinkPage;
+	declare persistent Text Persistent_UPS_Settings for LocalUser;
+	declare Json = Settings.fromjson(Persistent_UPS_Settings);
+}
+
+Void SaveSettings() {
+	declare SUPSSettings Settings for ManialinkPage;
+	declare persistent Text Persistent_UPS_Settings for LocalUser;
+	Persistent_UPS_Settings = Settings.tojson();
+}
+
+main() {
+	log("""[{{{C_Plugin_Name_Short}}}] Initializing UMPS...""");
+	log("""[{{{C_Plugin_Name_Short}}}] Loading UMPS settings...""");
+	LoadSettings();
+	
+	declare SUPSSettings Settings for ManialinkPage;
+	
+	log("""[{{{C_Plugin_Name_Short}}}] Initializing Scenery Painter subplugin...""");
+	+++SceneryPainter_Init+++
+	log("""[{{{C_Plugin_Name_Short}}}] Initializing Replacer subplugin...""");
+	+++Replacer_Init+++
+	log("""[{{{C_Plugin_Name_Short}}}] Initializing Test subplugin...""");
+	+++Test_Init+++
+	log("""[{{{C_Plugin_Name_Short}}}] Initializing Autosave subplugin...""");
+	+++Autosave_Init+++
+	log("""[{{{C_Plugin_Name_Short}}}] Initializing Skin Painter subplugin...""");
+	+++SkinPainter_Init+++
+
+	if(Settings.SceneryPainter.Enabled) +++SceneryPainter_Start+++
+	if(Settings.Replacer.Enabled) +++Replacer_Start+++
+	if(Settings.Test.Enabled) +++Test_Start+++
+	if(Settings.Autosave.Enabled) +++Autosave_Start+++
+	if(Settings.SkinPainter.Enabled) +++SkinPainter_Start+++
+	
+	ManialinkText = """<manialink version="3">
+<frame id="FRAME_TOOLTIP" hidden="1">
+	<quad z-index="0" size="30 5" style="Bgs1InRace" substyle="BgCardBuddy" colorize="000" id="QUAD_TOOLTIP"/>
+	<label pos="2.5 -2.6" z-index="3" size="50 5" text="halfpipeBlockTwnet" valign="center2" textsize="1" textfont="RajdhaniMono" id="LABEL_TOOLTIP"/>
+</frame>
+<frame pos="100 81">
+	<frame id="FRAME_BIGBANG1112">
+		<quad z-index="0" size="10 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1"/>
+		<quad z-index="1" size="10 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center"/>
+		<quad z-index="2" size="9.5 7.5" halign="center" style="Bgs1" substyle="BgWindow4" valign="center" colorize="630" opacity=".5" id="QUAD_UPDATE_AVAILABLE"/>
+		<quad z-index="2" size="9.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".5" id="QUAD_OPEN_PLUGINS" tooltip="Left click to open the plugin list. Right click to see more about the author."/>
+		<quad z-index="3" size="8 8" halign="center" valign="center" image="https://bigbang1112.eu/SignSmall.png"/>
+	</frame>
+	<frame id="FRAME_OUTER_PLUGINS">
+		<frame id="FRAME_PLUGINS">
+			<frame clip="True" clipsizen="170 180" clipposn="-90 0" id="FRAME_OUTER_SCENERYPAINTER">
+				<frame id="FRAME_OUTER_PLACE" z-index="-1" clip="True" clipsizen="170 180" clipposn="-90 0" hidden="1">
+					<frame pos="-25" id="FRAME_PLACE">
+						<quad z-index="0" size="40 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1" opacity=".5"/>
+						<quad z-index="1" size="40 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center" opacity=".5"/>
+						<quad z-index="2" size="39.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".25" id="QUAD_RESTORE" tooltip="Click to restore the window to the default position."/>
+						<label z-index="3" size="30 5" text="SCENERY PAINTER" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="0 -.2" opacity=".75"/>
+					</frame>
+				</frame>
+				<frame pos="-25" id="FRAME_SCENERYPAINTER">
+					<quad z-index="0" size="40 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1"/>
+					<quad z-index="1" size="40 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center"/>
+					<quad z-index="2" size="39.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".5" id="QUAD_OPEN" tooltip="Left click to enable/disable the plugin. Right click to start/stop moving the window."/>
+					<label z-index="3" size="30 5" text="SCENERY PAINTER" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="2.5 -.2"/>
+					<frame pos="-15 0" z-index="3" id="FRAME_ENABLED">
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlRed" opacity="1" id="QUAD_RED"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="F00" opacity="1" id="QUAD_RED_GLOW"/>
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlGreen" opacity="0" id="QUAD_GREEN"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="0F0" opacity="0" id="QUAD_GREEN_GLOW"/>
+					</frame>
+					<frame clip="True" clipsizen="40 60" clipposn="0 -34">
+						<frame pos="0 -3" id="FRAME_INNER">
+							<quad z-index="-2" size="40 53" style="Bgs1" substyle="BgCardList" scriptevents="1" halign="center"/>
+							<quad z-index="-1" size="40 53" halign="center" style="Bgs1" substyle="BgGradV"/>
+							<label pos="-16.75 -5" z-index="0" size="25 5" text="BRUSH RADIUS:" textsize="1" valign="center" textfont="RajdhaniMono"/>
+							<label pos="17 -4.7" z-index="0" size="14 5" text="?/10" textsize="3" valign="center" textfont="RajdhaniMono" id="LABEL_RADIUS" halign="right"/>
+							<frame pos="0 -22.25">
+								<quad z-index="0" size="40 25" style="Bgs1" substyle="BgGradV" halign="center" valign="center"/>
+								<frame pos="-15 0" z-index="1" id="FRAME_BLOCKS">
+									<frame pos="0 10" data-index="0">
+										<quad z-index="0" size="4 4" halign="center" valign="center" id="QUAD_IMAGE"/>
+										<label pos="3.5 -0.2" z-index="0" size="27 5" text="(empty slot)" valign="center2" textfont="Oswald" textsize="1" id="LABEL_BLOCK"/>
+										<quad pos="-2.5 0" z-index="0" size="35 5" valign="center" style="Bgs1" substyle="BgCardInventoryItem" scriptevents="1" id="QUAD_BLOCK" opacity=".5" colorize="036" tooltip="Click to define your current cursor block."/>
+									</frame>
+									<frame pos="0 5" data-index="1">
+										<quad z-index="0" size="4 4" halign="center" valign="center" id="QUAD_IMAGE"/>
+										<label pos="3.5 -0.2" z-index="0" size="27 5" text="(empty slot)" valign="center2" textfont="Oswald" textsize="1" id="LABEL_BLOCK"/>
+										<quad pos="-2.5 0" z-index="0" size="35 5" valign="center" style="Bgs1" substyle="BgCardInventoryItem" scriptevents="1" id="QUAD_BLOCK" opacity=".5" colorize="036" tooltip="Click to define your current cursor block."/>
+									</frame>
+									<frame pos="0 0" data-index="2">
+										<quad z-index="0" size="4 4" halign="center" valign="center" id="QUAD_IMAGE"/>
+										<label pos="3.5 -0.2" z-index="0" size="27 5" text="(empty slot)" valign="center2" textfont="Oswald" textsize="1" id="LABEL_BLOCK"/>
+										<quad pos="-2.5 0" z-index="0" size="35 5" valign="center" style="Bgs1" substyle="BgCardInventoryItem" scriptevents="1" id="QUAD_BLOCK" opacity=".5" colorize="036" tooltip="Click to define your current cursor block."/>
+									</frame>
+									<frame pos="0 -5" data-index="3">
+										<quad z-index="0" size="4 4" halign="center" valign="center" id="QUAD_IMAGE"/>
+										<label pos="3.5 -0.2" z-index="0" size="27 5" text="(empty slot)" valign="center2" textfont="Oswald" textsize="1" id="LABEL_BLOCK"/>
+										<quad pos="-2.5 0" z-index="0" size="35 5" valign="center" style="Bgs1" substyle="BgCardInventoryItem" scriptevents="1" id="QUAD_BLOCK" opacity=".5" colorize="036" tooltip="Click to define your current cursor block."/>
+									</frame>
+									<frame pos="0 -10" data-index="4">
+										<quad z-index="0" size="4 4" halign="center" valign="center" id="QUAD_IMAGE"/>
+										<label pos="3.5 -0.2" z-index="0" size="27 5" text="(empty slot)" valign="center2" textfont="Oswald" textsize="1" id="LABEL_BLOCK"/>
+										<quad pos="-2.5 0" z-index="0" size="35 5" valign="center" style="Bgs1" substyle="BgCardInventoryItem" scriptevents="1" id="QUAD_BLOCK" opacity=".5" colorize="036" tooltip="Click to define your current cursor block."/>
+									</frame>
+								</frame>
+							</frame>
+							<label pos="-16.5 -38.5" z-index="0" size="25 5" text="DENSITY:" textsize="1" valign="center" textfont="RajdhaniMono"/>
+							<entry pos="7.5 -38.5" z-index="0" size="10 5" textsize="2" valign="center" textfont="RajdhaniMono" id="ENTRY_DENSITY" tooltip="How many blocks will be placed in a game tick. Minimum value: 1"/>
+							<label pos="-16.5 -43.5" z-index="0" size="25 5" text="REPLACE MODE:" textsize="1" valign="center" textfont="RajdhaniMono"/>
+							<quad pos="9 -43.75" size="5 5" style="Icons64x64_1" substyle="Check" scriptevents="1" halign="center" valign="center" id="QUAD_REPLACEMODE" tooltip="Check to remove blocks that are in the way of the brush."/>
+							<label pos="-16.5 -48.5" z-index="0" size="25 5" text="PAINT KEY:" textsize="1" valign="center" textfont="RajdhaniMono"/>
+							<label pos="16 -48.5" z-index="0" size="25 5" text="LEFT SHIFT" textcolor="FF0" textsize=".5" valign="center" halign="right" textfont="RajdhaniMono"/>
+						</frame>
+					</frame>
+				</frame>
+			</frame>
+			<frame clip="True" clipsizen="170 180" clipposn="-90 0" id="FRAME_OUTER_REPLACER">
+				<frame id="FRAME_OUTER_PLACE" z-index="-1" clip="True" clipsizen="170 180" clipposn="-90 0" hidden="1">
+					<frame pos="-60" id="FRAME_PLACE" z-index="-1">
+						<quad z-index="0" size="30 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1" opacity=".5"/>
+						<quad z-index="1" size="30 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center" opacity=".5"/>
+						<quad z-index="2" size="29.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".25" id="QUAD_RESTORE" tooltip="Click to restore the window to the default position."/>
+						<label z-index="3" size="20 5" text="REPLACER" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="0 -.2" opacity=".75"/>
+					</frame>
+				</frame>
+				<frame pos="-60" id="FRAME_REPLACER">
+					<quad z-index="0" size="30 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1"/>
+					<quad z-index="1" size="30 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center"/>
+					<quad z-index="2" size="29.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".5" id="QUAD_OPEN" tooltip="Left click to enable/disable the plugin. Right click to start/stop moving the window."/>
+					<label z-index="3" size="20 5" text="REPLACER" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="2.5 -.2"/>
+					<frame pos="-10 0" z-index="3" id="FRAME_ENABLED">
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlRed" opacity="1" id="QUAD_RED"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="F00" opacity="1" id="QUAD_RED_GLOW"/>
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlGreen" opacity="0" id="QUAD_GREEN"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="0F0" opacity="0" id="QUAD_GREEN_GLOW"/>
+					</frame>
+					<frame clip="True" clipsizen="30 60" clipposn="0 -34">
+						<frame pos="0 -3" id="FRAME_INNER">
+							<quad z-index="-2" size="30 31" style="Bgs1" substyle="BgCardList" scriptevents="1" halign="center"/>
+							<quad z-index="-1" size="30 31" halign="center" style="Bgs1" substyle="BgGradV"/>
+							<label pos="0 -4.2" z-index="0" size="25 5" text="REPLACE ALL BLOCKS" textsize=".5" valign="center" textfont="RajdhaniMono" halign="center"/>
+							<frame pos="0 -12.5">
+								<frame pos="-8">
+									<quad z-index="0" size="10 10" style="Bgs1" substyle="BgCardList" halign="center" valign="center" opacity=".75"/>
+									<quad z-index="2" size="8 8" halign="center" valign="center" id="QUAD_TOREPLACE_ICON"/>
+									<quad z-index="1" size="10 10" style="Bgs1" substyle="BgCardInventoryItem" halign="center" valign="center" opacity=".5" scriptevents="1" colorize="036" id="QUAD_TOREPLACE" tooltip="Click to define your current cursor block to replace."/>
+								</frame>
+								<label pos="-.2 0" z-index="0" size="10 5" text="WITH" textsize="1" rot="-90" halign="center" valign="center" textfont="RajdhaniMono" scriptevents="1" style="TextCardRaceRank" id="LABEL_SWAP" tooltip="Click to swap the blocks."/>
+								<frame pos="8">
+									<quad z-index="0" size="10 10" style="Bgs1" substyle="BgCardList" halign="center" valign="center" opacity=".75"/>
+									<quad z-index="2" size="8 8" halign="center" valign="center" id="QUAD_REPLACEWITH_ICON"/>
+									<quad z-index="1" size="10 10" style="Bgs1" substyle="BgCardInventoryItem" halign="center" valign="center" opacity=".5" scriptevents="1" colorize="036" id="QUAD_REPLACEWITH" tooltip="Click to define your current cursor block to replace with."/>
+								</frame>
+							</frame>
+							<frame pos="0 -21">
+								<quad z-index="0" size="26 5" style="Bgs1" substyle="BgCardList" halign="center" valign="center" opacity=".75"/>
+								<quad z-index="1" size="26 5" style="Bgs1" substyle="BgWindow4" halign="center" valign="center" opacity=".75" colorize="060"/>
+								<quad z-index="2" size="26 5" style="Bgs1" substyle="BgCardInventoryItem" halign="center" valign="center" opacity=".75" scriptevents="1" colorize="060" id="QUAD_REPLACE" tooltip="Click to replace immediately."/>
+								<label pos="0 -.2" z-index="3" size="20 5" text="REPLACE" halign="center" valign="center2" textsize="1" textfont="RajdhaniMono"/>
+							</frame>
+							<frame pos="0 -26.5">
+								<quad z-index="0" size="26 5" style="Bgs1" substyle="BgCardList" halign="center" valign="center" opacity=".75"/>
+								<quad z-index="1" size="26 5" style="Bgs1" substyle="BgWindow4" halign="center" valign="center" opacity=".75" colorize="860"/>
+								<quad z-index="2" size="26 5" style="Bgs1" substyle="BgCardInventoryItem" halign="center" valign="center" opacity=".75" scriptevents="1" colorize="860" id="QUAD_DESELECT_FAILED" tooltip="Click to deselect all blocks that have failed to replace."/>
+								<label pos="0 -.2" z-index="3" size="22.5 5" text="DESELECT FAILED" halign="center" valign="center2" textsize=".75" textfont="RajdhaniMono"/>
+							</frame>
+						</frame>
+					</frame>
+				</frame>
+			</frame>
+			<frame clip="True" clipsizen="170 180" clipposn="-90 0" id="FRAME_OUTER_TEST">
+				<frame id="FRAME_OUTER_PLACE" z-index="-1" clip="True" clipsizen="170 180" clipposn="-90 0" hidden="1">
+					<frame pos="-90" id="FRAME_PLACE" z-index="-1">
+						<quad z-index="0" size="30 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1" opacity=".5"/>
+						<quad z-index="1" size="30 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center" opacity=".5"/>
+						<quad z-index="2" size="29.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".25" id="QUAD_RESTORE" tooltip="Click to restore the window to the default position."/>
+						<label z-index="3" size="20 5" text="TEST MODE" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="0 -.2" opacity=".75"/>
+					</frame>
+				</frame>
+				<frame pos="-90" id="FRAME_TEST">
+					<quad z-index="0" size="30 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1"/>
+					<quad z-index="1" size="30 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center"/>
+					<quad z-index="2" size="29.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".5" id="QUAD_OPEN" tooltip="Left click to enable/disable the plugin. Right click to start/stop moving the window."/>
+					<label z-index="3" size="20 5" text="TEST MODE" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="2.5 -.2"/>
+					<frame pos="-10 0" z-index="3" id="FRAME_ENABLED">
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlRed" opacity="1" id="QUAD_RED"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="F00" opacity="1" id="QUAD_RED_GLOW"/>
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlGreen" opacity="0" id="QUAD_GREEN"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="0F0" opacity="0" id="QUAD_GREEN_GLOW"/>
+					</frame>
+					<frame clip="True" clipsizen="30 60" clipposn="0 -34">
+						<frame pos="0 -3" id="FRAME_INNER">
+							<quad z-index="-2" size="30 35" style="Bgs1" substyle="BgCardList" scriptevents="1" halign="center"/>
+							<quad z-index="-1" size="30 35" halign="center" style="Bgs1" substyle="BgGradV"/>
+							
+							<frame pos="0 -4.5">
+								<quad z-index="0" size="26 5" style="Bgs1" substyle="BgCardList" halign="center" valign="center" opacity=".75"/>
+								<quad z-index="1" size="26 5" style="Bgs1" substyle="BgWindow4" halign="center" valign="center" opacity=".75" colorize="060"/>
+								<quad z-index="2" size="26 5" style="Bgs1" substyle="BgCardInventoryItem" halign="center" valign="center" opacity=".75" scriptevents="1" colorize="060" id="QUAD_TESTFROMSTART" tooltip="Start the test mode from the start anchor."/>
+								<label pos="0 -.2" z-index="3" size="22.5 5" text="TEST FROM START" halign="center" valign="center2" textsize=".75" textfont="RajdhaniMono"/>
+							</frame>
+							
+							<label pos="0 -11.5" z-index="0" size="23 5" text=" TEST FROM CHECKPOINT" textsize=".75" valign="center" textfont="RajdhaniMono" halign="center" autonewline="1"/>
+							
+							<frame pos="0 -24">
+								<quad z-index="0" size="17.5 17.5" style="Bgs1" substyle="BgCardList" halign="center" valign="center" opacity=".75"/>
+								<quad z-index="1" size="17.5 17.5" style="Bgs1" substyle="BgCardInventoryItem" halign="center" valign="center" opacity=".5" scriptevents="1" colorize="036" id="QUAD_TESTFROMCHECKPOINT" tooltip="Left click to start the test mode from the checkpoint. Right click to focus on the checkpoint."/>
+								<quad z-index="2" size="12.5 12.5" halign="center" valign="center" pos="0 1" id="QUAD_TESTFROMCHECKPOINT_ICON"/>
+								<label pos="6.5 -6" z-index="2" size="8 3" text="2/8" id="LABEL_TESTFROMCHECKPOINT" textsize="1" valign="center2" textfont="RajdhaniMono" halign="right"/>
+								<quad pos="-11 0" z-index="0" size="5 5" halign="center" valign="center" style="UIConstruction_Buttons" substyle="Quit" scriptevents="1" id="QUAD_TESTFROMCHECKPOINT_PREV" tooltip="Focus on the previous checkpoint."/>
+								<quad pos="11 0" z-index="0" size="5 5" halign="center" valign="center" style="UIConstruction_Buttons" substyle="Quit" scriptevents="1" rot="180" id="QUAD_TESTFROMCHECKPOINT_NEXT" tooltip="Focus on the next checkpoint."/>
+							</frame>
+						</frame>
+					</frame>
+				</frame>
+			</frame>
+			<frame clip="True" clipsizen="170 180" clipposn="-90 0" id="FRAME_OUTER_AUTOSAVE">
+				<frame id="FRAME_OUTER_PLACE" z-index="-1" clip="True" clipsizen="170 180" clipposn="-90 0" hidden="1">
+					<frame pos="-120" id="FRAME_PLACE" z-index="-1">
+						<quad z-index="0" size="30 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1" opacity=".5"/>
+						<quad z-index="1" size="30 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center" opacity=".5"/>
+						<quad z-index="2" size="29.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".25" id="QUAD_RESTORE" tooltip="Click to restore the window to the default position."/>
+						<label z-index="3" size="20 5" text="AUTOSAVE" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="0 -.2" opacity=".75"/>
+					</frame>
+				</frame>
+				<frame pos="-120" id="FRAME_AUTOSAVE">
+					<quad z-index="0" size="30 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1"/>
+					<quad z-index="1" size="30 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center"/>
+					<quad z-index="2" size="29.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".5" id="QUAD_OPEN" tooltip="Left click to enable/disable the plugin. Right click to start/stop moving the window."/>
+					<label z-index="3" size="20 5" text="AUTOSAVE" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="2.5 -.2"/>
+					<frame pos="-10 0" z-index="3" id="FRAME_ENABLED">
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlRed" opacity="1" id="QUAD_RED"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="F00" opacity="1" id="QUAD_RED_GLOW"/>
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlGreen" opacity="0" id="QUAD_GREEN"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="0F0" opacity="0" id="QUAD_GREEN_GLOW"/>
+					</frame>
+					<frame clip="True" clipsizen="30 60" clipposn="0 -34">
+						<frame pos="0 -3" id="FRAME_INNER">
+							<quad z-index="-2" size="30 31" style="Bgs1" substyle="BgCardList" scriptevents="1" halign="center"/>
+							<quad z-index="-1" size="30 31" halign="center" style="Bgs1" substyle="BgGradV"/>
+							
+							<label pos="0 -5.5" z-index="0" size="23 5" text="YOUR MAPS ARE NOW BEING AUTOSAVED" textsize=".5" valign="center" textfont="RajdhaniMono" halign="center" autonewline="1" textcolor="FF0"/>
+							<label pos="0 -11" z-index="0" size="23 3" text="AUTOSAVE LOCATION" textsize=".3" valign="center" textfont="RajdhaniMono" halign="center"/>
+							<label pos="-11.5 -14.5" z-index="0" size="7 3" text="Maps/" textsize=".5" valign="center" textfont="BiryaniDemiBold" autonewline="1"/>
+							<entry pos="-5 -14.5" z-index="0" size="17 3" default="Autosaves" textsize=".5" valign="center2" textfont="BiryaniDemiBold" id="ENTRY_AUTOSAVE_LOCATION" tooltip="Define the autosaves folder relative to Maps/ folder."/>
+							<label pos="-11.5 -19.25" z-index="0" size="23 3" text="INTERVAL" textsize="1.5" valign="center" textfont="RajdhaniMono"/>
+							<entry pos="3.5 -19.5" z-index="0" size="5 4" default="5" textsize="2" textfont="RajdhaniMono" valign="center" id="ENTRY_AUTOSAVE_INTERVAL" tooltip="How often the map will be autosaved in minutes."/>
+							<label pos="9.25 -20" z-index="0" size="5 3" text="min" textsize=".3" valign="center2" textfont="BiryaniDemiBold"/>
+							<label pos="0 -25.5" z-index="0" size="23 3" text="NEXT AUTOSAVE IN" textsize=".5" valign="bottom" textfont="Oswald" autonewline="1" halign="center"/>
+							<label pos="0 -28.5" z-index="0" size="23 3" text="5m 0s" textsize=".5" valign="bottom" textfont="OswaldMono" autonewline="1" halign="center" textprefix="$o" id="LABEL_AUTOSAVE_NEXT"/>
+						</frame>
+					</frame>
+				</frame>
+			</frame>
+			<frame clip="True" clipsizen="170 180" clipposn="-90 0" id="FRAME_OUTER_SKINPAINTER">
+				<frame id="FRAME_OUTER_PLACE" z-index="-1" clip="True" clipsizen="170 180" clipposn="-90 0" hidden="1">
+					<frame pos="-155" id="FRAME_PLACE" z-index="-1">
+						<quad z-index="0" size="40 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1" opacity=".5"/>
+						<quad z-index="1" size="40 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center" opacity=".5"/>
+						<quad z-index="2" size="39.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".25" id="QUAD_RESTORE" tooltip="Click to restore the window to the default position."/>
+						<label z-index="3" size="30 5" text="SKIN PAINTER" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="0 -.2" opacity=".75"/>
+					</frame>
+				</frame>
+				<frame pos="-155" id="FRAME_SKINPAINTER">
+					<quad z-index="0" size="40 8" halign="center" style="Bgs1" substyle="BgCardList" valign="center" scriptevents="1"/>
+					<quad z-index="1" size="40 8" halign="center" style="Bgs1" substyle="BgGradV" valign="center"/>
+					<quad z-index="2" size="39.5 7.5" halign="center" style="Bgs1" substyle="BgCardInventoryItem" valign="center" colorize="036" scriptevents="1" opacity=".5" id="QUAD_OPEN" tooltip="Left click to enable/disable the plugin. Right click to start/stop moving the window."/>
+					<label z-index="3" size="30 5" text="SKIN PAINTER" halign="center" valign="center2" textsize="1.2" textfont="RajdhaniMono" pos="2.5 -.2"/>
+					<frame pos="-15 0" z-index="3" id="FRAME_ENABLED">
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlRed" opacity="1" id="QUAD_RED"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="F00" opacity="1" id="QUAD_RED_GLOW"/>
+						<quad size="4 4" halign="center" valign="center" style="Icons64x64_1" substyle="LvlGreen" opacity="0" id="QUAD_GREEN"/>
+						<quad size="8 8" halign="center" valign="center" style="Bgs1" substyle="Glow" z-index="1" colorize="0F0" opacity="0" id="QUAD_GREEN_GLOW"/>
+					</frame>
+					<frame clip="True" clipsizen="40 60" clipposn="0 -34">
+						<frame pos="0 -3" id="FRAME_INNER">
+							<quad z-index="-2" size="40 40" style="Bgs1" substyle="BgCardList" scriptevents="1" halign="center"/>
+							<quad z-index="-1" size="40 40" halign="center" style="Bgs1" substyle="BgGradV"/>
+							
+							<frame pos="-12.5 -7.5">
+								<quad pos="0 0" z-index="0" size="10 10" halign="center" style="Bgs1" substyle="BgCardList" valign="center"/>
+								<quad z-index="1" size="8 8" halign="center" valign="center" id="QUAD_SKINPAINTER_BLOCK"/>
+								<label pos="6 0" z-index="0" size="22.5 3" text="No block selected" textfont="Oswald" textsize=".75" valign="center2" id="LABEL_SKINPAINTER_BLOCK"/>
+							</frame>
+							
+							<frame z-index="1" id="FRAME_OUTER_SKINPAINTER_MENU">
+								<quad pos="16.5 -14" z-index="1" size="0.7 0" style="Bgs1" substyle="BgWindow4" id="QUAD_SCROLL"/>
+								<quad pos="0 -13" z-index="1" size="35 20" halign="center" style="Bgs1" substyle="BgCardList" scriptevents="1"/>
+								<frame id="FRAME_SKINPAINTER_MENU_SCROLL" z-index="2" pos="0 -10" scroll="True" scrollmax="0 0" clip="True" clipsizen="32.5 17" clipposn="0 -13">
+									<frame id="FRAME_SKINPAINTER_MENU">
+										<frame pos="-13 -6" data-index="0" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-6.5 -6" data-index="1" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="0 -6" data-index="2" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="6.5 -6" data-index="3" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="13 -6" data-index="4" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-13 -9.5" data-index="5" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-6.5 -9.5" data-index="6" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="0 -9.5" data-index="7" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="6.5 -9.5" data-index="8" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="13 -9.5" data-index="9" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-13 -13" data-index="10" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-6.5 -13" data-index="11" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="0 -13" data-index="12" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="6.5 -13" data-index="13" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="13 -13" data-index="14" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-13 -16.5" data-index="15" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-6.5 -16.5" data-index="16" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="0 -16.5" data-index="17" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="6.5 -16.5" data-index="18" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="13 -16.5" data-index="19" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-13 -20" data-index="20" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="-6.5 -20" data-index="21" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="0 -20" data-index="22" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="6.5 -20" data-index="23" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+										<frame pos="13 -20" data-index="24" hidden="1">
+											<quad z-index="0" size="6 3" halign="center" valign="center" id="QUAD_IMAGE"/>
+											<quad z-index="1" size="7 4" halign="center" valign="center" style="Bgs1" substyle="BgCardInventoryItem" opacity="1" scriptevents="1" colorize="036" id="QUAD_SELECT"/>
+										</frame>
+									</frame>
+								</frame>
+							</frame>
+							<frame pos="0 -36">
+								<quad z-index="0" size="35 5" style="Bgs1" substyle="BgCardList" halign="center" valign="center" opacity=".75"/>
+								<quad z-index="1" size="35 5" style="Bgs1" substyle="BgWindow4" halign="center" valign="center" opacity=".75" colorize="060" id="QUAD_SKINPAINTER_START_BG"/>
+								<quad z-index="2" size="35 5" style="Bgs1" substyle="BgCardInventoryItem" halign="center" valign="center" opacity=".75" scriptevents="1" colorize="060" id="QUAD_SKINPAINTER_START" tooltip="Click to start the skin painting mode."/>
+								<label pos="0 -.2" z-index="3" size="30 5" text="START SKIN PAINTING" halign="center" valign="center2" textsize="1" textfont="RajdhaniMono" id="LABEL_SKINPAINTER_START"/>
+							</frame>
+						</frame>
+					</frame>
+				</frame>
+			</frame>
+		</frame>
+	</frame>
+</frame>"""^"""
+<script><![CDATA[
+		#Include "TextLib" as TextLib
+		#Include "MathLib" as MathLib
+		#Include "TimeLib" as TimeLib
+		#Include "ColorLib" as ColorLib
+	
+		#Struct SSceneryPainterSettings {
+			Boolean Enabled;
+			Boolean Windowed;
+			Vec2 WindowPosition;
+			Integer Density;
+			Text[] Blocks;
+			Boolean Replace;
+			Integer Key;
+			Vec3 Color;
+		}
+		
+		#Struct SReplacerSettings {
+			Boolean Enabled;
+			Boolean Windowed;
+			Vec2 WindowPosition;
+			Text ToReplace;
+			Text ReplaceWith;
+		}
+		
+		#Struct STestSettings {
+			Boolean Enabled;
+			Boolean Windowed;
+			Vec2 WindowPosition;
+		}
+		
+		#Struct SAutosaveSettings {
+			Boolean Enabled;
+			Boolean Windowed;
+			Vec2 WindowPosition;
+			Text Location;
+			Real Interval;
+		}
+		
+		#Struct SSkinPainterSettings {
+			Boolean Enabled;
+			Boolean Windowed;
+			Vec2 WindowPosition;
+		}
+		
+		#Struct SUPSSettings {
+			Boolean Open;
+			SSceneryPainterSettings SceneryPainter;
+			SReplacerSettings Replacer;
+			STestSettings Test;
+			SAutosaveSettings Autosave;
+			SSkinPainterSettings SkinPainter;
+		}
+		
+		#Struct SStatus {
+			Text Version;
+		}
+		
+		#Const C_Plugin_Version "{{{C_Plugin_Version}}}"
+
+		***SceneryPainter_Init***
+		***
+		declare Label_SceneryPainter_Radius = (Frame_SceneryPainter.GetFirstChild("LABEL_RADIUS") as CMlLabel);
+		declare Entry_SceneryPainter_Density = (Frame_SceneryPainter.GetFirstChild("ENTRY_DENSITY") as CMlEntry);
+		declare Quad_SceneryPainter_ReplaceMode = (Frame_SceneryPainter.GetFirstChild("QUAD_REPLACEMODE") as CMlQuad);
+		
+		declare Integer SP_MaxRadius for Page;
+		declare Integer SP_Radius for Page;
+		declare Boolean SP_IsPainting for Page;
+		***
+		
+		***SceneryPainter_Start***
+		***
+		foreach(Index => Block in Settings.SceneryPainter.Blocks) {
+			declare Frame = ((Frame_SceneryPainter.GetFirstChild("FRAME_BLOCKS") as CMlFrame).Controls[Index] as CMlFrame);
+			foreach(Model in Editor.BlockModels) {
+				if(Model.Name == Block) {
+					(Frame.GetFirstChild("LABEL_BLOCK") as CMlLabel).Value = Model.Name;
+					(Frame.GetFirstChild("QUAD_IMAGE") as CMlQuad).Image = Model.Icon;
+					break;
+				}
+			}
+		}
+		
+		AnimMgr.Add(Frame_SceneryPainter.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		
+		AnimMgr.Add(Frame_SceneryPainter.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_SceneryPainter.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_SceneryPainter.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_SceneryPainter.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		
+		Entry_SceneryPainter_Density.Value = Settings.SceneryPainter.Density^"";
+		
+		Quad_SceneryPainter_ReplaceMode.StyleSelected = Settings.SceneryPainter.Replace;
+		***
+		
+		***SceneryPainter_Event***
+		***
+		switch(Event.Type) {
+			case CMlScriptEvent::Type::EntrySubmit: {
+				if(Event.ControlId == "ENTRY_DENSITY") {
+					declare Density = TextLib::ToInteger(Entry_SceneryPainter_Density.Value);
+					if(Density > 0) {
+						Settings.SceneryPainter.Density = Density;
+						SaveSettings();
+					}
+					else {
+						Entry_SceneryPainter_Density.SetText("1", True);
+					}
+				}
+			}
+			case CMlScriptEvent::Type::MouseClick: {
+				switch(Event.ControlId) {
+					case "QUAD_OPEN": {
+						declare Parent <=> Event.Control.Parent;
+						switch(Parent.ControlId) {
+							case "FRAME_SCENERYPAINTER": {
+								if(Settings.SceneryPainter.Enabled) {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 49\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									Settings.SceneryPainter.Enabled = False;
+								}
+								else {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									
+									Settings.SceneryPainter.Enabled = True;
+								}
+								SaveSettings();
+								
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 0, 1.);
+							}
+						}
+					}
+					case "QUAD_BLOCK": {
+						declare BlockModel <=> Editor.Cursor.BlockModel;
+						declare Parent = Event.Control.Parent;
+						declare Index = TextLib::ToInteger(Event.Control.Parent.DataAttributeGet("index"));
+						
+						if(BlockModel == Null) {
+							if(Settings.SceneryPainter.Blocks[Index] != "") {
+								Settings.SceneryPainter.Blocks[Index] = "";
+								(Parent.GetFirstChild("QUAD_IMAGE") as CMlQuad).Image = Null;
+								(Parent.GetFirstChild("LABEL_BLOCK") as CMlLabel).Value = "(empty slot)";
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 0, 1.);
+							}
+						}
+						else {
+							if(Settings.SceneryPainter.Blocks[Index] != BlockModel.Name) {
+								Settings.SceneryPainter.Blocks[Index] = BlockModel.Name;
+								(Parent.GetFirstChild("QUAD_IMAGE") as CMlQuad).Image = BlockModel.Icon;
+								(Parent.GetFirstChild("LABEL_BLOCK") as CMlLabel).Value = BlockModel.Name;
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 1, 1.);
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 2, .25);
+							}
+						}
+						
+						SaveSettings();
+					}
+					case "QUAD_REPLACEMODE": {
+						declare Quad = (Event.Control as CMlQuad);
+						if(Quad.StyleSelected) Quad.StyleSelected = False;
+						else Quad.StyleSelected = True;
+						
+						Settings.SceneryPainter.Replace = Quad.StyleSelected;
+						SaveSettings();
+					}
+				}
+			}
+		}
+		***
+		
+		***SceneryPainter_Loop***
+		***
+		if(SP_Radius < 0)
+			Label_SceneryPainter_Radius.Value = "?/" ^ SP_MaxRadius;
+		else
+			Label_SceneryPainter_Radius.Value = SP_Radius ^ "/" ^ SP_MaxRadius;
+		
+		if(SP_IsPainting) {
+			Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 1, MathLib::Rand(.1, 1.));
+		}
+		***
+		
+		***SceneryPainter_RightClick***
+		***
+		if(HoverControl.ControlId == "QUAD_BLOCK") {
+			declare Index = TextLib::ToInteger(HoverControl.Parent.DataAttributeGet("index"));
+			if(Settings.SceneryPainter.Blocks[Index] != "") {
+				Settings.SceneryPainter.Blocks[Index] = "";
+				(HoverControl.Parent.GetFirstChild("QUAD_IMAGE") as CMlQuad).Image = Null;
+				(HoverControl.Parent.GetFirstChild("LABEL_BLOCK") as CMlLabel).Value = "(empty slot)";
+				Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 0, 1.);
+				SaveSettings();
+			}
+		}
+		***
+		
+		***Replacer_Start***
+		***
+		AnimMgr.Add(Frame_Replacer.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		
+		AnimMgr.Add(Frame_Replacer.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_Replacer.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_Replacer.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_Replacer.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		
+		foreach(Model in Editor.BlockModels) {
+			if(Model.Name == Settings.Replacer.ToReplace)
+				(Frame_Replacer.GetFirstChild("QUAD_TOREPLACE_ICON") as CMlQuad).Image = Model.Icon;
+			if(Model.Name == Settings.Replacer.ReplaceWith)
+				(Frame_Replacer.GetFirstChild("QUAD_REPLACEWITH_ICON") as CMlQuad).Image = Model.Icon;
+		}
+		***
+		
+		***Replacer_Event***
+		***
+		switch(Event.Type) {
+			case CMlScriptEvent::Type::MouseClick: {
+				switch(Event.ControlId) {
+					case "QUAD_OPEN": {
+						declare Parent <=> Event.Control.Parent;
+						switch(Parent.ControlId) {
+							case "FRAME_REPLACER": {
+								if(Settings.Replacer.Enabled) {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 27\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									Settings.Replacer.Enabled = False;
+								}
+								else {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									
+									Settings.Replacer.Enabled = True;
+								}
+								SaveSettings();
+								
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 0, 1.);
+							}
+						}
+					}
+					case "QUAD_RESTORE": {
+						declare Parent = Event.Control.Parent.Parent.Parent;
+						switch(Parent.ControlId) {
+							case "FRAME_OUTER_SCENERYPAINTER": {
+								Frame_SceneryPainter.DataAttributeSet("windowed", "False");
+								Frame_SceneryPainter.Parent.ClipWindowActive = True;
+								Frame_SceneryPainter.Parent.GetFirstChild("FRAME_OUTER_PLACE").Hide();
+								Frame_SceneryPainter.RelativePosition_V3 = <-25., 0.>;
+								Settings.SceneryPainter.Windowed = False;
+							}
+							case "FRAME_OUTER_REPLACER": {
+								Frame_Replacer.DataAttributeSet("windowed", "False");
+								Frame_Replacer.Parent.ClipWindowActive = True;
+								Frame_Replacer.Parent.GetFirstChild("FRAME_OUTER_PLACE").Hide();
+								Frame_Replacer.RelativePosition_V3 = <-60., 0.>;
+								Settings.Replacer.Windowed = False;
+							}
+							case "FRAME_OUTER_TEST": {
+								Frame_Test.DataAttributeSet("windowed", "False");
+								Frame_Test.Parent.ClipWindowActive = True;
+								Frame_Test.Parent.GetFirstChild("FRAME_OUTER_PLACE").Hide();
+								Frame_Test.RelativePosition_V3 = <-90., 0.>;
+								Settings.Test.Windowed = False;
+							}
+							case "FRAME_OUTER_AUTOSAVE": {
+								Frame_Autosave.DataAttributeSet("windowed", "False");
+								Frame_Autosave.Parent.ClipWindowActive = True;
+								Frame_Autosave.Parent.GetFirstChild("FRAME_OUTER_PLACE").Hide();
+								Frame_Autosave.RelativePosition_V3 = <-120., 0.>;
+								Settings.Autosave.Windowed = False;
+							}
+							case "FRAME_OUTER_SKINPAINTER": {
+								Frame_SkinPainter.DataAttributeSet("windowed", "False");
+								Frame_SkinPainter.Parent.ClipWindowActive = True;
+								Frame_SkinPainter.Parent.GetFirstChild("FRAME_OUTER_PLACE").Hide();
+								Frame_SkinPainter.RelativePosition_V3 = <-155., 0.>;
+								Settings.SkinPainter.Windowed = False;
+							}
+						}
+						SaveSettings();
+					}
+					case "QUAD_REPLACE": {
+						SendCustomEvent("Replacer_Replace", []);
+					}
+					case "QUAD_DESELECT_FAILED": {
+						SendCustomEvent("Replacer_DeselectFailed", []);
+					}
+					case "QUAD_TOREPLACE": {
+						declare BlockModel <=> Editor.Cursor.BlockModel;
+						declare Parent = Event.Control.Parent;
+						
+						if(BlockModel == Null) {
+							if(Settings.Replacer.ToReplace != "") {
+								Settings.Replacer.ToReplace = "";
+								(Parent.GetFirstChild("QUAD_TOREPLACE_ICON") as CMlQuad).Image = Null;
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 0, 1.);
+							}
+						}
+						else {
+							if(Settings.Replacer.ToReplace != BlockModel.Name) {
+								Settings.Replacer.ToReplace = BlockModel.Name;
+								(Parent.GetFirstChild("QUAD_TOREPLACE_ICON") as CMlQuad).Image = BlockModel.Icon;
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 1, 1.);
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 2, .25);
+							}
+						}
+						
+						SaveSettings();
+						
+						if(Settings.Replacer.ToReplace == "") HideTooltip();
+						else ShowTooltip(Settings.Replacer.ToReplace);
+					}
+					case "QUAD_REPLACEWITH": {
+						declare BlockModel <=> Editor.Cursor.BlockModel;
+						declare Parent = Event.Control.Parent;
+						
+						if(BlockModel == Null) {
+							if(Settings.Replacer.ReplaceWith != "") {
+								Settings.Replacer.ReplaceWith = "";
+								(Parent.GetFirstChild("QUAD_REPLACEWITH_ICON") as CMlQuad).Image = Null;
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 0, 1.);
+							}
+						}
+						else {
+							if(Settings.Replacer.ReplaceWith != BlockModel.Name) {
+								Settings.Replacer.ReplaceWith = BlockModel.Name;
+								(Parent.GetFirstChild("QUAD_REPLACEWITH_ICON") as CMlQuad).Image = BlockModel.Icon;
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 1, 1.);
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 2, .25);
+							}
+						}
+						
+						if(Settings.Replacer.ReplaceWith == "") HideTooltip();
+						else ShowTooltip(Settings.Replacer.ReplaceWith);
+						
+						SaveSettings();
+					}
+					case "LABEL_SWAP": {
+						declare Swap = Settings.Replacer.ToReplace;
+						Settings.Replacer.ToReplace = Settings.Replacer.ReplaceWith;
+						Settings.Replacer.ReplaceWith = Swap;
+						
+						foreach(Model in Editor.BlockModels) {
+							if(Model.Name == Settings.Replacer.ToReplace)
+								(Frame_Replacer.GetFirstChild("QUAD_TOREPLACE_ICON") as CMlQuad).Image = Model.Icon;
+							if(Model.Name == Settings.Replacer.ReplaceWith)
+								(Frame_Replacer.GetFirstChild("QUAD_REPLACEWITH_ICON") as CMlQuad).Image = Model.Icon;
+						}
+						
+						SaveSettings();
+					}
+				}
+			}
+			case CMlScriptEvent::Type::MouseOver: {
+				switch(Event.ControlId) {
+					case "QUAD_TOREPLACE": {
+						declare Block = Settings.Replacer.ToReplace;
+						if(Block == "") HideTooltip();
+						else ShowTooltip(Block);
+					}
+					case "QUAD_REPLACEWITH": {
+						declare Block = Settings.Replacer.ReplaceWith;
+						if(Block == "") HideTooltip();
+						else ShowTooltip(Block);
+					}
+				}
+			}
+			case CMlScriptEvent::Type::MouseOut: {
+				HideTooltip();
+			}
+		}
+		***
+		
+		***Replacer_RightClick***
+		***
+		if(HoverControl.ControlId == "QUAD_TOREPLACE") {
+			if(Settings.Replacer.ToReplace != "") {
+				Settings.Replacer.ToReplace = "";
+				(HoverControl.Parent.GetFirstChild("QUAD_TOREPLACE_ICON") as CMlQuad).Image = Null;
+				Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 0, 1.);
+				SaveSettings();
+			}
+			
+			if(Settings.Replacer.ToReplace == "") HideTooltip();
+			else ShowTooltip(Settings.Replacer.ToReplace);
+		}
+		if(HoverControl.ControlId == "QUAD_REPLACEWITH") {
+			if(Settings.Replacer.ReplaceWith != "") {
+				Settings.Replacer.ReplaceWith = "";
+				(HoverControl.Parent.GetFirstChild("QUAD_REPLACEWITH_ICON") as CMlQuad).Image = Null;
+				Audio.PlaySoundEvent(CAudioManager::ELibSound::ScoreIncrease, 0, 1.);
+				SaveSettings();
+			
+				if(Settings.Replacer.ReplaceWith == "") HideTooltip();
+				else ShowTooltip(Settings.Replacer.ReplaceWith);
+			}
+		}
+		***
+
+		***Test_UpdateCheckpoints***
+		***
+		if(Test_Checkpoints.count > 0) {
+			if(CurrentCheckpoint < 0) CurrentCheckpoint = 0;
+			if(CurrentCheckpoint >= Test_Checkpoints.count)
+				CurrentCheckpoint = Test_Checkpoints.count - 1;
+
+			foreach(Block in Editor.Blocks) {
+				if(Block.Id^"" == Test_Checkpoints[CurrentCheckpoint])
+					Quad_TestFromCheckpoint_Icon.Image = Block.BlockModel.Icon;
+			}
+			Label_TestFromCheckpoint.Value = (CurrentCheckpoint+1)^"/"^Test_Checkpoints.count;
+		}
+		else {
+			Quad_TestFromCheckpoint_Icon.Image = Null;
+			Label_TestFromCheckpoint.Value = "";
+			if(CurrentCheckpoint >= 0) CurrentCheckpoint = -1;
+		}
+		***
+
+		***Test_Init***
+		***
+		declare Quad_TestFromCheckpoint_Icon = (Frame_Test.GetFirstChild("QUAD_TESTFROMCHECKPOINT_ICON") as CMlQuad);
+		declare Label_TestFromCheckpoint = (Frame_Test.GetFirstChild("LABEL_TESTFROMCHECKPOINT") as CMlLabel);
+		
+		declare CurrentCheckpoint = -1;
+		declare Text[] Test_Checkpoints for Page;
+		declare Boolean Test_UpdateCheckpoints for Page;
+		***
+		
+		***Test_Start***
+		***
+		if(Settings.Test.Enabled) {
+			AnimMgr.Add(Frame_Test.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+			
+			AnimMgr.Add(Frame_Test.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+			AnimMgr.Add(Frame_Test.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+			AnimMgr.Add(Frame_Test.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+			AnimMgr.Add(Frame_Test.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		}
+
+		+++Test_UpdateCheckpoints+++
+		***
+		
+		***Test_Event***
+		***
+		switch(Event.Type) {
+			case CMlScriptEvent::Type::MouseClick: {
+				switch(Event.ControlId) {
+					case "QUAD_OPEN": {
+						declare Parent <=> Event.Control.Parent;
+						switch(Parent.ControlId) {
+							case "FRAME_TEST": {
+								if(Settings.Test.Enabled) {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 31\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									Settings.Test.Enabled = False;
+								}
+								else {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									
+									Settings.Test.Enabled = True;
+								}
+								SaveSettings();
+								
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 0, 1.);
+							}
+						}
+					}
+					case "QUAD_TESTFROMSTART": {
+						SendCustomEvent("Test_TestFromStart", []);
+					}
+					case "QUAD_TESTFROMCHECKPOINT": {
+						if(CurrentCheckpoint >= 0 && CurrentCheckpoint < Test_Checkpoints.count)
+							SendCustomEvent("Test_TestFromCheckpoint", [Test_Checkpoints[CurrentCheckpoint]^""]);
+					}
+					case "QUAD_TESTFROMCHECKPOINT_PREV": {
+						if(CurrentCheckpoint > 0)
+							CurrentCheckpoint -= 1;
+						else
+							CurrentCheckpoint = Test_Checkpoints.count-1;
+						
+						Test_UpdateCheckpoints = True;
+
+						if(CurrentCheckpoint >= 0 && CurrentCheckpoint < Test_Checkpoints.count)
+							SendCustomEvent("Test_Focus", [Test_Checkpoints[CurrentCheckpoint]^""]);
+					}
+					case "QUAD_TESTFROMCHECKPOINT_NEXT": {
+						if(CurrentCheckpoint < Test_Checkpoints.count-1)
+							CurrentCheckpoint += 1;
+						else
+							CurrentCheckpoint = 0;
+						
+						Test_UpdateCheckpoints = True;
+
+						if(CurrentCheckpoint >= 0 && CurrentCheckpoint < Test_Checkpoints.count)
+							SendCustomEvent("Test_Focus", [Test_Checkpoints[CurrentCheckpoint]^""]);
+					}
+				}
+			}
+		}
+		***
+
+		***Test_Loop***
+		***
+		if(Test_UpdateCheckpoints) {
+			+++Test_UpdateCheckpoints+++
+			Test_UpdateCheckpoints = False;
+		}
+		***
+
+		***Test_RightClick***
+		***
+		if(HoverControl.ControlId == "QUAD_TESTFROMCHECKPOINT") {
+			if(CurrentCheckpoint >= 0 && CurrentCheckpoint < Test_Checkpoints.count)
+				SendCustomEvent("Test_Focus", [Test_Checkpoints[CurrentCheckpoint]^""]);
+		}
+		***
+
+		***Autosave_Init***
+		***
+		declare Label_Autosave_Next = (Frame_Autosave.GetFirstChild("LABEL_AUTOSAVE_NEXT") as CMlLabel);
+		declare Entry_Autosave_Interval = (Frame_Autosave.GetFirstChild("ENTRY_AUTOSAVE_INTERVAL") as CMlEntry);
+		declare Entry_Autosave_Location = (Frame_Autosave.GetFirstChild("ENTRY_AUTOSAVE_LOCATION") as CMlEntry);
+
+		declare Integer AutosaveTimestamp for Page;
+		***
+		
+		***Autosave_Start***
+		***
+		AnimMgr.Add(Frame_Autosave.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		
+		AnimMgr.Add(Frame_Autosave.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_Autosave.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_Autosave.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_Autosave.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+
+		Entry_Autosave_Interval.Value = TextLib::FormatReal(Settings.Autosave.Interval, 2, True, True);
+		Entry_Autosave_Location.Value = Settings.Autosave.Location;
+		***
+		
+		***Autosave_Event***
+		***
+		switch(Event.Type) {
+			case CMlScriptEvent::Type::EntrySubmit: {
+				switch(Event.ControlId) {
+					case "ENTRY_AUTOSAVE_INTERVAL": {
+						declare Interval = TextLib::ToReal(Entry_Autosave_Interval.Value);
+						if(Interval > 99) {
+							Entry_Autosave_Interval.SetText("99", True);
+						}
+						else if(Interval > 0) {
+							Settings.Autosave.Interval = Interval;
+							SaveSettings();
+						}
+						else {
+							Entry_Autosave_Interval.SetText("5", True);
+						}
+					}
+					case "ENTRY_AUTOSAVE_LOCATION": {
+						if(Entry_Autosave_Location.Value != "") {
+							Settings.Autosave.Location = Entry_Autosave_Location.Value;
+							SaveSettings();
+						}
+						else {
+							Entry_Autosave_Location.SetText("Autosaves", True);
+						}
+					}
+				}
+			}
+			case CMlScriptEvent::Type::MouseClick: {
+				switch(Event.ControlId) {
+					case "QUAD_OPEN": {
+						declare Parent <=> Event.Control.Parent;
+						switch(Parent.ControlId) {
+							case "FRAME_AUTOSAVE": {
+								if(Settings.Autosave.Enabled) {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 31\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									Settings.Autosave.Enabled = False;
+								}
+								else {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									
+									Settings.Autosave.Enabled = True;
+								}
+								SaveSettings();
+								
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 0, 1.);
+							}
+						}
+					}
+				}
+			}
+		}
+		***
+
+		***Autosave_Loop***
+		***
+		declare Time = MathLib::FloorInteger((Settings.Autosave.Interval*1000*60 - (Now - AutosaveTimestamp))/1000);
+		Label_Autosave_Next.Value = MathLib::FloorInteger(Time/60.)^"m "^(Time % 60)^"s";
+		***
+		
+		***SkinPainter_Init***
+		***
+		declare Boolean StartSkinPainting for Page;
+		declare Text[] Skins for Page;
+		declare Integer[] SelectedSkins for Page;
+		
+		declare Quad_SkinPainter_Block = (Frame_SkinPainter.GetFirstChild("QUAD_SKINPAINTER_BLOCK") as CMlQuad);
+		declare Label_SkinPainter_Block = (Frame_SkinPainter.GetFirstChild("LABEL_SKINPAINTER_BLOCK") as CMlLabel);
+		declare Frame_SkinPainter_Menu = (Frame_SkinPainter.GetFirstChild("FRAME_SKINPAINTER_MENU") as CMlFrame);
+		declare Frame_SkinPainter_Menu_Scroll = (Frame_SkinPainter.GetFirstChild("FRAME_SKINPAINTER_MENU_SCROLL") as CMlFrame);
+		declare Quad_Scroll = (Frame_SkinPainter.GetFirstChild("QUAD_SCROLL") as CMlQuad);
+		
+		declare PreviousScroll = Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y;
+		declare PreviousBlockModel = "";
+		declare Specials = ["Skins\\Stadium\\Inflatable\\Black.zip" => "111",
+							"Skins\\Stadium\\Inflatable\\Blue.zip" => "00F",
+							"Skins\\Stadium\\Inflatable\\Green.zip" => "0F0",
+							"Skins\\Stadium\\Inflatable\\Orange.zip" => "F70",
+							"Skins\\Stadium\\Inflatable\\White.zip" => "FFF",
+							"Skins\\Stadium\\Inflatable\\Yellow.zip" => "FF0"];
+
+		declare Offset = MathLib::Max(0, MathLib::NearestInteger(Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y/3.5));
+		***
+		
+		***SkinPainter_Start***
+		***
+		AnimMgr.Add(Frame_SkinPainter.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		
+		AnimMgr.Add(Frame_SkinPainter.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_SkinPainter.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_SkinPainter.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+		AnimMgr.Add(Frame_SkinPainter.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+
+		Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y = 0.;
+		***
+		
+		***SkinPainter_Event***
+		***
+		switch(Event.Type) {
+			case CMlScriptEvent::Type::MouseClick: {
+				switch(Event.ControlId) {
+					case "QUAD_OPEN": {
+						declare Parent <=> Event.Control.Parent;
+						switch(Parent.ControlId) {
+							case "FRAME_SKINPAINTER": {
+								if(Settings.SkinPainter.Enabled) {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 36\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									Settings.SkinPainter.Enabled = False;
+								}
+								else {
+									AnimMgr.Add(Parent.GetFirstChild("FRAME_INNER"), "<frame pos=\"0 -3\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_RED_GLOW"), "<quad opacity=\"0\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									AnimMgr.Add(Parent.GetFirstChild("QUAD_GREEN_GLOW"), "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+									
+									Settings.SkinPainter.Enabled = True;
+								}
+								SaveSettings();
+								
+								Audio.PlaySoundEvent(CAudioManager::ELibSound::Valid, 0, 1.);
+							}
+						}
+					}
+					case "QUAD_SKINPAINTER_START": {
+						declare Quad_SkinPainter_Start = (Event.Control as CMlQuad);
+						declare Quad_SkinPainter_Start_Bg = (Event.Control.Parent.GetFirstChild("QUAD_SKINPAINTER_START_BG") as CMlQuad);
+						declare Label_SkinPainter_Start = (Event.Control.Parent.GetFirstChild("LABEL_SKINPAINTER_START") as CMlLabel);
+						
+						if(StartSkinPainting) {
+							StartSkinPainting = False;
+							Quad_SkinPainter_Start.Colorize = <0.,.4,.0>;
+							Quad_SkinPainter_Start.ToolTip = "Click to start the skin painting mode.";
+							Quad_SkinPainter_Start_Bg.Colorize = <0.,.4,.0>;
+							Label_SkinPainter_Start.Value = "START SKIN PAINTING";
+						}
+						else {
+							StartSkinPainting = True;
+							Quad_SkinPainter_Start.Colorize = <.8,.4,.0>;
+							Quad_SkinPainter_Start.ToolTip = "Click to stop the skin painting mode.";
+							Quad_SkinPainter_Start_Bg.Colorize = <.8,.4,.0>;
+							Label_SkinPainter_Start.Value = "STOP SKIN PAINTING";
+						}
+					}
+					case "QUAD_SELECT": {
+						declare Index = TextLib::ToInteger(Event.Control.Parent.DataAttributeGet("index"))+Offset*5;
+						declare Quad = (Event.Control as CMlQuad);
+						if(SelectedSkins.exists(Index)) {
+							SelectedSkins.remove(Index);
+							Quad.StyleSelected = False;
+						}
+						else {
+							SelectedSkins.add(Index);
+							Quad.StyleSelected = True;
+						}
+					}
+				}
+			}
+			case CMlScriptEvent::Type::MouseOver: {
+				if(Event.ControlId == "QUAD_SELECT") {
+					ShowTooltip(Editor.GetSkinDisplayName(Skins[Offset*5+TextLib::ToInteger(Event.Control.Parent.DataAttributeGet("index"))]));
+				}
+			}
+			case CMlScriptEvent::Type::MouseOut: {
+				HideTooltip();
+			}
+		}
+		***
+
+		***SkinPainter_UpdateScroll***
+		***
+		HideTooltip();
+		Offset = MathLib::Max(0, MathLib::NearestInteger(Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y/3.5));
+		
+		for(I, 0, Frame_SkinPainter_Menu.Controls.count-1) {
+			declare Frame = (Frame_SkinPainter_Menu.Controls[I] as CMlFrame);
+			
+			if(Skins.count > I+Offset*5) {
+				declare Skin = Skins[I+Offset*5];
+				
+				if(Specials.existskey(Skin)) {
+					(Frame.GetFirstChild("QUAD_IMAGE") as CMlQuad).BgColor = ColorLib::HexToRgb(Specials[Skin]);
+					(Frame.GetFirstChild("QUAD_IMAGE") as CMlQuad).ChangeImageUrl("");
+				}
+				else {
+					(Frame.GetFirstChild("QUAD_IMAGE") as CMlQuad).BgColor = <0., 0., 0.>;
+					(Frame.GetFirstChild("QUAD_IMAGE") as CMlQuad).ChangeImageUrl("file://"^Skin);
+				}
+
+				if(SelectedSkins.exists(I+Offset*5)) {
+					(Frame.GetFirstChild("QUAD_SELECT") as CMlQuad).StyleSelected = True;
+				}
+				else {
+					(Frame.GetFirstChild("QUAD_SELECT") as CMlQuad).StyleSelected = False;
+				}
+				
+				Frame.Show();
+			}
+			else {
+				Frame.Hide();
+			}
+		}
+		***
+		
+		***SkinPainter_Loop***
+		***
+		if(Editor.Cursor.BlockModel == Null) {
+			Quad_SkinPainter_Block.Image = Null;
+			Label_SkinPainter_Block.Value = "No block selected";
+		}
+		else {
+			Quad_SkinPainter_Block.Image = Editor.Cursor.BlockModel.Icon;
+			Label_SkinPainter_Block.Value = Editor.Cursor.BlockModel.Name;
+		}
+	
+		if(Editor.Cursor.BlockModel != Null && Editor.Cursor.BlockModel.Name != PreviousBlockModel) {
+			PreviousBlockModel = Editor.Cursor.BlockModel.Name;
+			
+			SelectedSkins.clear();
+			Skins.clear();
+			if(Editor.IsBlockModelSkinnable(Editor.Cursor.BlockModel)) {
+				for(I, 1, Editor.GetNbBlockModelSkins(Editor.Cursor.BlockModel)) {
+					Skins.add(Editor.GetBlockModelSkin(Editor.Cursor.BlockModel, Offset*5+I-1));
+				}
+			}
+			else {
+				
+			}
+
+			Frame_SkinPainter_Menu_Scroll.ScrollMax.Y = MathLib::Max(0., MathLib::FloorInteger(Skins.count/5.)*3.5 - 5*3.5);
+
+			if(Frame_SkinPainter_Menu_Scroll.ScrollMax.Y == 0)
+				Quad_Scroll.Size.Y = 0.;
+			else
+				Quad_Scroll.Size.Y = MathLib::Max(2.,Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y/Frame_SkinPainter_Menu_Scroll.ScrollMax.Y*18);
+
+			+++SkinPainter_UpdateScroll+++
+		}
+
+		if(Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y != PreviousScroll && Frame_SkinPainter_Menu_Scroll.ScrollMax.Y != 0) {
+			Quad_Scroll.RelativePosition_V3.Y = -14-Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y/Frame_SkinPainter_Menu_Scroll.ScrollMax.Y*(18-Quad_Scroll.Size.Y);
+			Frame_SkinPainter_Menu.RelativePosition_V3.Y += PreviousScroll - Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y;
+			PreviousScroll = Frame_SkinPainter_Menu_Scroll.ScrollOffset.Y;
+			+++SkinPainter_UpdateScroll+++
+		}
+		***
+
+		Void SaveSettings() {
+			SendCustomEvent("Save", []);
+		}
+		
+		Void ShowTooltip(Text _Tooltip) {
+			declare Frame_Tooltip = (Page.GetFirstChild("FRAME_TOOLTIP") as CMlFrame);
+			declare Quad_Tooltip = (Frame_Tooltip.GetFirstChild("QUAD_TOOLTIP") as CMlQuad);
+			declare Label_Tooltip = (Frame_Tooltip.GetFirstChild("LABEL_TOOLTIP") as CMlLabel);
+			Quad_Tooltip.Size.X = Label_Tooltip.ComputeWidth(_Tooltip) + 5;
+			Label_Tooltip.Value = _Tooltip;
+			Frame_Tooltip.Show();
+		}
+		
+		Void HideTooltip() {
+			declare Frame_Tooltip = (Page.GetFirstChild("FRAME_TOOLTIP") as CMlFrame);
+			Frame_Tooltip.Hide();
+		}
+		
+		main() {
+			log("[UMPS:ML] Initializing UMPS...");
+			
+			declare Frame_SceneryPainter = (Page.GetFirstChild("FRAME_SCENERYPAINTER") as CMlFrame);
+			declare Frame_Replacer = (Page.GetFirstChild("FRAME_REPLACER") as CMlFrame);
+			declare Frame_Test = (Page.GetFirstChild("FRAME_TEST") as CMlFrame);
+			declare Frame_Autosave = (Page.GetFirstChild("FRAME_AUTOSAVE") as CMlFrame);
+			declare Frame_SkinPainter = (Page.GetFirstChild("FRAME_SKINPAINTER") as CMlFrame);
+			
+			Frame_SceneryPainter.RelativePosition_V3.X = 155.;
+			Frame_Replacer.RelativePosition_V3.X = 120.;
+			Frame_Test.RelativePosition_V3.X = 90.;
+			Frame_Autosave.RelativePosition_V3.X = 60.;
+			Frame_SkinPainter.RelativePosition_V3.X = 25.;
+			
+			Frame_SceneryPainter.Parent.GetFirstChild("FRAME_PLACE").RelativePosition_V3.X = 155.;
+			Frame_Replacer.Parent.GetFirstChild("FRAME_PLACE").RelativePosition_V3.X = 120.;
+			Frame_Test.Parent.GetFirstChild("FRAME_PLACE").RelativePosition_V3.X = 90.;
+			Frame_Autosave.Parent.GetFirstChild("FRAME_PLACE").RelativePosition_V3.X = 60.;
+			Frame_SkinPainter.Parent.GetFirstChild("FRAME_PLACE").RelativePosition_V3.X = 25.;
+		
+			Frame_SceneryPainter.GetFirstChild("FRAME_INNER").RelativePosition_V3.Y = 49.;
+			Frame_Replacer.GetFirstChild("FRAME_INNER").RelativePosition_V3.Y = 27.;
+			Frame_Test.GetFirstChild("FRAME_INNER").RelativePosition_V3.Y = 31.;
+			Frame_Autosave.GetFirstChild("FRAME_INNER").RelativePosition_V3.Y = 27.;
+			Frame_SkinPainter.GetFirstChild("FRAME_INNER").RelativePosition_V3.Y = 36.;
+			
+			foreach(Control in (Page.GetFirstChild("FRAME_BIGBANG1112") as CMlFrame).Controls) {
+				(Control as CMlQuad).Opacity = 0.;
+				if(Control.ControlId != "QUAD_UPDATE_AVAILABLE")
+					AnimMgr.Add(Control, "<quad opacity=\"1\"/>", 300, CAnimManager::EAnimManagerEasing::QuadOut);
+			}
+			
+			declare Zones = TextLib::Split("|", LocalUser.ZonePath);
+			if(Zones.count > 0) {
+				log("[UMPS:ML] Checking for UMPS updates...");
+				
+				declare Quad_Update_Available = (Page.GetFirstChild("QUAD_UPDATE_AVAILABLE") as CMlQuad);
+				declare Quad_Open_Plugins = (Page.GetFirstChild("QUAD_OPEN_PLUGINS") as CMlQuad);
+				
+				Quad_Open_Plugins.ToolTip = "Waiting for version check.";
+				
+				declare Request = Http.CreateGet("https://bigbang1112.eu/projects/umps/umps.php?status", True);
+				while(!Request.IsCompleted) {
+					yield;
+				}
+				
+				declare SStatus Status;
+				declare Success = Status.fromjson(Request.Result);
+				
+				declare Boolean Terminate for Page;
+				if(Status.Version != C_Plugin_Version) {
+					Quad_Open_Plugins.ToolTip = "Update available! Click to immediately download.";
+					
+					declare End = False;
+					while(!End) {
+						foreach(Event in PendingEvents) {
+							switch(Event.Type) {
+								case CMlScriptEvent::Type::MouseClick: {
+									if(Event.ControlId == "QUAD_OPEN_PLUGINS") {
+										OpenLink("umpset", ::LinkType::ManialinkBrowser);
+										End = True;
+									}
+								}
+							}
+						}
+						Quad_Update_Available.Opacity = (MathLib::Sin(Now/1000.*MathLib::PI()*3)+1)/2*.75;
+						yield;
+					}
+				}
+				
+				Quad_Update_Available.Opacity = 0.;
+				Quad_Open_Plugins.ToolTip = "Left click to open the plugin list. Right click to see more about the author.";
+				
+				Http.Destroy(Request);
+			}
+			else 
+				log("[UMPS:ML] Offline mode, update check skipped...");
+
+			log("[UMPS:ML] Starting UMPS...");
+			declare SUPSSettings Settings for Page;
+			
+			declare CMlControl HoverControl;
+			declare Boolean PreviousRightClick;
+			
+			declare Boolean IsHoldingWindow;
+			
+			declare Frame_Tooltip = (Page.GetFirstChild("FRAME_TOOLTIP") as CMlFrame);
+			
+			declare Frame_Plugins = (Page.GetFirstChild("FRAME_PLUGINS") as CMlFrame);
+			/*Frame_Plugins.RelativePosition_V3.X = 170.;
+			if(Settings.Open)
+				AnimMgr.Add(Frame_Plugins, "<frame pos=\"0 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);*/
+
+			log("[UMPS:ML] Starting UMPS...");
+
+			if(Settings.Open) {
+				AnimMgr.Add(Frame_SceneryPainter.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-25 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+				AnimMgr.Add(Frame_Replacer.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-60 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+				AnimMgr.Add(Frame_Test.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-90 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+				AnimMgr.Add(Frame_Autosave.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-120 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+				AnimMgr.Add(Frame_SkinPainter.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-155 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+			}
+			
+			if(Settings.SceneryPainter.Windowed) {
+				Frame_SceneryPainter.DataAttributeSet("windowed", "True");
+				Frame_SceneryPainter.Parent.ClipWindowActive = False;
+				Frame_SceneryPainter.Parent.GetFirstChild("FRAME_OUTER_PLACE").Show();
+				Frame_SceneryPainter.RelativePosition_V3 = Settings.SceneryPainter.WindowPosition;
+			}
+			else {
+				if(Settings.Open)
+					AnimMgr.Add(Frame_SceneryPainter, "<frame pos=\"-25 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+			}
+			if(Settings.Replacer.Windowed) {
+				Frame_Replacer.DataAttributeSet("windowed", "True");
+				Frame_Replacer.Parent.ClipWindowActive = False;
+				Frame_Replacer.Parent.GetFirstChild("FRAME_OUTER_PLACE").Show();
+				Frame_Replacer.RelativePosition_V3 = Settings.Replacer.WindowPosition;
+			}
+			else {
+				if(Settings.Open)
+					AnimMgr.Add(Frame_Replacer, "<frame pos=\"-60 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+			}
+			if(Settings.Test.Windowed) {
+				Frame_Test.DataAttributeSet("windowed", "True");
+				Frame_Test.Parent.ClipWindowActive = False;
+				Frame_Test.Parent.GetFirstChild("FRAME_OUTER_PLACE").Show();
+				Frame_Test.RelativePosition_V3 = Settings.Test.WindowPosition;
+			}
+			else {
+				if(Settings.Open)
+					AnimMgr.Add(Frame_Test, "<frame pos=\"-90 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+			}
+			if(Settings.Autosave.Windowed) {
+				Frame_Autosave.DataAttributeSet("windowed", "True");
+				Frame_Autosave.Parent.ClipWindowActive = False;
+				Frame_Autosave.Parent.GetFirstChild("FRAME_OUTER_PLACE").Show();
+				Frame_Autosave.RelativePosition_V3 = Settings.Autosave.WindowPosition;
+			}
+			else {
+				if(Settings.Open)
+					AnimMgr.Add(Frame_Autosave, "<frame pos=\"-120 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+			}
+			if(Settings.SkinPainter.Windowed) {
+				Frame_SkinPainter.DataAttributeSet("windowed", "True");
+				Frame_SkinPainter.Parent.ClipWindowActive = False;
+				Frame_SkinPainter.Parent.GetFirstChild("FRAME_OUTER_PLACE").Show();
+				Frame_SkinPainter.RelativePosition_V3 = Settings.SkinPainter.WindowPosition;
+			}
+			else {
+				if(Settings.Open)
+					AnimMgr.Add(Frame_SkinPainter, "<frame pos=\"-155 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+			}
+
+			declare Boolean StartSceneryPainter for Page;
+			declare Boolean StartReplacer for Page;
+			declare Boolean StartTest for Page;
+			declare Boolean StartAutosave for Page;
+			declare Boolean StartSkinPainter for Page;
+
+			+++SceneryPainter_Init+++
+			+++Replacer_Init+++
+			+++Test_Init+++
+			+++Autosave_Init+++
+			+++SkinPainter_Init+++
+			
+			log("[UMPS:ML] Starting subplugins...");
+			if(Settings.SceneryPainter.Enabled) +++SceneryPainter_Start+++
+			if(Settings.Replacer.Enabled) +++Replacer_Start+++
+			if(Settings.Test.Enabled) +++Test_Start+++
+			if(Settings.Autosave.Enabled) +++Autosave_Start+++
+			if(Settings.SkinPainter.Enabled) +++SkinPainter_Start+++
+			
+			log("[UMPS:ML] Looping...");
+			while(True) {
+				if(StartSceneryPainter) {
+					+++SceneryPainter_Start+++
+					StartSceneryPainter = False;
+				}
+				if(StartReplacer) {
+					+++Replacer_Start+++
+					StartReplacer = False;
+				}
+				if(StartTest) {
+					+++Test_Start+++
+					StartTest = False;
+				}
+				if(StartAutosave) {
+					+++Autosave_Start+++
+					StartAutosave = False;
+				}
+				if(StartSkinPainter) {
+					+++SkinPainter_Start+++
+					StartSkinPainter = False;
+				}
+
+				if(!IsHoldingWindow)
+				foreach(Event in PendingEvents) {
+					switch(Event.Type) {
+						case CMlScriptEvent::Type::MouseOver: {
+							HoverControl = Event.Control;
+						}
+						case CMlScriptEvent::Type::MouseOut: {
+							HoverControl = Null;
+						}
+						case CMlScriptEvent::Type::MouseClick: {
+							if(Event.ControlId == "QUAD_OPEN_PLUGINS") {
+								if(Settings.Open) {
+									Settings.Open = False;
+
+									AnimMgr.Add(Frame_SceneryPainter.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"155 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_SceneryPainter.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_SceneryPainter, "<frame pos=\"155 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									AnimMgr.Add(Frame_Replacer.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"120 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_Replacer.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_Replacer, "<frame pos=\"120 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									AnimMgr.Add(Frame_Test.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"90 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_Test.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_Test, "<frame pos=\"90 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									AnimMgr.Add(Frame_Autosave.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"60 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_Autosave.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_Autosave, "<frame pos=\"60 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									AnimMgr.Add(Frame_SkinPainter.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"25 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_SkinPainter.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_SkinPainter, "<frame pos=\"25 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									//AnimMgr.Add(Frame_Plugins, "<frame pos=\"170 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+								}
+								else {
+									Settings.Open = True;
+
+									AnimMgr.Add(Frame_SceneryPainter.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-25 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_SceneryPainter.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_SceneryPainter, "<frame pos=\"-25 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									
+									AnimMgr.Add(Frame_Replacer.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-60 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_Replacer.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_Replacer, "<frame pos=\"-60 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									
+									AnimMgr.Add(Frame_Test.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-90 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_Test.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_Test, "<frame pos=\"-90 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									
+									AnimMgr.Add(Frame_Autosave.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-120 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_Autosave.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_Autosave, "<frame pos=\"-120 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+
+									AnimMgr.Add(Frame_SkinPainter.Parent.GetFirstChild("FRAME_PLACE"), "<frame pos=\"-155 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									if(Frame_SkinPainter.DataAttributeGet("windowed") != "True")
+										AnimMgr.Add(Frame_SkinPainter, "<frame pos=\"-155 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+									//AnimMgr.Add(Frame_Plugins, "<frame pos=\"0 0\"/>", 800, CAnimManager::EAnimManagerEasing::QuadOut);
+								}
+								SaveSettings();
+							}
+						}
+					}
+					
+					+++SceneryPainter_Event+++
+					+++Replacer_Event+++
+					+++Test_Event+++
+					+++Autosave_Event+++
+					+++SkinPainter_Event+++
+				}
+				
+				if(Input.MouseRightButton != PreviousRightClick) {
+					if(Input.MouseRightButton) {
+						if(HoverControl != Null) {
+							+++SceneryPainter_RightClick+++
+							+++Replacer_RightClick+++
+							+++Test_RightClick+++
+							+++Autosave_RightClick+++
+							+++SkinPainter_RightClick+++
+							
+							if(HoverControl.ControlId == "QUAD_OPEN_PLUGINS") {
+								OpenLink("bigbang1112", ::LinkType::ManialinkBrowser);
+							}
+							else if(HoverControl.ControlId == "QUAD_OPEN") {
+								declare Frame = HoverControl.Parent;
+								if(Frame.DataAttributeGet("holding") == "True") {
+									Frame.DataAttributeSet("holding", "False");
+									IsHoldingWindow = False;
+									switch(Frame.ControlId) {
+										case "FRAME_SCENERYPAINTER": {
+											Settings.SceneryPainter.WindowPosition = Frame.RelativePosition_V3;
+										}
+										case "FRAME_REPLACER": {
+											Settings.Replacer.WindowPosition = Frame.RelativePosition_V3;
+										}
+										case "FRAME_TEST": {
+											Settings.Test.WindowPosition = Frame.RelativePosition_V3;
+										}
+										case "FRAME_AUTOSAVE": {
+											Settings.Autosave.WindowPosition = Frame.RelativePosition_V3;
+										}
+										case "FRAME_SKINPAINTER": {
+											Settings.SkinPainter.WindowPosition = Frame.RelativePosition_V3;
+										}
+									}
+									SaveSettings();
+								}
+								else if(!IsHoldingWindow) {
+									Frame.DataAttributeSet("windowed", "True");
+									Frame.DataAttributeSet("holding", "True");
+									Frame.Parent.ClipWindowActive = False;
+									Frame.Parent.GetFirstChild("FRAME_OUTER_PLACE").Show();
+									IsHoldingWindow = True;
+									switch(Frame.ControlId) {
+										case "FRAME_SCENERYPAINTER": {
+											Settings.SceneryPainter.Windowed = True;
+										}
+										case "FRAME_REPLACER": {
+											Settings.Replacer.Windowed = True;
+										}
+										case "FRAME_TEST": {
+											Settings.Test.Windowed = True;
+										}
+										case "FRAME_AUTOSAVE": {
+											Settings.Autosave.Windowed = True;
+										}
+										case "FRAME_SKINPAINTER": {
+											Settings.SkinPainter.Windowed = True;
+										}
+									}
+									SaveSettings();
+								}
+							}
+						}
+					}
+					PreviousRightClick = Input.MouseRightButton;
+				}
+				
+				if(Settings.SceneryPainter.Enabled) +++SceneryPainter_Loop+++
+				if(Settings.Replacer.Enabled) +++Replacer_Loop+++
+				if(Settings.Test.Enabled) +++Test_Loop+++
+				if(Settings.Autosave.Enabled) +++Autosave_Loop+++
+				if(Settings.SkinPainter.Enabled) +++SkinPainter_Loop+++
+
+				foreach(Frame in [Frame_SceneryPainter, Frame_Replacer, Frame_Test, Frame_Autosave, Frame_SkinPainter]) {
+					if(Frame.DataAttributeGet("holding") == "True") {
+						Frame.Parent.ZIndex = 100.;
+						Frame.RelativePosition_V3 = <MouseX - 100, MouseY - 80>;
+					}
+					else
+						Frame.Parent.ZIndex = 0.;
+				}
+				
+				if(Frame_Tooltip.Visible) {
+					Frame_Tooltip.RelativePosition_V3 = <MouseX, MouseY>;
+				}
+				
+				yield;
+			}
+		}
+]]></script>
+</manialink>""";
+
+	declare Boolean StartSceneryPainter for ManialinkPage;
+	declare Boolean StartReplacer for ManialinkPage;
+	declare Boolean StartTest for ManialinkPage;
+	declare Boolean StartAutosave for ManialinkPage;
+	declare Boolean StartSkinPainter for ManialinkPage;
+
+	declare PreviousSceneryPainterEnabled = Settings.SceneryPainter.Enabled;
+	declare PreviousReplacerEnabled = Settings.Replacer.Enabled;
+	declare PreviousTestEnabled = Settings.Test.Enabled;
+	declare PreviousAutosaveEnabled = Settings.Autosave.Enabled;
+	declare PreviousSkinPainterEnabled = Settings.SkinPainter.Enabled;
+	
+	declare Boolean Terminate for ManialinkPage;
+	
+	log("""[{{{C_Plugin_Name_Short}}}] Looping...""");
+	while(True) {
+		if(Settings.SceneryPainter.Enabled != PreviousSceneryPainterEnabled) {
+			if(Settings.SceneryPainter.Enabled) {
+				+++SceneryPainter_Start+++
+				StartSceneryPainter = True;
+			}
+			PreviousSceneryPainterEnabled = Settings.SceneryPainter.Enabled;
+		}
+		if(Settings.Replacer.Enabled != PreviousReplacerEnabled) {
+			if(Settings.Replacer.Enabled) {
+				+++Replacer_Start+++
+				StartReplacer = True;
+			}
+			PreviousReplacerEnabled = Settings.Replacer.Enabled;
+		}
+		if(Settings.Test.Enabled != PreviousTestEnabled) {
+			if(Settings.Test.Enabled) {
+				+++Test_Start+++
+				StartTest = True;
+			}
+			PreviousTestEnabled = Settings.Test.Enabled;
+		}
+		if(Settings.Autosave.Enabled != PreviousAutosaveEnabled) {
+			if(Settings.Autosave.Enabled) {
+				+++Autosave_Start+++
+				StartAutosave = True;
+			}
+			PreviousAutosaveEnabled = Settings.Autosave.Enabled;
+		}
+		if(Settings.SkinPainter.Enabled != PreviousSkinPainterEnabled) {
+			if(Settings.SkinPainter.Enabled) {
+				+++SkinPainter_Start+++
+				StartSkinPainter = True;
+			}
+			PreviousSkinPainterEnabled = Settings.SkinPainter.Enabled;
+		}
+	
+		foreach(Event in PendingEvents) {
+			if(Event.Type == CMapEditorPluginEvent::Type::LayerCustomEvent) {
+				if(Event.CustomEventType == "Save") {
+					SaveSettings();
+				}	
+			}
+			
+			if(Settings.SceneryPainter.Enabled) +++SceneryPainter_Event+++
+			if(Settings.Replacer.Enabled) +++Replacer_Event+++
+			if(Settings.Test.Enabled) +++Test_Event+++
+			if(Settings.Autosave.Enabled) +++Autosave_Event+++
+			if(Settings.SkinPainter.Enabled) +++SkinPainter_Event+++
+		}
+		
+		if(Settings.SceneryPainter.Enabled) +++SceneryPainter_Loop+++
+		if(Settings.Replacer.Enabled) +++Replacer_Loop+++
+		if(Settings.Test.Enabled) +++Test_Loop+++
+		if(Settings.Autosave.Enabled) +++Autosave_Loop+++
+		if(Settings.SkinPainter.Enabled) +++SkinPainter_Loop+++
+		
+		if(Terminate) break;
+		
+		yield;
+	}
+}

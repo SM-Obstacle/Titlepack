@@ -1,7 +1,7 @@
 #Include "Libs/smokegun/Tools.Script.txt" as Tools
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 
-#Const  Version     "2022-25-11"
+#Const  Version     "2023-22-04"
 #Const  ScriptName  "SpecKeys.Script.txt"
 
 #Struct Keys {
@@ -27,10 +27,10 @@ Void UpdateLayer(CSmPlayer _Player)
 }
 
 Text GetLayer() {
-    CustomUI::Add("Frame_SpecKeys", <0., -35.>, <45., 20.>);
+    CustomUI::Add("Frame_SpecKeys", <0., -35.>, <45., 20.>, True);
     return """
 <manialink version="1" name="Obstacle:SpecKeys">
-    <frame id="Frame_SpecKeys" scale="0.5" class="LibCustomUI_Module">
+    <frame id="Frame_SpecKeys" scale="0.5" class="LibCustomUI_Module" hidden="1">
         <frame posn="0. -35">
             <frame posn="-17. -35">
                 <quad id="Down" posn="0 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Down.png" opacity="0.5"/>
@@ -39,8 +39,8 @@ Text GetLayer() {
                 <quad id="Left" posn="-15 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Left.png" opacity="0.5"/>
                 <quad id="Space" posn="35 -2" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Space.png" opacity="0.5"/>
                 <frame posn="35 13">
-                    <quad id="MouseRight" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Right.png" opacity="0.0"/>
-                    <quad id="MouseLeft" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Left.png" opacity="0.0"/>
+                    <quad id="MouseRight" z-index="1" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Right.png" opacity="0.0"/>
+                    <quad id="MouseLeft" z-index="1" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Left.png" opacity="0.0"/>
                     <quad id="Mouse" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Simple.png" opacity="0.5"/>
                 </frame>
             </frame>
@@ -107,11 +107,6 @@ Text GetLayer() {
         declare LeftPressed = IsKeyPressed(KC_A) || IsKeyPressed(KC_Q) || IsKeyPressed(KC_DEL) || IsKeyPressed(KC_LEFT);
         declare RightPressed = IsKeyPressed(KC_D) || IsKeyPressed(KC_PGDOWN) || IsKeyPressed(KC_RIGHT);
 
-        if (Previous.Space != IsKeyPressed(KC_SPACE)) {
-            Previous.Space = IsKeyPressed(KC_SPACE);
-            MyKeys.Space = Previous.Space;
-        }
-
         if (Previous.Up != UpPressed) {
             Previous.Up = UpPressed;
             MyKeys.Up = Previous.Up;
@@ -130,6 +125,11 @@ Text GetLayer() {
         if (Previous.Right != RightPressed) {
             Previous.Right = RightPressed;
             MyKeys.Right = Previous.Right;
+        }
+
+        if (Previous.Space != IsKeyPressed(KC_SPACE)) {
+            Previous.Space = IsKeyPressed(KC_SPACE);
+            MyKeys.Space = Previous.Space;
         }
 
         if (Previous.LClick != IsKeyPressed(KC_LCLICK)) {
@@ -190,10 +190,10 @@ Text GetLayer() {
         else if (! LastKeys.Space && Quad_Space.Opacity != 0.5)
             Quad_Space.Opacity = 0.5;
 
-        if ((LastKeys.LClick || LastKeys.RClick)  && Quad_Mouse.Opacity != 1.0)
-            Quad_Mouse.Opacity = 1.0;
-        else if (! (LastKeys.LClick || LastKeys.RClick) && Quad_Mouse.Opacity != 0.5)
-            Quad_Mouse.Opacity = 0.5;
+        // if ((LastKeys.LClick || LastKeys.RClick)  && Quad_Mouse.Opacity != 1.0)
+        //     Quad_Mouse.Opacity = 1.0;
+        // else if (! (LastKeys.LClick || LastKeys.RClick) && Quad_Mouse.Opacity != 0.5)
+        //     Quad_Mouse.Opacity = 0.5;
     }
 
     main() {
@@ -222,20 +222,12 @@ Text GetLayer() {
         while (True) {
             yield;
             
-            // for (I, 0, 255) {
-            //     if (IsKeyPressed(I))
-            //         log(I);
-            // }
-
-            if (Frame_SpecKeys.Visible != IsSpectator)
-                Frame_SpecKeys.Visible = IsSpectator;
-
             if (!IsSpectator) {
                 UpdatePlayer();
             }
-            else {
-                UpdateSpec();
-            }
+            
+            UpdateSpec();
+            
             {{{CustomUI::InjectMLLoop()}}}
         }
     }

@@ -15,7 +15,7 @@
     CONSTANTS
 ***************************************/
 
-#Const  Version     "2021-07-11"
+#Const  Version     "2023-04-18"
 #Const  ScriptName  "Weapons.Script.txt"
 
 
@@ -33,8 +33,6 @@ Void ResetWeapon(CSmPlayer _Player) {
 }
 
 Void SetWeapon(CSmPlayer _Player, Integer _WeaponType, Real _Gain, Integer _Count) {
-    ResetWeapon(_Player);
-
     declare Weapon = CSmMode::EWeapon::Rocket;
     switch(_WeaponType) {
         case Constants::C_Weapon_Laser: {

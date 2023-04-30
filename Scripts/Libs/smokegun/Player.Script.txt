@@ -314,6 +314,7 @@ Void saveLastLegitPosition(CSmPlayer _Player) {
         declare Boolean Save_UsedPvPCollisions for _Player;
         declare Boolean Save_UsedSpeedHack for _Player;
         declare Integer Save_CpProgress for _Player;
+        declare Ident Save_V2PortalCache for _Player;
 
         Save_LastCheckpoint = getLastCheckpoint(_Player);
         Save_UsedRSBug = usedRSBug(_Player);
@@ -322,6 +323,7 @@ Void saveLastLegitPosition(CSmPlayer _Player) {
         Save_UsedPvPCollisions = usedPvPCollisions(_Player);
         Save_UsedSpeedHack = usedSpeedHack(_Player);
         Save_CpProgress = getCpProgress(_Player);
+        Save_V2PortalCache = getV2PortalCache(_Player);
         
         declare Ident[] LastCheckpointsIds for _Player;
         declare netwrite Text[] LastCheckpointsIdsStr for _Player;
@@ -342,6 +344,7 @@ Void saveLastLegitPosition(CSmPlayer _Player) {
 
 Void setUsedJump(CSmPlayer _Player, Boolean _Value) {
     saveLastLegitPosition(_Player);
+
     declare netwrite Boolean Net_UsedJump for _Player = False;
     Net_UsedJump = _Value;
 }
@@ -354,6 +357,7 @@ Ident loadLastLegitPosition(CSmPlayer _Player) {
     declare Boolean Save_UsedPvPCollisions for _Player = False;
     declare Boolean Save_UsedSpeedHack for _Player = False;
     declare Integer Save_CpProgress for _Player = -1;
+    declare Ident Save_V2PortalCache for _Player = NullId;
 
     setLastCheckpoint(_Player, Save_LastCheckpoint);
     setUsedRSBug(_Player, Save_UsedRSBug);
@@ -363,21 +367,25 @@ Ident loadLastLegitPosition(CSmPlayer _Player) {
     setUsedSpeedHack(_Player, Save_UsedSpeedHack);
     setCpProgress(_Player, Save_CpProgress);
     setUsedJump(_Player, False);
+    setV2PortalCache(_Player, Save_V2PortalCache);
     
     declare Ident[] LastCheckpointsIds for _Player;
     declare netwrite Text[] LastCheckpointsIdsStr for _Player;
     declare netwrite Integer[] PreviousCheckpointsOrder for _Player;
-        declare Integer[Ident] CheckpointsTimeLast for _Player.Score;
+    declare Integer[Ident] CheckpointsTimeLast for _Player.Score;
 
     declare Ident[] Save_LastCheckpointsIds for _Player;
     declare Text[] Save_LastCheckpointsIdsStr for _Player;
     declare Integer[] Save_PreviousCheckpointsOrder for _Player;
-        declare Integer[Ident] Save_CheckpointsTimeLast for _Player;
+    declare Integer[Ident] Save_CheckpointsTimeLast for _Player;
 
     LastCheckpointsIds = Save_LastCheckpointsIds;
     LastCheckpointsIdsStr = Save_LastCheckpointsIdsStr;
     PreviousCheckpointsOrder = Save_PreviousCheckpointsOrder;
     CheckpointsTimeLast = Save_CheckpointsTimeLast;
+
+    if (Save_V2PortalCache != NullId)
+        return Save_V2PortalCache;
 
     return Save_LastCheckpoint;
 }
@@ -398,6 +406,7 @@ Void InitPlayer(CSmPlayer _Player) {
     setUsedPvPWeapons(_Player, UsePvPWeapons);
     setUsedPvPCollisions(_Player, UsePvPCollisions);
     setUsedSpeedHack(_Player, False);
+    setV2PortalCache(_Player, NullId);
 
     setBestRun(_Player, -1);
     setLastRun(_Player, -1);

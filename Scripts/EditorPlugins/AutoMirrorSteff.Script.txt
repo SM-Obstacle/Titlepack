@@ -4,7 +4,7 @@
 *	Contact:	schteffens@gmail.com	*
 ****************************************/
 
-#RequireContext	CEditorPlugin
+#RequireContext	CMapEditorPlugin
 
 #Include "MapUnits" as MapUnits
 #Include "MathLib" as MathLib
@@ -135,22 +135,22 @@ main() {
 		yield;
 		
 		switch (This.PlaceMode) {
-			case CEditorPlugin::PlaceMode::Block: {
+			case CMapEditorPlugin::PlaceMode::Block: {
 				switch (This.EditMode) {
-					case CEditorPlugin::EditMode::Erase: {
+					case CMapEditorPlugin::EditMode::Erase: {
 						// Block erase mode
-						declare CursorBlock = This.GetBlock(This.CursorCoord);
+						declare CursorBlock = This.GetBlock(This.Cursor.Coord);
 						if (MirrorMode == 0 || CursorBlock == Null || IsBaseGround(CursorBlock)) {
 							HighlightCoords(Int3[]);
 							continue;
 						}
-						declare MirrorCoords = MirrorCoords(This.CursorCoord, MirrorMode);
+						declare MirrorCoords = MirrorCoords(This.Cursor.Coord, MirrorMode);
 						HighlightCoords([MirrorCoords]);
 						log(Now);
 						foreach (Event in PendingEvents) {
 								log(Now^Event);
 							switch (Event.Type) {
-								case CEditorPluginEvent::Type::MapModified: {
+								case CMapEditorPluginEvent::Type::MapModified: {
 									foreach (Coords in This.CustomSelectionCoords) {
 										declare MirrorBlock = This.GetBlock(Coords);
 										if (MirrorBlock != CursorBlock) continue;
@@ -164,7 +164,7 @@ main() {
 							}
 						}
 					}
-					case CEditorPlugin::EditMode::Place: {
+					case CMapEditorPlugin::EditMode::Place: {
 						// Block place mode
 						if (MirrorMode == 0 || This.CursorBlockModel == Null) {
 							HighlightCoords(Int3[]);
@@ -175,7 +175,7 @@ main() {
 						
 						foreach (Event in PendingEvents) {
 							switch (Event.Type) {
-								case CEditorPluginEvent::Type::MapModified: {
+								case CMapEditorPluginEvent::Type::MapModified: {
 									// Check for newly added block
 									declare CBlock Block;
 									declare Int3 Coords;

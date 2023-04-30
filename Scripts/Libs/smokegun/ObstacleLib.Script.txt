@@ -34,7 +34,7 @@
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2023-04-10"
+#Const  Version     "2023-04-11"
 #Const  ScriptName  "ObstacleLib.Script.txt"
 
 
@@ -396,15 +396,13 @@ Void Private_RestartEffect(CSmPlayer _Player, Ident _SpawnId) {
  *            Boolean   _Increment      should the rs counter be incremented (False when jumping to a cp)
  */
 Void Private_CpRestart(CSmPlayer _Player, Integer _Delay, Ident _LastCheckpoint, Ident _CPSpawn, Boolean _Increment) {
-    if (_Increment)
-        Player::incrementRespawnCount(_Player);
-
     declare Checkpoint <=> MapLandmarks[_LastCheckpoint];
     declare CanFastRespawn = Settings::GetFastRespawn();
 
     if (_Increment) {
         CanFastRespawn = True;
-    } if (CanFastRespawn && ForceFastRSMap() == 2) {
+        Player::incrementRespawnCount(_Player);
+    } else if (ForceFastRSMap() == 2) {
         CanFastRespawn = False;
     }
 
@@ -603,11 +601,20 @@ Boolean JumpToCheckpointIdent_ByPassSpawn(CSmPlayer _Player, Ident _Target) {
 
 
 Boolean JumpToCheckpointIdent(CSmPlayer _Player, Ident _Target) {
+    Player::setUsedJump(_Player, True);
     declare Spawn = Tools::GetClosestSpawn(_Target, Player::getCpProgress(_Player));
 
-    Player::setUsedJump(_Player, True);
+    declare LastCP = Player::getV2PortalCache(_Player);
+    if (LastCP == NullId)
+        LastCP = Player::getLastCheckpoint(_Player);
+
+    if (_Target == LastCP) {
+        Private_CpRestart(_Player, 3500, _Target, Spawn, False);
+        return True;
+    }
+
     Player::clearLastCPTimes(_Player);
-    Player::setLastCheckpoint(_Player, NullId);
+    Player::setLastCheckpoint(_Player, _Target);
     Private_CpRestart(_Player, 3500, _Target, Spawn, False);
 
     if (RNG::GetOrder(MapLandmarks_Sector[_Target]) != 0)
@@ -778,8 +785,9 @@ Void Private_CheckpointEffect(CSmPlayer _Player, Ident _CheckpointId) {
 
 Void JumpBack(CSmPlayer _Player) {
     declare LastCP = Player::loadLastLegitPosition(_Player);
-
-    Private_CheckpointEffect(_Player, LastCP);
+    if (LastCP != NullId) {
+        Private_CheckpointEffect(_Player, LastCP);
+    }
     ObsRespawnPlayer(_Player);
 }
 

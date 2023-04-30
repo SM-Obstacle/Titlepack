@@ -2,7 +2,7 @@
  * Custom UI library
  */
 
-#Const Version		"2014-05-19"
+#Const Version		"2023-28-04"
 #Const ScriptName	"CustomUI.Script.txt"
 
 #Include "TextLib" as TL
@@ -36,10 +36,11 @@ declare Text G_Key;
  *
  *	@return	The manialink Text
  */
-Text Private_GetMLHelper(Text _Name, Vec2 _Pos, Vec2 _Size, Text _VAlign, Text _HAlign, Boolean _Movable, Boolean _Hidable) {
+Text Private_GetMLHelper(Text _Name, Vec2 _Pos, Vec2 _Size, Text _VAlign, Text _HAlign, Boolean _Movable, Boolean _Hidable, Boolean _SpecOnly) {
 	declare AdditionalClasses = "";
 	if (!_Movable) AdditionalClasses ^= " NotMovable";
 	if (!_Hidable) AdditionalClasses ^= " NotHidable";
+	if (_SpecOnly) AdditionalClasses ^= " SpecOnly";
 	
 	// We use the Controls array from Frame_Helper_XXX in the code below, take care when changing/adding elements in this frame!
 	return """
@@ -47,6 +48,7 @@ Text Private_GetMLHelper(Text _Name, Vec2 _Pos, Vec2 _Size, Text _VAlign, Text _
 	<frame hidden="0" class="Module_Helper{{{AdditionalClasses}}}" id="Frame_Helper_{{{_Name}}}">
 		<quad sizen="{{{_Size.X}}} {{{_Size.Y}}}" halign="{{{_HAlign}}}" valign="{{{_VAlign}}}" bgcolor="0505" id="Quad_Visible" />
 		<quad sizen="{{{_Size.X}}} {{{_Size.Y}}}" halign="{{{_HAlign}}}" valign="{{{_VAlign}}}" bgcolor="5005" hidden="1" id="Quad_NotVisible" />
+		<quad sizen="{{{_Size.X}}} {{{_Size.Y}}}" halign="{{{_HAlign}}}" valign="{{{_VAlign}}}" bgcolor="0055" hidden="1" id="Quad_SpecOnly" />
 		<label posn="0 0 1" sizen="{{{_Size.X}}} {{{_Size.Y}}}" halign="{{{_HAlign}}}" valign="{{{_VAlign}}}" focusareacolor1="fff0" focusareacolor2="fff1" scriptevents="1" class="Module_Handler" id="{{{_Name}}}" />
 		<label posn="0 0 2" halign="{{{_HAlign}}}" valign="{{{_VAlign}}}" textsize="1" textcolor="ddd" textemboss="1" text="{{{_Name}}}" />
 		<quad sizen="{{{_Size.X}}} {{{_Size.Y}}}" halign="{{{_HAlign}}}" valign="{{{_VAlign}}}" id="Quad_BoundingBox" />
@@ -132,7 +134,7 @@ Text Private_GetMLCustomUI() {
 <script><!--
 #Include "TextLib" as TL
 
-Void SetHelperModuleVisibility(CMlControl _Control, Boolean _Visible) {
+Void SetBasicHelperModuleVisibility(CMlControl _Control, Boolean _Visible) {
 	if (_Control == Null) return;
 	declare Control <=> (_Control as CMlFrame);
 	declare Quad_Visible		<=> Control.Controls[0];
@@ -146,6 +148,23 @@ Void SetHelperModuleVisibility(CMlControl _Control, Boolean _Visible) {
 		Quad_Visible.Visible = False;
 		Quad_NotVisible.Visible = True;
 	}
+}
+
+Void SetHelperModuleVisibility(CMlControl _Control, Boolean _Visible, Boolean _Spec) {
+	if (_Control == Null) return;
+	declare Control <=> (_Control as CMlFrame);
+	declare Quad_Visible		<=> Control.Controls[0];
+	declare Quad_NotVisible		<=> Control.Controls[1];
+	declare Quad_SpecOnly		<=> Control.Controls[2];
+	if (Quad_Visible == Null || Quad_NotVisible == Null) return;
+		
+	Quad_SpecOnly.Visible = False;
+	Quad_Visible.Visible = False;
+	Quad_NotVisible.Visible = False;
+
+	if (_Spec)         Quad_SpecOnly.Visible = True;
+	else if (_Visible)  Quad_Visible.Visible = True;
+	else             Quad_NotVisible.Visible = True;
 }
 
 Void SetButtonText(CMlLabel _Button, Boolean _Visible) {
@@ -172,22 +191,25 @@ main() {
 	
 	declare persistent Vec3[Text] Persistent_LibCustomUI_ModulesPositions;
 	declare persistent Boolean[Text] Persistent_LibCustomUI_ModulesVisibilities;
+	declare persistent Text[] Persistent_LibCustomUI_ModulesSpecOnly;
 	declare persistent Boolean[Text] Persistent_LibCustomUI_BasicVisibilities;
 	
 	declare Boolean LibCustomUI_IsVisible for ClientUI;
 	declare Boolean[Text] LibCustomUI_ModulesUpdated for ClientUI;
 	declare Vec3[Text] LibCustomUI_ModulesPositions for ClientUI;
 	declare Boolean[Text] LibCustomUI_ModulesVisibilities for ClientUI;
+	declare Text[] LibCustomUI_ModulesSpecOnly for ClientUI;
 	declare Integer LibCustomUI_ForcedUpdate for ClientUI;
 	
 	LibCustomUI_IsVisible = False;
 	LibCustomUI_ModulesUpdated.clear();
 	LibCustomUI_ModulesPositions.clear();
+	LibCustomUI_ModulesSpecOnly.clear();
 	LibCustomUI_ForcedUpdate = Now;
 	
 	Page.GetClassChildren("Module_Helper", Frame_Helpers, True);
 	foreach (Control in Page.GetClassChildren_Result) {
-		declare Label_Handler <=> (Control as CMlFrame).Controls[2];
+		declare Label_Handler <=> (Control as CMlFrame).Controls[3];
 		
 		LibCustomUI_ModulesUpdated[Label_Handler.ControlId] = True;
 		
@@ -198,12 +220,16 @@ main() {
 			LibCustomUI_ModulesPositions[Label_Handler.ControlId] = <0., 0., 0.>;
 			Control.RelativePosition = <0., 0., 0.>;
 		}
-		if (Persistent_LibCustomUI_ModulesVisibilities.existskey(Label_Handler.ControlId)) {
+		if (Persistent_LibCustomUI_ModulesSpecOnly.exists(Label_Handler.ControlId)) {
+			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = True;
+			LibCustomUI_ModulesSpecOnly.add(Label_Handler.ControlId);
+			SetHelperModuleVisibility(Control, True, True);
+		} else if (Persistent_LibCustomUI_ModulesVisibilities.existskey(Label_Handler.ControlId)) {
 			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = Persistent_LibCustomUI_ModulesVisibilities[Label_Handler.ControlId];
-			SetHelperModuleVisibility(Control, LibCustomUI_ModulesVisibilities[Label_Handler.ControlId]);
+			SetBasicHelperModuleVisibility(Control, LibCustomUI_ModulesVisibilities[Label_Handler.ControlId]);
 		} else {
 			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = True;
-			SetHelperModuleVisibility(Control, True);
+			SetBasicHelperModuleVisibility(Control, True);
 		}
 	}
 	
@@ -225,9 +251,9 @@ main() {
 		Frames_BasicHelpers[Control.ControlId] <=> Control;
 		
 		if (Persistent_LibCustomUI_BasicVisibilities.existskey(Control.ControlId)) {
-			SetHelperModuleVisibility(Control, Persistent_LibCustomUI_BasicVisibilities[Control.ControlId]);
+			SetBasicHelperModuleVisibility(Control, Persistent_LibCustomUI_BasicVisibilities[Control.ControlId]);
 		} else {
-			SetHelperModuleVisibility(Control, True);
+			SetBasicHelperModuleVisibility(Control, True);
 		}
 	}
 	
@@ -271,7 +297,7 @@ main() {
 		foreach (Event in PendingEvents) {
 			if (Event.Type == CMlEvent::Type::KeyPress && Event.KeyName == "{{{G_Key}}}") {
 				Frame_Global.Visible = !Frame_Global.Visible;
-				if (Frame_Global.Visible) {
+				if (Frame_Global.Visible && ClientUI.UISequence == CUIConfig::EUISequence::Playing ||ClientUI.UISequence == CUIConfig::EUISequence::None) {
 					LibCustomUI_IsVisible = True;
 					ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
 				} else {
@@ -288,7 +314,7 @@ main() {
 				if (Event.Control.HasClass("BasicButton")) {
 					declare Visibility = !Persistent_LibCustomUI_BasicVisibilities[Event.Control.ControlId];
 					Persistent_LibCustomUI_BasicVisibilities[Event.Control.ControlId] = Visibility;
-					SetHelperModuleVisibility(Frames_BasicHelpers[Event.Control.ControlId], Visibility);
+					SetBasicHelperModuleVisibility(Frames_BasicHelpers[Event.Control.ControlId], Visibility);
 					SetButtonText(Buttons_BasicVisibilities[Event.Control.ControlId], Visibility);
 					// Buttons
 					switch (Event.ControlId) {
@@ -320,7 +346,7 @@ main() {
 						case "Button_ActiveReset": {
 							foreach (Name => Button in Buttons_BasicVisibilities) {
 								Persistent_LibCustomUI_BasicVisibilities[Name] = True;
-								SetHelperModuleVisibility(Frames_BasicHelpers[Name], True);
+								SetBasicHelperModuleVisibility(Frames_BasicHelpers[Name], True);
 								SetButtonText(Button, True);
 								switch (Name) {
 									case "Notices"		: ClientUI.OverlayHideNotices	= False;
@@ -332,15 +358,23 @@ main() {
 							}
 							
 							Page.GetClassChildren("Module_Helper", Frame_Helpers, True);
+							LibCustomUI_ModulesSpecOnly.clear();
+							Persistent_LibCustomUI_ModulesSpecOnly.clear();
 							foreach (Control in Page.GetClassChildren_Result) {
-								declare Name = (Control as CMlFrame).Controls[2].ControlId;
+								declare Name = (Control as CMlFrame).Controls[3].ControlId;
 								if (LibCustomUI_ModulesUpdated.existskey(Name)) {
 									Control.RelativePosition = <0., 0., 0.>;
 									LibCustomUI_ModulesPositions[Name] = <0., 0., 0.>;
 									Persistent_LibCustomUI_ModulesPositions[Name] = <0., 0., 0.>;
 									LibCustomUI_ModulesVisibilities[Name] = True;
 									Persistent_LibCustomUI_ModulesVisibilities[Name] = True;
-									SetHelperModuleVisibility(Control, True);
+									if (Control.HasClass("SpecOnly")) {
+										LibCustomUI_ModulesSpecOnly.add(Name);
+										Persistent_LibCustomUI_ModulesSpecOnly.add(Name);
+										SetHelperModuleVisibility(Control, True, True);
+									} else {
+										SetBasicHelperModuleVisibility(Control, True);
+									}
 									LibCustomUI_ModulesUpdated[Name] = True;
 								}
 							}
@@ -392,7 +426,7 @@ main() {
 			}
 		}
 		
-		// Reset
+		// Reset, todo refact
 		if (LibCustomUI_PrevMouseMiddleButton != MouseMiddleButton) {
 			LibCustomUI_PrevMouseMiddleButton = MouseMiddleButton;
 			
@@ -406,7 +440,15 @@ main() {
 					Persistent_LibCustomUI_ModulesPositions[LibCustomUI_CurrentModuleName] = <0., 0., 0.>;
 					LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
 					Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
-					SetHelperModuleVisibility(LibCustomUI_CurrentModule, True);
+					if (LibCustomUI_CurrentModule.HasClass("SpecOnly")) {
+						if (!LibCustomUI_ModulesSpecOnly.exists(LibCustomUI_CurrentModuleName)) {
+							LibCustomUI_ModulesSpecOnly.add(LibCustomUI_CurrentModuleName);
+							Persistent_LibCustomUI_ModulesSpecOnly.add(LibCustomUI_CurrentModuleName);
+						}
+						SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, True);
+					} else {
+						SetBasicHelperModuleVisibility(LibCustomUI_CurrentModule, True);
+					}
 					LibCustomUI_ModulesUpdated[LibCustomUI_CurrentModuleName] = True;
 				}
 			}
@@ -415,19 +457,46 @@ main() {
 		// Show/Hide
 		if (LibCustomUI_PrevMouseRightButton != MouseRightButton) {
 			LibCustomUI_PrevMouseRightButton = MouseRightButton;
-			
-			if (MouseRightButton && !LibCustomUI_IsMoving) {
-				if (LibCustomUI_CurrentModuleName != "" && LibCustomUI_CurrentModule == Null) {
-					LibCustomUI_CurrentModule <=> Frame_Helpers.GetFirstChild("Frame_Helper_"^LibCustomUI_CurrentModuleName);
-				}
-				if (
-					LibCustomUI_CurrentModule != Null 
-					&& !LibCustomUI_CurrentModule.HasClass("NotHidable") 
-					&& LibCustomUI_ModulesUpdated.existskey(LibCustomUI_CurrentModuleName)
-				) {
-					LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = !LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];
-					Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];
-					SetHelperModuleVisibility(LibCustomUI_CurrentModule, LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName]);
+
+			if (MouseRightButton && !LibCustomUI_IsMoving && LibCustomUI_CurrentModuleName != "") {
+				LibCustomUI_CurrentModule <=> Frame_Helpers.GetFirstChild("Frame_Helper_"^LibCustomUI_CurrentModuleName);
+
+				if (LibCustomUI_CurrentModule != Null && LibCustomUI_ModulesUpdated.existskey(LibCustomUI_CurrentModuleName)) {
+					if (LibCustomUI_CurrentModule.HasClass("SpecOnly")) {
+						if (LibCustomUI_CurrentModule.HasClass("NotHidable")) {
+							LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
+							Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
+
+							if (LibCustomUI_ModulesSpecOnly.exists(LibCustomUI_CurrentModuleName)){
+								LibCustomUI_ModulesSpecOnly.remove(LibCustomUI_CurrentModuleName);
+								SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, False);
+							} else {
+								LibCustomUI_ModulesSpecOnly.add(LibCustomUI_CurrentModuleName);
+								SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, True);
+							}
+						} else {
+							if (LibCustomUI_ModulesSpecOnly.exists(LibCustomUI_CurrentModuleName)){
+								LibCustomUI_ModulesSpecOnly.remove(LibCustomUI_CurrentModuleName);
+
+								LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
+								Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
+								SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, False);
+							} else if (LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName]) {
+								LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = False;
+								SetHelperModuleVisibility(LibCustomUI_CurrentModule, False, False);
+							} else {
+								LibCustomUI_ModulesSpecOnly.add(LibCustomUI_CurrentModuleName);
+								LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
+								SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, True);
+							}
+
+							Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];	
+						}
+					} else if (!LibCustomUI_CurrentModule.HasClass("NotHidable")) {
+						LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = !LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];
+						Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];
+						SetHelperModuleVisibility(LibCustomUI_CurrentModule, LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName], False);
+					}
 					LibCustomUI_ModulesUpdated[LibCustomUI_CurrentModuleName] = True;
 				}
 			}
@@ -520,9 +589,11 @@ declare Boolean LibCustomUI_IsVisible for ClientUI;
 declare Boolean[Text] LibCustomUI_ModulesUpdated for ClientUI;
 declare Vec3[Text] LibCustomUI_ModulesPositions for ClientUI;
 declare Boolean[Text] LibCustomUI_ModulesVisibilities for ClientUI;
+declare Text[] LibCustomUI_ModulesSpecOnly for ClientUI;
 declare Integer LibCustomUI_ForcedUpdate for ClientUI;
 declare CMlControl[Text] LibCustomUI_LocalModules;
 declare Integer LibCustomUI_PrevForcedUpdate;
+declare Boolean LibCustomUI_PrevSpectator = IsSpectator;
 declare Boolean LibCustomUI_Reload;
 
 Page.GetClassChildren("LibCustomUI_Module", Page.MainFrame, True);
@@ -546,14 +617,24 @@ if (LibCustomUI_PrevForcedUpdate != LibCustomUI_ForcedUpdate) {
 	LibCustomUI_Reload = True;
 	LibCustomUI_PrevForcedUpdate = LibCustomUI_ForcedUpdate;
 }
+if (LibCustomUI_ModulesSpecOnly.count > 0 && LibCustomUI_PrevSpectator != IsSpectator) {
+	LibCustomUI_Reload = True;
+	LibCustomUI_PrevSpectator = IsSpectator;
+}
 if (LibCustomUI_IsVisible || LibCustomUI_Reload) {
 	declare Text[] ModulesUpdated;
 	foreach (ModuleName => ModuleUpdated in LibCustomUI_ModulesUpdated) {
-		if ((ModuleUpdated || LibCustomUI_Reload) && LibCustomUI_LocalModules.existskey(ModuleName)) {
+		if (LibCustomUI_LocalModules.existskey(ModuleName)) {
 			declare Module <=> LibCustomUI_LocalModules[ModuleName];
-			Module.RelativePosition = LibCustomUI_ModulesPositions[ModuleName];
-			Module.Visible = LibCustomUI_ModulesVisibilities[ModuleName];
-			ModulesUpdated.add(ModuleName);
+
+			if (ModuleUpdated || LibCustomUI_Reload) {
+				Module.RelativePosition = LibCustomUI_ModulesPositions[ModuleName];
+				Module.Visible = LibCustomUI_ModulesVisibilities[ModuleName];
+				ModulesUpdated.add(ModuleName);
+			}
+			if (LibCustomUI_ModulesSpecOnly.exists(ModuleName)) {
+				Module.Visible = IsSpectator;
+			}
 		}
 	}
 	foreach (ModuleName in ModulesUpdated) {
@@ -638,8 +719,9 @@ Void Load() {
  *	@param	_HAlign		The horizontal align of the helper, can be left, center or right
  *	@param	_Movable	Can the module be moved?
  *	@param	_Hidable	Can the module be hidden?
+ *	@param	_SpecOnly	Is the module hidden outside of spec?
  */
-Void Add(Text _Name, Vec2 _Pos, Vec2 _Size, Text _VAlign, Text _HAlign, Boolean _Movable, Boolean _Hidable) {
+Void Add(Text _Name, Vec2 _Pos, Vec2 _Size, Text _VAlign, Text _HAlign, Boolean _Movable, Boolean _Hidable, Boolean _SpecOnly) {
 	declare Name = TL::MLEncode(_Name);
 	declare Size = _Size;
 	if (Size.X > C_WindowWidth) Size.X = C_WindowWidth;
@@ -651,19 +733,30 @@ Void Add(Text _Name, Vec2 _Pos, Vec2 _Size, Text _VAlign, Text _HAlign, Boolean 
 	if (_HAlign == "left" || _HAlign == "right") HAlign = _HAlign;
 	if (_VAlign == "top" || _VAlign == "bottom") VAlign = _VAlign;
 	
-	G_MLHelpers[Name] = Private_GetMLHelper(Name, _Pos, Size, VAlign, HAlign, _Movable, _Hidable);
+	G_MLHelpers[Name] = Private_GetMLHelper(Name, _Pos, Size, VAlign, HAlign, _Movable, _Hidable, _SpecOnly);
+}
+
+// ---------------------------------- //
+/// Overload of the Add() function, see above for documentation
+Void Add(Text _Name, Vec2 _Pos, Vec2 _Size, Text _VAlign, Text _HAlign, Boolean _Movable, Boolean _Hidable) {
+	Add(_Name, _Pos, _Size, _VAlign, _HAlign, _Movable, _Hidable, False);
 }
 
 // ---------------------------------- //
 /// Overload of the Add() function, see above for documentation
 Void Add(Text _Name, Vec2 _Pos, Vec2 _Size, Text _VAlign, Text _HAlign) {
-	Add(_Name, _Pos, _Size, _VAlign, _HAlign, True, True);
+	Add(_Name, _Pos, _Size, _VAlign, _HAlign, True, True, False);
 }
 
 // ---------------------------------- //
 /// Overload of the Add() function, see above for documentation
+Void Add(Text _Name, Vec2 _Pos, Vec2 _Size, Boolean _SpecOnly) {
+	Add(_Name, _Pos, _Size, "", "", True, True, _SpecOnly);
+}
+// ---------------------------------- //
+/// Overload of the Add() function, see above for documentation
 Void Add(Text _Name, Vec2 _Pos, Vec2 _Size) {
-	Add(_Name, _Pos, _Size, "", "", True, True);
+	Add(_Name, _Pos, _Size, "", "", True, True, False);
 }
 
 // ---------------------------------- //
