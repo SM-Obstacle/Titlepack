@@ -33,15 +33,29 @@ Text GetLayer() {
     <frame id="Frame_SpecKeys" scale="0.5" class="LibCustomUI_Module" hidden="1">
         <frame posn="0. -35">
             <frame posn="-17. -35">
-                <quad id="Down" posn="0 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Down.png" opacity="0.5"/>
-                <quad id="Up" posn="0 15" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Up.png" opacity="0.5"/>
-                <quad id="Right" posn="15 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Right.png" opacity="0.5"/>
-                <quad id="Left" posn="-15 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Left.png" opacity="0.5"/>
-                <quad id="Space" posn="35 -2" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Space.png" opacity="0.5"/>
+                <quad id="Down" posn="0 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Down.png"
+                    opacity="0" modulatecolor="fff"/>
+                <quad id="Up" posn="0 15" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Up.png"
+                    opacity="0" modulatecolor="fff"/>
+                <quad id="Right" posn="15 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Right.png"
+                    opacity="0" modulatecolor="fff"/>
+                <quad id="Left" posn="-15 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Left.png"
+                    opacity="0" modulatecolor="fff"/>
+                <quad id="Space" posn="35 -2" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Space.png"
+                    opacity="0" modulatecolor="fff"/>
+
+                <quad posn="0 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Down.png" opacity="0.3"/>
+                <quad posn="0 15" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Up.png" opacity="0.3"/>
+                <quad posn="15 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Right.png" opacity="0.3"/>
+                <quad posn="-15 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Left.png" opacity="0.3"/>
+                <quad posn="35 -2" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Space.png" opacity="0.3"/>
+
                 <frame posn="35 13">
-                    <quad id="MouseRight" z-index="1" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Right.png" opacity="0.0"/>
-                    <quad id="MouseLeft" z-index="1" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Left.png" opacity="0.0"/>
-                    <quad id="Mouse" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Simple.png" opacity="0.5"/>
+                    <quad id="MouseRight" z-index="1" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Right.png"
+                        opacity="0" modulatecolor="fff"/>
+                    <quad id="MouseLeft" z-index="1" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Left.png"
+                        opacity="0" modulatecolor="fff"/>
+                    <quad z-index="0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Mouse_Simple.png" opacity="0.5"/>
                 </frame>
             </frame>
         </frame>
@@ -158,42 +172,42 @@ Text GetLayer() {
         if ( LastKeys.Up && Quad_Up.Opacity != 1.0)
             Quad_Up.Opacity = 1.0;
         else if (! LastKeys.Up && Quad_Up.Opacity != 0.5)
-            Quad_Up.Opacity = 0.5;
+            Quad_Up.Opacity = 0.;
 
         if ( LastKeys.Down && Quad_Down.Opacity != 1.0)
             Quad_Down.Opacity = 1.0;
-        else if (! LastKeys.Down && Quad_Down.Opacity != 0.5)
-            Quad_Down.Opacity = 0.5;
+        else if (! LastKeys.Down && Quad_Down.Opacity != 0.)
+            Quad_Down.Opacity = 0.;
 
         if ( LastKeys.Left && Quad_Left.Opacity != 1.0)
             Quad_Left.Opacity = 1.0;
-        else if (! LastKeys.Left && Quad_Left.Opacity != 0.5)
-            Quad_Left.Opacity = 0.5;
+        else if (! LastKeys.Left && Quad_Left.Opacity != 0.)
+            Quad_Left.Opacity = 0.;
 
         if ( LastKeys.Right && Quad_Right.Opacity != 1.0)
             Quad_Right.Opacity = 1.0;
-        else if (! LastKeys.Right && Quad_Right.Opacity != 0.5)
-            Quad_Right.Opacity = 0.5;
+        else if (! LastKeys.Right && Quad_Right.Opacity != 0.)
+            Quad_Right.Opacity = 0.;
 
         if ( LastKeys.LClick && Quad_LClick.Opacity != 1.0)
             Quad_LClick.Opacity = 1.0;
-        else if (! LastKeys.LClick && Quad_LClick.Opacity != 0.5)
-            Quad_LClick.Opacity = 0.5;
+        else if (! LastKeys.LClick && Quad_LClick.Opacity != 0.)
+            Quad_LClick.Opacity = 0.;
 
         if ( LastKeys.RClick && Quad_RClick.Opacity != 1.0)
             Quad_RClick.Opacity = 1.0;
-        else if (! LastKeys.RClick && Quad_RClick.Opacity != 0.5)
-            Quad_RClick.Opacity = 0.5;
+        else if (! LastKeys.RClick && Quad_RClick.Opacity != 0.)
+            Quad_RClick.Opacity = 0.;
 
         if ( LastKeys.Space && Quad_Space.Opacity != 1.0)
             Quad_Space.Opacity = 1.0;
-        else if (! LastKeys.Space && Quad_Space.Opacity != 0.5)
-            Quad_Space.Opacity = 0.5;
+        else if (! LastKeys.Space && Quad_Space.Opacity != 0.)
+            Quad_Space.Opacity = 0.;
 
         // if ((LastKeys.LClick || LastKeys.RClick)  && Quad_Mouse.Opacity != 1.0)
         //     Quad_Mouse.Opacity = 1.0;
-        // else if (! (LastKeys.LClick || LastKeys.RClick) && Quad_Mouse.Opacity != 0.5)
-        //     Quad_Mouse.Opacity = 0.5;
+        // else if (! (LastKeys.LClick || LastKeys.RClick) && Quad_Mouse.Opacity != 0.)
+        //     Quad_Mouse.Opacity = 0.;
     }
 
     main() {
