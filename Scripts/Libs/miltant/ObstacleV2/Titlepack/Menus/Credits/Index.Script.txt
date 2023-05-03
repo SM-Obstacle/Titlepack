@@ -16,60 +16,7 @@ Text Build() {
 	</frame>
 
 	<script><![CDATA[
-		#Include "MathLib" as ML
-
-		main() {
-			// declare Frame_Menus = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
-			// foreach (MenuContainer in Frame_Menus.Controls) {
-			//     declare Frame_MenuItem = (MenuContainer as CMlFrame);
-			//     declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
-
-			//     declare Text ItemId for Quad_Trigger;
-			//     ItemId = Frame_MenuItem.DataAttributeGet("name");
-			// }
-
-			while(True) {
-				yield;
-
-				if (!PageIsVisible && PendingEvents.count == 0) continue;
-
-				foreach(Event in PendingEvents) {
-					switch(Event.Type) {
-						case CMlScriptEvent::Type::MouseClick: {
-							declare Text ItemId for Event.Control;
-							
-							if (ItemId != "") {
-								SendCustomEvent("menu_item_click", [ItemId]);
-							}
-						}
-
-						case CMlScriptEvent::Type::MouseOver: {
-							declare Text ItemId for Event.Control;
-							
-							if (ItemId != "") {
-								declare Frame_MenuItem = (Event.Control.Parent as CMlFrame);
-
-								declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
-								Quad_Trigger.Scale = 1.1;
-								Quad_Trigger.ModulateColor = <75 / 255., 89 / 255., 125 / 255.>; // 4B597D
-							}
-						}
-
-						case CMlScriptEvent::Type::MouseOut: {
-							declare Text ItemId for Event.Control;
-							
-							if (ItemId != "") {
-								declare Frame_MenuItem = (Event.Control.Parent as CMlFrame);
-
-								declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
-								Quad_Trigger.Scale = 1.;
-								Quad_Trigger.ModulateColor = <155 / 255., 155 / 255., 158 / 255.>;
-							}
-						}
-					}
-				}
-			}
-		}
+	
 	]]></script>
 </manialink>""";
 }
@@ -78,20 +25,13 @@ Void Load() {
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
 	Window.Manialink = Build();
+	Window.Animation = CUILayer::EUILayerAnimation::RightFast;
 
 	Windows::CreateWindow(Window);
 }
 
 Void Loop() {
-	foreach(Event in PendingEvents) {
-		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
-			Event.CustomEventData.count > 0 &&
-			Event.CustomEventType == "menu_item_click") {
-			switch (Event.CustomEventData[0]) {
-				case "open_news": {
-
-				}
-			}
-		}
-	}
+	// foreach(Event in PendingEvents) {
+		
+	// }
 }

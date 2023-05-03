@@ -8,9 +8,30 @@ Text GetName() {
 }
 
 Void Load() {
+	declare SubMenu::K_SubMenu[] SubMenus;
+
+	// declare SubMenu::K_SubMenu Campaign;
+	// Campaign.Name = "Campaign";
+	// SubMenus.add(Campaign);
+
+	declare SubMenu::K_SubMenu Online;
+	Online.Name = "Online";
+	SubMenus.add(Online);
+
+	declare SubMenu::K_SubMenu Local;
+	Local.Name = "Local";
+	SubMenus.add(Local);
+
+	declare SubMenu::K_SubMenu Tutorials;
+	Tutorials.Name = "Tutorials";
+	SubMenus.add(Tutorials);
+
+
+
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
-	Window.Manialink = SubMenu::Build();
+	Window.Manialink = SubMenu::Build(SubMenus);
+	Window.Animation = CUILayer::EUILayerAnimation::LeftFast;
 
 	Windows::CreateWindow(Window);
 }
@@ -19,10 +40,16 @@ Void Loop() {
 	foreach(Event in PendingEvents) {
 		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
 			 Event.CustomEventData.count > 0 &&
-			 Event.CustomEventType == "menu_item_click") {
+			 Event.CustomEventType == "submenu_item_click") {
 			switch (Event.CustomEventData[0]) {
-				case "open_news": {
-
+				case "Online": {
+					
+				}
+				case "Local": {
+					
+				}
+				case "Tutorials": {
+					
 				}
 			}
 		}

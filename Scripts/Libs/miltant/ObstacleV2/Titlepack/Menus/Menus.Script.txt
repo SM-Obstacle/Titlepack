@@ -109,7 +109,6 @@ Void Loop() {
 
 				case "editors": {
 					Windows::Load(Editors::GetName());
-					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
 
 				case "profile": {

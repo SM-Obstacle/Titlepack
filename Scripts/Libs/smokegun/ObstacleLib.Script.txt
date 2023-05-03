@@ -397,6 +397,10 @@ Void Private_CpRestart(CSmPlayer _Player, Integer _Delay, Ident _LastCheckpoint,
     declare Checkpoint <=> MapLandmarks[_LastCheckpoint];
     declare CanFastRespawn = Settings::GetFastRespawn();
 
+    if (!_Increment) {
+        CanFastRespawn = True;
+    }
+
     // Check if fast respawn is possible
     if (CanFastRespawn) {
         declare metadata DefaultTag for  Checkpoint = "";
