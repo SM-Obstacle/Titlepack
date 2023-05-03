@@ -393,17 +393,23 @@ Void Private_RestartEffect(CSmPlayer _Player, Ident _SpawnId) {
  *            Integer   _Delay          Activation delay for SM::Spawn
  *            Ident     _LastCheckpoint Id of the last checkpoint
  *            Ident     _CPSpawn        Id of the spawn if fast rs isnt possible
- *            Boolean   _Increment      should the rs counter be incremented (False when jumping to a cp)
+ *            Boolean   _Legit          False when jumping to a cp
  */
-Void Private_CpRestart(CSmPlayer _Player, Integer _Delay, Ident _LastCheckpoint, Ident _CPSpawn, Boolean _Increment) {
+Void Private_CpRestart(CSmPlayer _Player, Integer _Delay, Ident _LastCheckpoint, Ident _CPSpawn, Boolean _Legit) {
+    Player::incrementRespawnCount(_Player);
+
     declare Checkpoint <=> MapLandmarks[_LastCheckpoint];
     declare CanFastRespawn = Settings::GetFastRespawn();
 
-    if (_Increment) {
-        CanFastRespawn = True;
-        Player::incrementRespawnCount(_Player);
-    } else if (ForceFastRSMap() == 2) {
-        CanFastRespawn = False;
+    if (_Legit) {
+        switch (ForceFastRSMap()) {
+            case 0: {
+                CanFastRespawn = (_CPSpawn != NullId);
+            }
+            case 2: {
+                CanFastRespawn = False;
+            }
+        }
     }
 
     // Check if fast respawn is possible
@@ -514,7 +520,6 @@ Void ObsRespawnPlayer(CSmPlayer _Player, Boolean _forceRestart) {
     declare Delay = -1;
     declare CPSpawnId = NullId;
     
-    log(LastCP);
     if (LastCP != NullId)
         CPSpawnId = Tools::GetClosestSpawn(LastCP, Player::getCpProgress(_Player));
     if (StartTime > Now + Delay)
@@ -523,6 +528,8 @@ Void ObsRespawnPlayer(CSmPlayer _Player, Boolean _forceRestart) {
     // Check if there is a cp spawn, if not we full restart
     if ((CPSpawnId != NullId || G_Editor_WayPointSpawn != NullId) && LastCP != NullId && !shouldRestart)
         Private_CpRestart(_Player, Delay, LastCP, CPSpawnId);
+    else if(Player::usedJump(_Player) && !shouldRestart)
+        Private_CpRestart(_Player, Delay, LastCP, CPSpawnId, False);
     else
         Private_FullRestart(_Player, Delay);
 
@@ -581,6 +588,44 @@ Void Private_UsePortal(CSmPlayer _Player, Ident _Portal) {
     Message::SendBigMessage(_Player, _("Portal!"), 2500, 0);
 }
 
+/* TODO: Make a separate checkpoint lib ?
+ *
+ * Effects:
+ *  - Ammo:
+ *   - ammo type
+ *   - ammo gain (0% - 1000%)
+ *   - ammo count
+ *
+ *  - Stamina:
+ *   - Stamina amount (0% - 300%)
+ *   - Stamina gain (0% - 100%)
+ */
+Void Private_CheckpointEffect(CSmPlayer _Player, Ident _CheckpointId) {
+    declare MapVersion = Map::GetMapTypeVersion();
+    declare Checkpoint <=> MapLandmarks[_CheckpointId];
+    declare CheckpointName = Checkpoint.Tag;
+
+    if (MapVersion <= 2) {
+        if (TL::Length(CheckpointName) > 10) {
+            declare CheckPointType = TL::ToInteger(TL::SubString(CheckpointName, 14, 1));
+            if (CheckPointType == 3) { // CheckpointType3
+                Private_UsePortal(_Player, _CheckpointId);
+            } else { // CheckpointType1, CheckpointType2
+                Weapons::ApplyWeaponForCheckpointType(_Player, CheckPointType);
+            }
+        } else if (CheckpointName == "Portal") { // Portal
+            Private_UsePortal(_Player, _CheckpointId);
+        } else { // ?
+            Weapons::ApplyWeaponForCheckpointType(_Player, 0);
+        }
+    } else { // contemporary customizable effects
+        Weapons::ApplyEffects(_Player, Checkpoint);
+
+        if (Tools::IsPortal(Checkpoint))
+            Private_UsePortal(_Player, _CheckpointId);
+    }
+}
+
 
 Boolean JumpToCheckpointIdent_ByPassSpawn(CSmPlayer _Player, Ident _Target) {
     G_Editor_WayPointSpawn = _Target;
@@ -616,6 +661,7 @@ Boolean JumpToCheckpointIdent(CSmPlayer _Player, Ident _Target) {
     Player::clearLastCPTimes(_Player);
     Player::setLastCheckpoint(_Player, _Target);
     Private_CpRestart(_Player, 3500, _Target, Spawn, False);
+    Private_CheckpointEffect(_Player, _Target);
 
     if (RNG::GetOrder(MapLandmarks_Sector[_Target]) != 0)
         Player::setCpProgress(_Player, RNG::GetOrder(MapLandmarks_Sector[_Target]));
@@ -735,44 +781,6 @@ Void Private_HandleFinish(CSmPlayer _Player, Ident _GoalId) {
         UI.SendNotice(TL::Compose("%1: $<%2$> %3", _("|Goal|Finish"), Color^TimeStr, message),
                 CUIConfig::ENoticeLevel::PlayerInfo, _Player.User, CUIConfig::EAvatarVariant::Default,
                 CUIConfig::EUISound::Finish, Variant);
-    }
-}
-
-/* TODO: Make a separate checkpoint lib ?
- *
- * Effects:
- *  - Ammo:
- *   - ammo type
- *   - ammo gain (0% - 1000%)
- *   - ammo count
- *
- *  - Stamina:
- *   - Stamina amount (0% - 300%)
- *   - Stamina gain (0% - 100%)
- */
-Void Private_CheckpointEffect(CSmPlayer _Player, Ident _CheckpointId) {
-    declare MapVersion = Map::GetMapTypeVersion();
-    declare Checkpoint <=> MapLandmarks[_CheckpointId];
-    declare CheckpointName = Checkpoint.Tag;
-
-    if (MapVersion <= 2) {
-        if (TL::Length(CheckpointName) > 10) {
-            declare CheckPointType = TL::ToInteger(TL::SubString(CheckpointName, 14, 1));
-            if (CheckPointType == 3) { // CheckpointType3
-                Private_UsePortal(_Player, _CheckpointId);
-            } else { // CheckpointType1, CheckpointType2
-                Weapons::ApplyWeaponForCheckpointType(_Player, CheckPointType);
-            }
-        } else if (CheckpointName == "Portal") { // Portal
-            Private_UsePortal(_Player, _CheckpointId);
-        } else { // ?
-            Weapons::ApplyWeaponForCheckpointType(_Player, 0);
-        }
-    } else { // contemporary customizable effects
-        Weapons::ApplyEffects(_Player, Checkpoint);
-
-        if (Tools::IsPortal(Checkpoint))
-            Private_UsePortal(_Player, _CheckpointId);
     }
 }
 

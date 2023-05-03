@@ -163,50 +163,55 @@ Text GetLayer() {
     }
 
     Void UpdateSpec() {
-        declare LocalPlayer <=> InputPlayer;
-        if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
-        if (LocalPlayer == Null) return;
+        declare Keys InputKeys;
 
-        declare netread Keys LastKeys for LocalPlayer;
+        if (InputPlayer != Null) {
+            InputKeys = Previous;
+        } else if (GUIPlayer != Null) {
+            declare netread Keys LastKeys for GUIPlayer;
+            InputKeys = LastKeys;
+        } else {
+            return;
+        }
 
-        if ( LastKeys.Up && Quad_Up.Opacity != 1.0)
+        if ( InputKeys.Up && Quad_Up.Opacity != 1.0)
             Quad_Up.Opacity = 1.0;
-        else if (! LastKeys.Up && Quad_Up.Opacity != 0.5)
+        else if (! InputKeys.Up && Quad_Up.Opacity != 0.5)
             Quad_Up.Opacity = 0.;
 
-        if ( LastKeys.Down && Quad_Down.Opacity != 1.0)
+        if ( InputKeys.Down && Quad_Down.Opacity != 1.0)
             Quad_Down.Opacity = 1.0;
-        else if (! LastKeys.Down && Quad_Down.Opacity != 0.)
+        else if (! InputKeys.Down && Quad_Down.Opacity != 0.)
             Quad_Down.Opacity = 0.;
 
-        if ( LastKeys.Left && Quad_Left.Opacity != 1.0)
+        if ( InputKeys.Left && Quad_Left.Opacity != 1.0)
             Quad_Left.Opacity = 1.0;
-        else if (! LastKeys.Left && Quad_Left.Opacity != 0.)
+        else if (! InputKeys.Left && Quad_Left.Opacity != 0.)
             Quad_Left.Opacity = 0.;
 
-        if ( LastKeys.Right && Quad_Right.Opacity != 1.0)
+        if ( InputKeys.Right && Quad_Right.Opacity != 1.0)
             Quad_Right.Opacity = 1.0;
-        else if (! LastKeys.Right && Quad_Right.Opacity != 0.)
+        else if (! InputKeys.Right && Quad_Right.Opacity != 0.)
             Quad_Right.Opacity = 0.;
 
-        if ( LastKeys.LClick && Quad_LClick.Opacity != 1.0)
+        if ( InputKeys.LClick && Quad_LClick.Opacity != 1.0)
             Quad_LClick.Opacity = 1.0;
-        else if (! LastKeys.LClick && Quad_LClick.Opacity != 0.)
+        else if (! InputKeys.LClick && Quad_LClick.Opacity != 0.)
             Quad_LClick.Opacity = 0.;
 
-        if ( LastKeys.RClick && Quad_RClick.Opacity != 1.0)
+        if ( InputKeys.RClick && Quad_RClick.Opacity != 1.0)
             Quad_RClick.Opacity = 1.0;
-        else if (! LastKeys.RClick && Quad_RClick.Opacity != 0.)
+        else if (! InputKeys.RClick && Quad_RClick.Opacity != 0.)
             Quad_RClick.Opacity = 0.;
 
-        if ( LastKeys.Space && Quad_Space.Opacity != 1.0)
+        if ( InputKeys.Space && Quad_Space.Opacity != 1.0)
             Quad_Space.Opacity = 1.0;
-        else if (! LastKeys.Space && Quad_Space.Opacity != 0.)
+        else if (! InputKeys.Space && Quad_Space.Opacity != 0.)
             Quad_Space.Opacity = 0.;
 
-        // if ((LastKeys.LClick || LastKeys.RClick)  && Quad_Mouse.Opacity != 1.0)
+        // if ((InputKeys.LClick || InputKeys.RClick)  && Quad_Mouse.Opacity != 1.0)
         //     Quad_Mouse.Opacity = 1.0;
-        // else if (! (LastKeys.LClick || LastKeys.RClick) && Quad_Mouse.Opacity != 0.)
+        // else if (! (InputKeys.LClick || InputKeys.RClick) && Quad_Mouse.Opacity != 0.)
         //     Quad_Mouse.Opacity = 0.;
     }
 
