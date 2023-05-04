@@ -1,0 +1,72 @@
+
+#Struct K_SubMenu {
+	Text Name;
+	Text Image;
+}
+
+Text Build(K_SubMenu[] _Menu) {
+    declare ML_Text = """
+<framemodel id="Model_SubMenuItem">
+	<frame pos="0 -26" id="Frame_Menus" size="70 112">
+        <quad size="70 111.33" scriptevents="1" id="Quad_Target"
+            data-target="Quad_Server"
+            data-default-anim="<quad scale=&quot;1.&quot;/>"
+            data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
+
+		<frame data-name="open_news" size="70 86">
+			<quad size="70 85" scriptevents="1" id="Quad_Target" data-target="Quad_News"
+				data-default-anim="<quad scale=&quot;1.&quot;/>" data-target-anim="<quad scale=&quot;1.066&quot;/>"/>
+
+            <frame pos="34.67 -40" clip="1" clipsizen="69.33 80">
+                <quad size="70 80.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_News"/>
+            </frame>
+		</frame>
+
+        <label class="lato" id="Label_Name" textprefix="$t" pos="35 -95.67" halign="center" valign="center2" textsize="5"/>
+        <quad size="70 110.67" image="file://Media/Images/Obstacle/Menu/FNavPlay.png"/>
+	</frame>
+</framemodel>
+
+<frame pos="-160 73.33" id="Frame_Menus">""";
+
+    foreach (I => Item in _Menu) {
+        ML_Text ^="""<frameinstance pos="{{{6.67 + (70. + 6.67) * I}}}" data-image="{{{Item.Image}}}" data-name="{{{Item.Name}}}" modelid="Model_SubMenuItem"/>""";
+    }
+
+    ML_Text ^= """
+</frame>
+
+<script><![CDATA[
+    #Include "MathLib" as ML
+    #Include "TextLib" as TL
+    #Include "ColorLib" as CL
+    
+    main() {
+        declare Frame_Menus = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
+
+        foreach (MenuItem in Frame_Menus.Controls) {
+            declare Frame_MenuItem = (MenuItem as CMlFrame);
+            declare Label_Name = (Frame_MenuItem.GetFirstChild("Label_Name") as CMlLabel);
+            declare Quad_News = (Frame_MenuItem.GetFirstChild("Quad_News") as CMlQuad);
+
+            if (MenuItem.DataAttributeGet("image") != "") {
+                Quad_News.ChangeImageUrl(MenuItem.DataAttributeGet("image"));
+            }
+            Label_Name.SetText(MenuItem.DataAttributeGet("name"));
+        }
+
+        while(True) {
+            yield;
+
+            if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+            foreach(Event in PendingEvents) {
+                //submenu_item_click
+            }
+        }
+    }
+]]></script>
+    """;
+
+    return ML_Text;
+}
