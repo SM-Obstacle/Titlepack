@@ -2,7 +2,7 @@
 #Include "Libs/miltant/Nadeo_Fork/Message.Script.txt" as Message
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 
-#Const  Version     "2022-25-11"
+#Const  Version     "2023-04-05"
 #Const  ScriptName  "NextMapVote.Script.txt"
 
 Void Yield(Real _NextMapVotingRatio) {
@@ -38,13 +38,13 @@ Void Yield(Real _NextMapVotingRatio) {
 }
 
 Text GetLayer(Real _NextMapVotingRatio) {
-    CustomUI::Add("Frame_NextMapVote", <-49., 90.>, <27., 5.>);
+    CustomUI::Add("Frame_NextMapVote", <-50., 90.>, <27., 8.>, "top", "left");
     return """
 <manialink version="3" name="Obstacle:NextMapVote">
     <frame id="Frame_NextMapVote" class="LibCustomUI_Module">
-        <frame pos="-49 90">
-            <label id="Label_NextMapVoting" pos="0 -2" size="25 4" textsize="1" halign="left" valign="center2" textfont="OswaldMono" textcolor="080"/>
-            <quad pos="12.5 -2" size="27 5" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center" id="Quad_VoteSkip" scriptevents="1"/>
+        <frame pos="-50 90">
+            <label id="Label_NextMapVoting" pos="0 -2.5" size="25 4" textsize="1" halign="left" valign="center2" textfont="OswaldMono" textcolor="080"/>
+            <quad size="27 5" style="BgRaceScore2" substyle="BgCardPlayer" id="Quad_VoteSkip" scriptevents="1"/>
         </frame>
     </frame>
 

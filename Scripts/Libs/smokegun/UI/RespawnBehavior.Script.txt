@@ -11,15 +11,15 @@ Void Yield() {}
 Void UpdateLayer() {}
 
 Text GetLayer() {
-    CustomUI::Add("RespawnBehavior", <-78.5, 90.>, <30., 5.>, "top", "left");
+    CustomUI::Add("RespawnBehavior", <-80., 90.>, <30., 8.>, "top", "left");
     return """
 <manialink version="3" name="Obstacle:RespawnBehavior">
     <frame id="RespawnBehavior" class="LibCustomUI_Module">
-        <frame pos="-78.5 90">
-            <label id="Label_RespawnBehavior" pos="3 -2" size="25 4" textsize="1" halign="left" valign="center2" textfont="OswaldMono"/>
-            <quad id="Quad_Indicator" pos="1 -2" size="2 2" halign="center" valign="center2" bgcolor="FFFA" image="file://Media/Images/Common/MarkerArrowDown.png"/>
-            <quad id="Quad_Toggler" pos="13.5 -2" size="30 5" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center" scriptevents="1"/>
-            <frame id="Frame_Infos" pos="12.5 -4.5" hidden="1">
+        <frame pos="-80 90">
+            <label id="Label_RespawnBehavior" pos="8 -2.5" textsize="1" halign="left" valign="center2" textfont="OswaldMono"/>
+            <quad id="Quad_Indicator" pos="3 -2.5" size="2 2" halign="center" valign="center2" bgcolor="FFFA" image="file://Media/Images/Common/MarkerArrowDown.png"/>
+            <quad id="Quad_Toggler" size="30 5" style="BgRaceScore2" substyle="BgCardPlayer" scriptevents="1"/>
+            <frame id="Frame_Infos" pos="12.5 -5" hidden="1">
                 <label id="Label_F4" size="45 3" pos="-24 -1" textsize="1" halign="left" valign="top" textfont="OswaldMono" text="☐ Always restart from the beginning (F4)" scriptevents="1"/>
                 <label id="Label_F5" size="45 3" pos="-24 -5" textsize="1" halign="left" valign="top" textfont="OswaldMono" text="☐ Disable restart from the beginning (F5)" scriptevents="1"/>
                 <label id="Label_RSBugs" size="45 3" pos="-24 -9" textsize="1" halign="left" valign="top" textfont="OswaldMono" text="☐ Advanced: Allow respawn bugs" scriptevents="1"/>
