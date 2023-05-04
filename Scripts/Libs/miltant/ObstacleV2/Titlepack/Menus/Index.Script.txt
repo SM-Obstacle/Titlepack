@@ -3,7 +3,7 @@
 #Include "Libs/Nadeo_Fork/MP4/TPLagoon/TokenManager.Script.txt"             as Auth
 
 Void Load() {
-    BackgroundComponent::Load();
+    // BackgroundComponent::Load();
     Menus::Load();
     Auth::Init();
 }

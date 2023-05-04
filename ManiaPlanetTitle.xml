@@ -1,10 +1,10 @@
 <maniaplanet_title version="4">
 	<id>obstacle@smokegun</id>
-	<name></name>
-	<desc></desc>
+	<name>obstacle@smokegun</name>
+	<desc>Do pew pew to go zooom</desc>
 	<url>ObstacleMP4</url>
 	<download_url></download_url>
-	<title_version>1.2.1</title_version>
+	<title_version>2.0</title_version>
 	<allowed_client_title_version></allowed_client_title_version>
 	<maker>SMStormMaker@nadeo</maker>
 	<base>SMStorm</base>
@@ -23,10 +23,10 @@
 		<station_noquickenter>true</station_noquickenter>
 	</packaging>
 	<menu>
-		<background_img name=""/>
+		<background_img name="Media\Images\Obstacle\Menu\Opening.webm"/>
 		<background_replay name=""/>
 		<header name=""/>
-		<music name="Media\Musics\Storm\Race\!Night\DAY_01_Track_03.ogg"/>
+		<music name="Media\Musics\Menu\Opening.ogg"/>
 		<manialink url="Media/Apps/ObstacleTitlePack.Script.txt"/>
 	</menu>
 	<menu_style name=""/>
