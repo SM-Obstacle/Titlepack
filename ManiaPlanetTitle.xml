@@ -27,7 +27,7 @@
 		<background_replay name=""/>
 		<header name=""/>
 		<music name="Media\Musics\Menu\Opening.ogg"/>
-		<manialink url="Media\Apps\MainMenuObstacle.Script.txt"/>
+		<manialink url="Media/Apps/ObstacleTitlePack.Script.txt"/>
 	</menu>
 	<menu_style name=""/>
 	<solo>
