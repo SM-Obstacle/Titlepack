@@ -1,7 +1,7 @@
 <maniaplanet_title version="4">
 	<id>obstacle@smokegun</id>
 	<name>obstacle@smokegun</name>
-	<desc>Do pew pew to go zooom</desc>
+	<desc>Pew pew to go zooom</desc>
 	<url>ObstacleMP4</url>
 	<download_url></download_url>
 	<title_version>2.0</title_version>
@@ -20,14 +20,14 @@
 		<sortindex>100</sortindex>
 		<station_manialink url=""/>
 		<boxcase_manialink url=""/>
-		<station_noquickenter>true</station_noquickenter>
+		<station_noquickenter>false</station_noquickenter>
 	</packaging>
 	<menu>
 		<background_img name="Media\Images\Obstacle\Menu\Opening.webm"/>
 		<background_replay name=""/>
 		<header name=""/>
 		<music name="Media\Musics\Menu\Opening.ogg"/>
-		<manialink url="Media/Apps/ObstacleTitlePack.Script.txt"/>
+		<manialink url="Media\Apps\MainMenuObstacle.Script.txt"/>
 	</menu>
 	<menu_style name=""/>
 	<solo>
