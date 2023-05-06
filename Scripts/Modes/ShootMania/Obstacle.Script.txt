@@ -341,12 +341,9 @@ foreach (Event in UIManager.PendingEvents) {
                 declare CP = TL::ToInteger(Event.CustomEventData[1]);
                 Obstacle::JumpToCheckpoint(Player, CP);
             }
-            case "banned": {
-                // log("ok u banned");
-                // todo: force the player to leave in local
-                // (may join with uri link?)
-                if (ServerAdmin == Null) break;
-                ServerAdmin.Kick(SM::GetPlayer(Event.CustomEventData[0]).User, Event.CustomEventData[1]);
+            case "token_update": {
+                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+                API::TokenReceivedFor(Player);
             }
         }
     }
@@ -541,6 +538,11 @@ foreach (Cap in PendingCaptures) {
 }
 
 foreach (Player in Players) {
+    // TODO: force the player to leave in local
+    // (may join with uri link?)
+    if (Player::isBanned(Player) && ServerAdmin != Null) {
+        ServerAdmin.Kick(Player.User, Player::banReason(Player));
+    }
 
     switch (Player.SpawnStatus) {
 

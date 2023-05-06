@@ -16,6 +16,8 @@
 #Include "Libs/smokegun/Player.Script.txt" as Player
 #Include "Libs/miltant/RunFlags.Script.txt" as RunFlags
 
+#Include "Libs/ahmad3/MlAuth.Script.txt" as Auth
+
 /*********************************************
  CONSTANTS
 *********************************************/
@@ -23,9 +25,18 @@
 #Const ScriptName "ObstacleRecords.Script.txt"
 
 #Struct SRequestData {
+    // We store the login and not the CSmPlayer instance
+    // because if the player despawns (i believe?), the insance will not be available anymore
+    Text PlayerLogin;
+    Text Headers;
     Text Url;
     Text Data;
     Integer Type;
+}
+
+#Struct K_UpdatePlayerResponse {
+    Boolean banned;
+    Auth::K_Banishment current_ban;
 }
 
 /*********************************************
@@ -39,9 +50,15 @@ declare Text G_GetHeaders;
 declare SRequestData[Ident] G_WaitingToComplete;
 declare SRequestData[]  G_WaitingToSend;
 
+declare SRequestData[] G_WaitingToUpdateToken;
+
 /////////////////////////////////////////////////////////////////
 /////////////////////       TOOLS       /////////////////////////
 /////////////////////////////////////////////////////////////////
+Text Private_MultipartHeaders(Text _Boundary) {
+    return "Content-Type: multipart/form-data; boundary=" ^ _Boundary ^ "\nAccept: application/xml\n";
+}
+
 Boolean Contains(Text _Text, Text _Input) {
     return TL::Find(_Text, _Input, False, False);
 }
@@ -51,22 +68,27 @@ Text LogPrefix() {
 }
 
 // Used to create a POST request
-Ident MakePost(Text _Url, Text _Data) {
+Ident MakePost(Text _Url, Text _Data, Text _Headers) {
     if (Http.SlotsAvailable > 0) {
         Log::Log(LogPrefix()^" Sending request to "^_Url);
-        declare request <=> Http.CreatePost(Constants::C_HostUrl^_Url, _Data, G_PostHeaders);
+        declare request <=> Http.CreatePost(Constants::C_HostUrl^_Url, _Data, _Headers);
         return request.Id;
     }
     return NullId;
 }
 
-Void SendPost(Text _Url, Text _Data, Integer _Type) {
+Void SendPost(Text _Url, Text _Data, Integer _Type, CSmPlayer _Player, Text _Headers) {
     declare SRequestData RequestData;
+    if (_Player == Null) RequestData.PlayerLogin = "";
+    else RequestData.PlayerLogin = _Player.User.Login;
+    RequestData.Headers = _Headers;
     RequestData.Url = _Url;
     RequestData.Data = _Data;
     RequestData.Type = _Type;
 
-    declare reqId = MakePost(_Url, _Data);
+    declare Text authHeaders = "";
+    if (_Player != Null) authHeaders = "PlayerLogin: " ^ RequestData.PlayerLogin ^ "\nAuthorization: " ^ Player::getToken(_Player);
+    declare reqId = MakePost(_Url, _Data, _Headers ^ authHeaders);
     if (reqId == NullId && G_WaitingToSend.count < 64) {
         Log::Log(LogPrefix()^" Queue up "^_Url^" (count: "^G_WaitingToSend.count^")");
         G_WaitingToSend.add(RequestData);
@@ -85,8 +107,8 @@ Void SendPost(Text _Url, Text _Data, Integer _Type) {
 
 // Init the API with a token
 Void Init() {
-    G_PostHeaders = "Content-Type: application/json\nAccept: application/xml";
-    G_GetHeaders  = "Accept: application/xml";
+    G_PostHeaders = "Content-Type: application/json\nAccept: application/xml\n";
+    G_GetHeaders  = "Accept: application/xml\n";
 }
 
 /////////////////////////////////////////////////////////////////
@@ -95,26 +117,30 @@ Void Init() {
 
 // Send map infos
 Void ReplaceOrCreateMap() {
-    declare payload = """
-    {
+    declare payload =
+"""{
     "name": {{{Json::GetText(Map.MapName)}}},
-    "maniaplanetMapId": {{{Json::GetText(""^Map.Id)}}},
-    "playerId": {{{Json::GetText(Map.AuthorLogin)}}}
+    "map_uid": {{{Json::GetText(""^Map.Id)}}},
+    "author": {
+        "login": {{{Json::GetText(Map.AuthorLogin)}}},
+        "nickname": {{{Json::GetText(Map.AuthorNickName)}}},
+        "zone_path": {{{Json::GetText(Map.AuthorZonePath)}}}
     }
-    """;
+}""";
 
-    SendPost("update_map", payload, Constants::C_Request_ReplaceOrCreateMap);
+    SendPost("map/insert", payload, Constants::C_Request_ReplaceOrCreateMap, Null, G_PostHeaders);
 }
 
 // Update player infos
 Void ReplaceOrCreatePlayer(CSmPlayer _Player) {
-    declare payload = """
-    {
+    declare payload =
+"""{
     "login": {{{Json::GetText(_Player.User.Login)}}},
-    "nickname": {{{Json::GetText(_Player.User.Name)}}}
-    }""";
+    "nickname": {{{Json::GetText(_Player.User.Name)}}},
+    "country": {{{Json::GetText(_Player.User.ZonePath)}}}
+}""";
 
-    SendPost("update_player", payload, Constants::C_Request_ReplaceOrCreatePlayer);
+    SendPost("player/update", payload, Constants::C_Request_ReplaceOrCreatePlayer, _Player, G_PostHeaders);
 }
 
 // Send records
@@ -129,20 +155,77 @@ Void PlayerFinished(CSmPlayer _Player) {
         Player::usedSpeedHack(_Player)
     );
 
+    declare state = _Player.User.Login ^ Now;
+
     log("flags:" ^ Flags);
 
-    declare payload = """
-    {
-    "time": {{{LastRun}}},
-    "respawnCount": {{{Json::GetInteger(RespawnCount)}}},
-    "playerId": {{{Json::GetText(_Player.User.Login)}}},
-    "mapId": {{{Json::GetText(""^Map.Id)}}},
-    "flags": {{{Json::GetInteger(Flags)}}}
-    }""";
+    declare boundary = "----------------" ^ state ^ ML::Rand(0, 10000000);
+    // TODO: register inputs
+    declare inputs = "";
 
-    SendPost("player_finished", payload, Constants::C_Request_PlayerFinished);
+    declare body = """
+--{{{boundary}}}
+Content-Disposition: form-data; name="time"
+Content-Type: text/plain
+
+{{{LastRun}}}
+--{{{boundary}}}
+Content-Disposition: form-data; name="respawn_count"
+Content-Type: text/plain
+
+{{{RespawnCount}}}
+--{{{boundary}}}
+Content-Disposition: form-data; name="login"
+Content-Type: text/plain
+
+{{{_Player.User.Login}}}
+--{{{boundary}}}
+Content-Disposition: form-data; name="map_uid"
+Content-Type: text/plain
+
+{{{""^Map.Id}}}
+--{{{boundary}}}
+Content-Disposition: form-data; name="flags"
+Content-Type: text/plain
+
+{{{Flags}}}
+""";
+
+    declare Integer[Ident] lastCpTimes = Player::getLastCPTimes(_Player);
+    foreach (time in lastCpTimes) {
+        declare Integer cpTime;
+        if (time == LastRun) cpTime = time;
+        else cpTime = LastRun - time;
+        body ^= """--{{{boundary}}}
+Content-Disposition: form-data; name="cps"
+Content-Type: text/plain
+
+{{{cpTime}}}
+""";
+    }
+
+    body ^= """--{{{boundary}}}
+Content-Disposition: form-data; name="inputs"
+Content-Type: text/plain
+
+{{{inputs}}}
+--{{{boundary}}}--
+""";
+    
+    body = TL::Replace(body, "\n", "\r\n");
+
+    SendPost("player/finished", body, Constants::C_Request_PlayerFinished, _Player, Private_MultipartHeaders(boundary));
 }
 
+Void TokenReceivedFor(CSmPlayer _Player) {
+    foreach (idx => req in G_WaitingToUpdateToken) {
+        if (req.PlayerLogin == _Player.User.Login) {
+            SendPost(req.Url, req.Data, req.Type, _Player, req.Headers);
+            declare _rem = G_WaitingToUpdateToken.removekey(idx);
+            break;
+        }
+    }
+}
 
 /////////////////////////////////////////////////////////////////
 /////////////////////      LOOP         /////////////////////////
@@ -165,6 +248,15 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
         if (!request.IsCompleted) continue;
 
         Log::Log(LogPrefix()^" Request done: ("^request.StatusCode^") "^request.Url);
+
+        if (request.StatusCode == 404) {
+            declare CSmPlayer player = GetPlayer(ReqData.PlayerLogin);
+            declare netwrite Integer Net_TokenNeedsUpdate for player = Now;
+            Net_TokenNeedsUpdate = Now;
+            G_WaitingToUpdateToken.add(ReqData);
+            ToDelete.add(reqId);
+            continue;
+        }
 
         if (request.StatusCode == 200) {
 
@@ -204,6 +296,19 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
                 }
 
                 Xml.Destroy(response);
+            } else if (ReqData.Type == Constants::C_Request_ReplaceOrCreatePlayer) {
+                declare K_UpdatePlayerResponse res;
+                declare err = res.fromjson(request.Result);
+                if (err) {
+                    ToDelete.add(reqId);
+                    continue;
+                }
+                log("checked if player is banned");
+                if (res.banned) {
+                    log("yes he is");
+                    declare player = SM::GetPlayer(ReqData.PlayerLogin);
+                    Player::setBanned(player, res.current_ban);
+                }
             }
         }
         else {
@@ -228,7 +333,7 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
 
         for (I, 0, ToSendCount-1) {
             declare RequestData = G_WaitingToSend[I];
-            declare reqId = MakePost(RequestData.Url, RequestData.Data);
+            declare reqId = MakePost(RequestData.Url, RequestData.Data, RequestData.Headers);
             G_WaitingToComplete[reqId] = RequestData;
         }
 
