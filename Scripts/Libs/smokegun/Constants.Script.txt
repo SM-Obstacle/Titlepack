@@ -22,6 +22,8 @@
 #Const C_Request_ReplaceOrCreatePlayer 1
 #Const C_Request_PlayerFinished 2
 
+#Const C_UnauthorizedStatusCode 401
+
 // Weapons
 #Const C_Weapon_Laser 0
 #Const C_Weapon_Rocket 1

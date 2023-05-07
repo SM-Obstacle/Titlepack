@@ -345,6 +345,9 @@ foreach (Event in UIManager.PendingEvents) {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 API::TokenReceivedFor(Player);
             }
+            case "token_error": {
+                API::SetErrorFor(Event.CustomEventData[0]);
+            }
         }
     }
 }

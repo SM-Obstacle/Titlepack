@@ -17,8 +17,6 @@
 #Const  Version     "2023-04-01"
 #Const  ScriptName  "Auth.Script.txt"
 
-#Const C_Token_Ttl 43200000 // 1000*60*60*12
-
 #Const C_MP_App_Id			"de1ce3ba8e"
 #Const C_MP_App_Secret	"52877e3c1aa428eeb75a042c52caa01fb74a7526"
 #Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=token&"
@@ -37,141 +35,15 @@
 }
 
 K_Banishment Default_Ban() {
-    declare K_Banishment b;
-    b.banished_by = "";
-    b.date_ban = "";
-    b.duration = -1;
-    b.id = -1;
-    b.is_current = False;
-    b.reason = "";
-    b.was_reprieved = False;
-    return b;
-}
-
-Text Private_Ml_LogMessage() {
-	return """
-Void LogMessage(Text _Msg) {
-	log("[Obs Auth] " ^ _Msg);
-}
-	""";
-}
-
-Text Private_Ml_LogError() {
-	return """
-Void LogError(Text _Msg) {
-	LogMessage("ERROR: " ^_Msg);
-}
-	""";
-}
-
-Text Private_Ml_CheckBanned() {
-	return """
-declare Text G_CurrentBan;
-Boolean Private_CheckBanned(Text _Login, Text _Secret) {
-	declare payload = "{"
-		^"\"secret\":\"" ^ TL::StripFormatting(_Secret) ^ "\","
-		^"\"login\":\"" ^ TL::StripFormatting(_Login) ^ "\""
-	^ "}";
-
-	declare req = Http.CreatePost(
-		C_HostUrl ^ "player/is_banned",
-		payload,
-		"Content-Type: application/json\nAccept: application/xml");
-
-	wait(req.IsCompleted);
-	log("Ban info: " ^ req.StatusCode ^ " " ^ req.Result);
-	
-	// this condition is necessary even if the token is updated before
-	// because the server may have closed meanwhile
-	// thus lost the token so we need to register a new one
-	if (req.StatusCode == 401) {
-		// updating token
-		return Private_CheckBanned(_Login, UpdateToken());
-	}
-	
-	if (req.StatusCode != 200) {
-		log("Error when checking if player is banned");
-		return False;
-	}
-
-	declare response = Xml.Create(req.Result);
-	declare banned = response.Root.GetFirstChild("banned").TextContents == "true";
-	// todo: format banishment (see obs API doc)
-	G_CurrentBan = response.Root.GetFirstChild("current_ban").TextContents;
-	return banned;
-}
-	""";
-}
-
-Text Private_Ml_UpdateToken() {
-	return """
-Text UpdateToken() {
-	LogMessage("Updating token...");
-
-	declare persistent Text obsToken for LocalUser;
-	declare persistent Text obsTokenAt for LocalUser = "0";
-	
-	declare login = LocalUser.Login;
-	declare Text state = login ^ Now;
-	declare payload = "{"
-		^ "\"login\":\"" ^ TL::StripFormatting(login) ^ "\","
-		^ "\"state\":\"" ^ TL::StripFormatting(state) ^ "\""
-	^ "}";
-	
-	declare req = Http.CreatePost(
-		C_HostUrl ^ "player/get_token",
-		payload,
-		"Content-Type: application/json\nAccept: application/xml");
-		
-	OpenLink(C_MP_Link
-		^ "client_id=" ^ C_MP_App_Id
-		^ "&client_secret=" ^ C_MP_App_Secret
-		^ "&redirect_uri=" ^ C_MP_Redirect
-		^ "&state=" ^ state
-		^ "&scope=basic",
-		CMlScript::LinkType::ExternalBrowser);
-		
-	wait(req.IsCompleted);		
-	if (req.StatusCode != 200) {
-		LogError("Error: " ^ req.StatusCode ^ req.Result);
-		UI.SendChat("An error occurred. Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
-		return obsToken;
-	}
-	
-	declare response = Xml.Create(req.Result);
-	declare token = response.Root.GetFirstChild("token").TextContents;
-	obsToken = token;
-	obsTokenAt = TimeLib::GetCurrent();
-
-	LogMessage("Token updated!");
-	SendCustomEvent("token_update", [login]);
-
-	return obsToken;
-}
-	""";
-}
-
-Text Private_Ml_CheckToken() {
-	return """
-Text CheckToken() {
-	declare persistent Text obsToken for LocalUser;
-	declare persistent Text obsTokenAt for LocalUser = "0";
-	// obsTokenAt = "0"; // uncomment this line to reset the token
-
-	// first time updating the token
-	if (obsTokenAt == "0") {
-		// display "welcoming" message
-	}
-
-	// update token if expired
-	if (TimeLib::GetDelta(TimeLib::GetCurrent(), obsTokenAt) > C_Token_Ttl) {
-		// no need to bind it to obsToken because it already does
-		declare _new = UpdateToken();
-	}
-	
-	return obsToken;
-}
-	""";
+    return K_Banishment {
+		banished_by = "",
+		date_ban = "",
+		duration = -1,
+		id = -1,
+		is_current = False,
+		reason = "",
+		was_reprieved = False
+	};
 }
 
 Text GetLayer() {
@@ -195,11 +67,65 @@ Text GetLayer() {
 // #Const C_MP_Redirect "https://api.obstacle.ovh/player/give_token"
 // #Const C_MP_Redirect "http://localhost:3000/player/give_token"
 
-{{{Private_Ml_LogMessage()}}}
-{{{Private_Ml_LogError()}}}
-{{{Private_Ml_UpdateToken()}}}
-{{{Private_Ml_CheckBanned()}}}
-{{{Private_Ml_CheckToken()}}}
+#Struct K_GetTokenBody {
+	Text login;
+	Text state;
+}
+
+#Struct K_GetTokenResponse {
+	Text token;
+}
+
+Void LogMessage(Text _Msg) {
+	log("[Obs Auth] " ^ _Msg);
+}
+
+Void LogError(Text _Msg) {
+	LogMessage("ERROR: " ^_Msg);
+}
+
+Text UpdateToken() {
+	LogMessage("Updating token...");
+
+	declare persistent Text obsToken for LocalUser;
+	
+	declare login = LocalUser.Login;
+	declare Text state = login ^ Now;
+	declare body = K_GetTokenBody {
+		login = login,
+		state = state
+	};
+	
+	declare req = Http.CreatePost(
+		C_HostUrl ^ "player/get_token",
+		body.tojson(),
+		"Content-Type: application/json\nAccept: application/json");
+		
+	OpenLink(C_MP_Link
+		^ "client_id=" ^ C_MP_App_Id
+		^ "&client_secret=" ^ C_MP_App_Secret
+		^ "&redirect_uri=" ^ C_MP_Redirect
+		^ "&state=" ^ state
+		^ "&scope=basic",
+		CMlScript::LinkType::ExternalBrowser);
+		
+	wait(req.IsCompleted);		
+	if (req.StatusCode != 200) {
+		LogError("Error: " ^ req.StatusCode ^ req.Result);
+		UI.SendChat("An error occurred. Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
+		SendCustomEvent("token_error", [login]);
+		return obsToken;
+	}
+	
+	declare K_GetTokenResponse response;
+	response.fromjson(req.Result);
+	obsToken = response.token;
+
+	LogMessage("Token updated!");
+	SendCustomEvent("token_update", [login]);
+
+	return obsToken;
+}
 
 Void initNetTokenUpdateVar() {
 	declare netwrite Integer Net_TokenNeedsUpdate for InputPlayer = -1;

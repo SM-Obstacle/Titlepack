@@ -34,9 +34,35 @@
     Integer Type;
 }
 
+#Struct K_MapAuthor {
+    Text login;
+    Text nickname;
+    Text zone_path;
+}
+
+#Struct K_UpdateMapBody {
+    Text name;
+    Ident map_uid;
+    K_MapAuthor author;
+}
+
+#Struct K_UpdatePlayerBody {
+    Text login;
+    Text nickname;
+    Text country;
+}
+
 #Struct K_UpdatePlayerResponse {
+    Text login;
     Boolean banned;
     Auth::K_Banishment current_ban;
+}
+
+#Struct K_HasFinishedResponse {
+    Boolean has_improved;
+    Text login;
+    Integer old;
+    Integer new;
 }
 
 /*********************************************
@@ -51,6 +77,7 @@ declare SRequestData[Ident] G_WaitingToComplete;
 declare SRequestData[]  G_WaitingToSend;
 
 declare SRequestData[] G_WaitingToUpdateToken;
+declare Text[] G_ErroredPlayers;
 
 /////////////////////////////////////////////////////////////////
 /////////////////////       TOOLS       /////////////////////////
@@ -78,16 +105,20 @@ Ident MakePost(Text _Url, Text _Data, Text _Headers) {
 }
 
 Void SendPost(Text _Url, Text _Data, Integer _Type, CSmPlayer _Player, Text _Headers) {
-    declare SRequestData RequestData;
-    if (_Player == Null) RequestData.PlayerLogin = "";
-    else RequestData.PlayerLogin = _Player.User.Login;
-    RequestData.Headers = _Headers;
-    RequestData.Url = _Url;
-    RequestData.Data = _Data;
-    RequestData.Type = _Type;
+    declare Text PlayerLogin;
+    if (_Player == Null) PlayerLogin = "";
+    else PlayerLogin = _Player.User.Login;
+    declare RequestData = SRequestData {
+        PlayerLogin = PlayerLogin,
+        Headers = _Headers,
+        Url = _Url,
+        Data = _Data,
+        Type = _Type
+    };
 
     declare Text authHeaders = "";
-    if (_Player != Null) authHeaders = "PlayerLogin: " ^ RequestData.PlayerLogin ^ "\nAuthorization: " ^ Player::getToken(_Player);
+    if (_Player != Null) authHeaders = "PlayerLogin: " ^ PlayerLogin
+        ^ "\nAuthorization: " ^ Player::getToken(_Player);
     declare reqId = MakePost(_Url, _Data, _Headers ^ authHeaders);
     if (reqId == NullId && G_WaitingToSend.count < 64) {
         Log::Log(LogPrefix()^" Queue up "^_Url^" (count: "^G_WaitingToSend.count^")");
@@ -117,30 +148,28 @@ Void Init() {
 
 // Send map infos
 Void ReplaceOrCreateMap() {
-    declare payload =
-"""{
-    "name": {{{Json::GetText(Map.MapName)}}},
-    "map_uid": {{{Json::GetText(""^Map.Id)}}},
-    "author": {
-        "login": {{{Json::GetText(Map.AuthorLogin)}}},
-        "nickname": {{{Json::GetText(Map.AuthorNickName)}}},
-        "zone_path": {{{Json::GetText(Map.AuthorZonePath)}}}
-    }
-}""";
+    declare body = K_UpdateMapBody {
+        name = Map.MapName,
+        map_uid = Map.Id,
+        author = K_MapAuthor {
+            login = Map.AuthorLogin,
+            nickname = Map.AuthorNickName,
+            zone_path = Map.AuthorZonePath
+        }
+    };
 
-    SendPost("map/insert", payload, Constants::C_Request_ReplaceOrCreateMap, Null, G_PostHeaders);
+    SendPost("map/insert", body.tojson(), Constants::C_Request_ReplaceOrCreateMap, Null, G_PostHeaders);
 }
 
 // Update player infos
 Void ReplaceOrCreatePlayer(CSmPlayer _Player) {
-    declare payload =
-"""{
-    "login": {{{Json::GetText(_Player.User.Login)}}},
-    "nickname": {{{Json::GetText(_Player.User.Name)}}},
-    "country": {{{Json::GetText(_Player.User.ZonePath)}}}
-}""";
+    declare body = K_UpdatePlayerBody {
+        login = _Player.User.Login,
+        nickname = _Player.User.Name,
+        country = _Player.User.ZonePath
+    };
 
-    SendPost("player/update", payload, Constants::C_Request_ReplaceOrCreatePlayer, _Player, G_PostHeaders);
+    SendPost("player/update", body.tojson(), Constants::C_Request_ReplaceOrCreatePlayer, _Player, G_PostHeaders);
 }
 
 // Send records
@@ -227,6 +256,37 @@ Void TokenReceivedFor(CSmPlayer _Player) {
     }
 }
 
+Void SetErrorFor(Text _PlayerLogin) {
+    if (G_ErroredPlayers.exists(_PlayerLogin)) return;
+    G_ErroredPlayers.add(_PlayerLogin);
+}
+
+Void Private_PlayerFinished(Text _BestRecordMsg, Text _WorseRecordMsg, Text _Response) {
+    declare K_HasFinishedResponse response;
+    response.fromjson(_Response);
+
+    declare Player = SM::GetPlayer(response.login);
+    declare PName = Player.User.Name;
+    declare NewTime = TL::TimeToText(response.new, True);
+    declare OldTime = TL::TimeToText(response.old, True);
+    declare DiffTime = TL::TimeToText(response.new - response.old, True);
+
+    if (response.has_improved && _BestRecordMsg != "") {
+        UIManager.UIAll.SendChat(TL::Compose(_BestRecordMsg, PName, NewTime, OldTime, DiffTime));
+    } else if (Player != Null && _WorseRecordMsg != "") {
+        UIManager.GetUI(Player).SendChat(TL::Compose(_WorseRecordMsg, PName, NewTime, OldTime, DiffTime));
+    }
+}
+
+Void Private_PlayerUpdated(Text _Response) {
+    declare K_UpdatePlayerResponse response;
+    response.fromjson(_Response);
+    if (response.banned) {
+        declare player = SM::GetPlayer(response.login);
+        Player::setBanned(player, response.current_ban);
+    }
+}
+
 /////////////////////////////////////////////////////////////////
 /////////////////////      LOOP         /////////////////////////
 /////////////////////////////////////////////////////////////////
@@ -249,9 +309,11 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
 
         Log::Log(LogPrefix()^" Request done: ("^request.StatusCode^") "^request.Url);
 
-        if (request.StatusCode == 404) {
+        if (request.StatusCode == Constants::C_UnauthorizedStatusCode
+                && !G_ErroredPlayers.exists(ReqData.PlayerLogin)) {
+            // Token needs to be updated
             declare CSmPlayer player = GetPlayer(ReqData.PlayerLogin);
-            declare netwrite Integer Net_TokenNeedsUpdate for player = Now;
+            declare netwrite Integer Net_TokenNeedsUpdate for player = -1;
             Net_TokenNeedsUpdate = Now;
             G_WaitingToUpdateToken.add(ReqData);
             ToDelete.add(reqId);
@@ -260,54 +322,13 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
 
         if (request.StatusCode == 200) {
 
-            if (ReqData.Type == Constants::C_Request_PlayerFinished) {
-                declare response = Xml.Create(request.Result);
-
-                if ( response != Null
-                    && response.Root != Null
-                    && response.Root.GetFirstChild("newBest") != Null
-                    && response.Root.GetFirstChild("login") != Null
-                    && response.Root.GetFirstChild("old") != Null
-                    && response.Root.GetFirstChild("new") != Null
-                ) {
-                    declare isNewBest = response.Root.GetFirstChild("newBest").TextContents == "true";
-                    // TODO: Add fields to backend response
-                    declare login = response.Root.GetFirstChild("login").TextContents;
-                    declare old = TL::ToInteger(response.Root.GetFirstChild("old").TextContents);
-                    declare new = TL::ToInteger(response.Root.GetFirstChild("new").TextContents);
-
-                    declare Player = SM::GetPlayer(login);
-                    declare PName = Player.User.Name;
-                    declare NewTime = TL::TimeToText(new, True);
-                    declare OldTime = TL::TimeToText(old, True);
-                    declare DiffTime = TL::TimeToText(new - old, True);
-
-                    if (isNewBest) {
-                        if (_BestRecordMsg != "") {
-                            UIManager.UIAll.SendChat(TL::Compose(_BestRecordMsg, PName, NewTime, OldTime, DiffTime));
-                        }
-                    } else if (Player != Null) {
-                        if (_WorseRecordMsg != "") {
-                            UIManager.GetUI(Player).SendChat(TL::Compose(_WorseRecordMsg, PName, NewTime, OldTime, DiffTime));
-                        }
-                    }
-
+            switch (ReqData.Type) {
+                case Constants::C_Request_PlayerFinished: {
+                    Private_PlayerFinished(_BestRecordMsg, _WorseRecordMsg, request.Result);
                     UpdateRecords = True;
                 }
-
-                Xml.Destroy(response);
-            } else if (ReqData.Type == Constants::C_Request_ReplaceOrCreatePlayer) {
-                declare K_UpdatePlayerResponse res;
-                declare err = res.fromjson(request.Result);
-                if (err) {
-                    ToDelete.add(reqId);
-                    continue;
-                }
-                log("checked if player is banned");
-                if (res.banned) {
-                    log("yes he is");
-                    declare player = SM::GetPlayer(ReqData.PlayerLogin);
-                    Player::setBanned(player, res.current_ban);
+                case Constants::C_Request_ReplaceOrCreatePlayer: {
+                    Private_PlayerUpdated(request.Result);
                 }
             }
         }
