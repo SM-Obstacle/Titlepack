@@ -191,20 +191,20 @@ main() {
 	
 	declare persistent Vec3[Text] Persistent_LibCustomUI_ModulesPositions;
 	declare persistent Boolean[Text] Persistent_LibCustomUI_ModulesVisibilities;
-	declare persistent Text[] Persistent_LibCustomUI_ModulesSpecOnly;
+	declare persistent Boolean[Text] Persistent_LibCustomUI_ModulesSpectateOnly;
 	declare persistent Boolean[Text] Persistent_LibCustomUI_BasicVisibilities;
 	
 	declare Boolean LibCustomUI_IsVisible for ClientUI;
 	declare Boolean[Text] LibCustomUI_ModulesUpdated for ClientUI;
 	declare Vec3[Text] LibCustomUI_ModulesPositions for ClientUI;
 	declare Boolean[Text] LibCustomUI_ModulesVisibilities for ClientUI;
-	declare Text[] LibCustomUI_ModulesSpecOnly for ClientUI;
+	declare Boolean[Text] LibCustomUI_ModulesSpectateOnly for ClientUI;
 	declare Integer LibCustomUI_ForcedUpdate for ClientUI;
 	
 	LibCustomUI_IsVisible = False;
 	LibCustomUI_ModulesUpdated.clear();
 	LibCustomUI_ModulesPositions.clear();
-	LibCustomUI_ModulesSpecOnly.clear();
+	LibCustomUI_ModulesSpectateOnly.clear();
 	LibCustomUI_ForcedUpdate = Now;
 	
 	Page.GetClassChildren("Module_Helper", Frame_Helpers, True);
@@ -220,23 +220,24 @@ main() {
 			LibCustomUI_ModulesPositions[Label_Handler.ControlId] = <0., 0., 0.>;
 			Control.RelativePosition = <0., 0., 0.>;
 		}
+
+		LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = True;
+		LibCustomUI_ModulesSpectateOnly[Label_Handler.ControlId] = False;
 		
-		if (Persistent_LibCustomUI_ModulesSpecOnly.exists(Label_Handler.ControlId)) {
-			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = True;
-			LibCustomUI_ModulesSpecOnly.add(Label_Handler.ControlId);
-			SetHelperModuleVisibility(Control, True, True);
+		if (Persistent_LibCustomUI_ModulesSpectateOnly.existskey(Label_Handler.ControlId)) {
+			LibCustomUI_ModulesSpectateOnly[Label_Handler.ControlId] = Persistent_LibCustomUI_ModulesSpectateOnly[Label_Handler.ControlId];
 		} else if (Control.HasClass("SpecOnly")) {
-			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = True;
-			LibCustomUI_ModulesSpecOnly.add(Label_Handler.ControlId);
-			Persistent_LibCustomUI_ModulesSpecOnly.add(Label_Handler.ControlId);
-			SetHelperModuleVisibility(Control, True, True);
-		} else if (Persistent_LibCustomUI_ModulesVisibilities.existskey(Label_Handler.ControlId)) {
-			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = Persistent_LibCustomUI_ModulesVisibilities[Label_Handler.ControlId];
-			SetBasicHelperModuleVisibility(Control, LibCustomUI_ModulesVisibilities[Label_Handler.ControlId]);
-		} else {
-			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = True;
-			SetBasicHelperModuleVisibility(Control, True);
+			LibCustomUI_ModulesSpectateOnly[Label_Handler.ControlId] = True;
+			Persistent_LibCustomUI_ModulesSpectateOnly[Label_Handler.ControlId] = True;
 		}
+		if (Persistent_LibCustomUI_ModulesVisibilities.existskey(Label_Handler.ControlId)) {
+			LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = Persistent_LibCustomUI_ModulesVisibilities[Label_Handler.ControlId];
+		}
+
+		Persistent_LibCustomUI_ModulesVisibilities[Label_Handler.ControlId] = LibCustomUI_ModulesVisibilities[Label_Handler.ControlId];
+		Persistent_LibCustomUI_ModulesSpectateOnly[Label_Handler.ControlId] = LibCustomUI_ModulesSpectateOnly[Label_Handler.ControlId];
+
+		SetHelperModuleVisibility(Control, LibCustomUI_ModulesVisibilities[Label_Handler.ControlId], LibCustomUI_ModulesSpectateOnly[Label_Handler.ControlId]);
 	}
 	
 	declare CMlLabel[Text] Buttons_BasicVisibilities;
@@ -364,19 +365,21 @@ main() {
 							}
 							
 							Page.GetClassChildren("Module_Helper", Frame_Helpers, True);
-							LibCustomUI_ModulesSpecOnly.clear();
-							Persistent_LibCustomUI_ModulesSpecOnly.clear();
 							foreach (Control in Page.GetClassChildren_Result) {
 								declare Name = (Control as CMlFrame).Controls[3].ControlId;
 								if (LibCustomUI_ModulesUpdated.existskey(Name)) {
 									Control.RelativePosition = <0., 0., 0.>;
 									LibCustomUI_ModulesPositions[Name] = <0., 0., 0.>;
 									Persistent_LibCustomUI_ModulesPositions[Name] = <0., 0., 0.>;
+
 									LibCustomUI_ModulesVisibilities[Name] = True;
+									LibCustomUI_ModulesSpectateOnly[Name] = False;
 									Persistent_LibCustomUI_ModulesVisibilities[Name] = True;
+									Persistent_LibCustomUI_ModulesSpectateOnly[Name] = False;
+
 									if (Control.HasClass("SpecOnly")) {
-										LibCustomUI_ModulesSpecOnly.add(Name);
-										Persistent_LibCustomUI_ModulesSpecOnly.add(Name);
+										LibCustomUI_ModulesSpectateOnly[Name] = True;
+										Persistent_LibCustomUI_ModulesSpectateOnly[Name] = True;
 										SetHelperModuleVisibility(Control, True, True);
 									} else {
 										SetBasicHelperModuleVisibility(Control, True);
@@ -444,13 +447,15 @@ main() {
 					LibCustomUI_CurrentModule.RelativePosition = <0., 0., 0.>;
 					LibCustomUI_ModulesPositions[LibCustomUI_CurrentModuleName] = <0., 0., 0.>;
 					Persistent_LibCustomUI_ModulesPositions[LibCustomUI_CurrentModuleName] = <0., 0., 0.>;
+
 					LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
+					LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = False;
 					Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
+					Persistent_LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = False;
+
 					if (LibCustomUI_CurrentModule.HasClass("SpecOnly")) {
-						if (!LibCustomUI_ModulesSpecOnly.exists(LibCustomUI_CurrentModuleName)) {
-							LibCustomUI_ModulesSpecOnly.add(LibCustomUI_CurrentModuleName);
-							Persistent_LibCustomUI_ModulesSpecOnly.add(LibCustomUI_CurrentModuleName);
-						}
+						LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = True;
+						Persistent_LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = True;
 						SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, True);
 					} else {
 						SetBasicHelperModuleVisibility(LibCustomUI_CurrentModule, True);
@@ -471,39 +476,35 @@ main() {
 					if (LibCustomUI_CurrentModule.HasClass("SpecOnly")) {
 						if (LibCustomUI_CurrentModule.HasClass("NotHidable")) {
 							LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
-							Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
 
-							if (LibCustomUI_ModulesSpecOnly.exists(LibCustomUI_CurrentModuleName)){
-								LibCustomUI_ModulesSpecOnly.remove(LibCustomUI_CurrentModuleName);
-								SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, False);
+							if (LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName]){
+								LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = False;
 							} else {
-								LibCustomUI_ModulesSpecOnly.add(LibCustomUI_CurrentModuleName);
-								SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, True);
+								LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = True;
 							}
-						} else {
-							if (LibCustomUI_ModulesSpecOnly.exists(LibCustomUI_CurrentModuleName)){
-								LibCustomUI_ModulesSpecOnly.remove(LibCustomUI_CurrentModuleName);
-
+						} else { // hidable
+							if (LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName]){
 								LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
-								Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
-								SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, False);
+								LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = False;
 							} else if (LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName]) {
 								LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = False;
-								SetHelperModuleVisibility(LibCustomUI_CurrentModule, False, False);
 							} else {
-								LibCustomUI_ModulesSpecOnly.add(LibCustomUI_CurrentModuleName);
+								LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = True;
 								LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = True;
-								SetHelperModuleVisibility(LibCustomUI_CurrentModule, True, True);
 							}
-
-							Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];	
 						}
 					} else if (!LibCustomUI_CurrentModule.HasClass("NotHidable")) {
 						LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = !LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];
-						Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];
-						SetHelperModuleVisibility(LibCustomUI_CurrentModule, LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName], False);
 					}
+
+					Persistent_LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName] = LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName];	
+					Persistent_LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName] = LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName];	
 					LibCustomUI_ModulesUpdated[LibCustomUI_CurrentModuleName] = True;
+					SetHelperModuleVisibility(
+						LibCustomUI_CurrentModule,
+						LibCustomUI_ModulesVisibilities[LibCustomUI_CurrentModuleName],
+						LibCustomUI_ModulesSpectateOnly[LibCustomUI_CurrentModuleName]
+					);
 				}
 			}
 		}
@@ -595,7 +596,7 @@ declare Boolean LibCustomUI_IsVisible for ClientUI;
 declare Boolean[Text] LibCustomUI_ModulesUpdated for ClientUI;
 declare Vec3[Text] LibCustomUI_ModulesPositions for ClientUI;
 declare Boolean[Text] LibCustomUI_ModulesVisibilities for ClientUI;
-declare Text[] LibCustomUI_ModulesSpecOnly for ClientUI;
+declare Boolean[Text] LibCustomUI_ModulesSpectateOnly for ClientUI;
 declare Integer LibCustomUI_ForcedUpdate for ClientUI;
 declare CMlControl[Text] LibCustomUI_LocalModules;
 declare Integer LibCustomUI_PrevForcedUpdate;
@@ -623,7 +624,7 @@ if (LibCustomUI_PrevForcedUpdate != LibCustomUI_ForcedUpdate) {
 	LibCustomUI_Reload = True;
 	LibCustomUI_PrevForcedUpdate = LibCustomUI_ForcedUpdate;
 }
-if (LibCustomUI_ModulesSpecOnly.count > 0 && LibCustomUI_PrevSpectator != IsSpectator) {
+if (LibCustomUI_ModulesSpectateOnly.count > 0 && LibCustomUI_PrevSpectator != IsSpectator) {
 	LibCustomUI_Reload = True;
 	LibCustomUI_PrevSpectator = IsSpectator;
 }
@@ -638,7 +639,7 @@ if (LibCustomUI_IsVisible || LibCustomUI_Reload) {
 				Module.Visible = LibCustomUI_ModulesVisibilities[ModuleName];
 				ModulesUpdated.add(ModuleName);
 			}
-			if (LibCustomUI_ModulesSpecOnly.exists(ModuleName)) {
+			if (LibCustomUI_ModulesSpectateOnly[ModuleName]) {
 				Module.Visible = IsSpectator;
 			}
 		}
