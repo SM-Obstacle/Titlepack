@@ -165,7 +165,7 @@ Text GetLayer() {
     Void UpdateSpec() {
         declare Keys InputKeys;
 
-        if (InputPlayer != Null) {
+        if (InputPlayer == GUIPlayer) {
             InputKeys = Previous;
         } else if (GUIPlayer != Null) {
             declare netread Keys LastKeys for GUIPlayer;
