@@ -15,7 +15,7 @@
 	<unlock_features>0</unlock_features>
 	<packaging>
 		<image name="Media\Images\Logos\PackImage.webm"/>
-		<logos name="Media\Images\Logos\Logos.png"/>
+		<logos name="Media\Images\Logos\Logo.png"/>
 		<collection></collection>
 		<sortindex>100</sortindex>
 		<station_manialink url=""/>
@@ -25,7 +25,7 @@
 	<menu>
 		<background_img name="Media\Images\Obstacle\Menu\Opening.webm"/>
 		<background_replay name=""/>
-		<header name=""/>
+		<header name="Media\Images\Logos\Logos.jpg"/>
 		<music name="Media\Musics\Menu\Opening.ogg"/>
 		<manialink url="Media/Apps/ObstacleTitlePack.Script.txt"/>
 	</menu>
