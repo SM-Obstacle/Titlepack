@@ -56,12 +56,23 @@ Text GetLayer() {
 <script><!--
     #Include "TextLib" as TL
 
+    #Struct K_RankedRecord {
+        Integer rank;
+        Text login;
+        Text nickname;
+        Integer time;
+    }
+    
+    #Struct K_Response {
+        K_RankedRecord[] response;
+    }
+
     declare CHttpRequest G_Req;
 
     Void UpdateRecords(Text _Login) {
         declare params = "?mapId="^Map.Id^"&playerId="^_Login;
         declare url = "{{{Constants::C_HostUrl}}}overview"^params;
-        G_Req = Http.CreateGet(url, True, "Accept: application/xml");
+        G_Req = Http.CreateGet(url, True, "Accept: application/json");
     }
 
 
@@ -76,6 +87,8 @@ Text GetLayer() {
         declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
 
         UpdateRecords(InputPlayer.User.Login);
+
+        declare logged = True;
 
         while (True) {
             yield;
@@ -96,26 +109,13 @@ Text GetLayer() {
             }
 
             if (G_Req != Null && G_Req.IsCompleted) {
-                declare Text[Text][] Records;
-                
-                // Parse the XML to text array
-                declare XRecords = Xml.Parse_Xml(G_Req.Result);
-                Http.Destroy(G_Req);
-                G_Req = Null;
-
-                if (XRecords == Null || XRecords.Root == Null)
-                    continue;
-
-                foreach (Node in XRecords.Root.Children) {
-                    if (Node.TextContents == "undefined")
-                        continue;
-
-                    declare Text[Text] Record;
-                    foreach (Prop in Node.Children)
-                        Record[Prop.Name] = Prop.TextContents;
-                    Records.add(Record);
+                declare K_Response response;
+                log(G_Req.Result);
+                response.fromjson(G_Req.Result);
+                if (logged) {
+                    log(response);
+                    logged = False;
                 }
-                Xml.Destroy(XRecords);
 
                 declare HasLocalPlayerFinished = False;
                 foreach (Idx => Control in Frame_Records.Controls) {
@@ -124,12 +124,12 @@ Text GetLayer() {
                     declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
                     declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
 
-                    if (Records.existskey(Idx)) {
-                        rankLabel.SetText(Records[Idx]["rank"]);
-                        nameLabel.SetText(Records[Idx]["nickname"]);
-                        timeLabel.SetText(TL::TimeToText(TL::ToInteger(Records[Idx]["time"]), True));
+                    if (response.response.existskey(Idx)) {
+                        rankLabel.SetText(""^response.response[Idx].rank);
+                        nameLabel.SetText(response.response[Idx].nickname);
+                        timeLabel.SetText(TL::TimeToText(response.response[Idx].time, True));
 
-                        if (Records[Idx]["playerId"] == LocalPlayer.User.Login)
+                        if (response.response[Idx].login == LocalPlayer.User.Login)
                             HasLocalPlayerFinished = True;
 
                         Control.Show();

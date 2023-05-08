@@ -42,7 +42,7 @@
 
 #Struct K_UpdateMapBody {
     Text name;
-    Ident map_uid;
+    Text map_uid;
     K_MapAuthor author;
 }
 
@@ -56,6 +56,15 @@
     Text login;
     Boolean banned;
     Auth::K_Banishment current_ban;
+}
+
+#Struct K_HasFinishedBody {
+    Integer time;
+    Integer respawn_count;
+    Text login;
+    Text map_uid;
+    Integer flags;
+    Integer[] cps;
 }
 
 #Struct K_HasFinishedResponse {
@@ -82,10 +91,6 @@ declare Text[] G_ErroredPlayers;
 /////////////////////////////////////////////////////////////////
 /////////////////////       TOOLS       /////////////////////////
 /////////////////////////////////////////////////////////////////
-Text Private_MultipartHeaders(Text _Boundary) {
-    return "Content-Type: multipart/form-data; boundary=" ^ _Boundary ^ "\nAccept: application/xml\n";
-}
-
 Boolean Contains(Text _Text, Text _Input) {
     return TL::Find(_Text, _Input, False, False);
 }
@@ -138,8 +143,8 @@ Void SendPost(Text _Url, Text _Data, Integer _Type, CSmPlayer _Player, Text _Hea
 
 // Init the API with a token
 Void Init() {
-    G_PostHeaders = "Content-Type: application/json\nAccept: application/xml\n";
-    G_GetHeaders  = "Accept: application/xml\n";
+    G_PostHeaders = "Content-Type: application/json\nAccept: application/json\n";
+    G_GetHeaders  = "Accept: application/json\n";
 }
 
 /////////////////////////////////////////////////////////////////
@@ -150,7 +155,7 @@ Void Init() {
 Void ReplaceOrCreateMap() {
     declare body = K_UpdateMapBody {
         name = Map.MapName,
-        map_uid = Map.Id,
+        map_uid = ""^Map.Id,
         author = K_MapAuthor {
             login = Map.AuthorLogin,
             nickname = Map.AuthorNickName,
@@ -188,62 +193,27 @@ Void PlayerFinished(CSmPlayer _Player) {
 
     log("flags:" ^ Flags);
 
-    declare boundary = "----------------" ^ state ^ ML::Rand(0, 10000000);
-    // TODO: register inputs
-    declare inputs = "";
-
-    declare body = """
---{{{boundary}}}
-Content-Disposition: form-data; name="time"
-Content-Type: text/plain
-
-{{{LastRun}}}
---{{{boundary}}}
-Content-Disposition: form-data; name="respawn_count"
-Content-Type: text/plain
-
-{{{RespawnCount}}}
---{{{boundary}}}
-Content-Disposition: form-data; name="login"
-Content-Type: text/plain
-
-{{{_Player.User.Login}}}
---{{{boundary}}}
-Content-Disposition: form-data; name="map_uid"
-Content-Type: text/plain
-
-{{{""^Map.Id}}}
---{{{boundary}}}
-Content-Disposition: form-data; name="flags"
-Content-Type: text/plain
-
-{{{Flags}}}
-""";
-
-    declare Integer[Ident] lastCpTimes = Player::getLastCPTimes(_Player);
-    foreach (time in lastCpTimes) {
-        declare Integer cpTime;
-        if (time == LastRun) cpTime = time;
-        else cpTime = LastRun - time;
-        body ^= """--{{{boundary}}}
-Content-Disposition: form-data; name="cps"
-Content-Type: text/plain
-
-{{{cpTime}}}
-""";
+    declare lastCpTimes = Player::getLastCPTimes(_Player);
+    declare Integer[] cps;
+    if (lastCpTimes.count > 0) {
+        foreach (time in lastCpTimes) {
+            if (time == LastRun)
+                cps.add(time);
+            else
+                cps.add(LastRun - time);
+        }
     }
 
-    body ^= """--{{{boundary}}}
-Content-Disposition: form-data; name="inputs"
-Content-Type: text/plain
+    declare body = K_HasFinishedBody {
+        time = LastRun,
+        respawn_count = RespawnCount,
+        login = _Player.User.Login,
+        map_uid = ""^Map.Id,
+        flags = Flags,
+        cps = cps
+    };
 
-{{{inputs}}}
---{{{boundary}}}--
-""";
-    
-    body = TL::Replace(body, "\n", "\r\n");
-
-    SendPost("player/finished", body, Constants::C_Request_PlayerFinished, _Player, Private_MultipartHeaders(boundary));
+    SendPost("player/finished", body.tojson(), Constants::C_Request_PlayerFinished, _Player, G_PostHeaders);
 }
 
 Void TokenReceivedFor(CSmPlayer _Player) {
