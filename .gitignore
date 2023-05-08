@@ -1,5 +1,10 @@
 .vscode/
 Media/Manialinks/Keyboard
 __pycache__
-Items/
+
+# Assets
 Maps/
+Items/
+Materials/
+
+Snow_Storm.zip

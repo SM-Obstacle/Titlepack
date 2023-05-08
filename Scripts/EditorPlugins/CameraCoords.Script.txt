@@ -1,4 +1,5 @@
-#RequireContext CGameCtnEditorPluginScriptHandler
+#RequireContext CMapEditorPlugin
+#Include "MathLib" as MathLib
 
 Text CreateManialink()
 {
@@ -6,9 +7,9 @@ Text CreateManialink()
 	"""
 		<script><!--
 			Void UpdateValues() {
-				declare CursorX for Page = 0.;
-				declare CursorY for Page = 0.;
-				declare CursorZ for Page = 0.;
+				declare CursorX for Page = 0;
+				declare CursorY for Page = 0;
+				declare CursorZ for Page = 0;
 				declare CursorDirectionText for Page = "";
 				declare LblCursorXValue <=> (Page.GetFirstChild("CursorXValue") as CMlLabel);
 				declare LblCursorYValue <=> (Page.GetFirstChild("CursorYValue") as CMlLabel);
@@ -20,7 +21,6 @@ Text CreateManialink()
 				LblCursorDirectionValue.SetText(CursorDirectionText);
 			}
 			main () {
-				declare BoxOffset = 0;
 				while(True) {
 					yield;
 					UpdateValues();
@@ -31,12 +31,12 @@ Text CreateManialink()
 			<quad id="CursorCoordBox" posn="0 0" z-index="-1" sizen="20 28" style="Bgs1" substyle="BgList" ScriptEvents="1"/>
 			<label id="CursorXLabel" text="Cursor" posn="2 -2"/>
 			<label id="CursorXLabel" text="X" posn="2 -7"/>
-				<label id="CursorXValue" text="XXX" posn="8 -7"/>
+				<label id="CursorXValue" text="" posn="8 -7"/>
 			<label id="CursorYLabel" text="Y" posn="2 -12"/>
-				<label id="CursorYValue" text="XXX" posn="8 -12"/>
+				<label id="CursorYValue" text="" posn="8 -12"/>
 			<label id="CursorZLabel" text="Z" posn="2 -17"/>
-				<label id="CursorZValue" text="XXX" posn="8 -17"/>
-			<label id="CursorDirectionValue" text="XXX" posn="2 -22"/>
+				<label id="CursorZValue" text="" posn="8 -17"/>
+			<label id="CursorDirectionValue" text="DirError" posn="2 -22"/>
 		</frame>
 	""";
 	return MLText;
@@ -48,33 +48,51 @@ Text CreateManialink()
 
 main()
 {
-	log("CursorCoords.Script starts");
-	
-	CursorBrightnessFactor = 1.;
+	Cursor.Brightness = 1.;
 	HideBlockHelpers = False;
 	
 	LayersDefaultManialinkVersion = 3;
 	
 	declare CursorAction for ManialinkPage = 0;
-	declare CursorX for ManialinkPage = 0.;
-	declare CursorY for ManialinkPage = 0.;
-	declare CursorZ for ManialinkPage = 0.;
+	declare CursorX for ManialinkPage = 0;
+	declare CursorY for ManialinkPage = 0;
+	declare CursorZ for ManialinkPage = 0;
 	declare CursorDirectionText for ManialinkPage = "";
+
+	declare Real DrawingLength;
+	declare Vec3 DrawingLast = <-4096., -4096., -4096.>;
 	
 	ManialinkText = CreateManialink();
 
 	while(True) {
 		yield;
 		// update ManialinkPage variables
-		CursorX = GetVec3FromCoord(CursorCoord)[0];
-		CursorY = GetVec3FromCoord(CursorCoord)[1];
-		CursorZ = GetVec3FromCoord(CursorCoord)[2];
-		switch(CursorDir) {
-			case ::CardinalDirections::North: 	CursorDirectionText = "North";
-			case ::CardinalDirections::East: 	CursorDirectionText = "East";
-			case ::CardinalDirections::South: 	CursorDirectionText = "South";
-			case ::CardinalDirections::West: 	CursorDirectionText = "West";
-			default: 							CursorDirectionText = "DirError";
+		CursorX = Cursor.Coord[0];
+		CursorY = Cursor.Coord[1];
+		CursorZ = Cursor.Coord[2];
+
+		if (EditorInputIsDown_CursorPlace && PlaceMode == ::PlaceMode::Block) {
+			declare VecCoord = GetVec3FromCoord(Cursor.Coord);
+
+			if (DrawingLast == <-4096., -4096., -4096.>) {
+				DrawingLength = 8.;
+			} else {
+				DrawingLength += MathLib::Distance(DrawingLast, VecCoord);
+			}
+			DrawingLast = VecCoord;
+
+			CursorDirectionText = "+" ^ MathLib::NearestInteger(DrawingLength / 8.);
+		} else {
+			switch(Cursor.Dir) {
+				case ::CardinalDirections::North: 	CursorDirectionText = "North";
+				case ::CardinalDirections::East: 	CursorDirectionText = "East";
+				case ::CardinalDirections::South: 	CursorDirectionText = "South";
+				case ::CardinalDirections::West: 	CursorDirectionText = "West";
+				default: 							CursorDirectionText = "DirError";
+			}
+
+			DrawingLength = 0.;
+			DrawingLast = <-4096., -4096., -4096.>;
 		}
 	}
 }

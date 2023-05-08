@@ -88,8 +88,6 @@ Text GetLayer() {
 
         UpdateRecords(InputPlayer.User.Login);
 
-        declare logged = True;
-
         while (True) {
             yield;
 
@@ -110,12 +108,7 @@ Text GetLayer() {
 
             if (G_Req != Null && G_Req.IsCompleted) {
                 declare K_Response response;
-                log(G_Req.Result);
                 response.fromjson(G_Req.Result);
-                if (logged) {
-                    log(response);
-                    logged = False;
-                }
 
                 declare HasLocalPlayerFinished = False;
                 foreach (Idx => Control in Frame_Records.Controls) {
