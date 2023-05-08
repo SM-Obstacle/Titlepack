@@ -18,7 +18,7 @@ Text Build() {
 			<label text="Home" textsize="5" class="lato" halign="center" valign="center2" pos="35 -4.5" id="Label_News"/> 
 			<quad size="70 9" image="file://Media/Images/Obstacle/Home/BPatchNote.png"/>
 
-			<frame pos="0 -10.67" size="70 74.67">
+			<frame pos="0 -10.33" size="70 74.67">
 				<quad size="70 74.67" image="file://Media/Images/Obstacle/Home/ContoursNews.png"/>
 				<frame pos="34.67 -37.67" clip="1" clipsizen="69.33 74">
 					<quad size="70 74.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_News"/>

@@ -11,12 +11,15 @@ Text Build() {
 <manialink version="3" name="L_Menus">
 	{{{Styles::GetStyleSheet()}}}
 	<framemodel id="Model_MenuItem">
-		<label halign="center" valign="center2" textprefix="$t" class="lato" pos="0 -0.2" id="Label_Text"/>
-		<quad halign="center" valign="center2" size="25 7.17"
-			modulatecolor="9b9b9e" image="file://Media/Images/Obstacle/Menu/BNav.png" id="Quad_Trigger" scriptevents="1"
-			data-target="Quad_Trigger" data-anim-length="70"
-			data-default-anim="<quad scale=&quot;1.&quot; modulatecolor=&quot;9b9b9e&quot;/>"
-			data-target-anim="<quad modulatecolor=&quot;4b597d&quot; scale=&quot;1.066&quot;/>"/>
+		<quad halign="center" valign="center2" size="25 7.17" id="Quad_Trigger" scriptevents="1"
+			data-target="Label_Text" data-anim-length="70"
+			data-default-anim="<label pos=&quot;0 .33&quot;/>"
+			data-target-anim="<label pos=&quot;0 0&quot;/>"/>
+
+		<quad halign="center" size="17 0.33" pos="0 -3" image="file://Media/Images/Obstacle/Menu/BNav.png" id="Quad_Underline"/>
+		<quad halign="center" valign="center" size="2 2" pos="0 -3.16" rot="45" bgcolor="FFFF"/>
+
+		<label halign="center" valign="center2" textprefix="$t" class="lato" pos="0 .33" id="Label_Text"/>
 	</framemodel>
 	<frame pos="-160 90">
 		<label text="" class="lato" pos="75.5 -8.9" halign="center" valign="center2"
@@ -108,7 +111,8 @@ Void Loop() {
 				}
 
 				case "editors": {
-					Windows::Load(Editors::GetName());
+					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+					//Windows::Load(Editors::GetName());
 				}
 
 				case "profile": {
