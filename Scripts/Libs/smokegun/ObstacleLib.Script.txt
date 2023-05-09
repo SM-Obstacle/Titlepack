@@ -86,6 +86,10 @@ Integer ForceFastRSMap() {
     declare metadata Integer Meta_ForceFastRS for Map = 0;
     return Meta_ForceFastRS;
 }
+Integer InvulnerabilityDuration() {
+    declare metadata Integer Meta_Invulnerability for Map = 2000;
+    return Meta_Invulnerability;
+}
 
 Integer GetCheckpointsTotal() {
     return G_CheckpointsTotal;

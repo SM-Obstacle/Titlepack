@@ -243,6 +243,8 @@ if (Obstacle::IsSameWallJumpMap()) {
     UseSameWallJump = False;
 }
 
+SpawnInvulnerabilityDuration = Obstacle::InvulnerabilityDuration();
+
 if (Obstacle::IsRandomizerMap()) {
     declare Text Seed = "";
 
