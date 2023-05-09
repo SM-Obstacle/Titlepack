@@ -462,11 +462,13 @@ Void EditMap()
     declare metadata Boolean Meta_PvP_Collisions for Map = False;
     declare metadata Boolean Meta_SameWallJump for Map = True;
     declare metadata Integer Meta_ForceFastRS for Map = 0;
+    declare metadata Integer Meta_Invulnerability for Map = 2000;
 
     declare PvP_Weapons for ManialinkPage = Meta_PvP_Weapons;
     declare PvP_Collisions for ManialinkPage = Meta_PvP_Collisions;
     declare SameWallJump for ManialinkPage = Meta_SameWallJump;
     declare ForceFastRS for ManialinkPage = Meta_ForceFastRS;
+    declare Invulnerability for ManialinkPage = Meta_Invulnerability;
 
     /// --- Manialink
     declare Properties = """
@@ -476,6 +478,7 @@ Void EditMap()
             {{{Property("12.5 -2.5", "PvP Collisions", Checkbox("13 0", "Checkbox_PvP_Collisions"))}}}
             {{{Property("-20 -10", "Same-Wall WJ", Checkbox("13 0", "Checkbox_SameWallJump"))}}}
             {{{Property("-20 -17.5", "Fast Respawn", Checkbox("13 0", "Checkbox_ForceFastRS"))}}}
+            {{{BigProperty("0 -28", "Weapon Ready Delay", Entry("0 -7.5", "Entry_Invulnerability"))}}}
         </frame>
     """;
 
@@ -485,17 +488,20 @@ Void EditMap()
     {{{GetML()}}}
     <script><!--
     #Include "TextLib" as TL
+    #Include "MathLib" as ML
 
     Void UpdateView() {
         declare Boolean PvP_Weapons for Page;
         declare Boolean PvP_Collisions for Page;
         declare Boolean SameWallJump for Page;
         declare Integer ForceFastRS for Page;
+        declare Integer Invulnerability for Page;
 
         declare Label_PvP_Weapons <=> (Page.GetFirstChild("Checkbox_PvP_Weapons") as CMlLabel);
         declare Label_PvP_Collisions <=> (Page.GetFirstChild("Checkbox_PvP_Collisions") as CMlLabel);
         declare Label_SameWallJump <=> (Page.GetFirstChild("Checkbox_SameWallJump") as CMlLabel);
         declare Label_ForceFastRS <=> (Page.GetFirstChild("Checkbox_ForceFastRS") as CMlLabel);
+        declare Entry_Invulnerability <=> (Page.GetFirstChild("Entry_Invulnerability") as CMlEntry);
 
         if (!PvP_Weapons && Label_PvP_Weapons.Value != "") {
             Label_PvP_Weapons.SetText("");
@@ -528,14 +534,17 @@ Void EditMap()
             Label_ForceFastRS.SetText("");
         }
 
+        Entry_Invulnerability.SetText(TL::ToText(Invulnerability), False);
+
         SendCustomEvent("Event_Save_Map", Text[]);
     }
 
     main() {
-        declare Boolean PvP_Weapons for Page = False;
-        declare Boolean PvP_Collisions for Page = False;
-        declare Boolean SameWallJump for Page = False;
-        declare Integer ForceFastRS for Page = 0;
+        declare Boolean PvP_Weapons for Page;
+        declare Boolean PvP_Collisions for Page;
+        declare Boolean SameWallJump for Page;
+        declare Integer ForceFastRS for Page;
+        declare Integer Invulnerability for Page;
 
         declare NeedUpdate = False;
         UpdateView();
@@ -549,28 +558,38 @@ Void EditMap()
             }
 
             foreach (Event in PendingEvents) {
-                if (Event.Type == CMlEvent::Type::MouseClick) {
-                    switch (Event.ControlId) {
-                        case "Checkbox_PvP_Weapons":
-                            PvP_Weapons = !PvP_Weapons;
+                switch (Event.Type) {
+                    case CMlEvent::Type::MouseClick: {
+                        switch (Event.ControlId) {
+                            case "Checkbox_PvP_Weapons":
+                                PvP_Weapons = !PvP_Weapons;
 
-                        case "Checkbox_PvP_Collisions":
-                            PvP_Collisions = !PvP_Collisions;
+                            case "Checkbox_PvP_Collisions":
+                                PvP_Collisions = !PvP_Collisions;
 
-                        case "Checkbox_SameWallJump":
-                            SameWallJump = !SameWallJump;
+                            case "Checkbox_SameWallJump":
+                                SameWallJump = !SameWallJump;
 
-                        case "Checkbox_ForceFastRS": {
-                            switch (ForceFastRS) {
-                                case 2:
-                                    ForceFastRS = 1;
-                                default:
-                                    ForceFastRS = 2;
+                            case "Checkbox_ForceFastRS": {
+                                switch (ForceFastRS) {
+                                    case 2:
+                                        ForceFastRS = 1;
+                                    default:
+                                        ForceFastRS = 2;
+                                }
                             }
                         }
-                    }
 
-                    NeedUpdate = True;
+                        NeedUpdate = True;
+                    }
+                    case CMlScriptEvent::Type::EntrySubmit: {
+                        declare Entry <=> (Event.Control as CMlEntry);
+
+                        switch(Entry.ControlId) {
+                            case "Entry_Invulnerability": Invulnerability = ML::Max(TL::ToInteger(Entry.Value), 0);
+                        }
+                        NeedUpdate = True;
+                    }
                 }
             }
         }
@@ -586,16 +605,19 @@ Void SaveMapSettings()
     declare metadata Boolean Meta_PvP_Collisions for Map;
     declare metadata Boolean Meta_SameWallJump for Map;
     declare metadata Integer Meta_ForceFastRS for Map;
+    declare metadata Integer Meta_Invulnerability for Map;
 
     declare Boolean PvP_Weapons for ManialinkPage;
     declare Boolean PvP_Collisions for ManialinkPage;
     declare Boolean SameWallJump for ManialinkPage;
     declare Integer ForceFastRS for ManialinkPage;
+    declare Integer Invulnerability for ManialinkPage;
 
     Meta_PvP_Weapons = PvP_Weapons;
     Meta_PvP_Collisions = PvP_Collisions;
     Meta_SameWallJump = SameWallJump;
     Meta_ForceFastRS = ForceFastRS;
+    Meta_Invulnerability = Invulnerability;
 }
 
 Void EditObjectives()
