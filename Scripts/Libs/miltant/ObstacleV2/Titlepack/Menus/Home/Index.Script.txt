@@ -15,13 +15,13 @@ Text Build() {
 			<quad size="70 85" scriptevents="1" id="Quad_Target" data-target="Quad_News"
 				data-default-anim="<quad scale=&quot;1.&quot;/>" data-target-anim="<quad scale=&quot;1.066&quot;/>"/>
 
-			<label text="Home" textsize="5" class="lato" halign="center" valign="center2" pos="35 -4.5" id="Label_News"/> 
+			<label text="Patch Notes 2.0" textsize="5" class="lato" halign="center" valign="center2" pos="35 -5" id="Label_News"/> 
 			<quad size="70 9" image="file://Media/Images/Obstacle/Home/BPatchNote.png"/>
 
 			<frame pos="0 -10.33" size="70 74.67">
 				<quad size="70 74.67" image="file://Media/Images/Obstacle/Home/ContoursNews.png"/>
 				<frame pos="34.67 -37.67" clip="1" clipsizen="69.33 74">
-					<quad size="70 74.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_News"/>
+					<quad size="70 74.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Home/News.png" id="Quad_News"/>
 				</frame>
 			</frame>
 		</frame>

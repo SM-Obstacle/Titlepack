@@ -8,36 +8,34 @@ Text Build() {
 	return """
 <frame id="Frame_Campaign">
 	<framemodel id="MapCard">
-		<label pos="1 -4.5" text="01" valign="center2" textsize="5" textcolor="5F5F64" textfont="light"/>
-		<label pos="13 -4.5" text="" textsize="3" valign="center2" textcolor="eb2"/>
-		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/author.png"/>
-		<quad pos="21 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png"/>
+		<label pos="1 -4.5" text="01" valign="center2" textsize="5" textcolor="5F5F64" textfont="regular"/>
+		<quad pos="20 .67" size="10 10" imae="file://Media/Images/Obstacle/Medals/author.png"/>
+		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png"/>
-		<quad pos="19 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png"/>
+		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png"/>
 		<quad size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png"/>
 	</framemodel>
 
-	<quad pos="-154.17 53.67" size="53 35.83" image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png"/>
+	<frame pos="-154.17 53.67">
+		<label text="" textcolor="FFF" pos="26.5 -17.83" halign="center" valign="center2" textsize="10"/>
+		<quad size="53 35.83" image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png"/>
+	</frame>
 
 	<frame pos="-154.17 15.67">
-		<label pos="26.5 -5.92" size="53 11.83" text="yes man" textprefix="$t   " textsize="4" textfont="light" halign="center" valign="center2"/>
-		<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
+		<label pos="26.5 -5.92" size="53 11.83" text="yes man" textprefix="$t   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff"/>
+		<quad size="53 11.83" bgcolor="0009"/>
 	</frame>
 	<frame pos="-154.17 2">
-		<label pos="26.5 -5.92" size="53 11.83" text="errorcat" textprefix="$t   " textsize="4" textfont="light" halign="center" valign="center2"/>
+		<label pos="26.5 -5.92" size="53 11.83" text="errorcat" textprefix="$t   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff"/>
 		<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
 	</frame>
 	<frame pos="-154.17 -25">
-		<label pos="-.17 5" text="personal best" textprefix="$t" textsize="2.05"/>
-		<label pos="26.5 -5.92" size="53 11.83" text="12:37.69" textsize="4" textfont="light" halign="center" valign="center2"/>
-		<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
+		<label pos="-.17 5" text="personal best" textprefix="$t" textsize="2.05" textcolor="fff"/>
+		<label pos="26.5 -5.92" size="53 11.83" text="12:37.69" textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff"/>
+		<quad size="53 11.83" bgcolor="0009"/>
 	</frame>
 
-	<frame pos="-96.17 53.67">
-		<label pos="6 -6.5" textsize="8" text="spring" textprefix="$t" textcolor="fff" textfont="light"/>
-		<label pos="6 -15.5" textsize="6" text="2023" textprefix="$t" textcolor="fff" textfont="light"/>
-		<quad size="183.33 35.17" bgcolor="92B7B7FF" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png"/>
-		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
+	<frame pos="-96.17 53.5">
 		<frame pos="8 -46.67">
 			<frame>
 				<quad pos="-.83" size="31.17 3.67" bgcolor="FFF"/>
@@ -80,9 +78,23 @@ Text Build() {
 				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
 			</frame>
 		</frame>
+
+		<frame pos="188.33">
+			<frame pos="31 -24">
+				<label halign="center" text="summer 2023" textprefix="$t" textfont="light" textcolor="B4B4B4" textsize="4.8"/>
+			</frame>
+			
+			<quad size="7.66 7.66"  image="file://Media/Images/Obstacle/Campaign/MX.png" pos="10.66 -2.83"/>
+			<label pos="34 -7.1" textsize="5.2" text="seasons" textprefix="$t" halign="center" valign="center2" textfont="light"/>
+			<quad size="62 123.83"  image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
+		</frame>
+
+		<label pos="6 -6.5" textsize="8" text="summer" textprefix="$t" textcolor="fff" textfont="regular"/>
+		<label pos="6 -15.5" textsize="6" text="2023" textprefix="$t" textcolor="fff" textfont="light"/>
+		<quad size="183.33 35.17" bgcolor="92B7B7FF" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png"/>
+		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
+		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
 	</frame>
-	<!-- TODO remove ! -->
-<quad pos="-160 90" size="320 180" image="https://cdn.discordapp.com/attachments/456854627153870858/1102998859216584834/Campaign.png" hidden="1"/>
 </frame>
 """;
 }
