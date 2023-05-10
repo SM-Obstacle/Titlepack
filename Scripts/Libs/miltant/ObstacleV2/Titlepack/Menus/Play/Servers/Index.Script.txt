@@ -1,0 +1,36 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+
+Text GetName() {
+	return "online";
+}
+
+Text Build() {
+	return """
+<frame pos="-160 73.33" id="Frame_Menus">
+	<frame pos="0 -26" id="Frame_Menus" size="70 112">
+        <quad size="70 111.33" scriptevents="1" id="Quad_Target"
+            data-target="Quad_Poster Label_Name"
+            data-default-anim="<quad scale=&quot;1.&quot;/> <label scale=&quot;1.&quot;/>"
+            data-target-anim="<quad scale=&quot;1.06&quot;/> <label scale=&quot;1.06&quot;/>"/>
+
+		<frame data-name="open_news" size="70 86">
+            <frame pos="34.67 -40" clip="1" clipsizen="69.33 80">
+                <quad size="70 80.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_Poster"/>
+            </frame>
+		</frame>
+
+        <label class="lato" id="Label_Name" textprefix="$t" pos="35 -95.67" halign="center" valign="center2" textsize="5" text="todo"/>
+        <quad size="70 110.67" image="file://Media/Images/Obstacle/Menu/FNavPlay.png"/>
+	</frame>
+</frame>
+""";
+}
+
+Void Load() {
+	declare Windows::K_Window Window;
+	Window.Name = GetName();
+	Window.Manialink = Build();
+	Window.Animation = CUILayer::EUILayerAnimation::LeftFast;
+
+	Windows::CreateWindow(Window);
+}

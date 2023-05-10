@@ -1,0 +1,97 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+
+Text GetName() {
+	return "campaign";
+}
+
+Text Build() {
+	return """
+<frame id="Frame_Campaign">
+	<framemodel id="MapCard">
+		<label pos="1 -4.5" text="01" valign="center2" textsize="5" textcolor="5F5F64" textfont="light"/>
+		<label pos="13 -4.5" text="" textsize="3" valign="center2" textcolor="eb2"/>
+		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/author.png"/>
+		<quad pos="21 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png"/>
+		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png"/>
+		<quad pos="19 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png"/>
+		<quad size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png"/>
+	</framemodel>
+
+	<quad pos="-154.17 53.67" size="53 35.83" image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png"/>
+
+	<frame pos="-154.17 15.67">
+		<label pos="26.5 -5.92" size="53 11.83" text="yes man" textprefix="$t   " textsize="4" textfont="light" halign="center" valign="center2"/>
+		<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
+	</frame>
+	<frame pos="-154.17 2">
+		<label pos="26.5 -5.92" size="53 11.83" text="errorcat" textprefix="$t   " textsize="4" textfont="light" halign="center" valign="center2"/>
+		<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
+	</frame>
+	<frame pos="-154.17 -25">
+		<label pos="-.17 5" text="personal best" textprefix="$t" textsize="2.05"/>
+		<label pos="26.5 -5.92" size="53 11.83" text="12:37.69" textsize="4" textfont="light" halign="center" valign="center2"/>
+		<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
+	</frame>
+
+	<frame pos="-96.17 53.67">
+		<label pos="6 -6.5" textsize="8" text="spring" textprefix="$t" textcolor="fff" textfont="light"/>
+		<label pos="6 -15.5" textsize="6" text="2023" textprefix="$t" textcolor="fff" textfont="light"/>
+		<quad size="183.33 35.17" bgcolor="92B7B7FF" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png"/>
+		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
+		<frame pos="8 -46.67">
+			<frame>
+				<quad pos="-.83" size="31.17 3.67" bgcolor="FFF"/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+			</frame>
+			<frame pos="34.5">
+				<quad pos="-.83" size="31.17 3.67" bgcolor="D7F69B"/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+			</frame>
+			<frame pos="69">
+				<quad pos="-.83" size="31.17 3.67" bgcolor="8AAAE5"/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+			</frame>
+			<frame pos="103.5">
+				<quad pos="-.83" size="31.17 3.67" bgcolor="F5BC8E"/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+			</frame>
+			<frame pos="138">
+				<quad pos="-.83" size="31.17 3.67" bgcolor="D37467"/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+			</frame>
+		</frame>
+	</frame>
+	<!-- TODO remove ! -->
+<quad pos="-160 90" size="320 180" image="https://cdn.discordapp.com/attachments/456854627153870858/1102998859216584834/Campaign.png" hidden="1"/>
+</frame>
+""";
+}
+
+Void Load() {
+	declare Windows::K_Window Window;
+	Window.Name = GetName();
+	Window.Manialink = Build();
+	Window.Animation = CUILayer::EUILayerAnimation::LeftFast;
+
+	Windows::CreateWindow(Window);
+}

@@ -1,0 +1,11 @@
+#Extends "Modes/ShootMania/Obstacle.Script.txt"
+
+***Match_InitServer***
+***
+// ServerModeName is "" in the editor
+G_EnableRecords = False;
+// ServerLogin is "" in local play
+G_ForceInvisibleSkin = False;
+
+G_IsCampaign = True;
+***
