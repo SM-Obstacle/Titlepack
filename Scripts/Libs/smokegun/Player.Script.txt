@@ -13,6 +13,8 @@
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/miltant/Randomizer.Script.txt" as RNG
 
+#Include "Libs/ahmad3/MlAuth.Script.txt" as Auth
+
 /*********************************************
   CONSTANTS
  *********************************************/
@@ -39,6 +41,26 @@
 /*********************************************
   FUNCTIONS
  *********************************************/
+
+Text getToken(CSmPlayer _Player) {
+    declare persistent Text obsToken for _Player.User = "";
+    return obsToken;
+}
+
+Boolean isBanned(CSmPlayer _Player) {
+    declare Auth::K_Banishment ban for _Player = Auth::Default_Ban();
+    return ban.is_current;
+}
+
+Void setBanned(CSmPlayer _Player, Auth::K_Banishment _Value) {
+    declare Auth::K_Banishment ban for _Player = _Value;
+    ban = _Value;
+}
+
+Text banReason(CSmPlayer _Player) {
+    declare Auth::K_Banishment ban for _Player = Auth::Default_Ban();
+    return ban.reason;
+}
 
 Boolean isInitialized(CSmPlayer _Player) {
     declare Boolean isInitialized for _Player = False;

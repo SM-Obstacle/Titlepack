@@ -43,6 +43,8 @@
 
 #Include "Libs/smokegun/Score.Script.txt" as ObsScores
 
+#Include "Libs/ahmad3/MlAuth.Script.txt" as MlAuth
+
 // ---------------------------------- //
 // Settings
 // ---------------------------------- //
@@ -342,6 +344,13 @@ foreach (Event in UIManager.PendingEvents) {
                 declare CP = TL::ToInteger(Event.CustomEventData[1]);
                 Obstacle::JumpToCheckpoint(Player, CP);
             }
+            case "token_update": {
+                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+                API::TokenReceivedFor(Player);
+            }
+            case "token_error": {
+                API::SetErrorFor(Event.CustomEventData[0]);
+            }
             case "jumpback_request": {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 Obstacle::JumpBack(Player);
@@ -533,6 +542,11 @@ foreach (Cap in PendingCaptures) {
 }
 
 foreach (Player in Players) {
+    // TODO: force the player to leave in local
+    // (may join with uri link?)
+    if (Player::isBanned(Player) && ServerAdmin != Null) {
+        ServerAdmin.Kick(Player.User, Player::banReason(Player));
+    }
 
     switch (Player.SpawnStatus) {
 
@@ -708,6 +722,8 @@ Void CreateUI() {
 
     Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
 
+    Layers::Create("Auth", MlAuth::GetLayer());
+
     if (Settings::GetEnableRecords()) {
         Layers::Create("Records", RecordsWidget::GetLayer());
         Layers::Attach("Records");
@@ -726,6 +742,7 @@ Void CreateUI() {
     Layers::Attach("RespawnBehavior");
     Layers::Attach("SpecKeys");
     Layers::Attach("SurvivalRanking");
+    Layers::Attach("Auth");
 
     //Layers::AttachReplay("SpecKeys");
     CustomUI::Build();
@@ -752,6 +769,7 @@ Void DestroyUI() {
     Layers::Detach("RespawnBehavior");
     Layers::Detach("SpecKeys");
     Layers::Detach("SurvivalRanking");
+    Layers::Detach("Auth");
 
     //Layers::DetachReplay("SpecKeys");
 

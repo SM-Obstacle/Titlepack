@@ -3,10 +3,148 @@
 #Include "Libs/miltant/Nadeo_Fork/Common/Core/Pages.Script.txt"								as Pages
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/MenuController.Script.txt"					as MenuController
 
+#Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
+#Include "Libs/smokegun/Constants.Script.Txt" as Constants
+
 #Const C_FirstPage			 "SectionsSelector"
+
+#Const C_UnauthorizedStatusCode 401
+
+#Const C_MP_App_Id			"de1ce3ba8e"
+#Const C_MP_App_Secret	"52877e3c1aa428eeb75a042c52caa01fb74a7526"
+#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=token&"
+#Const C_MP_Redirect		"http://192.168.1.113:3001/player/give_token"
+// #Const C_MP_Redirect "https://api.obstacle.ovh/player/give_token"
+// #Const C_MP_Redirect "http://localhost:3000/player/give_token"
+
+#Struct K_Banishment {
+    Integer id;
+    Text date_ban;
+    Integer duration;
+    Text reason;
+    Text banished_by;
+    Boolean was_reprieved;
+    Boolean is_current;
+}
+
+#Struct K_UpdatePlayerBody {
+	Text login;
+	Text nickname;
+	Text country;	
+}
+
+#Struct K_UpdatePlayerResponse {
+	Text login;
+    Boolean banned;
+    K_Banishment current_ban;
+}
+
+#Struct K_GetTokenBody {
+	Text login;
+	Text state;
+}
+
+#Struct K_GetTokenResponse {
+	Text token;
+}
+
+declare Boolean G_Errored;
+
+declare K_Banishment G_CurrentBan;
+
+Void LogMessage(Text _Msg) {
+	log("[Obs Auth] " ^ _Msg);
+}
+
+Void LogError(Text _Msg) {
+	LogMessage("ERROR: " ^_Msg);
+}
+
+Text Private_UpdateToken() {
+	LogMessage("Updating token...");
+
+	declare persistent obsToken for LocalUser = "";
+
+	declare login = LocalUser.Login;
+	declare Text state = login ^ Now;
+	declare body = K_GetTokenBody { login = login, state = state };
+	
+	declare req = Http.CreatePost(
+		Constants::C_HostUrl ^ "player/get_token",
+		body.tojson(),
+		"Content-Type: application/json\nAccept: application/json");
+		
+	OpenLink(C_MP_Link
+		^ "client_id=" ^ C_MP_App_Id
+		^ "&client_secret=" ^ C_MP_App_Secret
+		^ "&redirect_uri=" ^ C_MP_Redirect
+		^ "&state=" ^ state
+		^ "&scope=basic",
+		CManiaApp::ELinkType::ExternalBrowser);
+		
+	wait(req.IsCompleted);		
+	if (req.StatusCode != 200) {
+		LogError("Error: " ^ req.StatusCode ^ req.Result);
+		Dialog_Message("An error occurred. Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
+		// UI.SendChat("An error occurred. Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
+		G_Errored = True;
+		return obsToken;
+	}
+	
+	declare K_GetTokenResponse response;
+	response.fromjson(req.Result);
+	obsToken = response.token;
+
+	LogMessage("Token updated!");
+
+	return obsToken;
+}
+
+Boolean Private_UpdatePlayer(Text _Secret) {
+	declare body = K_UpdatePlayerBody {
+		login = LocalUser.Login,
+		nickname = LocalUser.Name,
+		country = LocalUser.ZonePath
+	};
+
+	declare req = Http.CreatePost(
+		Constants::C_HostUrl ^ "player/update",
+		body.tojson(),
+		"Content-Type: application/json\nAccept: application/json\nPlayerLogin: " ^ LocalUser.Login
+		^ "\nAuthorization: " ^ _Secret ^ "\n");
+	
+	wait(req.IsCompleted);
+	log("Update info: " ^ req.StatusCode ^ " " ^ req.Result);
+
+	if (req.StatusCode == C_UnauthorizedStatusCode && !G_Errored) {
+		// updating token
+		return Private_UpdatePlayer(Private_UpdateToken());
+	}
+
+	declare K_UpdatePlayerResponse res;
+	declare err = res.fromjson(req.Result);
+
+	log(req.Result);
+
+	if (err) {
+		log("conversion not ok");
+		return False;
+	}
+
+	if (res.banned) G_CurrentBan = res.current_ban;
+	return res.banned;
+}
 
 main() {
 	log("Main Obstacle Menu loaded!");
+	G_Errored = False;
+
+	declare persistent obsToken for LocalUser = "";
+
+	if (Private_UpdatePlayer(obsToken)) {
+		Dialog_Message("GO OUT U BANNED !!!!!");
+		return;
+	}
 
 	MenuController::LoadAll();
 	

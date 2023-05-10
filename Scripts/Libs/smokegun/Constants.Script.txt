@@ -17,13 +17,16 @@
 #Const C_Offzone10 "Offzone\\Visible\\Offzone#10.Item.gbx"
 #Const C_Offzone20 "Offzone\\Visible\\Offzone#20.Item.gbx"
 
-//
-#Const C_HostUrl "https://api.obstacle.ovh/"
+//#Const C_HostUrl "https://api.obstacle.ovh/"
 #Const C_WebsiteUrl "https://www.obstacle.ovh"
+//
+#Const C_HostUrl "http://192.168.1.113:3001/"
 //#Const C_HostUrl "http://localhost:3000/"
 #Const C_Request_ReplaceOrCreateMap 0
 #Const C_Request_ReplaceOrCreatePlayer 1
 #Const C_Request_PlayerFinished 2
+
+#Const C_UnauthorizedStatusCode 401
 
 // Weapons
 #Const C_Weapon_Laser 0
