@@ -35,17 +35,17 @@ Text GetInitFrameMenus() {
 	}""";
 }
 
-Text GetEventLoopActiveItem() {
+Text GetEventLoopActiveItem(Text _EventName) {
 	return """
 	switch(Event.Type) {
 		case CMlScriptEvent::Type::MouseClick: {
 			declare Text ItemId for Event.Control;
 			
 			if (ItemId != "") {
-				SendCustomEvent("menu_item_click", [ItemId]);
+				SendCustomEvent("{{{_EventName}}}", [ItemId]);
 			}
 			if (Event.Control.DataAttributeExists("name")) {
-				SendCustomEvent("menu_item_click", [Event.Control.DataAttributeGet("name")]);
+				SendCustomEvent("{{{_EventName}}}", [Event.Control.DataAttributeGet("name")]);
 			}
 		}
 
@@ -59,17 +59,20 @@ Text GetEventLoopActiveItem() {
 			if (Event.Control.DataAttributeExists("anim-length")) {
 				Duration = TL::ToInteger(Event.Control.DataAttributeGet("anim-length"));
 			}
-
-			AnimMgr.Add(
-				Frame_MenuItem.GetFirstChild(Event.Control.DataAttributeGet("target")),
-				Event.Control.DataAttributeGet("target-anim"),
-				Duration, CAnimManager::EAnimManagerEasing::QuadIn);
-
 			declare Boolean ModulateColor_T for Event.Control = False;
 			if (ModulateColor_T) {
 				declare Vec3 ModulateColor_Target for Event.Control;
 				declare Quad = (Event.Control as CMlQuad);
 				Quad.ModulateColor = ModulateColor_Target;
+			}
+
+			declare States = TL::RegexFind("<[^>]*>", Event.Control.DataAttributeGet("target-anim"), "g");
+			foreach (I => Target in TL::Split(" ", Event.Control.DataAttributeGet("target"))) {
+				AnimMgr.Add(
+					Frame_MenuItem.GetFirstChild(Target),
+					States[I % States.count],
+					Duration, CAnimManager::EAnimManagerEasing::QuadIn);
+
 			}
 		}
 
@@ -83,19 +86,27 @@ Text GetEventLoopActiveItem() {
 				Duration = TL::ToInteger(Event.Control.DataAttributeGet("anim-length"));
 			}
 
-			AnimMgr.Add(
-				Frame_MenuItem.GetFirstChild(Event.Control.DataAttributeGet("target")),
-				Event.Control.DataAttributeGet("default-anim"),
-				Duration, CAnimManager::EAnimManagerEasing::QuadOut);
-
 			declare Boolean ModulateColor_D for Event.Control = False;
 			if (ModulateColor_D) {
 				declare Vec3 ModulateColor_Default for Event.Control;
 				declare Quad = (Event.Control as CMlQuad);
 				Quad.ModulateColor = ModulateColor_Default;
 			}
+
+
+			declare States = TL::RegexFind("<[^>]*>", Event.Control.DataAttributeGet("default-anim"), "g");
+			foreach (I => Target in TL::Split(" ", Event.Control.DataAttributeGet("target"))) {
+				AnimMgr.Add(
+					Frame_MenuItem.GetFirstChild(Target),
+					States[I % States.count],
+					Duration, CAnimManager::EAnimManagerEasing::QuadOut);
+			}
 		}
 	}""";
+}
+
+Text GetEventLoopActiveItem() {
+	return GetEventLoopActiveItem("menu_item_click");
 }
 
 Text GetLoopActiveItem() {

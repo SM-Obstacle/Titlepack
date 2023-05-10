@@ -1,3 +1,4 @@
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 
 #Struct K_SubMenu {
 	Text Name;
@@ -6,19 +7,18 @@
 
 Text Build(K_SubMenu[] _Menu) {
     declare ML_Text = """
+{{{Styles::GetStyleSheet()}}}
+
 <framemodel id="Model_SubMenuItem">
 	<frame pos="0 -26" id="Frame_Menus" size="70 112">
-        <quad size="70 111.33" scriptevents="1" id="Quad_Target"
-            data-target="Quad_Server"
-            data-default-anim="<quad scale=&quot;1.&quot;/>"
-            data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
+        <quad size="70 111.33" scriptevents="1" id="Quad_Trigger"
+            data-target="Quad_Poster Label_Name"
+            data-default-anim="<quad scale=&quot;1.&quot;/> <label scale=&quot;1.&quot;/>"
+            data-target-anim="<quad scale=&quot;1.06&quot;/> <label scale=&quot;1.06&quot;/>"/>
 
 		<frame data-name="open_news" size="70 86">
-			<quad size="70 85" scriptevents="1" id="Quad_Target" data-target="Quad_News"
-				data-default-anim="<quad scale=&quot;1.&quot;/>" data-target-anim="<quad scale=&quot;1.066&quot;/>"/>
-
             <frame pos="34.67 -40" clip="1" clipsizen="69.33 80">
-                <quad size="70 80.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_News"/>
+                <quad size="70 80.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_Poster"/>
             </frame>
 		</frame>
 
@@ -42,7 +42,7 @@ Text Build(K_SubMenu[] _Menu) {
     #Include "ColorLib" as CL
     
     main() {
-        declare Frame_Menus = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
+        {{{Styles::GetInitFrameMenus()}}}
 
         foreach (MenuItem in Frame_Menus.Controls) {
             declare Frame_MenuItem = (MenuItem as CMlFrame);
@@ -61,7 +61,7 @@ Text Build(K_SubMenu[] _Menu) {
             if (!PageIsVisible && PendingEvents.count == 0) continue;
 
             foreach(Event in PendingEvents) {
-                //submenu_item_click
+                {{{Styles::GetEventLoopActiveItem("window_load")}}}
             }
         }
     }

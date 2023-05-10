@@ -65,9 +65,7 @@ Void Loop() {
 						}
 					}
 					case "window_unload" : {
-						if (Event.CustomEventData.count > 0) {
-							Unload();
-						}
+						Unload();
 					}
 				}
 			}

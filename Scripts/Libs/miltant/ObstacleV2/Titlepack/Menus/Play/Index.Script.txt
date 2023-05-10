@@ -1,6 +1,8 @@
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
-#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"		as SubMenu
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"				as Windows
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"			as SubMenu
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Index.Script.txt"	as Campaign
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Servers/Index.Script.txt"	as Servers
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Local/Index.Script.txt"		as Local
 
 
 Text GetName() {
@@ -10,22 +12,24 @@ Text GetName() {
 Void Load() {
 	declare SubMenu::K_SubMenu[] SubMenus;
 
-	// declare SubMenu::K_SubMenu Campaign;
-	// Campaign.Name = "Campaign";
-	// SubMenus.add(Campaign);
+	declare SubMenu::K_SubMenu Campaign;
+	Campaign.Name = "campaign";
+	SubMenus.add(Campaign);
+	Campaign::Load();
 
 	declare SubMenu::K_SubMenu Online;
-	Online.Name = "Online";
+	Online.Name = "online";
 	SubMenus.add(Online);
+	Servers::Load();
 
 	declare SubMenu::K_SubMenu Local;
-	Local.Name = "Local";
+	Local.Name = "local";
 	SubMenus.add(Local);
+	Local::Load();
 
-	declare SubMenu::K_SubMenu Tutorials;
-	Tutorials.Name = "Tutorials";
-	SubMenus.add(Tutorials);
-
+	// declare SubMenu::K_SubMenu Tutorials;
+	// Tutorials.Name = "Tutorials";
+	// SubMenus.add(Tutorials);
 
 
 	declare Windows::K_Window Window;
@@ -34,24 +38,4 @@ Void Load() {
 	Window.Animation = CUILayer::EUILayerAnimation::LeftFast;
 
 	Windows::CreateWindow(Window);
-}
-
-Void Loop() {
-	foreach(Event in PendingEvents) {
-		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
-			 Event.CustomEventData.count > 0 &&
-			 Event.CustomEventType == "submenu_item_click") {
-			switch (Event.CustomEventData[0]) {
-				case "Online": {
-					
-				}
-				case "Local": {
-					
-				}
-				case "Tutorials": {
-					
-				}
-			}
-		}
-	}
 }
