@@ -16,8 +16,8 @@ Text Build() {
 			data-default-anim="<label pos=&quot;0 .33&quot;/> <quad rot=&quot;45&quot; scale=&quot;1&quot;/>"
 			data-target-anim="<label pos=&quot;0 0&quot;/> <quad rot=&quot;0&quot; scale=&quot;0.8&quot;/>"/>
 
-		<quad halign="center" valign="center" size="2 2" pos="0 -3.16" rot="45" image="file://Media/Images/Obstacle/Menu/Rectangle.png" id="Quad_Square"/>
-		<quad halign="center" size="17 0.5" pos="0 -3" image="file://Media/Images/Obstacle/Menu/BNav.png" id="Quad_Underline"/>
+		<quad halign="center" valign="center" size="2 2" pos="0 -3.33" rot="45" image="file://Media/Images/Obstacle/Menu/Rectangle.png" id="Quad_Square"/>
+		<quad halign="center" size="17 0.66" pos="0 -3" image="file://Media/Images/Obstacle/Menu/BNav.png" id="Quad_Underline"/>
 
 		<label halign="center" valign="center2" textprefix="$t" class="lato" pos="0 .33" id="Label_Text"/>
 	</framemodel>
