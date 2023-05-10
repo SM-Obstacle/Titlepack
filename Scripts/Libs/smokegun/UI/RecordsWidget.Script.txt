@@ -75,6 +75,10 @@ Text GetLayer() {
         G_Req = Http.CreateGet(url, True, "Accept: application/json");
     }
 
+    Void initNetRecordsUpdate() {
+        declare netwrite Net_RecordsUpdated for Teams[0] = -1;
+        Net_RecordsUpdated = -1;
+    }
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
@@ -86,7 +90,7 @@ Text GetLayer() {
         declare Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
         declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
 
-        UpdateRecords(InputPlayer.User.Login);
+        initNetRecordsUpdate();
 
         while (True) {
             yield;

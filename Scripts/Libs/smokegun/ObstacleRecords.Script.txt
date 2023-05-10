@@ -300,6 +300,9 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
                 case Constants::C_Request_ReplaceOrCreatePlayer: {
                     Private_PlayerUpdated(request.Result);
                 }
+                case Constants::C_Request_ReplaceOrCreateMap: {
+                    UpdateRecords = True;
+                }
             }
         }
         else {
