@@ -38,7 +38,7 @@ Text Build() {
 <quad pos="-60.17 45.83" size="120.33 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search" scriptevents="1"/>
 
 <frame pos="61.83 45.83">
-	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<label textcolor="fff" pos="4.42 -4.17" text="" valign="center2" halign="center"/>
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
 </frame>
 <frame pos="72.33 45.83">
