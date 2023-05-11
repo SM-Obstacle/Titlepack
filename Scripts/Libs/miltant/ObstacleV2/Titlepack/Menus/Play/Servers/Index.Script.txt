@@ -8,45 +8,45 @@ Text Build() {
 	return """
 <framemodel id="Server">
 	<quad size="4.67 3.5" pos="4.17 -4.5"  valign="center" halign="center" image="file://Media/Flags/MLT.dds" styleselected="1" keepratio="Fit"/>
-	<label pos="7.57 -4.5" text="Max Map" valign="center2" textfont="light" textsize="2.6"/>
-	<label pos="130.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6"/>
-	<label pos="134.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6"/> <!--  -->
-	<label pos="142 -4.5" text="1500/6000" valign="center2" textfont="light" textsize="2.6" size="21"/>
-	<label pos="176 -4.5" text="21" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right"/>
-	<label pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
-	<label pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
+	<label textcolor="fff" pos="7.57 -4.5" text="Max Map" valign="center2" textfont="light" textsize="2.6"/>
+	<label textcolor="fff" pos="130.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6"/>
+	<label textcolor="fff" pos="134.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6"/> <!--  -->
+	<label textcolor="fff" pos="142 -4.5" text="1500/6000" valign="center2" textfont="light" textsize="2.6" size="21"/>
+	<label textcolor="fff" pos="176 -4.5" text="21" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right"/>
+	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
+	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
 	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png"/>
 </framemodel>
 
 
 <frame pos="-91.67 45.83">
-	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
 </frame>
 <frame pos="-81.17 45.83">
-	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
 </frame>
 <frame pos="-70.67 45.83">
-	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
 </frame>
 
 
-<label pos="55.7 42.17" text="" valign="center2" halign="center"/>
+<label textcolor="fff" pos="55.7 42.17" text="" valign="center2" halign="center"/>
 <entry pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="Default" valign="center2" id="Entry_Search"/>
-<quad pos="-60.17 45.83" size="120.33 7.33" image="file://Media/Images/Obstacle/Servers/FServer.png" id="Quad_Search" scriptevents="1"/>
+<quad pos="-60.17 45.83" size="120.33 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search" scriptevents="1"/>
 
 <frame pos="61.83 45.83">
-	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
 </frame>
 <frame pos="72.33 45.83">
-	<label pos="4.42 -3.67" text="$$" valign="center2" halign="center"/>
+	<label textcolor="fff" pos="4.42 -3.67" text="$$" valign="center2" halign="center"/>
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
 </frame>
 <frame pos="82.83 45.83">
-	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/><!--  -->
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/><!--  -->
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
 </frame>
 
