@@ -6,23 +6,91 @@ Text GetName() {
 
 Text Build() {
 	return """
-<frame pos="-160 73.33" id="Frame_Menus">
-	<frame pos="0 -26" id="Frame_Menus" size="70 112">
-        <quad size="70 111.33" scriptevents="1" id="Quad_Target"
-            data-target="Quad_Poster Label_Name"
-            data-default-anim="<quad scale=&quot;1.&quot;/> <label scale=&quot;1.&quot;/>"
-            data-target-anim="<quad scale=&quot;1.06&quot;/> <label scale=&quot;1.06&quot;/>"/>
+<framemodel id="Server">
+	<quad size="4.67 3.5" pos="4.17 -4.5"  valign="center" halign="center" image="file://Media/Flags/MLT.dds" styleselected="1" keepratio="Fit"/>
+	<label pos="7.57 -4.5" text="Max Map" valign="center2" textfont="light" textsize="2.6"/>
+	<label pos="130.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6"/>
+	<label pos="134.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6"/> <!--  -->
+	<label pos="142 -4.5" text="1500/6000" valign="center2" textfont="light" textsize="2.6" size="21"/>
+	<label pos="176 -4.5" text="21" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right"/>
+	<label pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
+	<label pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
+	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png"/>
+</framemodel>
 
-		<frame data-name="open_news" size="70 86">
-            <frame pos="34.67 -40" clip="1" clipsizen="69.33 80">
-                <quad size="70 80.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_Poster"/>
-            </frame>
-		</frame>
 
-        <label class="lato" id="Label_Name" textprefix="$t" pos="35 -95.67" halign="center" valign="center2" textsize="5" text="todo"/>
-        <quad size="70 110.67" image="file://Media/Images/Obstacle/Menu/FNavPlay.png"/>
-	</frame>
+<frame pos="-91.67 45.83">
+	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
 </frame>
+<frame pos="-81.17 45.83">
+	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+</frame>
+<frame pos="-70.67 45.83">
+	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+</frame>
+
+
+<label pos="55.7 42.17" text="" valign="center2" halign="center"/>
+<entry pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="Default" valign="center2" id="Entry_Search"/>
+<quad pos="-60.17 45.83" size="120.33 7.33" image="file://Media/Images/Obstacle/Servers/FServer.png" id="Quad_Search" scriptevents="1"/>
+
+<frame pos="61.83 45.83">
+	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+</frame>
+<frame pos="72.33 45.83">
+	<label pos="4.42 -3.67" text="$$" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+</frame>
+<frame pos="82.83 45.83">
+	<label pos="4.42 -3.67" text="" valign="center2" halign="center"/><!--  -->
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+</frame>
+
+<frame pos="-91.67 36">
+	<frameinstance pos="0 0" modelid="Server"/>
+	<frameinstance pos="0 -10" modelid="Server"/>
+	<frameinstance pos="0 -20" modelid="Server"/>
+	<frameinstance pos="0 -30" modelid="Server"/>
+	<frameinstance pos="0 -40" modelid="Server"/>
+	<frameinstance pos="0 -50" modelid="Server"/>
+	<frameinstance pos="0 -60" modelid="Server"/>
+	<frameinstance pos="0 -70" modelid="Server"/>
+	<frameinstance pos="0 -80" modelid="Server"/>
+	<frameinstance pos="0 -90" modelid="Server"/>
+</frame>
+
+<script><![CDATA[
+	#Include "MathLib" as ML
+	#Include "TextLib" as TL
+	
+	main() {
+		EnableMenuNavigationInputs = True;
+		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
+		Entry_Search.StartEdition();
+
+		while(True) {
+			yield;
+
+			if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+			foreach(Event in PendingEvents) {
+				switch (Event.Type) {
+					case CMlScriptEvent::Type::MouseClick: {
+						switch (Event.ControlId) {
+							case "Quad_Search": {
+								Entry_Search.StartEdition();
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+]]></script>
 """;
 }
 

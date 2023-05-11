@@ -48,7 +48,7 @@ Text Build() {
 		#Include "ColorLib" as CL
 		
 		main() {
-            {{{Styles::GetInitFrameMenus()}}}
+ 			{{{Styles::GetInitFrameMenus()}}}
 
 			EnableMenuNavigationInputs = True;
 
