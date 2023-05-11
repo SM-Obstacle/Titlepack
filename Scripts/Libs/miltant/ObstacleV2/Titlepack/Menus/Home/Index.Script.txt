@@ -33,8 +33,8 @@ Text Build() {
 				data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
 
 			<label class="lato" text="Top Server" textprefix="$t" pos="35 -3.8" halign="center" textsize="5"/>
-			<label class="lato" text="$ff0SSM° - Obstacle" textsize="1" textprefix="$t" size="36" pos="32 -16.42" halign="center" valign="center2"/>
-			<label class="lato" text="" textprefix="$t" pos="54.5 -16.42" halign="center" valign="center2" id="Label_TopServer"/>
+			<label class="lato" text="$ff0SSM° - Obstacle" textsize="1" textprefix="$t" size="36" pos="32 -16.67" halign="center" valign="center2"/>
+			<label class="lato" text="" textprefix="$t" pos="54.5 -16.67" halign="center" valign="center2" id="Label_TopServer"/>
 			<quad size="49.33 7.5" halign="center" valign="center2" pos="35 -16.42"
 				image="file://Media/Images/Obstacle/Home/BServer.png" id="Quad_Server"/>
 			<quad size="70 24.33" image="file://Media/Images/Obstacle/Home/FServer.png"/>

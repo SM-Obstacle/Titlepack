@@ -34,7 +34,7 @@ Text Build() {
 
 
 <label textcolor="fff" pos="55.7 42.17" text="" valign="center2" halign="center"/>
-<entry pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="Default" valign="center2" id="Entry_Search"/>
+<entry textcolor="fff" textfont="light" pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
 <quad pos="-60.17 45.83" size="120.33 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search" scriptevents="1"/>
 
 <frame pos="61.83 45.83">
