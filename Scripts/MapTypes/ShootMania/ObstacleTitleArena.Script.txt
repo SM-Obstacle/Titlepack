@@ -355,8 +355,6 @@ Text Private_WeaponUpdate()
 Void Load()
 {
     log(MapFileName ^ ":" ^ Now ^ "> Loaded.");
-    if (Map.TMObjective_AuthorTime == -1)
-        Map.TMObjective_AuthorTime = 1;
 }
 
 
@@ -624,15 +622,10 @@ Void EditObjectives()
 {
     G_LastAnchorId = NullId;
 
-    declare metadata Integer Meta_Champion_Medal for Map;
-    declare metadata Integer Meta_Gold_Medal for Map;
-    declare metadata Integer Meta_Silver_Medal for Map;
-    declare metadata Integer Meta_Bronze_Medal for Map;
-
-    declare Bronze_Medal for ManialinkPage = Meta_Champion_Medal;
-    declare Silver_Medal for ManialinkPage = Meta_Gold_Medal;
-    declare Gold_Medal for ManialinkPage = Meta_Silver_Medal;
-    declare Champion_Medal for ManialinkPage = Meta_Bronze_Medal;
+    declare Bronze_Medal for ManialinkPage = Map.TMObjective_BronzeTime;
+    declare Silver_Medal for ManialinkPage = Map.TMObjective_SilverTime;
+    declare Gold_Medal for ManialinkPage = Map.TMObjective_GoldTime;
+    declare Champion_Medal for ManialinkPage = Map.TMObjective_AuthorTime;
 
     /// --- Manialink
     declare Properties = """
@@ -659,7 +652,7 @@ Void EditObjectives()
         declare I = TimeComponents.count - 1;
 
         for (_I, 0, TimeComponents.count - 1) {
-            Time += Factor * TL::ToReal(TimeComponents[I]);
+            Time += Factor * TL::ToReal(TL::Join("", TL::RegexFind("[0-9\\.]", TimeComponents[I], "g")));
             Factor *= 60.;
             I -= 1;
         }
@@ -705,13 +698,38 @@ Void EditObjectives()
             foreach (Event in PendingEvents) {
                 if (Event.Type == CMlScriptEvent::Type::EntrySubmit) {
                     declare Entry <=> (Event.Control as CMlEntry);
+                    declare EntryValue = ParseTime(Entry.Value);
                     
                     switch(Entry.ControlId) {
-                        case "Entry_Champion_Medal": Champion_Medal = ParseTime(Entry.Value);
-                        case "Entry_Gold_Medal": Gold_Medal = ParseTime(Entry.Value);
-                        case "Entry_Silver_Medal": Silver_Medal = ParseTime(Entry.Value);
-                        case "Entry_Bronze_Medal": Bronze_Medal = ParseTime(Entry.Value);
+                        case "Entry_Champion_Medal": Champion_Medal = EntryValue;
+                        case "Entry_Gold_Medal": Gold_Medal = EntryValue;
+                        case "Entry_Silver_Medal": Silver_Medal = EntryValue;
+                        case "Entry_Bronze_Medal": Bronze_Medal = EntryValue;
                     }
+
+
+                    if (Gold_Medal < Champion_Medal) {
+                        if (Gold_Medal < 0.5 * Champion_Medal) {
+                            Gold_Medal = ML::CeilingInteger(Champion_Medal / 1000. * 1.066666) * 1000;
+                        } else {
+                            Gold_Medal = Champion_Medal;
+                        }
+                    }
+                    if (Silver_Medal < Gold_Medal) {
+                        if (Silver_Medal < 0.5 * Gold_Medal) {
+                            Silver_Medal = ML::CeilingInteger(Gold_Medal / 1000. * 1.125) * 1000;
+                        } else {
+                            Silver_Medal = Gold_Medal;
+                        }
+                    }
+                    if (Bronze_Medal < Silver_Medal) {
+                        if (Bronze_Medal < 0.5 * Silver_Medal) {
+                            Bronze_Medal = ML::CeilingInteger(Silver_Medal / 1000. * 1.25) * 1000;
+                        } else {
+                            Bronze_Medal = Silver_Medal;
+                        }
+                    }
+
                     NeedUpdate = True;
                 }
             }
@@ -724,7 +742,7 @@ Void EditObjectives()
 
 Void SaveObjectives()
 {
-    declare metadata Integer Meta_Champion_Medal for Map ;
+    declare metadata Integer Meta_Champion_Medal for Map;
     declare metadata Integer Meta_Gold_Medal for Map;
     declare metadata Integer Meta_Silver_Medal for Map;
     declare metadata Integer Meta_Bronze_Medal for Map;
@@ -734,10 +752,30 @@ Void SaveObjectives()
     declare Integer Silver_Medal for ManialinkPage;
     declare Integer Bronze_Medal for ManialinkPage;
     
+    Map.TMObjective_AuthorTime = Champion_Medal;
+    Map.TMObjective_GoldTime = Gold_Medal;
+    Map.TMObjective_SilverTime = Silver_Medal;
+    Map.TMObjective_BronzeTime = Bronze_Medal;
+
     Meta_Champion_Medal = Champion_Medal;
     Meta_Gold_Medal = Gold_Medal;
     Meta_Silver_Medal = Silver_Medal;
     Meta_Bronze_Medal = Bronze_Medal;
+}
+
+Void PreserveObjectives()
+{
+    if (Map.TMObjective_AuthorTime == -1) {
+        declare metadata Integer Meta_Champion_Medal for Map = 1000;
+        declare metadata Integer Meta_Gold_Medal for Map = 1000;
+        declare metadata Integer Meta_Silver_Medal for Map = 1000;
+        declare metadata Integer Meta_Bronze_Medal for Map = 1000;
+        
+        Map.TMObjective_AuthorTime = Meta_Champion_Medal;
+        Map.TMObjective_GoldTime = Meta_Gold_Medal;
+        Map.TMObjective_SilverTime = Meta_Silver_Medal;
+        Map.TMObjective_BronzeTime = Meta_Bronze_Medal;
+    }
 }
 
 Void EditGoal(CAnchorData _Goal)
@@ -1990,6 +2028,7 @@ main()
     declare CMapEditorPlugin::PlaceMode PlaceModeCache;
     while (True)
     {
+        PreserveObjectives();
         Loop();
 
         if (PlaceModeCache != PlaceMode) {
