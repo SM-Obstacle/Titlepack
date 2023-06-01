@@ -14,7 +14,7 @@ Text Build(K_SubMenu[] _Menu) {
         <quad size="70 111.33" scriptevents="1" id="Quad_Trigger"
             data-target="Quad_Poster Label_Name Quad_Background"
             data-default-anim="<quad scale=&quot;1.&quot; pos=&quot;0 0&quot;/> <label scale=&quot;1.&quot; textcolor=&quot;fff&quot; pos=&quot;0 -95.67&quot;/> <quad modulatecolor=&quot;000&quot; opacity=&quot;1&quot; scale=&quot;1&quot;/>"
-            data-target-anim="<quad scale=&quot;1.06&quot; pos=&quot;0 4&quot;/> <label scale=&quot;1.12&quot; textcolor=&quot;000&quot; pos=&quot;0 -97.33&quot;/> <quad modulatecolor=&quot;fff&quot; opacity=&quot;0.9&quot; scale=&quot;1.06&quot;/>"/>
+            data-target-anim="<quad scale=&quot;1.06&quot; pos=&quot;0 4&quot;/> <label scale=&quot;1.12&quot; textcolor=&quot;000&quot; pos=&quot;0 -98.33&quot;/> <quad modulatecolor=&quot;fff&quot; opacity=&quot;0.9&quot; scale=&quot;1.06&quot;/>"/>
 
         <frame id="Frame_Content" pos="35">
             <quad size="70 80.67" halign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_Poster"/>
