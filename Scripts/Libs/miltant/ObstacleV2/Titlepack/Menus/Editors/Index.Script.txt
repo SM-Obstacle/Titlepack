@@ -13,37 +13,37 @@ Void Load() {
 
 	declare SubMenu::K_SubMenu Maps;
 	Maps.Name = "Maps";
-	Campaign.Name = "file://Media/Images/Obstacle/Moods/none.png";
+	Maps.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Maps);
 
 	declare SubMenu::K_SubMenu Replay;
 	Replay.Name = "Replay";
-	Campaign.Name = "file://Media/Images/Obstacle/Moods/day.png";
+	Replay.Image = "file://Media/Images/Obstacle/Moods/day.png";
 	SubMenus.add(Replay);
 
 	declare SubMenu::K_SubMenu Item;
 	Item.Name = "Item";
-	Campaign.Name = "file://Media/Images/Obstacle/Moods/night.png";
+	Item.Image = "file://Media/Images/Obstacle/Moods/night.png";
 	SubMenus.add(Item);
 
 	declare SubMenu::K_SubMenu Action;
 	Action.Name = "Action";
-	Campaign.Name = "file://Media/Images/Obstacle/Moods/none.png";
+	Action.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Action);
 
 	declare SubMenu::K_SubMenu Interface;
 	Interface.Name = "Interface";
-	Campaign.Name = "file://Media/Images/Obstacle/Moods/sunset.png";
+	Interface.Image = "file://Media/Images/Obstacle/Moods/sunset.png";
 	SubMenus.add(Interface);
 
 	declare SubMenu::K_SubMenu Ghost;
 	Ghost.Name = "Ghost";
-	Campaign.Name = "file://Media/Images/Obstacle/Moods/none.png";
+	Ghost.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Ghost);
 
 	declare SubMenu::K_SubMenu Module;
 	Module.Name = "Module";
-	Campaign.Name = "file://Media/Images/Obstacle/Moods/none.png";
+	Module.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Module);
 
 

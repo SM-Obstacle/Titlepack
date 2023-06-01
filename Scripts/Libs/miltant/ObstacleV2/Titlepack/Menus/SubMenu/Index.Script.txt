@@ -17,7 +17,7 @@ Text Build(K_SubMenu[] _Menu) {
             data-target-anim="<quad scale=&quot;1.06&quot; pos=&quot;0 4&quot;/> <label scale=&quot;1.12&quot; textcolor=&quot;000&quot; pos=&quot;0 -98.33&quot;/> <quad modulatecolor=&quot;fff&quot; opacity=&quot;0.9&quot; scale=&quot;1.06&quot;/>"/>
 
         <frame id="Frame_Content" pos="35">
-            <quad size="70 80.67" halign="center" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png" id="Quad_Poster"/>
+            <quad size="70 80.67" halign="center" id="Quad_Poster"/>
 
             <label class="lato" id="Label_Name" textprefix="$t" pos="0 -95.67" halign="center" valign="center2" textsize="5"/>
             <quad size="70 110.67" pos="0 -55.33" image="file://Media/Images/Obstacle/Menu/FNavPlay.png" halign="center" valign="center" modulatecolor="000" id="Quad_Background"/>
@@ -47,10 +47,10 @@ Text Build(K_SubMenu[] _Menu) {
         foreach (MenuItem in Frame_Menus.Controls) {
             declare Frame_MenuItem = (MenuItem as CMlFrame);
             declare Label_Name = (Frame_MenuItem.GetFirstChild("Label_Name") as CMlLabel);
-            declare Quad_News = (Frame_MenuItem.GetFirstChild("Quad_News") as CMlQuad);
+            declare Quad_Poster = (Frame_MenuItem.GetFirstChild("Quad_Poster") as CMlQuad);
 
             if (MenuItem.DataAttributeGet("image") != "") {
-                Quad_News.ChangeImageUrl(MenuItem.DataAttributeGet("image"));
+                Quad_Poster.ChangeImageUrl(MenuItem.DataAttributeGet("image"));
             }
             Label_Name.SetText(MenuItem.DataAttributeGet("name"));
         }
