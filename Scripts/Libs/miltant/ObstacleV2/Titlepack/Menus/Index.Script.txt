@@ -1,11 +1,18 @@
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Menus.Script.txt"        as Menus
-#Include "Libs/miltant/ObstacleV2/Titlepack/Background/Index.Script.txt"   as BackgroundComponent
-#Include "Libs/Nadeo_Fork/MP4/TPLagoon/TokenManager.Script.txt"            as Auth
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Menus.Script.txt"                                 as Menus
+#Include "Libs/miltant/ObstacleV2/Titlepack/Background/Index.Script.txt"                            as BackgroundComponent
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/TokenManager.Script.txt"                             as Auth
+
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI.Script.txt"    as MultiplayerAPI
+
+#Include "MathLib"	as ML
 
 Void Load() {
     // BackgroundComponent::Load();
     Menus::Load();
     Auth::Init();
+
+    MultiplayerAPI::Load(True);
+    MultiplayerAPI::FetchServerListAsync();
 }
 
 Void Loop() {

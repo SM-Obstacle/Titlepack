@@ -35,7 +35,11 @@ Void Load() {
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
 	Window.Manialink = SubMenu::Build(SubMenus);
-	Window.Animation = CUILayer::EUILayerAnimation::LeftFast;
+	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
+}
+
+Void Loop() {
+	Campaign::Loop();
 }

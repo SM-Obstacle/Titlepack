@@ -1,4 +1,4 @@
-#Include "Libs/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"	as Layers
+#Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"	as Layers
 
 
 #Struct K_Window {
@@ -29,12 +29,21 @@ Void CreateWindow(K_Window _Window) {
 
 		Layers::Create(LayerName, MLText);
 
-		Layers::SetAnimationType(LayerName, _Window.Animation);
+		Layers::SetAnimationTypeIn(LayerName, _Window.Animation);
 	}
 }
 
 K_Window GetWindow(Text _Name) {
 	return G_Windows[_Name];
+}
+
+CMlPage GetPage(Text _Name) {
+	declare LayerName = "L_Window_" ^ _Name;
+	declare Layer = Layers::Get(LayerName);
+	if (Layer != Null)
+		return Layer.LocalPage;
+	
+	return Null;
 }
 
 Void Unload() {
@@ -65,6 +74,15 @@ Void Loop() {
 						}
 					}
 					case "window_unload" : {
+						Unload();
+					}
+
+					case "dialog_load" : {
+						if (Event.CustomEventData.count > 0) {
+							Load(Event.CustomEventData[0]);
+						}
+					}
+					case "dialog_unload" : {
 						Unload();
 					}
 				}

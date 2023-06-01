@@ -6,6 +6,12 @@ Text GetName() {
 
 Text Build() {
 	return """
+	<!-- 
+		opacity menus:
+			- base: 0.5
+			- hover: 70%
+			- active: 90%
+	 -->
 <framemodel id="Server">
 	<quad size="4.67 3.5" pos="4.17 -4.5"  valign="center" halign="center" image="file://Media/Flags/MLT.dds" styleselected="1" keepratio="Fit"/>
 	<label textcolor="fff" pos="7.57 -4.5" text="Max Map" valign="center2" textfont="light" textsize="2.6"/>
@@ -15,39 +21,42 @@ Text Build() {
 	<label textcolor="fff" pos="176 -4.5" text="21" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right"/>
 	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
 	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
-	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png"/>
+	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="000"/>
 </framemodel>
 
 
-<frame pos="-91.67 45.83">
+<frame pos="-91.67 45.83" data-name="refresh">
 	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
-	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
 </frame>
-<frame pos="-81.17 45.83">
+<frame pos="-81.17 45.83" data-name="filter_all">
 	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
-	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
 </frame>
-<frame pos="-70.67 45.83">
+<frame pos="-70.67 45.83" data-name="filter_favorites">
 	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
-	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
 </frame>
 
 
-<label textcolor="fff" pos="55.7 42.17" text="" valign="center2" halign="center"/>
+<label textcolor="fff" pos="66.2 42.17" text="" valign="center2" halign="center"/>
 <entry textcolor="fff" textfont="light" pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
-<quad pos="-60.17 45.83" size="120.33 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search" scriptevents="1"/>
+<quad pos="-60.17 45.83" size="130.83 7.33" image="file://Media/Images/Obstacle/Servers/FSearch_plus1.png" id="Quad_Search" scriptevents="1" opacity="0.5"/>
 
-<frame pos="61.83 45.83">
+<frame pos="72.33 45.83" data-name="create">
 	<label textcolor="fff" pos="4.42 -4.17" text="" valign="center2" halign="center"/>
-	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
 </frame>
-<frame pos="72.33 45.83">
+<frame pos="72.33 45.83" data-name="buy" hidden="1">
 	<label textcolor="fff" pos="4.42 -3.67" text="$$" valign="center2" halign="center"/>
-	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
 </frame>
-<frame pos="82.83 45.83">
+<frame pos="82.83 45.83" data-name="sort">
 	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/><!--  -->
-	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
+	<frame pos="8.83 -8.17">
+		<quad size="29.83 18" image="file://Media/Images/Obstacle/Servers/Combo.png" halign="right" opacity="0.9"/>
+	</frame>
 </frame>
 
 <frame pos="-91.67 36">
@@ -68,7 +77,6 @@ Text Build() {
 	#Include "TextLib" as TL
 	
 	main() {
-		EnableMenuNavigationInputs = True;
 		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
 		Entry_Search.StartEdition();
 
@@ -98,7 +106,7 @@ Void Load() {
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
 	Window.Manialink = Build();
-	Window.Animation = CUILayer::EUILayerAnimation::LeftFast;
+	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
 }

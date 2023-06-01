@@ -347,6 +347,9 @@ Void Private_FetchServerListAsync(Text[Text] _Filters, Text _OrderBy, Text _Orde
 		declare Text ProjectEnviro for LocalUser;
 		BrowsingFactor = """environments[]={{{ProjectEnviro}}}""";
 	}
+	log("""{{{G_Base_API_Url}}}/ingame/servers/online?{{{BrowsingFactor}}}&{{{QueryString}}}""");
+	log(Http_GetHeaders());
+
 	G_Request = Http.CreateGet("""{{{G_Base_API_Url}}}/ingame/servers/online?{{{BrowsingFactor}}}&{{{QueryString}}}""", False, Http_GetHeaders());
 }
 

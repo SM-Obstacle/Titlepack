@@ -3,7 +3,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Index.Script.txt"		as Play
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Home/Index.Script.txt"		as Home
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
-#Include "Libs/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"					as Layers
+#Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"			as Layers
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 
 Text Build() {
@@ -46,6 +46,8 @@ Text Build() {
 		#Include "MathLib" as ML
 		#Include "TextLib" as TL
 		#Include "ColorLib" as CL
+
+		{{{Styles::GetDeclareGlobals()}}}
 		
 		main() {
  			{{{Styles::GetInitFrameMenus()}}}
@@ -92,11 +94,11 @@ Void Load() {
 	Layers::Create(LayerName, MLText);
 	Layers::Attach(LayerName);
 
-	Home::Load();
 	Editors::Load();
 	Play::Load();
 	Credits::Load();
 
+	Home::Load();
 	Windows::Load(Home::GetName());
 }
 
@@ -113,8 +115,8 @@ Void Loop() {
 				}
 
 				case "editors": {
-					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
-					//Windows::Load(Editors::GetName());
+					// TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+					Windows::Load(Editors::GetName());
 				}
 
 				case "profile": {
@@ -139,5 +141,6 @@ Void Loop() {
 	Home::Loop();
 	Editors::Loop();
 	Credits::Loop();
+	Play::Loop();
 	Windows::Loop();
 }

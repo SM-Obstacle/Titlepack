@@ -1,81 +1,115 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+#Include "TextLib" as TL
+
+#Struct K_Map {
+	Integer MXId;
+	Text UID;
+	Text Name;
+	Text Author;
+	Text Thumbnail;
+	Text Path;
+	Integer PersonalBest;
+}
+
+
+#Struct K_Campaign {
+	Text Name;
+	Text NameLn1;
+	Text NameLn2;
+	Integer MXId;
+	Integer Type;
+	Text Banner;
+	K_Map[] Maps;
+
+	Boolean FullOnline;
+	Boolean PartialOnline;
+}
+
 
 Text GetName() {
 	return "campaign";
 }
 
+
+declare Ident FileList;
+declare K_Campaign[Integer] CampaignList;
+declare Boolean NeedRefresh;
+
 Text Build() {
 	return """
 <frame id="Frame_Campaign">
 	<framemodel id="MapCard">
-		<label pos="1 -4.5" text="01" valign="center2" textsize="5" textcolor="5F5F64" textfont="regular"/>
-		<quad pos="20 .67" size="10 10" imae="file://Media/Images/Obstacle/Medals/author.png"/>
-		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png"/>
-		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png"/>
-		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png"/>
-		<quad size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png"/>
+		<label pos="1 -4.5" valign="center2" textsize="5" textcolor="5F5F64" textfont="regular" id="Label_Num"/>
+		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/author.png" id="Quad_MedalC" hidden="1"/>
+		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1"/>
+		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1"/>
+		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1"/>
+		<quad size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png" id="Button_Map" scriptevents="1"/>
 	</framemodel>
 
-	<frame pos="-154.17 53.67">
-		<label text="" textcolor="FFF" pos="26.5 -17.83" halign="center" valign="center2" textsize="10"/>
-		<quad size="53 35.83" image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png"/>
-	</frame>
+	<frame pos="-154.17" id="Frame_Infos" hidden="1">
+		<frame pos="0 53.67">
+			<label text="" textcolor="FFF" pos="26.5 -17.83" halign="center" valign="center2" textsize="10" id="Label_IconPlay"/>
+			<quad size="53 35.83" id="Quad_Thumbnail"/>
+			<quad size="53 35.83" image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png" scriptevents="1"/>
+		</frame>
 
-	<frame pos="-154.17 15.67">
-		<label pos="26.5 -5.92" size="53 11.83" text="yes man" textprefix="$t   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff"/>
-		<quad size="53 11.83" bgcolor="0009"/>
-	</frame>
-	<frame pos="-154.17 2">
-		<label pos="26.5 -5.92" size="53 11.83" text="errorcat" textprefix="$t   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff"/>
-		<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
-	</frame>
-	<frame pos="-154.17 -25">
-		<label pos="-.17 5" text="personal best" textprefix="$t" textsize="2.05" textcolor="fff"/>
-		<label pos="26.5 -5.92" size="53 11.83" text="12:37.69" textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff"/>
-		<quad size="53 11.83" bgcolor="0009"/>
+		<frame pos="0 15.67">
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textprefix="$t   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
+			<quad size="53 11.83" bgcolor="0009"/>
+		</frame>
+		<frame pos="0 2">
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textprefix="$t   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
+			<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
+		</frame>
+		<frame pos="0 -25">
+			<label pos="-.17 5" text="personal best" textprefix="$t" textsize="2.05" textcolor="fff"/>
+			<label pos="26.5 -5.92" size="52 11.83" text="..:..:.." textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_PB"/>
+			<quad size="53 11.83" bgcolor="0009" scriptevents="1"/>
+		</frame>
 	</frame>
 
 	<frame pos="-96.17 53.5">
 		<frame pos="8 -46.67">
 			<frame>
 				<quad pos="-.83" size="31.17 3.67" bgcolor="FFF"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_1"/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_2"/>
+				<frameinstance modelid="MapCard" pos="0 -32" id="Card_3"/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_4"/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_5"/>
 			</frame>
 			<frame pos="34.5">
 				<quad pos="-.83" size="31.17 3.67" bgcolor="D7F69B"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_6"/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_7"/>
+				<frameinstance modelid="MapCard" pos="0 -32" id="Card_8"/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_9"/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_10"/>
 			</frame>
 			<frame pos="69">
 				<quad pos="-.83" size="31.17 3.67" bgcolor="8AAAE5"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_11"/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_12"/>
+				<frameinstance modelid="MapCard" pos="0 -32" id="Card_13"/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_14"/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_15"/>
 			</frame>
 			<frame pos="103.5">
 				<quad pos="-.83" size="31.17 3.67" bgcolor="F5BC8E"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_16"/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_17"/>
+				<frameinstance modelid="MapCard" pos="0 -32" id="Card_18"/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_19"/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_20"/>
 			</frame>
 			<frame pos="138">
 				<quad pos="-.83" size="31.17 3.67" bgcolor="D37467"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -32" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" data-num="" data-medals=""/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" data-num="" data-medals=""/>
+				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_21"/>
+				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_22"/>
+				<frameinstance modelid="MapCard" pos="0 -32" id="Card_23"/>
+				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_24"/>
+				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_25"/>
 			</frame>
 		</frame>
 
@@ -89,13 +123,130 @@ Text Build() {
 			<quad size="62 123.83"  image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
 		</frame>
 
-		<label pos="6 -6.5" textsize="8" text="summer" textprefix="$t" textcolor="fff" textfont="regular"/>
-		<label pos="6 -15.5" textsize="6" text="2023" textprefix="$t" textcolor="fff" textfont="light"/>
-		<quad size="183.33 35.17" bgcolor="92B7B7FF" image="file://Media/Images/Obstacle/Campaign/SpringBanner01.png"/>
+		<label pos="6 -6.5" textsize="8" text="" textprefix="$t" textcolor="fff" textfont="regular" id="Label_EventLn1"/>
+		<label pos="6 -15.5" textsize="6" text="" textprefix="$t" textcolor="fff" textfont="light" id="Label_EventLn2"/>
+		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
 		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
 	</frame>
 </frame>
+
+<script><![CDATA[
+	#Include "TextLib" as TL
+	
+	#Struct K_Map {
+		Integer MXId;
+		Text UID;
+		Text Name;
+		Text Author;
+		Text Thumbnail;
+		Text Path;
+		Integer PersonalBest;
+	}
+	
+	
+	#Struct K_Campaign {
+		Text Name;
+		Text NameLn1;
+		Text NameLn2;
+		Integer MXId;
+		Integer Type;
+		Text Banner;
+		K_Map[] Maps;
+	
+		Boolean FullOnline;
+		Boolean PartialOnline;
+	}
+
+	main() {
+		declare Frame_Infos = (Page.GetFirstChild("Frame_Infos") as CMlFrame);
+		declare Label_IconPlay = (Page.GetFirstChild("Label_IconPlay") as CMlLabel);
+		declare Quad_Thumbnail = (Page.GetFirstChild("Quad_Thumbnail") as CMlQuad);
+		declare Label_Map = (Page.GetFirstChild("Label_Map") as CMlLabel);
+		declare Label_Mapper = (Page.GetFirstChild("Label_Mapper") as CMlLabel);
+		declare Label_PB = (Page.GetFirstChild("Label_PB") as CMlLabel);
+
+		declare Quad_Banner = (Page.GetFirstChild("Quad_Banner") as CMlQuad);
+		declare Label_EventLn1 = (Page.GetFirstChild("Label_EventLn1") as CMlLabel);
+		declare Label_EventLn2 = (Page.GetFirstChild("Label_EventLn2") as CMlLabel);
+
+		declare K_Campaign[Integer] MapsList for Page;
+		declare Integer SelectedCampaign as ControllerSelectedCampaign for Page = -1;
+		declare Integer SelectedCampaign = -1;
+		declare Integer SelectedMap = -1;
+		declare Integer TimestampLastSelection = -1;
+
+		while (True) {
+			if (ControllerSelectedCampaign != -1 && SelectedCampaign != ControllerSelectedCampaign) {
+				SelectedMap = -1;
+				Frame_Infos.Hide();
+				SelectedCampaign = ControllerSelectedCampaign;
+				Quad_Banner.ChangeImageUrl(MapsList[SelectedCampaign].Banner);
+				Label_EventLn1.SetText(MapsList[SelectedCampaign].NameLn1);
+				Label_EventLn2.SetText(MapsList[SelectedCampaign].NameLn2);
+
+				foreach (I => Map in MapsList[SelectedCampaign].Maps) {
+					declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
+					declare Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
+					declare Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
+					declare Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
+					declare Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
+					declare Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
+
+					if (I < 9)
+						Label_Num.SetText("0" ^ (I + 1));
+					else
+						Label_Num.SetText("" ^ (I + 1));
+
+					if (Map.PersonalBest != -1 && MapsList[SelectedCampaign].FullOnline) {
+						// Quad_MedalC
+						// Quad_MedalG
+						// Quad_MedalS
+						// Quad_MedalB	
+					}
+
+					Frame_Card.Show();
+				}
+
+				for (I, MapsList[SelectedCampaign].Maps.count, 24) {
+					declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
+					Frame_Card.Hide();
+				}
+			}
+
+			foreach (Event in PendingEvents) {
+				switch (Event.Type) {
+					case CMlScriptEvent::Type::MouseClick: {
+						switch (Event.ControlId) {
+							case "Button_Map": {
+								declare ClickedCard = (Event.Control.Parent as CMlFrame);
+
+								if (TL::StartsWith("Card_", ClickedCard.ControlId)) {
+									declare MapIndex = TL::ToInteger(TL::SubString(ClickedCard.ControlId, 5, TL::Length(ClickedCard.ControlId) - 4)) - 1;
+									log(Now - TimestampLastSelection);
+									if (MapIndex != SelectedMap) {
+										SelectedMap = MapIndex;
+										TimestampLastSelection = Now;
+										Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
+										Label_Map.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Name);
+										Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
+										Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
+										Frame_Infos.Show();
+									} else if (TimestampLastSelection != -1 && Now - TimestampLastSelection < 500) {
+										TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/Obstacle.Script.txt", "");
+										TimestampLastSelection = -1;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			yield;
+		}
+	}
+]]></script>
 """;
 }
 
@@ -103,7 +254,120 @@ Void Load() {
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
 	Window.Manialink = Build();
-	Window.Animation = CUILayer::EUILayerAnimation::LeftFast;
+	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
+
+	// fatten, sort by date asc
+	FileList = DataFileMgr.Map_GetGameList("Campaigns\\", True, False, True).Id;
+
+	// TODO get from the API and move to the loop
+
+	declare K_Map Map1;
+	Map1.UID = "cVajuk5onbAPDNyBlmmwYfj7Knd";
+	declare K_Map Map2;
+	Map2.UID = "_4sqKTSX5WCWND63fgPG2WV43Uj";
+	declare K_Map Map3;
+	Map3.UID = "Q_bctfrszJtFfuT1VB5onreiKQc";
+	declare K_Map Map4;
+	Map4.UID = "bao0k0CvZGPTS82PrtURLa0s148";
+	declare K_Map Map5;
+	Map5.UID = "qWY6lPqGrjyePKzdI1ns94B5Di2";
+	declare K_Map Map6;
+	Map6.UID = "HFFv6GrhyqgnHvHeEbhbdGCShk3";
+	declare K_Map Map7;
+	Map7.UID = "zVmgYK7DdmutRgFitrqC0irIKHg";
+
+	declare K_Campaign first;
+	first.Name = "Summer 2023";
+	first.NameLn1 = "Summer";
+	first.NameLn2 = "2023";
+	first.MXId = 26;
+	first.Type = 1;
+	first.Banner = "file://Media/Images/Obstacle/Campaign/SpringBanner01.png";
+	first.Maps = [
+		Map1,
+		Map2,
+		Map3,
+		Map4,
+		Map5,
+		Map6,
+		Map7
+	];
+	CampaignList = [
+		1 => first
+	];
+	NeedRefresh = False;
+}
+
+Void Loop() {
+	// associate Maps to their parent folder and update the manialink
+	declare CMapInfo[][Integer] CampaignFiles;
+
+	if (DataFileMgr.TaskResults.existskey(FileList) && DataFileMgr.TaskResults[FileList].HasSucceeded) {
+		declare MapsList = (DataFileMgr.TaskResults[FileList] as CTaskResult_MapList);
+		
+		foreach (File in MapsList.MapInfos) {
+			declare Folder = TL::RegexMatch("""Campaigns\\([0-9]+)""", File.Path, "i")[1];
+			if (Folder != "") {
+				declare MXId = TL::ToInteger(Folder);
+
+				if (!CampaignFiles.existskey(MXId))
+					CampaignFiles[MXId] = [];
+				CampaignFiles[MXId].add(File);
+			}
+		}
+
+		NeedRefresh = True;
+	}
+
+	if (NeedRefresh && CampaignList.count > 0) {
+		NeedRefresh = False;
+
+		// compute the intersection between the CampaignFiles (folders) and the API CampaignList
+		foreach (MXId => Campaign in CampaignList) {
+			if (CampaignFiles.existskey(MXId)) {
+				declare FullOnline = True;
+				declare PartialOnline = False;
+
+				foreach (Map_I => Map in Campaign.Maps) {
+					declare Boolean Online = True;
+					foreach (File_I => File in CampaignFiles[MXId]) {
+						if (File.MapUid == Map.UID) {
+							CampaignList[MXId].Maps[Map_I].Path = File.FileName;
+							CampaignList[MXId].Maps[Map_I].Thumbnail = "file://Thumbnails/MapUid/" ^ Map.UID;
+							
+							Online = False;
+							FullOnline = False;
+							break;
+						}
+					}
+					if (Online) {
+						CampaignList[MXId].Maps[Map_I].Path = "https://sm.mania-exchange.com/maps/download/43034" ^ Map.UID;
+						CampaignList[MXId].Maps[Map_I].Thumbnail = "https://sm.mania-exchange.com/maps/screenshot/normal/" ^ Map.UID;
+
+						PartialOnline = True;
+					}
+				}
+
+				CampaignList[MXId].FullOnline = FullOnline;
+				if (FullOnline) {
+					CampaignList[MXId].PartialOnline = False;
+				} else {
+					CampaignList[MXId].FullOnline = PartialOnline;
+				}
+			}
+		}
+		
+
+		declare K_Campaign[Integer] MapsList for Windows::GetPage(GetName());
+		declare Integer SelectedCampaign for Windows::GetPage(GetName());
+		MapsList = CampaignList;
+		foreach (ID => uwu in CampaignList) {
+			SelectedCampaign = ID;
+			break;
+		}
+
+		DataFileMgr.TaskResult_Release(FileList);
+	}
 }

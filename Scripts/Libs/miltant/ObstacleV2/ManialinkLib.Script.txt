@@ -5,6 +5,67 @@ Text GetStyleSheet() {
 	</stylesheet>""";
 }
 
+Text GetDeclareGlobals() {
+	return """
+	Void HandleMouseEvent(CMlScriptEvent _Event) {
+		if (!_Event.Control.DataAttributeExists("target")) return;
+		declare Frame_MenuItem = (_Event.Control.Parent as CMlFrame);
+
+		declare Duration = 200;
+		if (_Event.Control.DataAttributeExists("anim-length")) {
+			Duration = TL::ToInteger(_Event.Control.DataAttributeGet("anim-length"));
+		}
+
+		declare AttributeAnim = "target-anim";
+		declare EasingType = CAnimManager::EAnimManagerEasing::QuadIn;
+		
+		if (_Event.Type == CMlScriptEvent::Type::MouseOver) {
+			declare Vec3[Text] ModulateColor_Target for _Event.Control;
+			
+			foreach (Id => Color in ModulateColor_Target) {
+				declare Quad = (Frame_MenuItem.GetFirstChild(Id) as CMlQuad);
+				Quad.ModulateColor = Color;
+			}
+		} else {
+			declare Vec3[Text] ModulateColor_Default for _Event.Control;
+
+			foreach (Id => Color in ModulateColor_Default) {
+				declare Quad = (Frame_MenuItem.GetFirstChild(Id) as CMlQuad);
+				Quad.ModulateColor = Color;
+			}
+			
+			EasingType = CAnimManager::EAnimManagerEasing::QuadOut;
+			AttributeAnim = "default-anim";
+		}
+
+		declare Targets = TL::Split(" ", _Event.Control.DataAttributeGet("target"));
+		declare States = TL::RegexFind("<[^!>][^>]*>", _Event.Control.DataAttributeGet(AttributeAnim), "g");
+
+		foreach (I => Target in Targets) {
+			AnimMgr.Add(
+				Frame_MenuItem.GetFirstChild(Target),
+				States[I],
+				Duration,
+				EasingType
+			);
+		}
+	}
+
+	Vec3[Text] ParseModulateColor (Text[] _Targets, Text _XML) {
+		declare Tags = TL::RegexFind("<[^!>][^>]*>", _XML, "g");
+		declare Vec3[Text] Results;
+
+		foreach (I => Tag in Tags) {
+			declare Match = TL::RegexMatch("modulatecolor=\"([abcdef\\d]{1,8})\"", Tag, "i");
+			if (Match.count == 2 && TL::Length(Match[1]) > 0) {
+				Results[_Targets[I]] = CL::HexToRgb(Match[1]);
+			}
+		}
+		return Results;
+	}
+	""";
+}
+
 Text GetInitFrameMenus() {
 	return """
 	declare Frame_Menus = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
@@ -18,19 +79,16 @@ Text GetInitFrameMenus() {
 			declare Text ItemId for Quad_Trigger;
 			ItemId = Frame_MenuItem.DataAttributeGet("name");
 		}
+		declare Targets = TL::Split(" ", Quad_Trigger.DataAttributeGet("target"));
+
 		if (Quad_Trigger.DataAttributeExists("default-anim")) {
-			declare Match = TL::RegexMatch("modulatecolor=\"([abcdef\\d]{1,8})\"", Quad_Trigger.DataAttributeGet("default-anim"), "i");
-			if (Match.count == 2) {
-				declare Boolean ModulateColor_D for Quad_Trigger = True;
-				declare Vec3 ModulateColor_Default for Quad_Trigger;
-				ModulateColor_Default = CL::HexToRgb(Match[1]);
-			}
-			Match = TL::RegexMatch("modulatecolor=\"([abcdef\\d]{1,8})\"", Quad_Trigger.DataAttributeGet("target-anim"), "i");
-			if (Match.count == 2) {
-				declare Boolean ModulateColor_T for Quad_Trigger = True;
-				declare Vec3 ModulateColor_Target for Quad_Trigger;
-				ModulateColor_Target = CL::HexToRgb(Match[1]);
-			}
+			declare Vec3[Text] ModulateColor_Default for Quad_Trigger;
+			ModulateColor_Default = ParseModulateColor(Targets, Quad_Trigger.DataAttributeGet("default-anim"));
+		}
+
+		if (Quad_Trigger.DataAttributeExists("target-anim")) {
+			declare Vec3[Text] ModulateColor_Target for Quad_Trigger;
+			ModulateColor_Target = ParseModulateColor(Targets, Quad_Trigger.DataAttributeGet("target-anim"));
 		}
 	}""";
 }
@@ -41,66 +99,21 @@ Text GetEventLoopActiveItem(Text _EventName) {
 		case CMlScriptEvent::Type::MouseClick: {
 			declare Text ItemId for Event.Control;
 			
-			if (ItemId != "") {
-				SendCustomEvent("{{{_EventName}}}", [ItemId]);
-			}
 			if (Event.Control.DataAttributeExists("name")) {
 				SendCustomEvent("{{{_EventName}}}", [Event.Control.DataAttributeGet("name")]);
+				HandleMouseEvent(Event);
+			} else if (ItemId != "") {
+				SendCustomEvent("{{{_EventName}}}", [ItemId]);
 			}
+			HandleMouseEvent(Event);
 		}
 
 		case CMlScriptEvent::Type::MouseOver: {
-			if (!Event.Control.DataAttributeExists("target")) continue;
-
-			declare Frame_MenuItem = (Event.Control.Parent as CMlFrame);
-			Page.GetClassChildren("hover-zoom", Frame_MenuItem, True);
-
-			declare Duration = 200;
-			if (Event.Control.DataAttributeExists("anim-length")) {
-				Duration = TL::ToInteger(Event.Control.DataAttributeGet("anim-length"));
-			}
-			declare Boolean ModulateColor_T for Event.Control = False;
-			if (ModulateColor_T) {
-				declare Vec3 ModulateColor_Target for Event.Control;
-				declare Quad = (Event.Control as CMlQuad);
-				Quad.ModulateColor = ModulateColor_Target;
-			}
-
-			declare States = TL::RegexFind("<[^>]*>", Event.Control.DataAttributeGet("target-anim"), "g");
-			foreach (I => Target in TL::Split(" ", Event.Control.DataAttributeGet("target"))) {
-				AnimMgr.Add(
-					Frame_MenuItem.GetFirstChild(Target),
-					States[I % States.count],
-					Duration, CAnimManager::EAnimManagerEasing::QuadIn);
-
-			}
+			HandleMouseEvent(Event);
 		}
 
 		case CMlScriptEvent::Type::MouseOut: {
-			if (!Event.Control.DataAttributeExists("target")) continue;
-
-			declare Frame_MenuItem = (Event.Control.Parent as CMlFrame);
-
-			declare Duration = 200;
-			if (Event.Control.DataAttributeExists("anim-length")) {
-				Duration = TL::ToInteger(Event.Control.DataAttributeGet("anim-length"));
-			}
-
-			declare Boolean ModulateColor_D for Event.Control = False;
-			if (ModulateColor_D) {
-				declare Vec3 ModulateColor_Default for Event.Control;
-				declare Quad = (Event.Control as CMlQuad);
-				Quad.ModulateColor = ModulateColor_Default;
-			}
-
-
-			declare States = TL::RegexFind("<[^>]*>", Event.Control.DataAttributeGet("default-anim"), "g");
-			foreach (I => Target in TL::Split(" ", Event.Control.DataAttributeGet("target"))) {
-				AnimMgr.Add(
-					Frame_MenuItem.GetFirstChild(Target),
-					States[I % States.count],
-					Duration, CAnimManager::EAnimManagerEasing::QuadOut);
-			}
+			HandleMouseEvent(Event);
 		}
 	}""";
 }

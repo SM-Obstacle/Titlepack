@@ -27,10 +27,9 @@ declare CSmObject[] G_AnchorsObjects;
 Void LoadItems() {
     G_ItemIdents[Constants::C_ItemOffzone] = ItemList_Add(Constants::C_ItemOffzone);
     G_ItemIdents[Constants::C_ItemAmmo] = ItemList_Add(Constants::C_ItemAmmo);
-    
-    // G_ItemIdents[Constants::C_Offzone01] = ItemList_Add(Constants::C_Offzone01);
-    // G_ItemIdents[Constants::C_Offzone10] = ItemList_Add(Constants::C_Offzone10);
-    // G_ItemIdents[Constants::C_Offzone20] = ItemList_Add(Constants::C_Offzone20);
+    foreach (item in Constants::C_ItemCustomOffzones) {
+        //G_ItemIdents[item] = ItemList_Add(item);
+    }
 }
 
 Void Init() {

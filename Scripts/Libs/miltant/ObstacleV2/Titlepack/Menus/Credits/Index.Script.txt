@@ -25,7 +25,7 @@ Void Load() {
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
 	Window.Manialink = Build();
-	Window.Animation = CUILayer::EUILayerAnimation::RightFast;
+	Window.Animation = CUILayer::EUILayerAnimation::RightSlow;
 
 	Windows::CreateWindow(Window);
 }
