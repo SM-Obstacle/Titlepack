@@ -14,16 +14,19 @@ Void Load() {
 
 	declare SubMenu::K_SubMenu Campaign;
 	Campaign.Name = "campaign";
+	Campaign.Name = "file://Media/Images/Obstacle/Moods/campaign.png";
 	SubMenus.add(Campaign);
 	Campaign::Load();
 
 	declare SubMenu::K_SubMenu Online;
 	Online.Name = "online";
+	Campaign.Name = "file://Media/Images/Obstacle/Moods/online.png";
 	SubMenus.add(Online);
 	Servers::Load();
 
 	declare SubMenu::K_SubMenu Local;
 	Local.Name = "local";
+	Campaign.Name = "file://Media/Images/Obstacle/Moods/local.png";
 	SubMenus.add(Local);
 	Local::Load();
 
