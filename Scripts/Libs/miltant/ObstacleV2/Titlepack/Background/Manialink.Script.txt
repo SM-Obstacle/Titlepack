@@ -74,6 +74,7 @@ Text Build() {
 			declare Boolean _IsVideo;
 			declare Text[] Extensionfile = Background_TextLib::Split(".", _Background);
 			if (Extensionfile.count == 0) {
+				UpdateBackGroundImg("");
 				return;
 			}
 			_IsVideo = (Extensionfile[Extensionfile.count - 1] == "webm");
@@ -85,8 +86,6 @@ Text Build() {
 		}
 
 		main() {
-			UpdateBackGround("https://cdn.discordapp.com/attachments/1062704595358453830/1063107642215632956/Obstacle_Update_Opening.webm");
-
 			declare LastPause = 0.;
 			declare VideoCursorDifference = 0.;
 			while(True) {

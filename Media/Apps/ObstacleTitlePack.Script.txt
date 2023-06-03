@@ -1,9 +1,11 @@
 #RequireContext CManiaAppTitle
 
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Index.Script.txt"	as ObstacleController
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Index.Script.txt"				as ObstacleController
+#Include "Libs/miltant/ObstacleV2/Titlepack/Background/Index.Script.txt"		as Background
 
 main() {
 	ObstacleController::Load();
+	Background::Load();
 
 	while(True) {
 		yield;

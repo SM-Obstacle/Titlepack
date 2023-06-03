@@ -59,6 +59,17 @@ Void Load(Text _Window) {
 
 		Layers::Attach(LayerName);
 		G_Current_Window = LayerName;
+
+		if (Layers::Exists("Obstacle_Background")) {
+			switch (_Window) {
+				case "home": {
+					LayerCustomEvent(Layers::Get("Obstacle_Background"), "UpdateBackGround", [""]);
+				}
+				default: {
+					LayerCustomEvent(Layers::Get("Obstacle_Background"), "UpdateBackGround", ["file://Media/Images/Logos/Background.png"]);
+				}
+			}
+		}
 	}
 }
 
