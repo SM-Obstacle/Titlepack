@@ -188,16 +188,27 @@ Text Build() {
 
 		while (True) {
 			if (ControllerSelectedCampaign != -1 && SelectedCampaign != ControllerSelectedCampaign) {
-				SelectedMap = 0;
 				SelectedCampaign = ControllerSelectedCampaign;
 				Quad_Banner.ChangeImageUrl(MapsList[SelectedCampaign].Banner);
 				Label_EventLn1.SetText(MapsList[SelectedCampaign].NameLn1);
 				Label_EventLn2.SetText(MapsList[SelectedCampaign].NameLn2);
 
+				SelectedMap = 0;
+				foreach (I => Map in MapsList[SelectedCampaign].Maps) {
+					if (Map.PersonalBest > 0)
+						SelectedMap += 1;
+				}
+				SelectedMap = SelectedMap % MapsList[SelectedCampaign].Maps.count;
+
 				Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
 				Label_Map.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Name);
 				Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
-				Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
+
+				if (MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest < 1) {
+					Label_PB.SetText("-- : -- : --");
+				} else {
+					Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
+				}
 				Frame_Infos.Show();
 
 				foreach (I => Map in MapsList[SelectedCampaign].Maps) {
@@ -246,8 +257,12 @@ Text Build() {
 										Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
 										Label_Map.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Name);
 										Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
-										Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
-										Frame_Infos.Show();
+
+										if (MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest < 1) {
+											Label_PB.SetText("..:..:..");
+										} else {
+											Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
+										}										Frame_Infos.Show();
 									} else if (TimestampLastSelection != -1 && Now - TimestampLastSelection < 500) {
 										TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/Obstacle.Script.txt", "");
 										TimestampLastSelection = -1;
