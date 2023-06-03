@@ -50,13 +50,14 @@ Text Build() {
 	</framemodel>
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
-		<frame pos="0 53.67" size="53 35.83">
-			<label text="" textcolor="FFF" pos="26.5 -17.83" halign="center" valign="center2" textsize="10" id="Label_IconPlay"/>
-			<quad size="53 35.83" image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png" scriptevents="1"
+		<frame pos="0 53.67" clip="1" clipsizen="52.67 35.83" clipposn="26.63 -17.83">
+			<label text="" textcolor="fff" pos="26.5 -17.83" halign="center" valign="center2" textsize="10" id="Label_IconPlay"/>
+			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center"
+				image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png" scriptevents="1"
 				data-target="Label_IconPlay Quad_Thumbnail" data-anim-length="70"
 				data-default-anim="<label scale=&quot;1&quot;/> <quad scale=&quot;1&quot;/>"
 				data-target-anim="<label scale=&quot;1.2&quot;/> <quad scale=&quot;1.06&quot;/>"/>
-			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Thumbnail"/>
+			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Thumbnail" keepratio="Clip"/>
 		</frame>
 
 		<frame pos="0 15.67">
