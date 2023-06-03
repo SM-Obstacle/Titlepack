@@ -1,4 +1,5 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "TextLib" as TL
 
 #Struct K_Map {
@@ -37,6 +38,7 @@ declare Boolean NeedRefresh;
 
 Text Build() {
 	return """
+{{{Styles::GetStyleSheet()}}}
 <frame id="Frame_Campaign">
 	<framemodel id="MapCard">
 		<label pos="1 -4.5" valign="center2" textsize="5" textcolor="5F5F64" textfont="regular" id="Label_Num"/>
@@ -48,10 +50,13 @@ Text Build() {
 	</framemodel>
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
-		<frame pos="0 53.67">
+		<frame pos="0 53.67" size="53 35.83">
 			<label text="" textcolor="FFF" pos="26.5 -17.83" halign="center" valign="center2" textsize="10" id="Label_IconPlay"/>
-			<quad size="53 35.83" id="Quad_Thumbnail"/>
-			<quad size="53 35.83" image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png" scriptevents="1"/>
+			<quad size="53 35.83" image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png" scriptevents="1"
+				data-target="Label_IconPlay Quad_Thumbnail" data-anim-length="70"
+				data-default-anim="<label scale=&quot;1&quot;/> <quad scale=&quot;1&quot;/>"
+				data-target-anim="<label scale=&quot;1.2&quot;/> <quad scale=&quot;1.06&quot;/>"/>
+			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Thumbnail"/>
 		</frame>
 
 		<frame pos="0 15.67">
@@ -132,7 +137,9 @@ Text Build() {
 </frame>
 
 <script><![CDATA[
+	#Include "MathLib" as ML
 	#Include "TextLib" as TL
+	#Include "ColorLib" as CL
 	
 	#Struct K_Map {
 		Integer MXId;
@@ -158,6 +165,8 @@ Text Build() {
 		Boolean PartialOnline;
 	}
 
+	{{{Styles::GetDeclareGlobals()}}}
+		
 	main() {
 		declare Frame_Infos = (Page.GetFirstChild("Frame_Infos") as CMlFrame);
 		declare Label_IconPlay = (Page.GetFirstChild("Label_IconPlay") as CMlLabel);
@@ -173,12 +182,12 @@ Text Build() {
 		declare K_Campaign[Integer] MapsList for Page;
 		declare Integer SelectedCampaign as ControllerSelectedCampaign for Page = -1;
 		declare Integer SelectedCampaign = -1;
-		declare Integer SelectedMap = -1;
+		declare Integer SelectedMap = 1;
 		declare Integer TimestampLastSelection = -1;
 
 		while (True) {
 			if (ControllerSelectedCampaign != -1 && SelectedCampaign != ControllerSelectedCampaign) {
-				SelectedMap = -1;
+				SelectedMap = 1;
 				Frame_Infos.Hide();
 				SelectedCampaign = ControllerSelectedCampaign;
 				Quad_Banner.ChangeImageUrl(MapsList[SelectedCampaign].Banner);
@@ -215,6 +224,7 @@ Text Build() {
 			}
 
 			foreach (Event in PendingEvents) {
+				{{{Styles::GetEventLoopActiveItem()}}}
 				switch (Event.Type) {
 					case CMlScriptEvent::Type::MouseClick: {
 						switch (Event.ControlId) {
@@ -223,7 +233,7 @@ Text Build() {
 
 								if (TL::StartsWith("Card_", ClickedCard.ControlId)) {
 									declare MapIndex = TL::ToInteger(TL::SubString(ClickedCard.ControlId, 5, TL::Length(ClickedCard.ControlId) - 4)) - 1;
-									log(Now - TimestampLastSelection);
+
 									if (MapIndex != SelectedMap) {
 										SelectedMap = MapIndex;
 										TimestampLastSelection = Now;

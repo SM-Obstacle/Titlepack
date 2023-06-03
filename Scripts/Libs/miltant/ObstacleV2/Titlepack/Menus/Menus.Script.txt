@@ -30,7 +30,7 @@ Text Build() {
 		<frame id="Frame_Menus" pos="">
 			<frameinstance pos="97.5 -7.33" data-name="editors" modelid="Model_MenuItem"/>
 			<frameinstance pos="125.83 -7.33" data-name="profile" modelid="Model_MenuItem"/>
-			<frameinstance pos="159.88 -7.33" data-name="play" modelid="Model_MenuItem"/>
+			<frameinstance pos="159.88 -7.5" data-name="play" modelid="Model_MenuItem"/>
 			<frameinstance pos="194.17 -7.33" data-name="credits" modelid="Model_MenuItem"/>
 			<frameinstance pos="222.5 -7.33" data-name="quit" modelid="Model_MenuItem"/>
 		</frame>
