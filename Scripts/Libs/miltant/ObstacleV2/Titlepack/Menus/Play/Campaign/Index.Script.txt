@@ -188,12 +188,17 @@ Text Build() {
 
 		while (True) {
 			if (ControllerSelectedCampaign != -1 && SelectedCampaign != ControllerSelectedCampaign) {
-				SelectedMap = 1;
-				Frame_Infos.Hide();
+				SelectedMap = 0;
 				SelectedCampaign = ControllerSelectedCampaign;
 				Quad_Banner.ChangeImageUrl(MapsList[SelectedCampaign].Banner);
 				Label_EventLn1.SetText(MapsList[SelectedCampaign].NameLn1);
 				Label_EventLn2.SetText(MapsList[SelectedCampaign].NameLn2);
+
+				Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
+				Label_Map.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Name);
+				Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
+				Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
+				Frame_Infos.Show();
 
 				foreach (I => Map in MapsList[SelectedCampaign].Maps) {
 					declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
