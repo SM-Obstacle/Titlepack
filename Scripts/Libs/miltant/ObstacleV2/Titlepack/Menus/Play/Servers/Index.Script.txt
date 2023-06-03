@@ -41,7 +41,7 @@ Text Build() {
 
 <label textcolor="fff" pos="66.2 42.17" text="" valign="center2" halign="center"/>
 <entry textcolor="fff" textfont="light" pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
-<quad pos="-60.17 45.83" size="130.83 7.33" image="file://Media/Images/Obstacle/Servers/FSearch_plus1.png" id="Quad_Search" scriptevents="1" opacity="0.5"/>
+<quad pos="-60.17 45.83" size="130.83 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search" scriptevents="1" opacity="0.5"/>
 
 <frame pos="72.33 45.83" data-name="create">
 	<label textcolor="fff" pos="4.42 -4.17" text="" valign="center2" halign="center"/>

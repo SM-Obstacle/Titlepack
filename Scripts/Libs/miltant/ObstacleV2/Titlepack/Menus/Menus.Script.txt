@@ -19,7 +19,7 @@ Text Build() {
 		<quad halign="center" valign="center" size="2 2" pos="0 -3.16" rot="45" image="file://Media/Images/Obstacle/Menu/Rectangle.png" id="Quad_Square"/>
 		<quad halign="center" size="17 0.5" pos="0 -3" image="file://Media/Images/Obstacle/Menu/BNav.png" id="Quad_Underline"/>
 
-		<label halign="center" valign="center2" textprefix="$t" class="lato" pos="0 .33" id="Label_Text"/>
+		<label halign="center" valign="center2" textprefix="$t" class="lato" pos="0 .33" id="Label_Text" textcolor="fff"/>
 	</framemodel>
 	<frame pos="-160 90">
 		<label text="" class="lato" pos="75.5 -8.9" halign="center" valign="center2"
@@ -28,11 +28,11 @@ Text Build() {
 			data-default-anim="<label scale=&quot;1.&quot;/>" data-target-anim="<label scale=&quot;1.066&quot;/>"/>
 
 		<frame id="Frame_Menus" pos="">
-			<frameinstance pos="97.5 -8.66" data-name="editors" modelid="Model_MenuItem"/>
-			<frameinstance pos="125.83 -8.66" data-name="profile" modelid="Model_MenuItem"/>
-			<frameinstance pos="159.88 -8.66" data-name="play" modelid="Model_MenuItem"/>
-			<frameinstance pos="194.17 -8.66" data-name="credits" modelid="Model_MenuItem"/>
-			<frameinstance pos="222.5 -8.66" data-name="quit" modelid="Model_MenuItem"/>
+			<frameinstance pos="97.5 -8" data-name="editors" modelid="Model_MenuItem"/>
+			<frameinstance pos="125.83 -8" data-name="profile" modelid="Model_MenuItem"/>
+			<frameinstance pos="159.88 -8" data-name="play" modelid="Model_MenuItem"/>
+			<frameinstance pos="194.17 -8" data-name="credits" modelid="Model_MenuItem"/>
+			<frameinstance pos="222.5 -8" data-name="quit" modelid="Model_MenuItem"/>
 		</frame>
 
 		<label text="" class="lato" pos="241.67 -5.6" textsize="5" hidden="1"/>

@@ -1,7 +1,7 @@
 Text GetStyleSheet() {
 	return """<stylesheet>
-		<style class="lato" textcolor="FFFF" textfont="light"/>
-		<style class="lator" textcolor="FFFF" textfont="regular"/>
+		<style class="lato" textcolor="fff" textfont="light"/>
+		<style class="lator" textcolor="fff" textfont="regular"/>
 	</stylesheet>""";
 }
 

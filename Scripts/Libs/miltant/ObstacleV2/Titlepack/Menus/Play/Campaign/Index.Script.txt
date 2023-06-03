@@ -265,6 +265,9 @@ Void Load() {
 
 	declare K_Map Map1;
 	Map1.UID = "cVajuk5onbAPDNyBlmmwYfj7Knd";
+	Map1.Name = "My map";
+	Map1.Author = "Your mom";
+	Map1.PersonalBest = 6000000;
 	declare K_Map Map2;
 	Map2.UID = "_4sqKTSX5WCWND63fgPG2WV43Uj";
 	declare K_Map Map3;
