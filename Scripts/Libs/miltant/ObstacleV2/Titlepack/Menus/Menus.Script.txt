@@ -27,7 +27,7 @@ Text Build() {
 			data-target="Label_Home"
 			data-default-anim="<label scale=&quot;1.&quot;/>" data-target-anim="<label scale=&quot;1.066&quot;/>"/>
 
-		<frame id="Frame_Menus" pos="10">
+		<frame id="Frame_Menus" pos="">
 			<frameinstance pos="97.5 -8.66" data-name="editors" modelid="Model_MenuItem"/>
 			<frameinstance pos="125.83 -8.66" data-name="profile" modelid="Model_MenuItem"/>
 			<frameinstance pos="159.88 -8.66" data-name="play" modelid="Model_MenuItem"/>
