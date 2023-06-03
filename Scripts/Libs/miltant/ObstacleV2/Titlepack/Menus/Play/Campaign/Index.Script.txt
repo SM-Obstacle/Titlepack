@@ -78,7 +78,7 @@ Text Build() {
 	<frame pos="-96.17 53.5">
 		<frame pos="8 -46.67">
 			<frame>
-				<quad pos="-.83" size="31.17 3.67" bgcolor="FFF"/>
+				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/White.png"/>
 				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_1"/>
 				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_2"/>
 				<frameinstance modelid="MapCard" pos="0 -32" id="Card_3"/>
@@ -86,7 +86,7 @@ Text Build() {
 				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_5"/>
 			</frame>
 			<frame pos="34.5">
-				<quad pos="-.83" size="31.17 3.67" bgcolor="D7F69B"/>
+				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/Green.png"/>
 				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_6"/>
 				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_7"/>
 				<frameinstance modelid="MapCard" pos="0 -32" id="Card_8"/>
@@ -94,7 +94,7 @@ Text Build() {
 				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_10"/>
 			</frame>
 			<frame pos="69">
-				<quad pos="-.83" size="31.17 3.67" bgcolor="8AAAE5"/>
+				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/Blue.png"/>
 				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_11"/>
 				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_12"/>
 				<frameinstance modelid="MapCard" pos="0 -32" id="Card_13"/>
@@ -102,7 +102,7 @@ Text Build() {
 				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_15"/>
 			</frame>
 			<frame pos="103.5">
-				<quad pos="-.83" size="31.17 3.67" bgcolor="F5BC8E"/>
+				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/Orange.png"/>
 				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_16"/>
 				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_17"/>
 				<frameinstance modelid="MapCard" pos="0 -32" id="Card_18"/>
@@ -110,7 +110,7 @@ Text Build() {
 				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_20"/>
 			</frame>
 			<frame pos="138">
-				<quad pos="-.83" size="31.17 3.67" bgcolor="D37467"/>
+				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/Red.png"/>
 				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_21"/>
 				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_22"/>
 				<frameinstance modelid="MapCard" pos="0 -32" id="Card_23"/>
@@ -259,7 +259,7 @@ Text Build() {
 										Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
 
 										if (MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest < 1) {
-											Label_PB.SetText("..:..:..");
+											Label_PB.SetText("-- : -- : --");
 										} else {
 											Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
 										}										Frame_Infos.Show();
