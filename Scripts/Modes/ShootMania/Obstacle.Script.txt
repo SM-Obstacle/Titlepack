@@ -20,6 +20,7 @@
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/miltant/UI/SpectatorBar.Script.txt" as SpecBar
 #Include "Libs/miltant/UI/Markers.Script.txt" as Markers
+#Include "Libs/miltant/UI/EndScreen.Script.txt" as EndScreen
 
 #Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
 //#Include "Libs/miltant/KeysSettings.Script.txt" as KeysSettings
@@ -532,7 +533,6 @@ foreach (Player in Players) {
                         declare UI <=> UIManager.GetUI(Player);
                         declare netread Boolean _AltMenu_Visible for UI = False;
 
-                        log(_AltMenu_Visible);
                         if  (_AltMenu_Visible){
                             Player::setUsedAltGlitch(Player, True);
                         }
@@ -669,6 +669,11 @@ Void CreateUI() {
     Layers::Create("SpecBar", SpecBar::GetLayer());
     Layers::Attach("SpecBar");
     
+    if (G_IsCampaign) {
+        Layers::Create("EndScreen", EndScreen::GetLayer());
+        Layers::Attach("EndScreen");
+    }
+    
     Layers::Create("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
     Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
     Layers::Attach("Markers");
@@ -680,6 +685,7 @@ Void CreateUI() {
 
 Void DestroyUI() {
     Layers::Detach("SpecBar");
+    Layers::Detach("EndScreen");
     Layers::Detach("Markers");
 
     //Layers::DetachReplay("SpecKeys");

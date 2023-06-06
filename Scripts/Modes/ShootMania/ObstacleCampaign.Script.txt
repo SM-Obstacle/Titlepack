@@ -2,10 +2,11 @@
 
 ***Match_InitServer***
 ***
-// ServerModeName is "" in the editor
 G_EnableRecords = False;
 // ServerLogin is "" in local play
 G_ForceInvisibleSkin = False;
 
 G_IsCampaign = True;
+
+log("mode is Obstacle Campaign");
 ***

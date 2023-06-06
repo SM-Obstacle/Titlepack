@@ -264,7 +264,7 @@ Text Build() {
 											Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
 										}										Frame_Infos.Show();
 									} else if (TimestampLastSelection != -1 && Now - TimestampLastSelection < 500) {
-										TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/Obstacle.Script.txt", "");
+										TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
 										TimestampLastSelection = -1;
 									}
 								}
