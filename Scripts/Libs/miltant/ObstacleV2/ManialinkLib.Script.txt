@@ -97,13 +97,12 @@ Text GetEventLoopActiveItem(Text _EventName) {
 	return """
 	switch(Event.Type) {
 		case CMlScriptEvent::Type::MouseClick: {
-			declare Text ItemId for Event.Control;
-			
 			if (Event.Control.DataAttributeExists("name")) {
 				SendCustomEvent("{{{_EventName}}}", [Event.Control.DataAttributeGet("name")]);
-				HandleMouseEvent(Event);
-			} else if (ItemId != "") {
-				SendCustomEvent("{{{_EventName}}}", [ItemId]);
+			} else {
+				declare Text ItemId for Event.Control;
+				if (ItemId != "")
+					SendCustomEvent("{{{_EventName}}}", [ItemId]);
 			}
 			HandleMouseEvent(Event);
 		}

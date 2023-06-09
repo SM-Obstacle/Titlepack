@@ -1,8 +1,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"								as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"											as Styles
-#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI.Script.txt"    as MultiplayerAPI
 
-
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
 
 Text GetName() {
@@ -50,13 +49,19 @@ Text Build() {
 	#Include "TextLib" as TL
 	#Include "ColorLib" as CL
 
+	{{{ChannelInfoStructs::K_ServerInfo_ML}}}
 	{{{Styles::GetDeclareGlobals()}}}
 
 	main() {
 		{{{Styles::GetInitFrameMenus()}}}
 		declare Label_TopServer = (Page.GetFirstChild("Label_TopServer") as CMlLabel);
 		declare Label_JoinArrow = (Page.GetFirstChild("Label_JoinArrow") as CMlLabel);
-		declare Text TopServer for Page = ". . .";
+
+		declare K_ServerInfo[] TopServers for LocalUser;
+		declare Text TopServer = ". . .";
+		declare Text TopServer_Login = "";
+		declare Integer LastUpdate_TopServers as LastUpdatePage for LocalUser;
+		declare Integer LastUpdate;
 
 		while(True) {
 			yield;
@@ -78,6 +83,12 @@ Text Build() {
 				{{{Styles::GetEventLoopActiveItem()}}}
 			}
 
+			if (LastUpdate != LastUpdatePage) {
+				LastUpdate = LastUpdatePage;
+				if (TopServers.count > 0)
+					TopServer = TopServers[0].server_name;
+					TopServer_Login = TopServers[0].server_login;
+			}
 			Label_TopServer.SetText(TopServer);
 		}
 	}
@@ -107,15 +118,6 @@ Void Loop() {
 
 				}
 			}
-		}
-	}
-
-	if (MultiplayerAPI::HasFetched()) {
-		declare Text TopServer for Windows::GetPage(GetName());
-
-		declare Servers = MultiplayerAPI::GetServersName();
-		if (Servers.count > 0) {
-			TopServer = Servers[0];
 		}
 	}
 }

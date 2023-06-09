@@ -37,3 +37,53 @@
 	K_ChannelTimeSlot[][][Text] time_slots;
 }
 """
+
+#Struct K_ServerInfo {
+	Text server_name;
+	Text server_description;
+	Text server_login;
+	Text server_title;
+	Integer server_ladder_limit_min;
+	Integer server_ladder_limit_max;
+	Integer server_average_ladder_points;
+	Integer server_player_count;
+	Integer server_player_max;
+	Integer server_spectator_count;
+	Text server_zone;
+	Boolean server_is_private;
+	Boolean server_is_spectator_private;
+	Boolean server_is_lobby;
+	Integer server_level_class_1;
+	Integer server_level_class_2;
+	Integer server_level_class_3;
+	Integer server_level_class_4;
+	Integer server_level_class_5;
+	Text server_script_name;
+	Text server_game_mode;
+}
+
+#Const K_ServerInfo_ML """
+#Struct K_ServerInfo {
+	Text server_name;
+	Text server_description;
+	Text server_login;
+	Text server_title;
+	Integer server_ladder_limit_min;
+	Integer server_ladder_limit_max;
+	Integer server_average_ladder_points;
+	Integer server_player_count;
+	Integer server_player_max;
+	Integer server_spectator_count;
+	Text server_zone;
+	Boolean server_is_private;
+	Boolean server_is_spectator_private;
+	Boolean server_is_lobby;
+	Integer server_level_class_1;
+	Integer server_level_class_2;
+	Integer server_level_class_3;
+	Integer server_level_class_4;
+	Integer server_level_class_5;
+	Text server_script_name;
+	Text server_game_mode;
+}
+"""

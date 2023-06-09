@@ -34,3 +34,7 @@ Void Load() {
 
 	Windows::CreateWindow(Window);
 }
+
+Void Loop() {
+	
+}

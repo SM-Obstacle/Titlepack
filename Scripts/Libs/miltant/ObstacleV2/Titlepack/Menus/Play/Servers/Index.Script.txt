@@ -1,4 +1,7 @@
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"									as Windows
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"											as Styles
+
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
 Text GetName() {
 	return "online";
@@ -13,15 +16,18 @@ Text Build() {
 			- active: 90%
 	 -->
 <framemodel id="Server">
-	<quad size="4.67 3.5" pos="4.17 -4.5"  valign="center" halign="center" image="file://Media/Flags/MLT.dds" styleselected="1" keepratio="Fit"/>
-	<label textcolor="fff" pos="7.57 -4.5" text="Max Map" valign="center2" textfont="light" textsize="2.6"/>
-	<label textcolor="fff" pos="130.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6"/>
-	<label textcolor="fff" pos="134.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6"/> <!--  -->
-	<label textcolor="fff" pos="142 -4.5" text="1500/6000" valign="center2" textfont="light" textsize="2.6" size="21"/>
-	<label textcolor="fff" pos="176 -4.5" text="21" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right"/>
+	<quad size="4.67 3.5" pos="4.17 -4.5" valign="center" halign="center" keepratio="Cover" id="Quad_Flag"/>
+	<label textcolor="fff" pos="8 -4.5" size="110" valign="center2" textfont="light" textsize="2.6" id="Label_Name"/>
+	<label textcolor="fff" pos="130.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Private"/>
+	<label textcolor="fff" pos="134.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Fav"/> <!--  -->
+	<label textcolor="fff" pos="142 -4.5" valign="center2" textfont="light" textsize="2.6" size="21" id="Label_Players"/>
+	<label textcolor="fff" pos="176 -4.5" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right" id="Label_Ping"/>
 	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
 	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
-	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="000"/>
+	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="000"
+		id="Quad_Trigger" data-target="Quad_Trigger" scriptevents="1"
+		data-default-anim="<quad modulatecolor=&quot;000&quot;/>"
+		data-target-anim="<quad modulatecolor=&quot;fff&quot;/>"/>
 </framemodel>
 
 
@@ -59,31 +65,100 @@ Text Build() {
 	</frame>
 </frame>
 
-<frame pos="-91.67 36">
-	<frameinstance pos="0 0" modelid="Server"/>
-	<frameinstance pos="0 -10" modelid="Server"/>
-	<frameinstance pos="0 -20" modelid="Server"/>
-	<frameinstance pos="0 -30" modelid="Server"/>
-	<frameinstance pos="0 -40" modelid="Server"/>
-	<frameinstance pos="0 -50" modelid="Server"/>
-	<frameinstance pos="0 -60" modelid="Server"/>
-	<frameinstance pos="0 -70" modelid="Server"/>
-	<frameinstance pos="0 -80" modelid="Server"/>
-	<frameinstance pos="0 -90" modelid="Server"/>
+<frame id="Server_List" pos="-91.67 36" size="190 95" scroll="1" scrollmax="0 100" scrollgrid="0 3.33333">
+	<frame id="Frame_Menus">
+		<frameinstance pos="0 10" modelid="Server" data-index="0"/>
+		<frameinstance pos="0 0" modelid="Server" data-index="1"/>
+		<frameinstance pos="0 -10" modelid="Server" data-index="2"/>
+		<frameinstance pos="0 -20" modelid="Server" data-index="3"/>
+		<frameinstance pos="0 -30" modelid="Server" data-index="4"/>
+		<frameinstance pos="0 -40" modelid="Server" data-index="5"/>
+		<frameinstance pos="0 -50" modelid="Server" data-index="6"/>
+		<frameinstance pos="0 -60" modelid="Server" data-index="7"/>
+		<frameinstance pos="0 -70" modelid="Server" data-index="8"/>
+		<frameinstance pos="0 -80" modelid="Server" data-index="9"/>
+		<frameinstance pos="0 -90" modelid="Server" data-index="10"/>
+		<frameinstance pos="0 -100" modelid="Server" data-index="11"/>
+	</frame>
+	<quad size="190 100" pos="0 10" scriptevents="1" id="Quad_ScrollTrigger"/>
 </frame>
 
 <script><![CDATA[
 	#Include "MathLib" as ML
 	#Include "TextLib" as TL
+	#Include "ColorLib" as CL
+
+	{{{ChannelInfoStructs::K_ServerInfo_ML}}}
+	{{{Styles::GetDeclareGlobals()}}}
+
+	Void UpdateServers(Integer TopServerIndex) {
+		declare K_ServerInfo[] TopServers for LocalUser;
+		declare Frame_VisibleContent = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
+		Frame_VisibleContent.RelativePosition_V3.Y = TopServerIndex * -10.;
+		
+		for (I, 0, 11) {
+			declare FrameInstance = (Frame_VisibleContent.Controls[I] as CMlFrame);
+			declare Integer ServerIndex = TopServerIndex + I - 1;
+
+			if (ServerIndex < 0 || ServerIndex >= TopServers.count) {
+				FrameInstance.Visible = False;
+				continue;
+			}
+			declare Server = TopServers[ServerIndex];
+			FrameInstance.Visible = True;
+			FrameInstance.DataAttributeSet("login", Server.server_login);
+
+			declare Quad_Flag = (FrameInstance.GetFirstChild("Quad_Flag") as CMlQuad);
+			declare Label_Name = (FrameInstance.GetFirstChild("Label_Name") as CMlLabel);
+			declare Label_Private = (FrameInstance.GetFirstChild("Label_Private") as CMlLabel);
+			declare Label_Fav = (FrameInstance.GetFirstChild("Label_Fav") as CMlLabel);
+			declare Label_Players = (FrameInstance.GetFirstChild("Label_Players") as CMlLabel);
+			declare Label_Ping = (FrameInstance.GetFirstChild("Label_Ping") as CMlLabel);
+
+			Quad_Flag.ChangeImageUrl(Server.server_zone);
+			Label_Name.SetText(Server.server_name);
+			Label_Private.Visible = Server.server_is_private;
+			Label_Fav.Visible = False;
+			Label_Players.SetText(Server.server_player_count ^ "/" ^ Server.server_player_max);
+			// Label_Ping.SetText(Server.server_ping);
+		}
+	}
 	
 	main() {
+		{{{Styles::GetInitFrameMenus()}}}
+		
 		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
 		Entry_Search.StartEdition();
 
+		declare Server_List = (Page.GetFirstChild("Server_List") as CMlFrame);
+		declare Quad_ScrollTrigger = (Server_List.GetFirstChild("Quad_ScrollTrigger") as CMlQuad);
+		declare Vec2 ScrollOffset;
+		declare K_ServerInfo[] TopServers for LocalUser;
+		declare Integer TopServerIndex;
+		declare Integer SelectedServerIndex;
+		declare Integer LastUpdate_TopServers as LastUpdateUser for LocalUser;
+		declare Integer LastUpdate;
+		
 		while(True) {
 			yield;
 
 			if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+			if (Server_List.ScrollOffset != ScrollOffset) {
+				ScrollOffset = Server_List.ScrollOffset;
+				TopServerIndex = ML::FloorInteger(ScrollOffset.Y / 10.);
+				SelectedServerIndex = TopServerIndex;
+				
+				UpdateServers(TopServerIndex);
+			}
+
+			if (LastUpdate != LastUpdateUser) {
+				LastUpdate = LastUpdateUser;
+				Server_List.ScrollMax.Y = ML::Max(0., TopServers.count * 10. - 100.) + 5.;
+				Quad_ScrollTrigger.Size.Y = ML::Max(100., TopServers.count * 10.) + 5.;
+				
+				UpdateServers(ML::Min(TopServerIndex, TopServers.count - 11));
+			}
 
 			foreach(Event in PendingEvents) {
 				switch (Event.Type) {
@@ -92,9 +167,17 @@ Text Build() {
 							case "Quad_Search": {
 								Entry_Search.StartEdition();
 							}
+							case "Quad_Trigger": {
+								declare Frame = Event.Control.Parent;
+								if (Frame.DataAttributeExists("index")) {
+									declare Index = TL::ToInteger(Frame.DataAttributeGet("index"));
+									SelectedServerIndex = TopServerIndex + Index - 1;
+								}
+							}
 						}
 					}
 				}
+				{{{Styles::GetEventLoopActiveItem("join_server")}}}
 			}
 		}
 	}
@@ -109,4 +192,8 @@ Void Load() {
 	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
+}
+
+Void Loop() {
+	
 }

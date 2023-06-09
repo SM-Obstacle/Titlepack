@@ -2,7 +2,8 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Background/Index.Script.txt"                            as BackgroundComponent
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/TokenManager.Script.txt"                             as Auth
 
-#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI.Script.txt"    as MultiplayerAPI
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI2.Script.txt"    as MultiplayerAPI
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
 #Include "MathLib"	as ML
 
@@ -18,4 +19,19 @@ Void Load() {
 Void Loop() {
     Menus::Loop();
     Auth::Loop();
+
+    declare Integer LastUpdate_TopServers for LocalUser;
+	if (MultiplayerAPI::HasFetched()) {
+		declare ChannelInfoStructs::K_ServerInfo[] TopServers for LocalUser;
+
+		declare Servers = MultiplayerAPI::GetServersInfos();
+		if (Servers.count > 0) {
+			TopServers = Servers;
+		}
+        LastUpdate_TopServers = Now;
+	} else if (Now - LastUpdate_TopServers > 20000 && !MultiplayerAPI::HasStartedFetch()) {
+        MultiplayerAPI::FetchServerListAsync();
+    }
+
+    declare Integer LastUpdate_TopPlayers for LocalUser;
 }

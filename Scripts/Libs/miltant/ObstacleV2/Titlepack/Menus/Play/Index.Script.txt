@@ -45,4 +45,6 @@ Void Load() {
 
 Void Loop() {
 	Campaign::Loop();
+	Servers::Loop();
+	Local::Loop();
 }
