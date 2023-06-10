@@ -7,6 +7,14 @@
 
 #Include "MathLib"	as ML
 
+#Struct K { // K_ServerRecord
+    Integer t; //time
+    Text p; // password
+    Text s; // spectating password
+}
+
+
+
 Void Load() {
     // BackgroundComponent::Load();
     Menus::Load();
@@ -33,5 +41,21 @@ Void Loop() {
         MultiplayerAPI::FetchServerListAsync();
     }
 
-    declare Integer LastUpdate_TopPlayers for LocalUser;
+    foreach (Event in PendingEvents) {
+        if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent) {
+            if (Event.CustomEventType == "join_server" && Event.CustomEventData.count > 0) {
+                declare Login = Event.CustomEventData[0];
+                declare Text Password;
+                declare Text SpectatingPassword;
+                declare persistent K[Text] Servers for LocalUser;
+
+                if (Servers.existskey(Login)) {
+                    Password = Servers[Login].p;
+                    SpectatingPassword = Servers[Login].s;
+                }
+
+                
+            }
+        }
+    }
 }

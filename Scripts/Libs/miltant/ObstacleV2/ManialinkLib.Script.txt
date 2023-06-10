@@ -94,8 +94,10 @@ Text GetInitFrameMenus() {
 }
 
 Text GetEventLoopActiveItem(Text _EventName) {
-	return """
-	switch(Event.Type) {
+	declare ML = """
+	switch(Event.Type) {""";
+	if (_EventName != "") {	
+		ML ^= """
 		case CMlScriptEvent::Type::MouseClick: {
 			if (Event.Control.DataAttributeExists("name")) {
 				SendCustomEvent("{{{_EventName}}}", [Event.Control.DataAttributeGet("name")]);
@@ -106,7 +108,10 @@ Text GetEventLoopActiveItem(Text _EventName) {
 			}
 			HandleMouseEvent(Event);
 		}
-
+""";
+	}
+	
+	ML ^=  """
 		case CMlScriptEvent::Type::MouseOver: {
 			HandleMouseEvent(Event);
 		}
@@ -115,6 +120,8 @@ Text GetEventLoopActiveItem(Text _EventName) {
 			HandleMouseEvent(Event);
 		}
 	}""";
+
+	return ML;
 }
 
 Text GetEventLoopActiveItem() {
