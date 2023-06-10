@@ -36,13 +36,14 @@
 
 #Struct K_MapAuthor {
     Text login;
-    Text nickname;
+    Text name;
     Text zone_path;
 }
 
 #Struct K_UpdateMapBody {
     Text name;
     Text map_uid;
+    Integer cps_number;
     K_MapAuthor author;
 }
 
@@ -152,13 +153,14 @@ Void Init() {
 /////////////////////////////////////////////////////////////////
 
 // Send map infos
-Void ReplaceOrCreateMap() {
+Void ReplaceOrCreateMap(Integer _CpsNumber) {
     declare body = K_UpdateMapBody {
         name = Map.MapName,
         map_uid = ""^Map.Id,
+        cps_number = _CpsNumber,
         author = K_MapAuthor {
             login = Map.AuthorLogin,
-            nickname = Map.AuthorNickName,
+            name = Map.AuthorNickName,
             zone_path = Map.AuthorZonePath
         }
     };
