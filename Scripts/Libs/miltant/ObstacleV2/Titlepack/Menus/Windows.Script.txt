@@ -63,10 +63,10 @@ Void Load(Text _Window) {
 		if (Layers::Exists("Obstacle_Background")) {
 			switch (_Window) {
 				case "home": {
-					LayerCustomEvent(Layers::Get("Obstacle_Background"), "UpdateBackGround", [""]);
+					LayerCustomEvent(Layers::Get("Obstacle_Background"), "Titlepack_Background_Show", []);
 				}
 				default: {
-					LayerCustomEvent(Layers::Get("Obstacle_Background"), "UpdateBackGround", ["file://Media/Images/Logos/Background.png"]);
+					LayerCustomEvent(Layers::Get("Obstacle_Background"), "Titlepack_Background_Hide", []);
 				}
 			}
 		}
@@ -80,20 +80,16 @@ Void Loop() {
 			case CManiaAppEvent::EType::LayerCustomEvent: {
 				switch(Event.CustomEventType) {
 					case "window_load" : {
-						if (Event.CustomEventData.count > 0) {
-							Load(Event.CustomEventData[0]);
-						}
+						// asserts that the window's name is provided
+						// and that preventdefault is not set 
+						if (
+							Event.CustomEventData.count > 0
+						 && Event.CustomEventData.count == 1
+						 || Event.CustomEventData[1] != "preventdefault"
+						)
+						{ Load(Event.CustomEventData[0]); }
 					}
 					case "window_unload" : {
-						Unload();
-					}
-
-					case "dialog_load" : {
-						if (Event.CustomEventData.count > 0) {
-							Load(Event.CustomEventData[0]);
-						}
-					}
-					case "dialog_unload" : {
 						Unload();
 					}
 				}

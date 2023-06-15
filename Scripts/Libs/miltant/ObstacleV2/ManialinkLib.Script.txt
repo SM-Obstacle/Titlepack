@@ -99,12 +99,22 @@ Text GetEventLoopActiveItem(Text _EventName) {
 	if (_EventName != "") {	
 		ML ^= """
 		case CMlScriptEvent::Type::MouseClick: {
+			declare Text Id;
 			if (Event.Control.DataAttributeExists("name")) {
-				SendCustomEvent("{{{_EventName}}}", [Event.Control.DataAttributeGet("name")]);
+				Id = Event.Control.DataAttributeGet("name");
 			} else {
 				declare Text ItemId for Event.Control;
-				if (ItemId != "")
-					SendCustomEvent("{{{_EventName}}}", [ItemId]);
+				Id = ItemId;
+			}
+			if (Id != "") {
+				if ( Event.Control.DataAttributeExists("preventdefault")
+				  && Event.Control.DataAttributeGet("preventdefault") == "True"
+				)
+					SendCustomEvent("{{{_EventName}}}", [Id, "preventdefault"]);
+				else {
+					SendCustomEvent("{{{_EventName}}}", [Id]);
+					Audio.PlaySoundEvent(CAudioManager::ELibSound::ShowMenu, 0, 0.0);
+				}
 			}
 			HandleMouseEvent(Event);
 		}

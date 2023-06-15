@@ -21,18 +21,19 @@ Text Build() {
 
 		<label halign="center" valign="center2" textprefix="$t" class="lato" pos="0 .83" id="Label_Text" textcolor="fff"/>
 	</framemodel>
+	
 	<frame pos="-160 90">
 		<label text="" class="lato" pos="75.5 -8.9" halign="center" valign="center2"
 			textsize="5" id="Label_Home" data-name="home" scriptevents="1"
 			data-target="Label_Home"
 			data-default-anim="<label scale=&quot;1.&quot;/>" data-target-anim="<label scale=&quot;1.066&quot;/>"/>
 
-		<frame id="Frame_Menus" pos="">
+		<frame id="Frame_Menus">
 			<frameinstance pos="97.5 -7.33" data-name="editors" modelid="Model_MenuItem"/>
-			<frameinstance pos="125.83 -7.33" data-name="profile" modelid="Model_MenuItem"/>
+			<frameinstance pos="125.83 -7.33" data-name="profile" modelid="Model_MenuItem" data-preventdefault="True"/>
 			<frameinstance pos="159.88 -7.5" data-name="play" modelid="Model_MenuItem"/>
 			<frameinstance pos="194.17 -7.33" data-name="credits" modelid="Model_MenuItem"/>
-			<frameinstance pos="222.5 -7.33" data-name="quit" modelid="Model_MenuItem"/>
+			<frameinstance pos="222.5 -7.33" data-name="quit" modelid="Model_MenuItem" data-preventdefault="True"/>
 		</frame>
 
 		<label text="" class="lato" pos="241.67 -5.6" textsize="5" hidden="1"/>

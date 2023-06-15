@@ -57,10 +57,10 @@ Text Build() {
 		declare Label_TopServer = (Page.GetFirstChild("Label_TopServer") as CMlLabel);
 		declare Label_JoinArrow = (Page.GetFirstChild("Label_JoinArrow") as CMlLabel);
 
-		declare K_ServerInfo[] TopServers for LocalUser;
+		declare K_ServerInfo[] ObsStore_TopServers for LocalUser;
 		declare Text TopServer = ". . .";
 		declare Text TopServer_Login = "";
-		declare Integer LastUpdate_TopServers as LastUpdatePage for LocalUser;
+		declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
 		declare Integer LastUpdate;
 
 		while(True) {
@@ -83,11 +83,11 @@ Text Build() {
 				{{{Styles::GetEventLoopActiveItem()}}}
 			}
 
-			if (LastUpdate != LastUpdatePage) {
-				LastUpdate = LastUpdatePage;
-				if (TopServers.count > 0)
-					TopServer = TopServers[0].server_name;
-					TopServer_Login = TopServers[0].server_login;
+			if (LastUpdate != ObsStore_LastUpdate_TopServers) {
+				LastUpdate = ObsStore_LastUpdate_TopServers;
+				if (ObsStore_TopServers.count > 0)
+					TopServer = ObsStore_TopServers[0].server_name;
+					TopServer_Login = ObsStore_TopServers[0].server_login;
 			}
 			Label_TopServer.SetText(TopServer);
 		}

@@ -22,8 +22,9 @@ Text Build() {
 	<label textcolor="fff" pos="134.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Fav"/> <!--  -->
 	<label textcolor="fff" pos="142 -4.5" valign="center2" textfont="light" textsize="2.6" size="21" id="Label_Players"/>
 	<label textcolor="fff" pos="176 -4.5" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right" id="Label_Ping"/>
-	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
-	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8"/>
+	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_ms"/>
+	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_graph"/>
+
 	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="fff" id="Quad_Back" hidden="1"/>
 	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="000"
 		id="Quad_Trigger" data-target="Quad_Trigger" scriptevents="1"
@@ -95,18 +96,18 @@ Text Build() {
 	declare CMlFrame G_Frame_VisibleContent;
 
 	Void UpdateServers(Integer TopServerIndex) {
-		declare K_ServerInfo[] TopServers for LocalUser;
+		declare K_ServerInfo[] ObsStore_TopServers for LocalUser;
 		G_Frame_VisibleContent.RelativePosition_V3.Y = TopServerIndex * -10.;
 		
 		for (I, 0, 11) {
 			declare FrameInstance = (G_Frame_VisibleContent.Controls[I] as CMlFrame);
 			declare Integer ServerIndex = TopServerIndex + I - 1;
 
-			if (ServerIndex < 0 || ServerIndex >= TopServers.count) {
+			if (ServerIndex < 0 || ServerIndex >= ObsStore_TopServers.count) {
 				FrameInstance.Visible = False;
 				continue;
 			}
-			declare Server = TopServers[ServerIndex];
+			declare Server = ObsStore_TopServers[ServerIndex];
 			FrameInstance.Visible = True;
 			FrameInstance.DataAttributeSet("login", Server.server_login);
 
@@ -131,18 +132,21 @@ Text Build() {
 		G_Frame_VisibleContent = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
 		
 		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
-		Entry_Search.StartEdition();
 
 		declare Server_List = (Page.GetFirstChild("Server_List") as CMlFrame);
 		declare Quad_ScrollTrigger = (Server_List.GetFirstChild("Quad_ScrollTrigger") as CMlQuad);
 		declare Vec2 ScrollOffset;
-		declare K_ServerInfo[] TopServers for LocalUser;
+		declare K_ServerInfo[] ObsStore_TopServers for LocalUser;
 		declare Integer TopServerIndex;
-		declare Integer LastUpdate_TopServers as LastUpdateUser for LocalUser;
+		declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
 		declare Integer LastUpdate;
-		declare Integer SelectedServerIndex = 1;
+		declare Integer SelectedServerIndex;
 		declare Integer LastClick = Now;
-		declare Integer PreviousSelectedServerIndex = 0;
+		declare Integer PreviousSelectedServerIndex;
+
+		declare Integer Context;
+		declare K_ServerInfo[Text] ServersCache;
+
 		
 		while(True) {
 			yield;
@@ -156,12 +160,44 @@ Text Build() {
 				UpdateServers(TopServerIndex);
 			}
 
-			if (LastUpdate != LastUpdateUser) {
-				LastUpdate = LastUpdateUser;
-				Server_List.ScrollMax.Y = ML::Max(0., TopServers.count * 10. - 100.) + 5.;
-				Quad_ScrollTrigger.Size.Y = ML::Max(100., TopServers.count * 10.) + 5.;
+			if (LastUpdate != ObsStore_LastUpdate_TopServers && Now - LastClick > 1500) {
+				LastUpdate = ObsStore_LastUpdate_TopServers;
+				Server_List.ScrollMax.Y = ML::Max(0., ObsStore_TopServers.count * 10. - 100.) + 5.;
+				Quad_ScrollTrigger.Size.Y = ML::Max(100., ObsStore_TopServers.count * 10.) + 5.;
 				
-				UpdateServers(ML::Min(TopServerIndex, TopServers.count - 11));
+				UpdateServers(ML::Min(TopServerIndex, ObsStore_TopServers.count - 11));
+			}
+
+			switch (TitleControl.LatestResult) {
+				case CTitleControl::EResult::Success: {
+					if (Context == 1) {
+
+					}
+				}
+				case CTitleControl::EResult::Error_Net_ServerNotFound: {
+					
+				}
+				case CTitleControl::EResult::Error_Net_ServerUnreachable: {
+					
+				}
+				case CTitleControl::EResult::Error_Net_Disconnected: {
+					
+				}
+				case CTitleControl::EResult::Error_Net_WrongPassword: {
+					
+				}
+				case CTitleControl::EResult::Error_Network_OnlineExpired: {
+					
+				}
+				case CTitleControl::EResult::Error_Network_ServerFull: {
+					
+				}
+				// CTitleControl::EResult::Error_Abort
+				// CTitleControl::EResult::Error_Internal
+				// CTitleControl::EResult::Error_DataMgr
+				default: {
+					
+				}
 			}
 
 			foreach(Event in PendingEvents) {

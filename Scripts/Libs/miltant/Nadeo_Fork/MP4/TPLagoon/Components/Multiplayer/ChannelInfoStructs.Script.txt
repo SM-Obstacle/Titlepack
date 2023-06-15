@@ -60,6 +60,13 @@
 	Integer server_level_class_5;
 	Text server_script_name;
 	Text server_game_mode;
+
+	Text[] server_players;
+	Text[] server_maps;
+	Integer server_maps_count;
+	Text server_build_version;
+	Text server_mode_version;
+	Boolean server_is_favourite;
 }
 
 #Const K_ServerInfo_ML """
@@ -85,5 +92,12 @@
 	Integer server_level_class_5;
 	Text server_script_name;
 	Text server_game_mode;
+
+	Text[] server_players;
+	Text[] server_maps;
+	Integer server_maps_count;
+	Text server_build_version;
+	Text server_mode_version;
+	Boolean server_is_favourite;
 }
 """

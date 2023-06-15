@@ -2,6 +2,7 @@
 // #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Explorer/Index.Script.txt"	as Explorer
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"		as SubMenu
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"	as ExplorerDialog
 
 
 Text GetName() {
@@ -9,40 +10,49 @@ Text GetName() {
 }
 
 Void Load() {
+	ExplorerDialog::Load();
+
 	declare SubMenu::K_SubMenu[] SubMenus;
 
 	declare SubMenu::K_SubMenu Maps;
 	Maps.Name = "Maps";
+	Maps.PreventAutoNavigation = True;
 	Maps.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Maps);
 
 	declare SubMenu::K_SubMenu Replay;
 	Replay.Name = "Replay";
+	Replay.PreventAutoNavigation = True;
 	Replay.Image = "file://Media/Images/Obstacle/Moods/day.png";
 	SubMenus.add(Replay);
 
 	declare SubMenu::K_SubMenu Item;
 	Item.Name = "Item";
+	Item.PreventAutoNavigation = True;
 	Item.Image = "file://Media/Images/Obstacle/Moods/night.png";
 	SubMenus.add(Item);
 
 	declare SubMenu::K_SubMenu Action;
 	Action.Name = "Action";
+	Action.PreventAutoNavigation = True;
 	Action.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Action);
 
 	declare SubMenu::K_SubMenu Interface;
 	Interface.Name = "Interface";
+	Interface.PreventAutoNavigation = True;
 	Interface.Image = "file://Media/Images/Obstacle/Moods/sunset.png";
 	SubMenus.add(Interface);
 
 	declare SubMenu::K_SubMenu Ghost;
 	Ghost.Name = "Ghost";
+	Ghost.PreventAutoNavigation = True;
 	Ghost.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Ghost);
 
 	declare SubMenu::K_SubMenu Module;
 	Module.Name = "Module";
+	Module.PreventAutoNavigation = True;
 	Module.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Module);
 
@@ -63,7 +73,7 @@ Void Loop() {
 			 Event.CustomEventType == "window_load") {
 			switch (Event.CustomEventData[0]) {
 				case "Maps": {
-					//Windows::Load(Explorer::GetName());
+					ExplorerDialog::Pick("Pick a map", "Map");
 				}
 				case "Replay": {
 					//Windows::Load(Explorer::GetName());

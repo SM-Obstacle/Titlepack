@@ -1,7 +1,8 @@
 Text Build() {
 	return """
 <manialink version="3" name="L_Background">
-	<frame id="Frame_All" z-index="-80">
+	<frame z-index="-1000">
+		<label id="Label_Mute" text="" textcolor="ffff" pos="140 -50" textsize="7" scriptevents="1" hidden="1"/>
 		<quad id="Quad_Background"
 			halign="center" valign="center"
 			size="320 180"/>
@@ -9,22 +10,10 @@ Text Build() {
 	
 	
 	<script><![CDATA[
-		#Include "TextLib" as Background_TextLib
 
-		declare CVideo[Text]	G_Videos;
-		declare CMlQuad[Text]	G_VideoQuads;
 		declare CAudioSource G_Music;
-	
-		Void Load(Text _Name, Text _Path) { // TODO : Ajouter un destroy (pas urgent)
-			declare V = Video.CreateVideo(_Path, True, True);
-			declare Q = (Page.GetFirstChild(_Name) as CMlQuad);
-			Q.Image = V.Image;
-			
-			G_Videos[_Name] 			= V;
-			G_VideoQuads[_Name]			= Q;
-			G_VideoQuads[_Name].Hide();
-		}
-		
+		declare CVideo G_Video;
+
 		Void StopMusic()
 		{
 			if (G_Music != Null)
@@ -54,53 +43,50 @@ Text Build() {
 			G_Music.Play();
 		}
 
-
-		Void UpdateBackGroundImg(Text _Background)
+		Void StopVideo()
 		{
-			declare CMlQuad Quad_Background <=> (Page.GetFirstChild("Quad_Background")	as CMlQuad);
-			Quad_Background.ChangeImageUrl(_Background);
-		}
-		
-		Void StartVideo(Text _Background)
-		{
-			Load("Quad_Background", _Background);
-			G_Videos["Quad_Background"].Play();
-			G_VideoQuads["Quad_Background"].Show();
-			PlayMusic("https://cdn.discordapp.com/attachments/456854627153870858/1079354081493143582/Obstacle_Update_Opening.ogg");
+			if (G_Video != Null)
+			{
+				G_Video.Stop();
+			}
 		}
 
-		Void UpdateBackGround(Text _Background)
+		Void PlayVideo(Text _VideoPath, Boolean _Looping)
 		{
-			declare Boolean _IsVideo;
-			declare Text[] Extensionfile = Background_TextLib::Split(".", _Background);
-			if (Extensionfile.count == 0) {
-				UpdateBackGroundImg("");
-				return;
-			}
-			_IsVideo = (Extensionfile[Extensionfile.count - 1] == "webm");
-			if (_IsVideo) {
-				StartVideo(_Background);
-			} else {
-				UpdateBackGroundImg(_Background);
-			}
+			StopVideo();
+			G_Video = Video.CreateVideo(_VideoPath, _Looping, True);
+			G_Video.Play();
+			// G_Video.Image.DefaultVideoTimer = CImage::EVideoTimer::Human;
+		}
+
+		Void PlayVideo(Text _VideoPath)
+		{
+			PlayVideo(_VideoPath, False);
 		}
 
 		main() {
-			declare LastPause = 0.;
-			declare VideoCursorDifference = 0.;
+			declare Quad_Background = (Page.GetFirstChild("Quad_Background") as CMlQuad);
+			declare Label_Mute = (Page.GetFirstChild("Label_Mute") as CMlLabel);
+
+			declare persistent Boolean ObsStore_ForceMusic for LocalUser = True;
+
+			PlayMusic("file://Media/Musics/Menu/opening.ogg");
+			PlayVideo("file://Media/Images/Logos/opening_intro.webm");
+			Quad_Background.Image = G_Video.Image;
+
 			while(True) {
 				yield;
 
-				foreach (Video in G_Videos) {
-					if (G_Music.PlayCursor == 0.) {
-						if (Video.IsPlaying) {
-							Video.Stop();
-							LastPause = Video.PlayCursor;
-						}
-					} else if (!Video.IsPlaying) {
-						Video.Play();
-						G_Music.PlayCursor = 0.;
-					}
+				if (!G_Video.IsPlaying) {
+					PlayVideo("file://Media/Images/Logos/opening_loop.webm", True);
+					Quad_Background.Image = G_Video.Image;
+					if (!ObsStore_ForceMusic)
+						Label_Mute.Hide();
+					
+				}
+				if (G_Video.PlayCursor > .2 && G_Music.PlayCursor == 0.) {
+					Audio.ForceEnableMusic = ObsStore_ForceMusic;
+					Label_Mute.Show();
 				}
 
 				if (!PageIsVisible && PendingEvents.count == 0) continue;
@@ -109,9 +95,26 @@ Text Build() {
 					switch(Event.Type) {
 						case CMlEvent::Type::PluginCustomEvent: {
 							switch(Event.CustomEventType) {
-								case "UpdateBackGround" : {
-									declare Text Background = Event.CustomEventData[0];
-									UpdateBackGround(Background);
+								case "Titlepack_Background_Hide" : {
+									StopVideo();
+									Quad_Background.Hide();
+								}
+								case "Titlepack_Background_Show" : {
+									PlayVideo("file://Media/Images/Logos/opening_loop.webm");
+									Quad_Background.Show();
+								}
+							}
+						}
+						case CMlEvent::Type::MouseClick: {
+							switch(Event.ControlId) {
+								case "Label_Mute" : {
+									Audio.ForceEnableMusic = !Audio.ForceEnableMusic;
+									ObsStore_ForceMusic = Audio.ForceEnableMusic;
+									if (Audio.ForceEnableMusic) {
+										Label_Mute.SetText("");
+									} else {
+										Label_Mute.SetText("");
+									}
 								}
 							}
 						}

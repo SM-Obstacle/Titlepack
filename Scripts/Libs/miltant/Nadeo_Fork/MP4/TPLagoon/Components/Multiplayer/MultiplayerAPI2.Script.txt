@@ -322,7 +322,6 @@ Boolean HasFetched()
 Void InitiateFetch()
 {
 	if (!G_HasStartedFetch || G_HasFetched) {
-		log("fetch");
 		G_HasStartedFetch	= False;
 		G_HasFetched		= False;
 		G_LimitTime			= Now + C_WaitTimeMax;

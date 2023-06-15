@@ -1,5 +1,5 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Menus.Script.txt"                                 as Menus
-#Include "Libs/miltant/ObstacleV2/Titlepack/Background/Index.Script.txt"                            as BackgroundComponent
+#Include "Libs/miltant/ObstacleV2/Titlepack/Background/Index.Script.txt"                            as Background
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/TokenManager.Script.txt"                             as Auth
 
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI2.Script.txt"    as MultiplayerAPI
@@ -16,7 +16,7 @@
 
 
 Void Load() {
-    // BackgroundComponent::Load();
+    Background::Load();
     Menus::Load();
     Auth::Init();
 
@@ -28,16 +28,16 @@ Void Loop() {
     Menus::Loop();
     Auth::Loop();
 
-    declare Integer LastUpdate_TopServers for LocalUser;
+    declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
 	if (MultiplayerAPI::HasFetched()) {
-		declare ChannelInfoStructs::K_ServerInfo[] TopServers for LocalUser;
+		declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
 
 		declare Servers = MultiplayerAPI::GetServersInfos();
 		if (Servers.count > 0) {
-			TopServers = Servers;
+			ObsStore_TopServers = Servers;
 		}
-        LastUpdate_TopServers = Now;
-	} else if (Now - LastUpdate_TopServers > 20000 && !MultiplayerAPI::HasStartedFetch()) {
+        ObsStore_LastUpdate_TopServers = Now;
+	} else if (Now - ObsStore_LastUpdate_TopServers > 20000 && !MultiplayerAPI::HasStartedFetch()) {
         MultiplayerAPI::FetchServerListAsync();
     }
 
@@ -47,11 +47,11 @@ Void Loop() {
                 declare Login = Event.CustomEventData[0];
                 declare Text Password;
                 declare Text SpectatingPassword;
-                declare persistent K[Text] Servers for LocalUser;
+                declare persistent K[Text] ObsStore_Servers for LocalUser;
 
-                if (Servers.existskey(Login)) {
-                    Password = Servers[Login].p;
-                    SpectatingPassword = Servers[Login].s;
+                if (ObsStore_Servers.existskey(Login)) {
+                    Password = ObsStore_Servers[Login].p;
+                    SpectatingPassword = ObsStore_Servers[Login].s;
                 }
 
                 
