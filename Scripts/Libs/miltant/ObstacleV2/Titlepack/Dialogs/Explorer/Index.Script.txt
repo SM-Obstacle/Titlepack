@@ -1,0 +1,89 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"   as Dialogs
+
+#Const C_Dialog_Close "Explorer_Close"
+
+Text Build() {
+    return """
+<manialink version="3">
+    <framemodel id="EmoteTile">
+        <label pos="23.17 -12.83" halign="center" valign="center2" text="" textcolor="fff" textsize="10" id="Label_Emote"/>
+        <label pos="23.17 -25.5" halign="center" valign="center2" text="batman" textfont="light" textcolor="fff" textsize="2" size="46" id="Label_Name"/>
+        <quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" style="Bgs1InRace" substyle="HealthBar" modulatecolor="414245"/>
+    </framemodel>
+
+    <framemodel id="ThumbnailTile" size="46.33 30.67">
+        <label pos="23.17 -27.17" halign="center" valign="center2" text="A Wasted Hymn" textfont="light" textcolor="fff" textsize="2" size="46" id="Label_Name"/>
+        <quad pos="0 -23.17" size="46.33 19.33" image="file://Media/Images/Obstacle/Explorer/FMap.png" id="Quad_Banner"/>
+        <quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" style="Bgs1InRace" substyle="HealthBar" modulatecolor="414245"/>
+    </framemodel>
+
+    <frame pos="-104.25 49.75" size="208.5 99.5">
+        <frame id="Frame_Header">
+            <label pos="3.7 -2" text="Pick a map" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
+            <frame pos="12.6 -11.9">
+                <label text="    Back" textprefix="$t" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+                <quad size="18.5 6" id="Quad_Join" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"/>
+            </frame>
+
+            <label textcolor="fff" pos="160.17 -9" text="" valign="center2" halign="center"/>
+            <entry textcolor="fff" textfont="light" pos="47 -9" size="108 7" default="$ff0$z Downloaded/cheesebullets/run" selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
+            <quad pos="44.33 -5.17" size="120.17 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search" scriptevents="1" modulatecolor="000" opacity="0.5"/>
+        </frame>
+
+        <frame id="Frame_Body" pos="2 -19">
+            <frame size="196 77.5" scroll="1" scrollmax="0 100" id="Frame_Content">
+                <frame id="Frame_Emotes" pos="1">
+                    <frameinstance modelid="EmoteTile" pos="1.33 -1.5"/>
+                    <frameinstance modelid="EmoteTile" pos="50.67 -1.5"/>
+                    <frameinstance modelid="EmoteTile" pos="100 -1.5"/>
+                    <frameinstance modelid="EmoteTile" pos="149.33 -1.5"/>
+
+                    <frameinstance modelid="EmoteTile" pos="1.33 -35.17"/>
+                    <frameinstance modelid="EmoteTile" pos="50.67 -35.17"/>
+                    <frameinstance modelid="EmoteTile" pos="100 -35.17"/>
+                    <frameinstance modelid="EmoteTile" pos="149.33 -35.17"/>
+
+                    <frameinstance modelid="EmoteTile" pos="1.33 -68.83"/>
+                    <frameinstance modelid="EmoteTile" pos="50.67 -68.83"/>
+                    <frameinstance modelid="EmoteTile" pos="100 -68.83"/>
+                    <frameinstance modelid="EmoteTile" pos="149.33 -68.83"/>
+                </frame>
+                <frame id="Frame_Thumbnail" pos="1">
+                    <frameinstance modelid="ThumbnailTile" pos="1.33 -1.5"/>
+                    <frameinstance modelid="ThumbnailTile" pos="50.67 -1.5"/>
+                    <frameinstance modelid="ThumbnailTile" pos="100 -1.5"/>
+                    <frameinstance modelid="ThumbnailTile" pos="149.33 -1.5"/>
+
+                    <frameinstance modelid="ThumbnailTile" pos="1.33 -35.17"/>
+                    <frameinstance modelid="ThumbnailTile" pos="50.67 -35.17"/>
+                    <frameinstance modelid="ThumbnailTile" pos="100 -35.17"/>
+                    <frameinstance modelid="ThumbnailTile" pos="149.33 -35.17"/>
+
+                    <frameinstance modelid="ThumbnailTile" pos="1.33 -68.83"/>
+                    <frameinstance modelid="ThumbnailTile" pos="50.67 -68.83"/>
+                    <frameinstance modelid="ThumbnailTile" pos="100 -68.83"/>
+                    <frameinstance modelid="ThumbnailTile" pos="149.33 -68.83"/>
+                </frame>
+                <quad size="208.5 200" scriptevents="1"/>
+            </frame>
+        </frame>
+    </frame>
+    <script><![CDATA[
+    
+]]></script>
+</manialink>
+""";
+}
+
+Void Load() {
+    Dialogs::RegisterDialog("explorer", "", Build(), C_Dialog_Close);
+}
+
+Text Pick(Text _Title, Text _FileType) {
+    declare Result = Dialogs::PromptWithTitle("explorer", "explorer_" ^ _FileType, _Title);
+
+    if (Result.Success && Result.CustomData.count > 0) {
+        return Result.CustomData[0];
+    }
+    return "";
+}
