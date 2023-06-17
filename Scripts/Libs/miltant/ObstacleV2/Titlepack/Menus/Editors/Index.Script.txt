@@ -50,13 +50,6 @@ Void Load() {
 	Ghost.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Ghost);
 
-	declare SubMenu::K_SubMenu Module;
-	Module.Name = "Module";
-	Module.PreventAutoNavigation = True;
-	Module.Image = "file://Media/Images/Obstacle/Moods/none.png";
-	SubMenus.add(Module);
-
-
 
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
@@ -88,9 +81,6 @@ Void Loop() {
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
 				case "Ghost": {
-					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
-				}
-				case "Module": {
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
 			}

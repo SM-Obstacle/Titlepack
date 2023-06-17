@@ -2,10 +2,9 @@ Text Build() {
 	return """
 <manialink version="3" name="L_Background">
 	<frame z-index="-1000">
-		<label id="Label_Mute" text="" textcolor="ffff" pos="140 -50" textsize="7" scriptevents="1" hidden="1"/>
-		<quad id="Quad_Background"
-			halign="center" valign="center"
-			size="320 180"/>
+		<label id="Label_Mute" halign="center" valign="center" size="20 20" focusareacolor1="0000" focusareacolor2="0000"
+			text="" textcolor="ffff" pos="144 -80" textsize="7" scriptevents="1" hidden="1"/>
+		<quad id="Quad_Background" halign="center" valign="center" size="320 180"/>
 	</frame>
 	
 	
@@ -74,19 +73,24 @@ Text Build() {
 			PlayVideo("file://Media/Images/Logos/opening_intro.webm");
 			Quad_Background.Image = G_Video.Image;
 
+			Audio.ForceEnableMusic = ObsStore_ForceMusic;
+			Label_Mute.Show();
+
 			while(True) {
 				yield;
 
 				if (!G_Video.IsPlaying) {
 					PlayVideo("file://Media/Images/Logos/opening_loop.webm", True);
 					Quad_Background.Image = G_Video.Image;
+
 					if (!ObsStore_ForceMusic)
-						Label_Mute.Hide();
-					
+						Label_Mute.Opacity = Label_Mute.Opacity * .5;
 				}
 				if (G_Video.PlayCursor > .2 && G_Music.PlayCursor == 0.) {
 					Audio.ForceEnableMusic = ObsStore_ForceMusic;
 					Label_Mute.Show();
+				} else if (!ObsStore_ForceMusic) {
+					Audio.LimitMusicVolumedB = -100.;
 				}
 
 				if (!PageIsVisible && PendingEvents.count == 0) continue;
@@ -96,26 +100,34 @@ Text Build() {
 						case CMlEvent::Type::PluginCustomEvent: {
 							switch(Event.CustomEventType) {
 								case "Titlepack_Background_Hide" : {
-									StopVideo();
 									Quad_Background.Hide();
 								}
 								case "Titlepack_Background_Show" : {
-									PlayVideo("file://Media/Images/Logos/opening_loop.webm");
 									Quad_Background.Show();
 								}
 							}
 						}
 						case CMlEvent::Type::MouseClick: {
-							switch(Event.ControlId) {
-								case "Label_Mute" : {
-									Audio.ForceEnableMusic = !Audio.ForceEnableMusic;
-									ObsStore_ForceMusic = Audio.ForceEnableMusic;
-									if (Audio.ForceEnableMusic) {
-										Label_Mute.SetText("");
-									} else {
-										Label_Mute.SetText("");
-									}
+							if(Event.ControlId == "Label_Mute") {
+								Audio.ForceEnableMusic = !Audio.ForceEnableMusic;
+								ObsStore_ForceMusic = Audio.ForceEnableMusic;
+								if (Audio.ForceEnableMusic) {
+									Label_Mute.SetText("");
+									Audio.LimitMusicVolumedB = 0.;
+								} else {
+									Label_Mute.SetText("");
+									Audio.LimitMusicVolumedB = -100.;
 								}
+							}
+						}
+						case CMlEvent::Type::MouseOver: {
+							if(Event.ControlId == "Label_Mute") {
+								Label_Mute.Opacity = 1.;
+							}
+						}
+						case CMlEvent::Type::MouseOut: {
+							if(Event.ControlId == "Label_Mute") {
+								Label_Mute.Opacity = 0.5;
 							}
 						}
 					}
