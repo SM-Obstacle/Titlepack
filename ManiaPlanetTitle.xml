@@ -15,7 +15,7 @@
 	<unlock_features>0</unlock_features>
 	<packaging>
 		<image name="Media\Images\Logos\PackImage.webm"/>
-		<logos name="Media\Images\Logos\MenuHeader.png"/>
+		<logos name="Media\Images\Logos\Background.png"/>
 		<collection></collection>
 		<sortindex>100</sortindex>
 		<station_manialink url=""/>
