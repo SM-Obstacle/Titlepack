@@ -15,7 +15,7 @@
 	<unlock_features>0</unlock_features>
 	<packaging>
 		<image name="Media\Images\Logos\PackImage.webm"/>
-		<logos name="Media\Images\Logos\Logos.png"/>
+		<logos name="Media\Images\Logos\MenuHeader.png"/>
 		<collection></collection>
 		<sortindex>100</sortindex>
 		<station_manialink url=""/>
@@ -25,7 +25,7 @@
 	<menu>
 		<background_img name="Media\Images\Logos\Background.png"/>
 		<background_replay name=""/>
-		<header name=""/>
+		<header name="Media\Images\Logos\Background.png"/>
 		<music name="Media\Musics\Storm\Race\!Night\DAY_01_Track_03.ogg"/>
 		<manialink url="Media/Apps/ObstacleTitlePack.Script.txt"/>
 	</menu>
