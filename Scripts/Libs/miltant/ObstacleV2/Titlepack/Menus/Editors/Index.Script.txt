@@ -1,5 +1,4 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
-// #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Explorer/Index.Script.txt"	as Explorer
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"		as SubMenu
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"	as ExplorerDialog
@@ -66,16 +65,31 @@ Void Loop() {
 			 Event.CustomEventType == "window_load") {
 			switch (Event.CustomEventData[0]) {
 				case "Maps": {
-					ExplorerDialog::Pick("Pick a map", "Map");
+					declare Map = ExplorerDialog::Pick("Pick a map", "Map");
+					if (Map != "") {
+						TitleControl.EditMap(
+							Map, 
+							"MapTypes/ShootMania/ObstacleTitleArena.Script.txt",
+							"""<mode_script_settings>
+								<setting name='S_Mode'					value=''		type='text'/>
+								<setting name='S_IsOfficialMap'			value='False'	type='boolean'/>
+								<setting name='S_Gameplay_Acceleration'	value='1.'		type='real'/>
+								<setting name='S_Gameplay_Control'		value='1.'		type='real'/>
+								<setting name='S_Gameplay_Gravity'		value='1.'		type='real'/>
+							</mode_script_settings>"""
+						);
+					}
 				}
 				case "Replay": {
-					//Windows::Load(Explorer::GetName());
+					declare Replays = ExplorerDialog::MultiPick("Pick one or several replays", "Replay");
+					if (Replays.count > 0)
+						TitleControl.EditReplay(Replays);
 				}
 				case "Item": {
-					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+					TitleControl.OpenEditor(CTitleControl::EEditorType::ItemEditor);
 				}
 				case "Action": {
-					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+					TitleControl.OpenEditor(CTitleControl::EEditorType::ActionMaker);
 				}
 				case "Interface": {
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
@@ -84,6 +98,8 @@ Void Loop() {
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
 			}
+
+			yield;
 		}
 	}
 }

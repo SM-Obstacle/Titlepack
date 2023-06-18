@@ -77,6 +77,10 @@ Text Build() {
 						case CMlScriptEvent::Type::MouseOut: {
 							Label_JoinArrow.SetText(TL::Replace(Label_JoinArrow.Value, "", ""));
 						}
+						case CMlScriptEvent::Type::MouseClick: {
+							if (TopServer_Login != "")
+								SendCustomEvent("join_server", [TopServer_Login]);
+						}
 					}
 				}
 				

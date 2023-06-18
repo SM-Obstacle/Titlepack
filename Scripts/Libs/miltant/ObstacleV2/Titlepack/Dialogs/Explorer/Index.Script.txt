@@ -87,3 +87,12 @@ Text Pick(Text _Title, Text _FileType) {
     }
     return "";
 }
+
+Text[] MultiPick(Text _Title, Text _FileType) {
+    declare Result = Dialogs::PromptWithTitle("explorer", "explorer_" ^ _FileType, _Title);
+
+    if (Result.Success) {
+        return Result.CustomData;
+    }
+    return [];
+}

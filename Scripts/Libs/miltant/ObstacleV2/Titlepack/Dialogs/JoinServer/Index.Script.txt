@@ -1,0 +1,84 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"   as Dialogs
+
+#Const C_Dialog_Close "JoinServer_Close"
+
+Text Build() {
+    return """
+<manialink version="3">
+    
+	<framemodel id="Model_News">
+		<quad size="61 31" id="Poster"/>
+		<quad size="61 31" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/FrameNews.png" id="Frame_Trigger" scriptevents="1"/>
+	</framemodel>
+			
+    <frame pos="-104.25 49.75" size="208.5 99.5">
+        <frame id="Frame_Header">
+            <label pos="3.7 -2" text="Max Map" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
+            <label pos="25.7 -2" text="" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
+
+            <frame pos="12.6 -11.9">
+                <label text="Play" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+                <quad size="18.5 6" id="Quad_Join" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"/>
+            </frame>
+            <frame pos="34 -11.9">
+                <label text="Spectate" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+                <quad size="18.5 6" id="Quad_Spec" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BDefault.png"/>
+            </frame>
+
+		
+            <label pos="167 -7" text="Lyyras" textfont="light" textcolor="fff" textsize="1.7" id="Label_Name" halign="right" textprefix="  "/>
+            <label pos="170 -7" text=" maniaplanet://#join" textfont="light" textcolor="fff" textsize="1.7" id="Label_Name"/>
+        </frame>
+
+        <frame id="Frame_Body" pos="2 -19">
+            <label pos="0 -1" textprefix="  " text="Description" textfont="light" textcolor="fff" textsize="1.7"/>
+			<frame size="134 31.83" pos="0 -6.33" scroll="1" scrollmax="0 500">
+				<label pos="67 -1" size="134" text="Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm " autonewline="1" halign="center" textsize="2" textcolor="fff"/>
+				<quad  scriptevents="1" size="134 700" pos="0 100"/>
+			</frame>
+			<quad pos="0 -6.33" size="134 31.83" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/FComment.png"/>
+			<frameinstance pos="0 -43.67" modelid="Model_News"/>
+			<frameinstance pos="72.83 -43.67" modelid="Model_News"/>
+			
+			<frame pos="136.5 -1">
+            	<label textprefix="  " text="Players" textfont="light" textcolor="fff" textsize="1.7"/>
+				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="f0ff9"/>
+            	<label text="1500/6000" textfont="light" textcolor="cb5" textsize="1.7" pos="67 0" halign="right"/>
+				
+				<frame size="134 31.83" pos="0 -6.33" scroll="1" scrollmax="0 500">
+					<label pos="67 -1" size="134" text="Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummm" autonewline="1" halign="center" textsize="2" textcolor="fff"/>
+					<quad  scriptevents="1" size="134 700" pos="0 100"/>
+				</frame>
+			</frame>
+			
+			<frame pos="136.5 -39">
+            	<label textprefix="  " text="Maps" textfont="light" textcolor="fff" textsize="1.7"/>
+				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="f0ff9"/>
+            	<label text="1500" textfont="light" textcolor="cb5" textsize="1.7" pos="67 0" halign="right"/>
+				
+				<frame size="134 31.83" pos="0 -6.33" scroll="1" scrollmax="0 500">
+					<label pos="67 -1" size="134" text="Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummmmmmmm Lorem ipsummm" autonewline="1" halign="center" textsize="2" textcolor="fff"/>
+					<quad  scriptevents="1" size="134 700" pos="0 100"/>
+				</frame>
+			</frame>
+        </frame>
+    </frame>
+<script><![CDATA[
+    
+]]></script>
+</manialink>
+""";
+}
+
+Void Load() {
+    Dialogs::RegisterDialog("joinserver", "", Build(), C_Dialog_Close);
+}
+
+Text Join(Text _Login) {
+    declare Result = Dialogs::PromptWithTitle("joinserver", "joinserver_" ^ _Login, _Login);
+
+    if (Result.Success && Result.CustomData.count > 0) {
+        return Result.CustomData[0];
+    }
+    return "";
+}

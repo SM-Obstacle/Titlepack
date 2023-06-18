@@ -1,5 +1,6 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"									as Windows
-#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"											as Styles
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"												as Styles
+#Include "Libs/miltant/ObstacleV2/String.Script.txt"													as StringLib
 
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
@@ -92,6 +93,7 @@ Text Build() {
 
 	{{{ChannelInfoStructs::K_ServerInfo_ML}}}
 	{{{Styles::GetDeclareGlobals()}}}
+	{{{StringLib::ExportContrast()}}}
 
 	declare CMlFrame G_Frame_VisibleContent;
 
@@ -119,7 +121,7 @@ Text Build() {
 			declare Label_Ping = (FrameInstance.GetFirstChild("Label_Ping") as CMlLabel);
 
 			Quad_Flag.ChangeImageUrl(Server.server_zone);
-			Label_Name.SetText(Server.server_name);
+			Label_Name.SetText(ContrastString(Server.server_name));
 			Label_Private.Visible = Server.server_is_private;
 			Label_Fav.Visible = False;
 			Label_Players.SetText(Server.server_player_count ^ "/" ^ Server.server_player_max);

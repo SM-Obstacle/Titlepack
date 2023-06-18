@@ -3,7 +3,8 @@
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/TokenManager.Script.txt"                             as Auth
 
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI2.Script.txt"    as MultiplayerAPI
-#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt" as ChannelInfoStructs
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/JoinServer/Index.Script.txt"	                 as ServerDialog
 
 #Include "MathLib"	as ML
 
@@ -16,6 +17,7 @@
 
 
 Void Load() {
+	ServerDialog::Load();
     Background::Load();
     Menus::Load();
     Auth::Init();
@@ -54,7 +56,7 @@ Void Loop() {
                     SpectatingPassword = ObsStore_Servers[Login].s;
                 }
 
-                
+                ServerDialog::Join(Login);
             }
         }
     }

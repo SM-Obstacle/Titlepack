@@ -78,6 +78,7 @@ Void Loop() {
 	foreach(Event in PendingEvents) {
 		switch(Event.Type) {
 			case CManiaAppEvent::EType::LayerCustomEvent: {
+				log(Event);
 				switch(Event.CustomEventType) {
 					case "window_load" : {
 						// asserts that the window's name is provided

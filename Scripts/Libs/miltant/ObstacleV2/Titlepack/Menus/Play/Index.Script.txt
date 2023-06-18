@@ -27,12 +27,14 @@ Void Load() {
 	declare SubMenu::K_SubMenu Local;
 	Local.Name = "local";
 	Local.Image = "file://Media/Images/Obstacle/Moods/local.png";
+	Local.PreventAutoNavigation = True;
 	SubMenus.add(Local);
 	Local::Load();
 
-	// declare SubMenu::K_SubMenu Tutorials;
-	// Tutorials.Name = "Tutorials";
-	// SubMenus.add(Tutorials);
+	declare SubMenu::K_SubMenu Tutorials;
+	Tutorials.Name = "Tutorials";
+	Tutorials.PreventAutoNavigation = True;
+	SubMenus.add(Tutorials);
 
 
 	declare Windows::K_Window Window;
