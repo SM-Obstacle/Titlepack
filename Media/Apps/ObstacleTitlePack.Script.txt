@@ -2,14 +2,17 @@
 
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Index.Script.txt"				as ObstacleController
 #Include "Libs/miltant/ObstacleV2/Titlepack/Background/Index.Script.txt"		as Background
+#Include "Libs/miltant/ObstacleV2/Titlepack/Store.Script.txt"   				as ObsStore
 
 main() {
 	ObstacleController::Load();
 	Background::Load();
+	ObsStore::Load();
 
 	while(True) {
 		yield;
 		
+		ObsStore::Loop();
 		ObstacleController::Loop();
 	}
 }

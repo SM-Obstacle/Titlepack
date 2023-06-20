@@ -76,23 +76,20 @@ Void Load(Text _Window) {
 
 Void Loop() {
 	foreach(Event in PendingEvents) {
-		switch(Event.Type) {
-			case CManiaAppEvent::EType::LayerCustomEvent: {
-				log(Event);
-				switch(Event.CustomEventType) {
-					case "window_load" : {
-						// asserts that the window's name is provided
-						// and that preventdefault is not set 
-						if (
-							Event.CustomEventData.count > 0
-						 && Event.CustomEventData.count == 1
-						 || Event.CustomEventData[1] != "preventdefault"
-						)
-						{ Load(Event.CustomEventData[0]); }
-					}
-					case "window_unload" : {
-						Unload();
-					}
+		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent) {
+			switch (Event.CustomEventType) {
+				case "window_load": {
+					// asserts that the window's name is provided
+					// and that preventdefault is not set
+					if (
+						Event.CustomEventData.count > 0
+					 && Event.CustomEventData.count == 1
+					 || Event.CustomEventData[1] != "preventdefault"
+					)
+					{ Load(Event.CustomEventData[0]); }
+				}
+				case "window_unload" : {
+					Unload();
 				}
 			}
 		}

@@ -3,7 +3,7 @@
 #Struct K_SubMenu {
 	Text Name;
 	Text Image;
-    Boolean PreventAutoNavigation;
+    Boolean AutoNavigation;
 }
 
 Text Build(K_SubMenu[] _Menu) {
@@ -30,7 +30,7 @@ Text Build(K_SubMenu[] _Menu) {
     <frame id="Frame_Menus">""";
 
         foreach (I => Item in _Menu) {
-            ML_Text ^="""<frameinstance pos="{{{6.67 + (70. + 6.67) * I}}}" data-image="{{{Item.Image}}}" data-name="{{{Item.Name}}}" data-preventdefault="{{{Item.PreventAutoNavigation}}}" modelid="Model_SubMenuItem"/>""";
+            ML_Text ^="""<frameinstance pos="{{{6.67 + (70. + 6.67) * I}}}" data-image="{{{Item.Image}}}" data-name="{{{Item.Name}}}" data-preventdefault="{{{Item.AutoNavigation}}}" modelid="Model_SubMenuItem"/>""";
         }
 
         ML_Text ^= """

@@ -39,15 +39,15 @@ Void Initialize() {
     declare ML_Text = """
 <manialink version="3">
     <framemodel id="rectangle">
-        <quad size="1.666666 1.666666" id="Quad_TopLeft" opacity="0.901961"/>
-        <quad size="0 1.666666" id="Quad_Top" opacity="0.901961"/>
-        <quad size="1.666666 1.666666" id="Quad_TopRight" rot="90" opacity="0.901961"/>
+        <quad size="1.666666 1.666666" id="Quad_TopLeft" opacity="0.901961" scriptevents="1"/>
+        <quad size="0 1.666666" id="Quad_Top" opacity="0.901961" scriptevents="1"/>
+        <quad size="1.666666 1.666666" id="Quad_TopRight" rot="90" opacity="0.901961" scriptevents="1"/>
         
-        <quad id="Quad_Middle" opacity="0.901961"/>
+        <quad id="Quad_Middle" opacity="0.901961" scriptevents="1"/>
         
-        <quad size="1.666666 1.666666" id="Quad_BotLeft" rot="270" opacity="0.901961"/>
-        <quad size="0 1.666666" id="Quad_Bot" opacity="0.901961"/>
-        <quad size="1.666666 1.666666" id="Quad_BotRight" rot="180" opacity="0.901961"/>
+        <quad size="1.666666 1.666666" id="Quad_BotLeft" rot="270" opacity="0.901961" scriptevents="1"/>
+        <quad size="0 1.666666" id="Quad_Bot" opacity="0.901961" scriptevents="1"/>
+        <quad size="1.666666 1.666666" id="Quad_BotRight" rot="180" opacity="0.901961" scriptevents="1"/>
     </framemodel>
 
     <frame z-index="999">
@@ -211,36 +211,44 @@ Void Private_ResizeWrapper(CMlPage _Dialog, CMlPage _Wrapper) {
     declare CMlFrame Frame_BG_Header = (_Wrapper.GetFirstChild("Frame_BG_Header") as CMlFrame);
     declare CMlFrame Frame_BG_Body = (_Wrapper.GetFirstChild("Frame_BG_Body") as CMlFrame);
 
-    declare Vec2 WrapperSize;
+    declare Vec2 WrapperPos;
+    declare Vec2 WrapperBottomRight;
     foreach (Control in _Dialog.MainFrame.Controls) {
-        if (Control.AbsolutePosition_V3.X < WrapperSize.X) {
-            WrapperSize.X = Control.AbsolutePosition_V3.X;
+        if (Control.AbsolutePosition_V3.X < WrapperPos.X) {
+            WrapperPos.X = Control.AbsolutePosition_V3.X;
         }
-        if (Control.AbsolutePosition_V3.Y > WrapperSize.Y) {
-            WrapperSize.Y = Control.AbsolutePosition_V3.Y;
+        if (Control.AbsolutePosition_V3.Y > WrapperPos.Y) {
+            WrapperPos.Y = Control.AbsolutePosition_V3.Y;
         }
-        if (Control.Size.X + Control.AbsolutePosition_V3.X > WrapperSize.X) {
-            WrapperSize.X = Control.Size.X + Control.AbsolutePosition_V3.X;
+        if (Control.Size.X + Control.AbsolutePosition_V3.X > WrapperBottomRight.X) {
+            WrapperBottomRight.X = Control.Size.X + Control.AbsolutePosition_V3.X;
         }
-        if (Control.Size.Y - Control.AbsolutePosition_V3.Y > WrapperSize.Y) {
-            WrapperSize.Y = Control.Size.Y - Control.AbsolutePosition_V3.Y;
+        if (Control.AbsolutePosition_V3.Y - Control.Size.Y < WrapperBottomRight.Y) {
+            WrapperBottomRight.Y = Control.AbsolutePosition_V3.Y - Control.Size.Y;
         }
     }
+
+    declare WrapperSize = WrapperBottomRight - WrapperPos;
+    WrapperSize.X = ML::Abs(WrapperSize.X);
+    WrapperSize.Y = ML::Abs(WrapperSize.Y);
 
     Private_ResizeRectangle(Frame_BG_Header, K_CornersToggle {
         TopLeft = True,
         TopRight = True,
         BotLeft = False,
         BotRight = False
-    }, <WrapperSize.X * 2, 17.666666>, <.324, .3275, .3484>);
-    Frame_BG_Header.RelativePosition_V3.Y = WrapperSize.Y - 8.833;
+    }, <WrapperSize.X, 17.666666>, <.324, .3275, .3484>);
+    Frame_BG_Header.RelativePosition_V3.X = WrapperPos.X + WrapperSize.X / 2.;
+    Frame_BG_Header.RelativePosition_V3.Y = WrapperPos.Y - 8.833333;
+
     Private_ResizeRectangle(Frame_BG_Body, K_CornersToggle {
         TopLeft = False,
         TopRight = False,
         BotLeft = True,
         BotRight = True
-    }, <WrapperSize.X * 2, WrapperSize.Y * 2 - 17.666666>, <.09, .09, .09>);
-    Frame_BG_Body.RelativePosition_V3.Y = -8.833;
+    }, <WrapperSize.X, WrapperSize.Y - 17.666666>, <.2, .2, .2>);
+    Frame_BG_Body.RelativePosition_V3.X = WrapperPos.X + WrapperSize.X / 2.;
+    Frame_BG_Body.RelativePosition_V3.Y = WrapperPos.Y - WrapperSize.Y / 2. - 8.833333;
 }
 
 
@@ -288,10 +296,11 @@ K_Result PromptWithTitle(Text _ID, Text _Procedure_ID, Text _Title) {
         declare Text[] Dialog_CustomData;
 
         foreach (Event in PendingEvents) {
-            if (Event.Type == CMlScriptEvent::Type::PluginCustomEvent && Event.CustomEventType == DialogLib_CurrentDialog.Close_Event) {
+            if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent && Event.CustomEventType == DialogLib_CurrentDialog.Close_Event) {
                 Dialog_Closed = True;
-                log(Event.CustomEventData);
-                // Dialog_CustomData = Event.CustomEventData;
+                foreach (Data in Event.CustomEventData) {
+                    Dialog_CustomData.add(Data);
+                }
             }
         }
 
@@ -304,7 +313,9 @@ K_Result PromptWithTitle(Text _ID, Text _Procedure_ID, Text _Title) {
 
             declare K_Result Result;
             Result.Success = DialogLib_CurrentDialog.Aborted;
-            // TODO Result.CustomData = Dialog_CustomData;
+            foreach (T in Dialog_CustomData) {
+                Result.CustomData.add(T);
+            }
             return Result;
         }
     }

@@ -2,6 +2,7 @@
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"		as SubMenu
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"	as ExplorerDialog
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/NewMap/Index.Script.txt"	as NewMapDialog
 
 
 Text GetName() {
@@ -10,42 +11,43 @@ Text GetName() {
 
 Void Load() {
 	ExplorerDialog::Load();
+	NewMapDialog::Load();
 
 	declare SubMenu::K_SubMenu[] SubMenus;
 
 	declare SubMenu::K_SubMenu Maps;
 	Maps.Name = "Maps";
-	Maps.PreventAutoNavigation = True;
+	Maps.AutoNavigation = False;
 	Maps.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Maps);
 
 	declare SubMenu::K_SubMenu Replay;
 	Replay.Name = "Replay";
-	Replay.PreventAutoNavigation = True;
+	Replay.AutoNavigation = False;
 	Replay.Image = "file://Media/Images/Obstacle/Moods/day.png";
 	SubMenus.add(Replay);
 
 	declare SubMenu::K_SubMenu Item;
 	Item.Name = "Item";
-	Item.PreventAutoNavigation = True;
+	Item.AutoNavigation = False;
 	Item.Image = "file://Media/Images/Obstacle/Moods/night.png";
 	SubMenus.add(Item);
 
 	declare SubMenu::K_SubMenu Action;
 	Action.Name = "Action";
-	Action.PreventAutoNavigation = True;
+	Action.AutoNavigation = False;
 	Action.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Action);
 
 	declare SubMenu::K_SubMenu Interface;
 	Interface.Name = "Interface";
-	Interface.PreventAutoNavigation = True;
+	Interface.AutoNavigation = False;
 	Interface.Image = "file://Media/Images/Obstacle/Moods/sunset.png";
 	SubMenus.add(Interface);
 
 	declare SubMenu::K_SubMenu Ghost;
 	Ghost.Name = "Ghost";
-	Ghost.PreventAutoNavigation = True;
+	Ghost.AutoNavigation = False;
 	Ghost.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Ghost);
 
@@ -79,6 +81,7 @@ Void Loop() {
 							</mode_script_settings>"""
 						);
 					}
+					// log(NewMapDialog::Craft());
 				}
 				case "Replay": {
 					declare Replays = ExplorerDialog::MultiPick("Pick one or several replays", "Replay");
@@ -96,6 +99,9 @@ Void Loop() {
 				}
 				case "Ghost": {
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+				}
+				default: {
+					continue;
 				}
 			}
 

@@ -116,12 +116,12 @@ Void Loop() {
 				}
 
 				case "editors": {
-					// TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 					Windows::Load(Editors::GetName());
 				}
 
 				case "profile": {
 					Menu_Profile();
+					yield;
 				}
 
 				case "play": {

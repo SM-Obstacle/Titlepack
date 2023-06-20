@@ -1,0 +1,138 @@
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI2.Script.txt"    as MultiplayerAPI
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt" as ChannelInfoStructs
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/JoinServer/Index.Script.txt"	                 as ServerDialog
+
+#Struct K { // K_ServerRecord
+    Integer t; //time
+    Text p; // password
+    Text s; // spectating password
+}
+
+#Struct K_MapInfo {
+    Text MapUid;
+    Text AuthorNickName;
+    Boolean IsPlayable;
+    Integer TMObjective_AuthorTime;
+    Integer TMObjective_GoldTime;
+    Integer TMObjective_SilverTime;
+    Integer TMObjective_BronzeTime;
+    Text Name;
+    Text Path;
+    Text FileName;
+}
+
+Text ML_K_MapInfo() {
+    return """
+#Struct K_MapInfo {
+    Text MapUid;
+    Text AuthorNickName;
+    Boolean IsPlayable;
+    Integer TMObjective_AuthorTime;
+    Integer TMObjective_GoldTime;
+    Integer TMObjective_SilverTime;
+    Integer TMObjective_BronzeTime;
+    Text Name;
+    Text Path;
+    Text FileName;
+}""";
+}
+
+
+declare Boolean G_MapsHasFetched;
+declare CTaskResult_MapList	G_MapsTaskResult;
+
+Void RefreshMultiplayer() {
+    MultiplayerAPI::FetchServerListAsync();
+}
+
+Void Load_Multiplayer() {
+    MultiplayerAPI::Load(True);
+    RefreshMultiplayer();
+}
+
+Void Loop_Multiplayer() {
+    declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
+	if (MultiplayerAPI::HasFetched()) {
+		declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+
+		declare Servers = MultiplayerAPI::GetServersInfos();
+		if (Servers.count > 0) {
+			ObsStore_TopServers = Servers;
+		}
+        ObsStore_LastUpdate_TopServers = Now;
+	} else if (Now - ObsStore_LastUpdate_TopServers > 20000 && !MultiplayerAPI::HasStartedFetch()) {
+        MultiplayerAPI::FetchServerListAsync();
+    }
+
+    foreach (Event in PendingEvents) {
+        if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent) {
+            if (Event.CustomEventType == "join_server" && Event.CustomEventData.count > 0) {
+                declare Login = Event.CustomEventData[0];
+                declare Text Password;
+                declare Text SpectatingPassword;
+                declare persistent K[Text] ObsStore_Servers for LocalUser;
+
+                if (ObsStore_Servers.existskey(Login)) {
+                    Password = ObsStore_Servers[Login].p;
+                    SpectatingPassword = ObsStore_Servers[Login].s;
+                }
+
+                ServerDialog::Join(Login);
+            }
+        }
+    }
+}
+
+Void Load_Maps() {
+    G_MapsHasFetched = False;
+    if (G_MapsTaskResult != Null) {
+        DataFileMgr.TaskResult_Release(G_MapsTaskResult.Id);
+    }
+	G_MapsTaskResult = DataFileMgr.Map_GetGameList("", True);
+
+}
+
+Void Loop_Maps() {
+	if (!G_MapsHasFetched && G_MapsTaskResult != Null && !G_MapsTaskResult.IsProcessing && G_MapsTaskResult.HasSucceeded) {
+		G_MapsHasFetched = True;
+        
+        declare K_MapInfo[][Text] ObsStore_Maps for LocalUser;
+        declare Integer ObsStore_Maps_LastUpdate for LocalUser;
+        ObsStore_Maps.clear();
+        ObsStore_Maps_LastUpdate = Now;
+
+        foreach (I => Map in G_MapsTaskResult.MapInfos) {
+            if (!ObsStore_Maps.existskey(Map.Path)) {
+                ObsStore_Maps[Map.Path] = [];
+            }
+            ObsStore_Maps[Map.Path].add(K_MapInfo {
+                MapUid =  Map.MapUid,
+                AuthorNickName = Map.AuthorNickName,
+                IsPlayable = Map.IsPlayable,
+                TMObjective_AuthorTime = Map.TMObjective_AuthorTime,
+                TMObjective_GoldTime = Map.TMObjective_GoldTime,
+                TMObjective_SilverTime = Map.TMObjective_SilverTime,
+                TMObjective_BronzeTime = Map.TMObjective_BronzeTime,
+                Name = Map.Name,
+                Path = Map.Path,
+                FileName = Map.FileName
+            });
+        }
+	}
+}
+
+Void RefreshMaps() {
+    DataFileMgr.Map_RefreshFromDisk();
+    Load_Maps();
+}
+
+Void Load() {
+    ServerDialog::Load();
+    Load_Multiplayer();
+    Load_Maps();
+}
+
+Void Loop() {
+    Loop_Multiplayer();
+    Loop_Maps();
+}

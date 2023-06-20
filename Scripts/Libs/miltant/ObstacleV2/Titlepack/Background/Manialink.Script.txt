@@ -3,7 +3,7 @@ Text Build() {
 <manialink version="3" name="L_Background">
 	<frame z-index="-1000">
 		<label id="Label_Mute" halign="center" valign="center" size="20 20" focusareacolor1="0000" focusareacolor2="0000"
-			text="" textcolor="ffff" pos="144 -80" textsize="7" opacity="0.5" scriptevents="1"/>
+			text="" textcolor="ffff" pos="144 -80" textsize="7" opacity="0.5" scriptevents="1" z-index="5"/>
 		<quad id="Quad_Background" halign="center" valign="center" size="320 180"/>
 	</frame>
 	
@@ -75,6 +75,11 @@ Text Build() {
 			Quad_Background.Image = G_Video.Image;
 
 			Audio.ForceEnableMusic = ObsStore_ForceMusic;
+			if (Audio.ForceEnableMusic) {
+				Label_Mute.SetText("");
+			} else {
+				Label_Mute.SetText("");
+			}
 
 			while(True) {
 				yield;

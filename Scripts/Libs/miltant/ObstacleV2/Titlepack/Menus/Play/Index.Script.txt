@@ -27,13 +27,13 @@ Void Load() {
 	declare SubMenu::K_SubMenu Local;
 	Local.Name = "local";
 	Local.Image = "file://Media/Images/Obstacle/Moods/local.png";
-	Local.PreventAutoNavigation = True;
+	Local.AutoNavigation = False;
 	SubMenus.add(Local);
 	Local::Load();
 
 	declare SubMenu::K_SubMenu Tutorials;
-	Tutorials.Name = "Tutorials";
-	Tutorials.PreventAutoNavigation = True;
+	Tutorials.Name = "tutorials";
+	Tutorials.AutoNavigation = False;
 	SubMenus.add(Tutorials);
 
 
