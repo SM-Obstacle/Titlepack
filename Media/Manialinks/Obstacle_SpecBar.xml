@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<manialink version="3">
+<frame>
+    <frame pos="-45 0">
+        <quad z-index="0" size="90 15" bgcolor="FFFA" image="https://cdn.discordapp.com/attachments/456854627153870858/1066782830908162048/Fond.png" keepratio="Clip"/>
+	    <frame z-index="1">
+			<label pos="45 -7.5" z-index="0" size="50 10" text="ZENYOX" halign="center" valign="center" style="TextCardScores2" textfont="Oswald" textsize="5"/>
+			<quad pos="35 0" z-index="0" size="55 0.5" bgcolor="FFFF"/>
+			<quad pos="55 -14.5" z-index="0" size="35 0.5" bgcolor="FFFF"/>
+			<quad pos="89.5 0" z-index="0" size="0.5 15" bgcolor="FFFF"/>
+			<quad pos="75 -4" z-index="0" size="10 7" bgcolor="FFFA" style="Bgs1" substyle="BgColorContour"/>
+			<quad pos="75.5 -4.5" z-index="0" size="9 6" bgcolor="FFFA" image="https://upload.wikimedia.org/wikipedia/en/thumb/c/c3/Flag_of_France.svg/1200px-Flag_of_France.svg.png"  />
+	    </frame>
+    </frame>
+</frame>
+</manialink>
