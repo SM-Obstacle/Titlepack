@@ -1,0 +1,108 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"		as SubMenu
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"	as ExplorerDialog
+
+declare Boolean G_PendingStartMapEditor;
+declare Boolean G_PendingStartReplayEditor;
+
+Text GetName() {
+	return "editors";
+}
+
+Void StartMapEditor() {
+	if (G_PendingStartMapEditor)
+		G_PendingStartMapEditor = !ExplorerDialog::StartMapEditor();
+}
+
+Void StartReplayEditor() {
+	if (G_PendingStartReplayEditor)
+		G_PendingStartReplayEditor = !ExplorerDialog::StartReplayEditor();
+}
+
+Void Load() {
+	G_PendingStartMapEditor = False;
+
+	declare SubMenu::K_SubMenu[] SubMenus;
+
+	declare SubMenu::K_SubMenu Maps;
+	Maps.Name = "Maps";
+	Maps.PreventDefault = True;
+	Maps.Image = "file://Media/Images/Obstacle/Moods/none.png";
+	SubMenus.add(Maps);
+
+	declare SubMenu::K_SubMenu Replay;
+	Replay.Name = "Replay";
+	Replay.PreventDefault = True;
+	Replay.Image = "file://Media/Images/Obstacle/Moods/day.png";
+	SubMenus.add(Replay);
+
+	declare SubMenu::K_SubMenu Item;
+	Item.Name = "Item";
+	Item.PreventDefault = True;
+	Item.Image = "file://Media/Images/Obstacle/Moods/night.png";
+	SubMenus.add(Item);
+
+	declare SubMenu::K_SubMenu Action;
+	Action.Name = "Action";
+	Action.PreventDefault = True;
+	Action.Image = "file://Media/Images/Obstacle/Moods/none.png";
+	SubMenus.add(Action);
+
+	declare SubMenu::K_SubMenu Interface;
+	Interface.Name = "Interface";
+	Interface.PreventDefault = True;
+	Interface.Image = "file://Media/Images/Obstacle/Moods/sunset.png";
+	SubMenus.add(Interface);
+
+	declare SubMenu::K_SubMenu Ghost;
+	Ghost.Name = "Ghost";
+	Ghost.PreventDefault = True;
+	Ghost.Image = "file://Media/Images/Obstacle/Moods/none.png";
+	SubMenus.add(Ghost);
+
+
+	declare Windows::K_Window Window;
+	Window.Name = GetName();
+	Window.Manialink = SubMenu::Build(SubMenus);
+	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
+
+	Windows::CreateWindow(Window);
+}
+
+Void Loop() {
+	foreach(Event in PendingEvents) {
+		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
+			 Event.CustomEventData.count > 0 &&
+			 Event.CustomEventType == "window_load") {
+			switch (Event.CustomEventData[0]) {
+				case "Maps": {
+					ExplorerDialog::Load("Map", True);
+					G_PendingStartMapEditor = True;
+				}
+				case "Replay": {
+					ExplorerDialog::Load("Replay");
+					G_PendingStartReplayEditor = True;
+				}
+				case "Item": {
+					TitleControl.OpenEditor(CTitleControl::EEditorType::ItemEditor);
+				}
+				case "Action": {
+					TitleControl.OpenEditor(CTitleControl::EEditorType::ActionMaker);
+				}
+				case "Interface": {
+					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+				}
+				case "Ghost": {
+					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+				}
+				case "Module": {
+					TitleControl.OpenEditor(CTitleControl::EEditorType::ModuleStudio);
+				}
+			}
+		}
+	}
+
+	StartMapEditor();
+	StartReplayEditor();
+}

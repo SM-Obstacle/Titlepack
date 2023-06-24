@@ -1,0 +1,666 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Store.Script.txt"           as ObsStore
+#Include "Libs/miltant/ObstacleV2/String.Script.txt"					as StringLib
+
+#Const C_Dialog_Close "Explorer_Close"
+
+Text Build(Text _FileType, Boolean _New) {
+	declare Update_NewMap = "";
+	declare NewCoords = "-149.5 49.75";
+	declare MainCoords = "-104.25 49.75";
+
+	if (_New) {
+		Update_NewMap = "Update_NewMap();";
+		MainCoords = "-59 49.75";
+	} else {
+		NewCoords = MainCoords;
+	}
+	
+	
+	declare ML_Text = """
+<manialink version="3">
+	<framemodel id="EmoteTile">
+		<label pos="23.17 -12.83" halign="center" valign="center2" textcolor="fff" textsize="10" id="Label_Emote"/>
+		<label pos="23.17 -25.5" halign="center" valign="center2" textfont="light" textcolor="fff" textsize="1.5" size="46" id="Label_Name"/>
+		<quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" style="Bgs1InRace" substyle="HealthBar" modulatecolor="414245"/>
+	</framemodel>
+
+	<framemodel id="ThumbnailTile" size="46.33 30.67">
+		<frame id="Frame_Banner">
+			<label pos="23.17 -27.17" halign="center" valign="center2" textfont="light" textcolor="fff" textsize="1.5" size="44" id="Label_Name"/>
+			<label pos="23.17 -34" halign="center" valign="center2" textfont="light" textcolor="fff" textsize="1.5" size="44" id="Label_Author" hidden="1" textprefix="  "/>
+			<quad pos="0 -23.17" size="46.33 19.33" id="Quad_Banner" bgcolor="000b"/>
+		</frame>
+		<quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" keepratio="Clip"/>
+		<label pos="23.17 -12.83" halign="center" valign="center2" textcolor="fff" textsize="10" text=""/>
+	</framemodel>
+
+	<frame pos="{{{NewCoords}}}" size="80 111" id="Window_NewMap" hidden="{{{!_New}}}">
+		<frame id="Frame_Header">
+			<label pos="40 -6" text="New Map" textfont="light" textcolor="fff" textsize="3.5" id="Label_Title" halign="center"/>
+
+			<!-- <label textcolor="fff" pos="75 -.5" size="7 7" text="x" valign="center2" halign="center" id="Label_NewMap" scriptevents="1" focusareacolor1="0000" focusareacolor2="0000" hidden="1"/>
+			<label pos="15 -.5" text="New map" textfont="light" textcolor="fff" textsize="3.5" id="Label_NewMapName" size="56.5 7" halign="left" valign="center2" focusareacolor1="0000" focusareacolor2="0000" scriptevents="1"/> -->
+		</frame>
+
+		<frame id="Frame_Body" pos="3.67 -17.66">
+			<quad pos="38.08 -23.49" size="83.5 46.97" id="Quad_Preview" halign="center" valign="center2" keepratio="Fit"/>
+			
+			<frame pos="0 -51" id="Frame_Deco">
+				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Deco_Minus" scriptevents="1" hidden="1" focusareacolor2="ccc5"/>
+				<label pos="38.08 -4" size="40 8" text="Land" halign="center" valign="center2" id="Label_Deco"/>
+				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Deco_Plus" scriptevents="1" focusareacolor2="ccc5"/>
+			</frame>
+			<frame pos="0 -61" id="Frame_Mood">
+				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mood_Minus" scriptevents="1" focusareacolor2="ccc5"/>
+				<label pos="38.08 -4" size="40 8" text="Day" halign="center" valign="center2" id="Label_Mood"/>
+				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mood_Plus" scriptevents="1" focusareacolor2="ccc5"/>
+			</frame>
+			<frame pos="0 -71" id="Frame_Mod">
+				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mod_Minus" scriptevents="1" hidden="1" focusareacolor2="ccc5"/>
+				<label pos="38.08 -4" size="40 8" text="Default Textures" halign="center" valign="center2" id="Label_Mod"/>
+				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mod_Plus" scriptevents="1" hidden="1" focusareacolor2="ccc5"/>
+			</frame>
+
+			<frame pos="38.08 -86">
+				<label text="Create" textprefix=" " textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+				<quad size="18.5 6" id="Button_Confirm" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png" scriptevents="1"/>
+			</frame>
+		</frame>
+	</frame>
+
+	<frame pos="{{{MainCoords}}}" size="208.5 111" id="Window_Picker">
+		<frame id="Frame_Header">
+			<label pos="3.7 -6" text="Pick a {{{_FileType}}}" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
+			<!-- <frame pos="12.6 -11.9">
+				<label text="    Back" textprefix="$t" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+				<quad size="18.5 6" id="Quad_Back" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"/>
+			</frame> -->
+
+			<entry textcolor="fff" textfont="light" pos="53 -9" size="95 7" default="/"
+				selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
+			<label textcolor="fff" pos="153.17 -9.17" text="" valign="center2" halign="center" id="Label_Parent" scriptevents="1" size="8 8" focusareacolor1="0000" focusareacolor2="0000"/>
+			<label textcolor="fff" pos="160.17 -9.17" text="" valign="center2" halign="center" id="Label_Refresh" scriptevents="1" size="8 8" focusareacolor1="0000" focusareacolor2="0000"/>
+			<label textcolor="fff" pos="48.33 -9" text="$ff0" valign="center2" halign="center"/>
+			<quad pos="44.33 -5.17" size="120.17 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search"
+				scriptevents="1" modulatecolor="000" opacity="0.5"/>
+		</frame>
+
+		<frame id="Frame_Body" pos="2 -19">
+			<frame size="296 89.5" scroll="1" scrollmax="0 0" id="Frame_Content">
+				<frame id="Frame_Emotes" pos="1">
+					<frameinstance modelid="EmoteTile" pos="1.33 -1.5" data-index="0"/>
+					<frameinstance modelid="EmoteTile" pos="50.67 -1.5" data-index="1"/>
+					<frameinstance modelid="EmoteTile" pos="100 -1.5" data-index="2"/>
+					<frameinstance modelid="EmoteTile" pos="149.33 -1.5" data-index="3"/>
+
+					<frameinstance modelid="EmoteTile" pos="1.33 -35.17" data-index="4"/>
+					<frameinstance modelid="EmoteTile" pos="50.67 -35.17" data-index="5"/>
+					<frameinstance modelid="EmoteTile" pos="100 -35.17" data-index="6"/>
+					<frameinstance modelid="EmoteTile" pos="149.33 -35.17" data-index="7"/>
+
+					<frameinstance modelid="EmoteTile" pos="1.33 -68.83" data-index="8"/>
+					<frameinstance modelid="EmoteTile" pos="50.67 -68.83" data-index="9"/>
+					<frameinstance modelid="EmoteTile" pos="100 -68.83" data-index="10"/>
+					<frameinstance modelid="EmoteTile" pos="149.33 -68.83" data-index="11"/>
+
+					<frameinstance modelid="EmoteTile" pos="1.33 -102.5" data-index="12"/>
+					<frameinstance modelid="EmoteTile" pos="50.67 -102.5" data-index="13"/>
+					<frameinstance modelid="EmoteTile" pos="100 -102.5" data-index="14"/>
+					<frameinstance modelid="EmoteTile" pos="149.33 -102.5" data-index="15"/>
+				</frame>
+				<frame id="Frame_Thumbnail" pos="1">
+					<frameinstance modelid="ThumbnailTile" pos="1.33 -1.5" data-index="0"/>
+					<frameinstance modelid="ThumbnailTile" pos="50.67 -1.5" data-index="1"/>
+					<frameinstance modelid="ThumbnailTile" pos="100 -1.5" data-index="2"/>
+					<frameinstance modelid="ThumbnailTile" pos="149.33 -1.5" data-index="3"/>
+
+					<frameinstance modelid="ThumbnailTile" pos="1.33 -35.17" data-index="4"/>
+					<frameinstance modelid="ThumbnailTile" pos="50.67 -35.17" data-index="5"/>
+					<frameinstance modelid="ThumbnailTile" pos="100 -35.17" data-index="6"/>
+					<frameinstance modelid="ThumbnailTile" pos="149.33 -35.17" data-index="7"/>
+
+					<frameinstance modelid="ThumbnailTile" pos="1.33 -68.83" data-index="8"/>
+					<frameinstance modelid="ThumbnailTile" pos="50.67 -68.83" data-index="9"/>
+					<frameinstance modelid="ThumbnailTile" pos="100 -68.83" data-index="10"/>
+					<frameinstance modelid="ThumbnailTile" pos="149.33 -68.83" data-index="11"/>
+
+					<frameinstance modelid="ThumbnailTile" pos="1.33 -102.5" data-index="12"/>
+					<frameinstance modelid="ThumbnailTile" pos="50.67 -102.5" data-index="13"/>
+					<frameinstance modelid="ThumbnailTile" pos="100 -102.5" data-index="14"/>
+					<frameinstance modelid="ThumbnailTile" pos="149.33 -102.5" data-index="15"/>
+				</frame>
+				<quad size="300 500" scriptevents="1" id="Quad_Bg" pos="-2 50"/>
+			</frame>
+		</frame>
+	</frame>
+	<script><![CDATA[
+	#Include "MathLib" as ML
+	#Include "TextLib" as TL
+	#Include "ColorLib" as CL
+
+	#Const Decos ["Land", "Water"]
+	#Const Moods ["Sunrise", "Day", "Sunset", "Night"]
+
+	{{{ObsStore::ML_K_MapInfo()}}}
+	{{{ObsStore::ML_K_FileInfo()}}}
+
+	#Struct K_Tile {
+		Text Image;
+		Text Icon;
+		Text Name;
+		Text DisplayName;
+		Text Author;
+		Boolean IsFolder;
+	}
+
+	declare Integer G_SelectedDeco;
+	declare Integer G_SelectedMood;
+	declare Integer G_SelectedMod;
+	
+	declare K_Tile[][Text] Folders;
+	declare Text G_CurrentFolder;
+	declare Boolean G_NeedRerender;
+	declare Text G_Selected_Name;
+
+	{{{StringLib::ExportContrast()}}}
+
+	Void BrowseAbsolute(Text _Path) {
+		if (!Folders.existskey(_Path)) {
+			return;
+		}
+		G_CurrentFolder = _Path;
+		G_Selected_Name = "";
+		G_NeedRerender = True;
+
+		declare Frame_Content = (Page.GetFirstChild("Frame_Content") as CMlFrame);
+		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
+
+		if (Frame_Content.ScrollOffset.Y > 8.) {
+			Frame_Content.ScrollOffset.Y = 0.;
+			Frame_Content.ScrollBumpTop();
+		} else {
+			Frame_Content.ScrollOffset.Y = 0.;
+		}
+
+		if (Folders[G_CurrentFolder].count < 9) {
+			Frame_Content.ScrollMax.Y = 0.;
+		} else {
+			Frame_Content.ScrollMax.Y = ML::CeilingInteger(Folders[G_CurrentFolder].count / 4. - 2.5) * 33.666666 + 10.;
+		}
+
+		Entry_Search.Value = G_CurrentFolder;
+	}
+
+	Void BrowseRelative(Text _Path) {
+		BrowseAbsolute(G_CurrentFolder ^ _Path ^ "/");
+	}
+
+	Void Update_Explorer() {
+		declare K_MapInfo[Text][Text] ObsStore_{{{_FileType}}}s for LocalUser;
+	
+		declare K_Tile[Text][Text] FolderTiles;
+		declare K_Tile[][Text] {{{_FileType}}}Tiles;
+	
+		Folders.clear();
+
+		foreach (Folder => {{{_FileType}}}s in ObsStore_{{{_FileType}}}s) {
+			declare Parents = TL::Split("\\", Folder);
+			declare CurrentPath = "/";
+	
+			foreach (Parent in Parents) {
+				if (!Folders.existskey(CurrentPath)) {
+					Folders[CurrentPath] = [];
+					{{{_FileType}}}Tiles[CurrentPath] = [];
+					FolderTiles[CurrentPath] = [];
+				}
+				declare Found = False;
+				foreach (Tile in Folders[CurrentPath]) {
+					if (Tile.Name == Parent) {
+						Found = True;
+						break;
+					}
+				}
+				
+				if (!Found) {
+					FolderTiles[CurrentPath][TL::ToLowerCase(Parent)] = K_Tile {
+						Icon = "",
+						Name = Parent,
+						DisplayName = Parent,
+						IsFolder = True
+					};
+				}
+				CurrentPath ^= Parent ^ "/";
+			}
+	
+			if (!Folders.existskey(CurrentPath)) {
+				Folders[CurrentPath] = [];
+				{{{_FileType}}}Tiles[CurrentPath] = [];
+				FolderTiles[CurrentPath] = [];
+			}
+	
+			foreach (Name => {{{_FileType}}} in {{{_FileType}}}s) {
+				{{{_FileType}}}Tiles[CurrentPath].add(K_Tile {
+					Image = "file://Thumbnails/MapUid/" ^ {{{_FileType}}}.MapUid ^ "/",
+					Name = {{{_FileType}}}.FileName,
+					DisplayName = {{{_FileType}}}.Name,
+					Author = {{{_FileType}}}.Author,
+					IsFolder = False
+				});
+			}
+
+		}
+	
+		foreach (Path => Tiles in FolderTiles) {
+			declare SortedTiles = Tiles.sortkey();
+			foreach (Folder in SortedTiles) {
+				Folders[Path].add(Folder);
+			}
+		}
+		foreach (Path => Tiles in {{{_FileType}}}Tiles) {
+			// Tiles.sortkey();
+			foreach ({{{_FileType}}} in Tiles) {
+				Folders[Path].add({{{_FileType}}});
+			}
+		}
+
+		BrowseAbsolute(G_CurrentFolder);
+	}
+
+	Void Update_NewMap() {
+		declare Quad_Preview = (Page.GetFirstChild("Quad_Preview") as CMlQuad);
+		declare Label_Deco = (Page.GetFirstChild("Label_Deco") as CMlLabel);
+		declare Label_Mood = (Page.GetFirstChild("Label_Mood") as CMlLabel);
+		declare Label_Mod = (Page.GetFirstChild("Label_Mod") as CMlLabel);
+
+		declare K_FileInfo[] ObsStore_Skins for LocalUser;
+		// declare CVideo[Text] ObsStore_Previews for LocalUser;
+
+		// declare V <=> ObsStore_Previews[Decos[G_SelectedDeco] ^ Moods[G_SelectedMood]];
+		// Quad_Preview.Image = V.Image;
+		// V.Play();
+		Quad_Preview.ChangeImageUrl("file://Media/Images/Previews/" ^ Decos[G_SelectedDeco] ^ Moods[G_SelectedMood] ^ ".webm");
+
+		Label_Deco.SetText(Decos[G_SelectedDeco]);
+		Label_Mood.SetText(Moods[G_SelectedMood]);
+
+		if (ObsStore_Skins.existskey(G_SelectedMod)) {
+			Label_Mod.SetText(ObsStore_Skins[G_SelectedMod].Name);
+		} else {
+			Label_Mod.SetText("Default Textures");
+		}
+	}
+
+	main () {
+		declare Window_Picker = (Page.GetFirstChild("Window_Picker") as CMlFrame);
+		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
+		declare Frame_Content = (Page.GetFirstChild("Frame_Content") as CMlFrame);
+		declare Frame_Emotes = (Page.GetFirstChild("Frame_Emotes") as CMlFrame);
+		declare Frame_Thumbnail = (Page.GetFirstChild("Frame_Thumbnail") as CMlFrame);
+				declare Quad_Bg = (Page.GetFirstChild("Quad_Bg") as CMlQuad);
+
+		declare Quad_Preview = (Page.GetFirstChild("Quad_Preview") as CMlQuad);
+		declare Label_Deco = (Page.GetFirstChild("Label_Deco") as CMlLabel);
+		declare Label_Mood = (Page.GetFirstChild("Label_Mood") as CMlLabel);
+		declare Label_Mod = (Page.GetFirstChild("Label_Mod") as CMlLabel);
+
+		declare K_FileInfo[] ObsStore_Skins for LocalUser;
+		declare CVideo[Text] ObsStore_Previews for LocalUser;
+
+		declare Text[][Text] ObsStore_Requests for LocalUser;
+		declare K_MapInfo[Text][Text] ObsStore_{{{_FileType}}}s for LocalUser;
+		declare Integer ObsStore_{{{_FileType}}}s_LastUpdate for LocalUser;
+		declare Text[] ObsStore_{{{_FileType}}}s_SearchResults for LocalUser;
+		declare Text ObsStore_Selected{{{_FileType}}}_Name for LocalUser;
+		declare Text ObsStore_Selected{{{_FileType}}} for LocalUser;
+
+		declare Integer {{{_FileType}}}s_LastUpdate = 0;
+		declare Integer RefreshDebouncer = 0;
+		declare Integer LastClick = 0;
+		declare LastScrollOffset = 0.;
+		G_NeedRerender = True;
+		declare TilesScrollOffset = 0;
+
+		declare SearchResults = False;
+		declare PendingSearch = False;
+
+		G_CurrentFolder = "/";
+				
+		declare Skins_Loaded = False;""";
+
+		/*if (_New) {
+			ML_Text ^=
+			"""if (ObsStore_Previews.count < Decos.count) {
+				foreach (Deco in Decos) {
+					foreach (Mood in Moods) {
+						declare V = Video.CreateVideo("file://Media/Images/Previews/" ^ Deco ^ Mood ^ ".webm", True, True);
+						ObsStore_Previews[Deco ^ Mood] = V;
+					}
+				}
+			}""";
+		}*/
+
+		ML_Text ^= """
+		G_SelectedMood = 1;
+		{{{Update_NewMap}}}
+
+		while (True) {
+			if (!Skins_Loaded && ObsStore_Skins.count > 0) {
+				declare Mod_Plus = (Page.GetFirstChild("Mod_Plus") as CMlLabel);
+				Mod_Plus.Show();
+
+				Skins_Loaded = True;
+			}
+
+			if (ObsStore_{{{_FileType}}}s_LastUpdate != {{{_FileType}}}s_LastUpdate) {
+				{{{_FileType}}}s_LastUpdate = ObsStore_{{{_FileType}}}s_LastUpdate;
+				Update_Explorer();
+			}
+			if (SearchResults && PendingSearch) {
+				PendingSearch = False;
+				G_NeedRerender = True;
+			}
+
+			if (LastScrollOffset != Frame_Content.ScrollOffset.Y) {
+				G_NeedRerender = True;
+			}
+
+			foreach (Event in PendingEvents) {
+				switch (Event.Type) {
+					case CMlScriptEvent::Type::EntrySubmit: {
+						if (Event.ControlId == "Entry_Search") {
+							if (!TL::StartsWith("/", Entry_Search.Value, False, False))
+								Entry_Search.Value = "/" ^ Entry_Search.Value;
+							if (!TL::EndsWith("/", Entry_Search.Value, False, False))
+								Entry_Search.Value = Entry_Search.Value ^ "/";
+							SearchResults = False;
+							BrowseAbsolute(Entry_Search.Value);
+							// } else {
+							// 	SearchResults = True;
+							// 	ObsStore_Requests["Search_{{{_FileType}}}s"] = [Entry_Search.Value];
+							// }
+						}
+					}
+					case CMlScriptEvent::Type::MouseClick: {
+
+						if (Window_Picker.GetFirstChild(Event.ControlId) != Null) {
+							switch (Event.ControlId) {
+								case "Quad_Search": {
+									Entry_Search.StartEdition();
+									ObsStore_Requests["Index_{{{_FileType}}}s"] = [];
+								}
+								case "Label_Refresh": {
+									SearchResults = False;
+
+									if (RefreshDebouncer + 2000 < Now) {
+										RefreshDebouncer = Now;
+										ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [];
+
+										declare Label_Refresh = (Page.GetFirstChild("Label_Refresh") as CMlLabel);
+										Label_Refresh.RelativeRotation = 0.;
+										AnimMgr.Add(
+											Label_Refresh, "<label rot=\"360\"/>",
+											2000, CAnimManager::EAnimManagerEasing::QuadOut
+										);
+									}
+								}
+								case "Label_Parent": {
+									if (SearchResults) {
+										SearchResults = False;
+										BrowseAbsolute(G_CurrentFolder);
+									} else {
+										declare Parents = TL::Split("/", G_CurrentFolder);
+										declare NewPath = "/";
+										for (I, 1, Parents.count - 2) {
+											NewPath ^= Parents[I] ^ "/";
+										}
+										BrowseAbsolute(NewPath);
+									}
+								}
+								case "Quad_Trigger": {
+									if (!Event.Control.Parent.DataAttributeExists("index"))
+										break;
+									
+									declare Index = TL::ToInteger(Event.Control.Parent.DataAttributeGet("index")) + TilesScrollOffset;
+									declare Tile = Folders[G_CurrentFolder][Index];
+									if (LastClick + 500 > Now && G_Selected_Name == Tile.Name) {
+										if (Tile.IsFolder) {
+											BrowseRelative(Tile.Name);
+										} else {
+											SendCustomEvent("{{{C_Dialog_Close}}}", [Tile.Name]);
+										}
+									} else {
+										LastClick = Now;
+										G_Selected_Name = Tile.Name;
+										if (!Tile.IsFolder) {
+											ObsStore_Selected{{{_FileType}}} = Tile.Image;
+											ObsStore_Selected{{{_FileType}}}_Name = Tile.DisplayName;
+										}
+									}
+								}
+							}
+							G_NeedRerender = True;
+						} else {
+							switch (Event.ControlId) {
+								case "Button_Confirm": {
+									declare SelectedMod = "";
+									if (ObsStore_Skins.existskey(G_SelectedMod)) {
+										SelectedMod = ObsStore_Skins[G_SelectedMod].FileName;
+									}
+		
+									declare CustomData = [Decos[G_SelectedDeco], Moods[G_SelectedMood], SelectedMod];
+									SendCustomEvent("{{{C_Dialog_Close}}}", CustomData);
+								}
+								case "Label_NewMap": {
+									ObsStore_Selected{{{_FileType}}}_Name = "";
+									ObsStore_Selected{{{_FileType}}} = "";
+								}
+								case "Label_NewMapName": {
+									ObsStore_Selected{{{_FileType}}}_Name = "";
+									ObsStore_Selected{{{_FileType}}} = "";
+								}
+								case "Deco_Plus": {
+									G_SelectedDeco = ML::Clamp(G_SelectedDeco + 1, 0, Decos.count - 1);
+		
+									declare Deco_Minus = (Page.GetFirstChild("Deco_Minus") as CMlLabel);
+									Deco_Minus.Show();
+									Event.Control.Hide();
+								}
+								case "Deco_Minus": {
+									G_SelectedDeco = ML::Clamp(G_SelectedDeco - 1, 0, Decos.count - 1);
+		
+									declare Deco_Plus = (Page.GetFirstChild("Deco_Plus") as CMlLabel);
+									Deco_Plus.Show();
+									Event.Control.Hide();
+								}
+								case "Mood_Plus": {
+									G_SelectedMood = ML::Clamp(G_SelectedMood + 1, 0, Moods.count - 1);
+		
+									declare Mood_Minus = (Page.GetFirstChild("Mood_Minus") as CMlLabel);
+									Mood_Minus.Show();
+		
+									if (G_SelectedMood == Moods.count - 1) {
+										Event.Control.Hide();
+									}
+								}
+								case "Mood_Minus": {
+									G_SelectedMood = ML::Clamp(G_SelectedMood - 1, 0, Moods.count - 1);
+		
+									declare Mood_Plus = (Page.GetFirstChild("Mood_Plus") as CMlLabel);
+									Mood_Plus.Show();
+		
+									if (G_SelectedMood == 0) {
+										Event.Control.Hide();
+									}
+								}
+								case "Mod_Plus": {
+									if (ObsStore_Skins.count > 0) {
+										G_SelectedMod = ML::Clamp(G_SelectedMod + 1, 0, ObsStore_Skins.count - 1);
+		
+										declare Mod_Minus = (Page.GetFirstChild("Mod_Minus") as CMlLabel);
+										Mod_Minus.Show();
+			
+										if (G_SelectedMod == ObsStore_Skins.count - 1) {
+											Event.Control.Hide();
+										}
+									}
+								}
+								case "Mod_Minus": {
+									if (ObsStore_Skins.count > 0) {
+										G_SelectedMod = ML::Clamp(G_SelectedMod - 1, 0, ObsStore_Skins.count - 1);
+		
+										declare Mod_Plus = (Page.GetFirstChild("Mod_Plus") as CMlLabel);
+										Mod_Plus.Show();
+		
+										if (G_SelectedMod == 0) {
+											Event.Control.Hide();
+										}
+									}
+								}
+								default: {
+									break;
+								}
+							}
+							{{{Update_NewMap}}}
+						}
+					}
+					case CMlEvent::Type::MouseOver: {
+						declare Frame_Banner = (Event.Control.Parent.GetFirstChild("Frame_Banner") as CMlFrame);
+						if (Frame_Banner == Null) {
+							
+						} else {
+							declare Label_Name = (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
+							declare Label_Author = (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
+							
+							AnimMgr.Add(
+								Frame_Banner, "<frame pos=\"0 8\"/>",
+								200, CAnimManager::EAnimManagerEasing::QuadIn
+							);
+
+							if (Label_Author.Value != "") {
+								Label_Author.Show();
+								Label_Name.MaxLine = 2;
+								Label_Name.AutoNewLine = False;
+							} else {
+								Label_Author.Hide();
+								Label_Name.MaxLine = 4;
+								Label_Name.AutoNewLine = True;
+							}
+						}
+					}
+					case CMlEvent::Type::MouseOut: {
+						declare Frame_Banner = (Event.Control.Parent.GetFirstChild("Frame_Banner") as CMlFrame);
+						if (Frame_Banner == Null) {
+							
+						} else {
+							declare Label_Author = (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
+							declare Label_Name = (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
+							
+							if (G_Selected_Name != Frame_Banner.Parent.DataAttributeGet("name")) {
+								AnimMgr.Add(
+									Frame_Banner, "<frame pos=\"0 0\"/>",
+									200, CAnimManager::EAnimManagerEasing::QuadOut
+								);
+								Label_Author.Hide();
+							}
+						}
+					}
+				}
+			}
+
+			if (G_NeedRerender) {
+				LastScrollOffset = Frame_Content.ScrollOffset.Y;
+				declare Lines = ML::CeilingInteger(LastScrollOffset / 33.666666) - 1;
+				TilesScrollOffset = Lines * 4;
+				Frame_Emotes.RelativePosition_V3.Y = -Lines * 33.666666;
+				Frame_Thumbnail.RelativePosition_V3.Y = Frame_Emotes.RelativePosition_V3.Y;
+				Quad_Bg.RelativePosition_V3.Y = Frame_Emotes.RelativePosition_V3.Y + 50.;
+				G_NeedRerender = False;
+
+				for (I, 0, 15) {
+					declare Target_Tile = TilesScrollOffset + I;
+
+					Frame_Emotes.Controls[I].Hide();
+					Frame_Thumbnail.Controls[I].Hide();
+
+					if (SearchResults && !PendingSearch) {
+						if (ObsStore_{{{_FileType}}}s_SearchResults.count > Target_Tile) {
+							declare FileName = "/" ^ TL::Replace(ObsStore_{{{_FileType}}}s_SearchResults[Target_Tile], "\\", "/");
+							declare PathSplit = TL::RegexMatch("^(.*/)?([^/]+)$", FileName, "");
+							declare K_Tile Tile;
+							
+							if (PathSplit.count == 3) {
+								foreach (File in Folders[PathSplit[1]]) {
+									if (File.Name == ObsStore_{{{_FileType}}}s_SearchResults[Target_Tile]) {
+										Tile = File;
+										break;
+									}
+								}
+							}
+							if (Tile.Name != "") {
+								declare Frame_Instance = (Frame_Thumbnail.Controls[I] as CMlFrame);
+								Frame_Instance.Show();
+								Frame_Instance.DataAttributeSet("name", Tile.Name);
+
+								declare Quad_Trigger = (Frame_Instance.GetFirstChild("Quad_Trigger") as CMlQuad);
+								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
+								declare Label_Author = (Frame_Instance.GetFirstChild("Label_Author") as CMlLabel);
+								declare Frame_Banner = (Frame_Instance.GetFirstChild("Frame_Banner") as CMlFrame);
+
+								Quad_Trigger.ChangeImageUrl(Tile.Image);
+								Label_Name.SetText(ContrastString(Tile.DisplayName));
+								Label_Author.SetText(Tile.Author);
+
+								if (G_Selected_Name == Tile.Name) {
+									Frame_Banner.RelativePosition_V3.Y = 8.;
+								} else {
+									Frame_Banner.RelativePosition_V3.Y = 0.;
+								}
+							}
+						}
+					} else if (Folders.existskey(G_CurrentFolder)) {
+						if (Folders[G_CurrentFolder].count > Target_Tile) {
+							declare Tile = Folders[G_CurrentFolder][Target_Tile];
+							
+							if (Tile.Image != "") {
+								declare Frame_Instance = (Frame_Thumbnail.Controls[I] as CMlFrame);
+								Frame_Instance.Show();
+								Frame_Instance.DataAttributeSet("name", Tile.Name);
+	
+								declare Quad_Trigger = (Frame_Instance.GetFirstChild("Quad_Trigger") as CMlQuad);
+								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
+								declare Label_Author = (Frame_Instance.GetFirstChild("Label_Author") as CMlLabel);
+								declare Frame_Banner = (Frame_Instance.GetFirstChild("Frame_Banner") as CMlFrame);
+	
+								Quad_Trigger.ChangeImageUrl(Tile.Image);
+								Label_Name.SetText(ContrastString(Tile.DisplayName));
+								Label_Author.SetText(Tile.Author);
+
+								if (G_Selected_Name == Tile.Name) {
+									Frame_Banner.RelativePosition_V3.Y = 8.;
+								} else {
+									Frame_Banner.RelativePosition_V3.Y = 0.;
+								}
+							} else {
+								declare Frame_Instance = (Frame_Emotes.Controls[I] as CMlFrame);
+								Frame_Instance.Show();
+	
+								declare Label_Emote = (Frame_Instance.GetFirstChild("Label_Emote") as CMlLabel);
+								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
+	
+								Label_Emote.SetText(Tile.Icon);
+								Label_Name.SetText(ContrastString(Tile.DisplayName));
+							}
+						}
+					}
+				}
+			}
+
+			yield;
+		}
+	}
+]]></script>
+</manialink>
+""";
+
+	return ML_Text;
+}

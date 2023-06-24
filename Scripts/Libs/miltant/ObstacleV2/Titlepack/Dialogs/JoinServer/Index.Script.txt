@@ -1,0 +1,193 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"   as Dialogs
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
+
+#Struct K { // K_ServerRecord
+	Integer t; //time
+	Text p; // password
+	Text s; // spectating password
+}
+
+#Const C_Dialog_Close "JoinServer_Close"
+
+Text Build() {
+	return """
+<manialink version="3">
+	
+	<framemodel id="Model_News">
+		<quad size="61 31" id="Poster"/>
+		<quad size="61 31" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/FrameNews.png" id="Frame_Trigger" scriptevents="1"/>
+	</framemodel>
+			
+	<frame pos="-104.25 49.75" size="208.5 99.5">
+		<frame id="Frame_Header">
+			<label pos="3.7 -2" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
+			<label pos="0 -2" text="" textfont="light" textcolor="fff" textsize="3.5" id="Label_Favourite" hidden="1"/>
+
+			<frame pos="12.6 -11.9">
+				<label text="Play" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+				<quad size="18.5 6" id="Quad_Join" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"/>
+			</frame>
+			<frame pos="34 -11.9">
+				<label text="Spectate" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+				<quad size="18.5 6" id="Quad_Spec" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BDefault.png"/>
+			</frame>
+
+		
+			<!-- <label pos="162 -7" textfont="light" textcolor="fff" textsize="1.7" id="Label_Owner" halign="right" textprefix="  "/> -->
+			<label pos="165 -7" size="30 4.5" text="maniaplanet://#join" textfont="light" textcolor="fff" textsize="1.7" id="Label_JoinLink" textprefix="  " scriptevents="1" focusareacolor1="0000" focusareacolor2="0002"/>
+		</frame>
+
+		<frame id="Frame_Body" pos="2 -19">
+			<label pos="0 -1" textprefix="  " text="Description" textfont="light" textcolor="fff" textsize="1.7"/>
+			<frame size="134 30.5" pos="0 -7" scroll="1" scrollmax="0 500">
+				<label pos="67 -.5" size="134" autonewline="1" halign="center" textsize="2" textcolor="fff" id="Label_Description"/>
+				<quad  scriptevents="1" size="134 700" pos="0 100"/>
+			</frame>
+			<quad pos="0 -6.33" size="134 31.83" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/FComment.png"/>
+			<frameinstance pos="0 -43.67" modelid="Model_News" hidden="1"/>
+			<frameinstance pos="72.83 -43.67" modelid="Model_News" hidden="1"/>
+			
+			<frame pos="136.5 -1">
+				<label textprefix="  " text="Players" textfont="light" textcolor="fff" textsize="1.7" id="Label_TitlePlayers"/>
+				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="cb5" id="Quad_Players"/>
+				<label textfont="light" textcolor="cb5" textsize="1.7" pos="67 0" halign="right" id="Label_Players"/>
+				
+				<frame size="134 31.83" pos="0 -5.83" scroll="1" scrollmax="0 30">
+					<label pos="33" size="66" autonewline="1" halign="center" textsize="2" id="List_Players"/>
+					<quad  scriptevents="1" size="134 700" pos="0 100"/>
+				</frame>
+			</frame>
+			
+			<frame pos="136.5 -39">
+				<label textprefix="  " text="Maps" textfont="light" textcolor="fff" textsize="1.7" id="Label_TitleMaps"/>
+				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="cb5" id="Quad_Maps"/>
+				<label textfont="light" textcolor="cb5" textsize="1.7" pos="67 0" halign="right" id="Label_Maps"/>
+				
+				<frame size="134 31.83" pos="0 -5.83" scroll="1" scrollmax="0 30">
+					<label pos="33" size="66" autonewline="1" halign="center" textsize="2" id="List_Maps"/>
+					<quad  scriptevents="1" size="134 700" pos="0 100"/>
+				</frame>
+			</frame>
+		</frame>
+	</frame>
+<script><![CDATA[
+	#Include "TextLib" as TL
+	
+	{{{ChannelInfoStructs::K_ServerInfo_ML}}}
+
+	main() {
+		declare Label_Name = (Page.GetFirstChild("Label_Name") as CMlLabel);
+		declare Label_Favourite = (Page.GetFirstChild("Label_Favourite") as CMlLabel);
+		declare Label_Description = (Page.GetFirstChild("Label_Description") as CMlLabel);
+		declare Quad_Maps = (Page.GetFirstChild("Quad_Maps") as CMlQuad);
+		declare Label_Maps = (Page.GetFirstChild("Label_Maps") as CMlLabel);
+		declare List_Maps = (Page.GetFirstChild("List_Maps") as CMlLabel);
+		declare Label_TitleMaps = (Page.GetFirstChild("Label_TitleMaps") as CMlLabel);
+		declare Quad_Players = (Page.GetFirstChild("Quad_Players") as CMlQuad);
+		declare Label_Players = (Page.GetFirstChild("Label_Players") as CMlLabel);
+		declare List_Players = (Page.GetFirstChild("List_Players") as CMlLabel);
+		declare Label_TitlePlayers = (Page.GetFirstChild("Label_TitlePlayers") as CMlLabel);
+
+		declare Text[][Text] ObsStore_Requests for LocalUser;
+		declare Text ObsStore_ServerJoinTarget for LocalUser;
+		declare K_ServerInfo[] ObsStore_TopServers for LocalUser;
+		declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
+		declare Text Previous_Server;
+		declare Integer LastUpdate = 0;
+		declare Boolean NeedUpdate = True;
+		wait (ObsStore_ServerJoinTarget != "");
+
+		while (True) {
+			foreach (Event in PendingEvents) {
+				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
+					if (Event.ControlId == "Quad_Join") {
+						SendCustomEvent("{{{C_Dialog_Close}}}", [ObsStore_ServerJoinTarget, "False"]);
+					}
+					else if (Event.ControlId == "Quad_Spec") {
+						SendCustomEvent("{{{C_Dialog_Close}}}", [ObsStore_ServerJoinTarget, "True"]);
+					}
+					else if (Event.ControlId == "Label_JoinLink") {
+						System.ClipboardSet("maniaplanet://#join=" ^ ObsStore_ServerJoinTarget ^ "@obstacle@smokegun");
+					}
+				}
+			}
+
+			if (Previous_Server != ObsStore_ServerJoinTarget) {
+				ObsStore_Requests["Lookup_ServerInfo"] = [ObsStore_ServerJoinTarget];
+				Previous_Server = ObsStore_ServerJoinTarget;
+				NeedUpdate = True;
+			}
+
+			if (ObsStore_LastUpdate_TopServers >= LastUpdate) {
+				NeedUpdate = True;
+			}
+
+			if (NeedUpdate) {
+				NeedUpdate = False;
+				foreach (I => Server in ObsStore_TopServers) {
+					if (Server.server_login == ObsStore_ServerJoinTarget) {
+						LastUpdate = Now;
+
+						Label_Name.SetText(ObsStore_TopServers[I].server_name);
+						Label_Description.SetText(ObsStore_TopServers[I].server_description);
+						Label_Maps.SetText("" ^ ObsStore_TopServers[I].server_maps_count);
+						List_Maps.SetText(TL::Join("\n", ObsStore_TopServers[I].server_maps));
+						Label_Players.SetText(ObsStore_TopServers[I].server_player_count ^ "/" ^ ObsStore_TopServers[I].server_player_max);
+						List_Players.SetText(TL::Join("\n", ObsStore_TopServers[I].server_players));
+
+						Label_Favourite.RelativePosition_V3.X = Label_Name.ComputeWidth(Label_Name.Value) + 7.;
+						if (ObsStore_TopServers[I].server_is_favourite)
+							Label_Favourite.Show();
+						else
+							Label_Favourite.Hide();
+
+						Quad_Maps.RelativePosition_V3.X = Label_TitleMaps.ComputeWidth(Label_TitleMaps.Value) + Label_TitleMaps.RelativePosition_V3.X + 3.;
+						Quad_Maps.Size.X = Label_Maps.RelativePosition_V3.X - Label_Maps.ComputeWidth(Label_Maps.Value) - 3. - Quad_Maps.RelativePosition_V3.X;
+						
+						Quad_Players.RelativePosition_V3.X = Label_TitlePlayers.ComputeWidth(Label_TitlePlayers.Value) + Label_TitlePlayers.RelativePosition_V3.X + 3.;
+						Quad_Players.Size.X = Label_Players.RelativePosition_V3.X - Label_Players.ComputeWidth(Label_Players.Value) - 3. - Quad_Players.RelativePosition_V3.X;
+							
+						break;
+					}
+				}
+			}
+			yield;
+		}
+	}
+]]></script>
+</manialink>
+""";
+}
+
+Void Load() {
+	Dialogs::RegisterDialog("joinserver", Build(), C_Dialog_Close);
+}
+
+Boolean Join(Text _Login) {
+	declare Text ObsStore_ServerJoinTarget for LocalUser;
+	if (ObsStore_ServerJoinTarget != _Login)
+		ObsStore_ServerJoinTarget = _Login;
+
+	declare Status = Dialogs::Prompt("joinserver", "explorer__joinserver_main", 0.);
+
+	if (Status.Over) {
+		wait(TitleControl.IsReady);
+		
+		if (Status.Success) {
+			if (Status.CustomData.count > 1) {
+				declare Text Password;
+				declare Text SpectatingPassword;
+				declare persistent K[Text] ObsStore_Servers for LocalUser;
+	
+				if (ObsStore_Servers.existskey(Status.CustomData[0])) {
+					Password = ObsStore_Servers[Status.CustomData[0]].p;
+					SpectatingPassword = ObsStore_Servers[Status.CustomData[0]].s;
+				}
+	
+				TitleControl.JoinServer(Status.CustomData[0], Status.CustomData[1] == "True", "");
+			}
+		}
+		return True;
+	}
+	return False;
+}

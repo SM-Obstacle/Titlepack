@@ -1,0 +1,85 @@
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
+
+#Struct K_SubMenu {
+	Text Name;
+	Text Image;
+    Boolean PreventDefault;
+}
+
+Text Build(K_SubMenu[] _Menu) {
+    declare ML_Text = """
+{{{Styles::GetStyleSheet()}}}
+
+<framemodel id="Model_SubMenuItem">
+	<frame pos="0 -26" id="Frame_Menus">
+        <quad size="70 111.33" scriptevents="1" id="Quad_Trigger"
+            data-target="Quad_Poster Label_Name Quad_Background"
+            data-default-anim="<quad scale=&quot;1.&quot; pos=&quot;0 0&quot;/> <label scale=&quot;1.&quot; textcolor=&quot;fff&quot; pos=&quot;0 -95.67&quot;/> <quad modulatecolor=&quot;000&quot; opacity=&quot;1&quot; scale=&quot;1&quot;/>"
+            data-target-anim="<quad scale=&quot;1.06&quot; pos=&quot;0 4&quot;/> <label scale=&quot;1.12&quot; textcolor=&quot;000&quot; pos=&quot;0 -98.33&quot;/> <quad modulatecolor=&quot;fff&quot; opacity=&quot;0.9&quot; scale=&quot;1.06&quot;/>"/>
+
+        <frame id="Frame_Content" pos="35">
+            <quad size="70 80.67" halign="center" id="Quad_Poster"/>
+
+            <label class="lato" id="Label_Name" textprefix="$t" pos="0 -95.67" halign="center" valign="center2" textsize="5"/>
+            <quad size="70 110.67" pos="0 -55.33" image="file://Media/Images/Obstacle/Menu/FNavPlay.png" halign="center" valign="center" modulatecolor="000" id="Quad_Background"/>
+        </frame>
+	</frame>
+</framemodel>
+
+<frame pos="-160" id="Frame_Wrapper" scroll="1">
+    <frame id="Frame_Menus">""";
+
+        foreach (I => Item in _Menu) {
+            ML_Text ^="""<frameinstance pos="{{{6.67 + (70. + 6.67) * I}}}" data-image="{{{Item.Image}}}" data-name="{{{Item.Name}}}" data-preventdefault="{{{Item.PreventDefault}}}" modelid="Model_SubMenuItem"/>""";
+        }
+
+        ML_Text ^= """
+    </frame>
+    <quad scriptevents="1" size="9999 9999" pos="-75 75"/>
+</frame>
+
+<script><![CDATA[
+    #Include "MathLib" as ML
+    #Include "TextLib" as TL
+    #Include "ColorLib" as CL
+
+    {{{Styles::GetDeclareGlobals()}}}
+    
+    main() {
+        {{{Styles::GetInitFrameMenus()}}}
+
+        declare ItemCount = Frame_Menus.Controls.count;
+        declare ItemsWidth = 70. * ItemCount + 6.67 * (ItemCount - 1);
+        declare Frame_Wrapper = (Page.GetFirstChild("Frame_Wrapper") as CMlFrame);
+        Frame_Wrapper.ScrollMax.Y = (ItemsWidth - 320.) / 320. * Frame_Wrapper.Size.Y;
+
+        foreach (MenuItem in Frame_Menus.Controls) {
+            declare Frame_MenuItem = (MenuItem as CMlFrame);
+            declare Label_Name = (Frame_MenuItem.GetFirstChild("Label_Name") as CMlLabel);
+            declare Quad_Poster = (Frame_MenuItem.GetFirstChild("Quad_Poster") as CMlQuad);
+            declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
+
+            if (MenuItem.DataAttributeGet("image") != "") {
+                Quad_Poster.ChangeImageUrl(MenuItem.DataAttributeGet("image"));
+            }
+            Label_Name.SetText(MenuItem.DataAttributeGet("name"));
+            Quad_Trigger.DataAttributeSet("preventdefault", MenuItem.DataAttributeGet("preventdefault"));
+        }
+
+        while(True) {
+            yield;
+
+            if (!PageIsVisible && PendingEvents.count == 0) continue;
+            Frame_Menus.RelativePosition_V3.X = Frame_Wrapper.ScrollAnimOffset.Y / Frame_Wrapper.ScrollMax.Y * -(ItemsWidth - 320. + 6.67 * 2.);
+            Frame_Menus.RelativePosition_V3.Y = -Frame_Wrapper.ScrollAnimOffset.Y + 73.333;
+
+            foreach(Event in PendingEvents) {
+                {{{Styles::GetEventLoopActiveItem("window_load")}}}
+            }
+        }
+    }
+]]></script>
+    """;
+
+    return ML_Text;
+}

@@ -1,0 +1,97 @@
+#Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"	as Layers
+
+
+#Struct K_Window {
+	Text Name;
+	Text Manialink;
+	CUILayer::EUILayerAnimation Animation;
+}
+
+declare K_Window[Text] G_Windows;
+declare Text G_Current_Window;
+
+
+Text Build(K_Window _Menu) {
+	declare ML_Text = """
+<manialink version="3" name="L_Window_{{{_Menu.Name}}}">
+{{{_Menu.Manialink}}}
+</manialink>
+	""";
+
+	return ML_Text;
+}
+
+Void CreateWindow(K_Window _Window) {
+	if (!G_Windows.existskey(_Window.Name)) {
+		G_Windows[_Window.Name] = _Window;
+		declare LayerName = "L_Window_" ^ _Window.Name;
+		declare Text MLText = Build(_Window);
+
+		Layers::Create(LayerName, MLText);
+
+		Layers::SetAnimationTypeIn(LayerName, _Window.Animation);
+	}
+}
+
+K_Window GetWindow(Text _Name) {
+	return G_Windows[_Name];
+}
+
+CMlPage GetPage(Text _Name) {
+	declare LayerName = "L_Window_" ^ _Name;
+	declare Layer = Layers::Get(LayerName);
+	if (Layer != Null)
+		return Layer.LocalPage;
+	
+	return Null;
+}
+
+Void Unload() {
+	Layers::Detach(G_Current_Window);
+	G_Current_Window = "";
+}
+
+Void Load(Text _Window) {
+	Unload();
+
+	if (G_Windows.existskey(_Window)) {
+		declare LayerName = "L_Window_" ^ _Window;
+
+		Layers::Attach(LayerName);
+		G_Current_Window = LayerName;
+
+		if (Layers::Exists("Obstacle_Background")) {
+			switch (_Window) {
+				case "home": {
+					LayerCustomEvent(Layers::Get("Obstacle_Background"), "Titlepack_Background_Show", []);
+				}
+				default: {
+					LayerCustomEvent(Layers::Get("Obstacle_Background"), "Titlepack_Background_Hide", []);
+				}
+			}
+		}
+	}
+}
+
+
+Void Loop() {
+	foreach(Event in PendingEvents) {
+		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent) {
+			switch (Event.CustomEventType) {
+				case "window_load": {
+					// asserts that the window's name is provided
+					// and that preventdefault is not set
+					if (
+						Event.CustomEventData.count > 0
+					 && Event.CustomEventData.count == 1
+					 || Event.CustomEventData[1] != "preventdefault"
+					)
+					{ Load(Event.CustomEventData[0]); }
+				}
+				case "window_unload" : {
+					Unload();
+				}
+			}
+		}
+	}
+}

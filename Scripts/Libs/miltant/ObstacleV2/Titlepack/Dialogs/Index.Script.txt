@@ -1,0 +1,379 @@
+/*
+    Dialog library by MiLTanT
+    Wraps manialinks into a unified design and logic
+*/
+#Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"    as Layers
+#Include "MathLib" as ML
+
+#Struct K_Dialog {
+    Text Close_Event;
+    Boolean Aborted;
+    CUILayer Layer;
+    Boolean Pending;
+}
+        
+#Struct K_CornersToggle {
+    Boolean TopLeft;
+    Boolean TopRight;
+    Boolean BotLeft;
+    Boolean BotRight;
+}
+
+#Struct K_Result {
+    Boolean Over;
+    Boolean Success;
+    Text[] CustomData;
+}
+
+declare K_Dialog[Text] G_Dialogs;
+declare Text[] G_Queue;
+declare Text G_Current;
+
+declare Boolean G_Initialized;
+declare CUILayer G_LayerWrapper;
+
+// Initializes the library
+Void Initialize() {
+    if (G_Initialized)
+        return;
+
+    declare ML_Text = """
+<manialink version="3">
+    <framemodel id="rectangle">
+        <quad size="1.666666 1.666666" id="Quad_TopLeft" scriptevents="1"/>
+        <quad size="0 1.666666" id="Quad_Top" scriptevents="1"/>
+        <quad size="1.666666 1.666666" id="Quad_TopRight" rot="90" scriptevents="1"/>
+        
+        <quad id="Quad_Middle" scriptevents="1"/>
+        
+        <quad size="1.666666 1.666666" id="Quad_BotLeft" rot="270" scriptevents="1"/>
+        <quad size="0 1.666666" id="Quad_Bot" scriptevents="1"/>
+        <quad size="1.666666 1.666666" id="Quad_BotRight" rot="180" scriptevents="1"/>
+    </framemodel>
+
+    <frame z-index="999">
+        <label id="Label_Close" text="" size="5 5" halign="right" valign="top" scriptevents="1" focusareacolor1="0000" focusareacolor2="0000"/>
+        <frameinstance id="Frame_BG_Header" modelid="rectangle"/>
+        <frameinstance id="Frame_BG_Body" modelid="rectangle"/>
+        <frameinstance id="Frame_BG2_Header" modelid="rectangle"/>
+        <frameinstance id="Frame_BG2_Body" modelid="rectangle"/>
+        <quad id="Quad_Backdrop" pos="-160 90" size="320 180" style="Bgs1" substyle="BgSystemBar" opacity="0.8" scriptevents="1"/>
+    </frame>
+    <script><![CDATA[
+        #Include "MathLib" as ML
+        #Include "TextLib" as TL
+    
+        #Struct K_Dialog {
+            Text Close_Event;
+            Boolean Aborted;
+            CUILayer Layer;
+            Boolean Pending;
+        }
+
+        main () {
+            declare CMlQuad Quad_Backdrop = (Page.GetFirstChild("Quad_Backdrop") as CMlQuad);
+            declare K_Dialog DialogLib_CurrentDialog for LocalUser;
+
+            while (True) {
+                foreach (Event in PendingEvents) {
+                    if (Event.Type == CMlScriptEvent::Type::MouseClick) {
+                        if (Event.ControlId == "Quad_Backdrop" || Event.ControlId == "Label_Close") {
+                            DialogLib_CurrentDialog.Aborted = True;
+                        }
+                    }
+                    if (Event.Type == CMlScriptEvent::Type::KeyPress) {
+                        if (Event.KeyCode == 36) {
+                            DialogLib_CurrentDialog.Aborted = True;
+                        }
+                    }
+                }
+                yield;
+            }
+        }
+    ]]></script>
+</manialink>
+    """;
+    Layers::Create("DialogLib_Backdrop", ML_Text);
+    G_LayerWrapper = Layers::Get("DialogLib_Backdrop");
+
+    G_Initialized = True;
+    G_Current = "";
+}
+
+// Creates a new dialog
+Void RegisterDialog(Text _ID, Text _Content, Text _Close_Event) {
+    Initialize();
+
+    declare K_Dialog Dialog;
+    Dialog.Close_Event = _Close_Event;
+    Dialog.Pending = True;
+
+    // both update if already exists
+    G_Dialogs[_ID] = Dialog;
+    Layers::Create("DialogLib__" ^ _ID, _Content);
+}
+
+// Check if a dialog is registered
+Boolean DialogRegistered(Text _ID) {
+	return G_Dialogs.existskey(_ID);
+}
+
+// Returns the current dialog
+Text Current() {
+	return G_Current;
+}
+
+// Go to the next dialog in queue
+Void NextDialog() {
+    if (G_Queue.count > 0)
+        G_Queue.remove(G_Current);
+    
+    if (G_Queue.count > 0) {
+        G_Current = G_Queue[0];
+    } else {
+        G_Current = "";
+    }
+}
+
+// Aborts a dialog
+Void AbortDialog(Text _Procedure_ID) {
+    if (G_Queue.exists(_Procedure_ID)) {
+        if (G_Current == _Procedure_ID) {
+            NextDialog();
+        } else {
+            G_Queue.remove(_Procedure_ID);
+        }
+    }
+}
+
+
+Void Private_ResizeRectangle(CMlFrame _Frame, K_CornersToggle _Corners, Vec2 _Size, Vec3 _Color) {
+    declare Quad_TopLeft = (_Frame.GetFirstChild("Quad_TopLeft") as CMlQuad);
+    declare Quad_Top = (_Frame.GetFirstChild("Quad_Top") as CMlQuad);
+    declare Quad_TopRight = (_Frame.GetFirstChild("Quad_TopRight") as CMlQuad);
+    declare Quad_Middle = (_Frame.GetFirstChild("Quad_Middle") as CMlQuad);
+    declare Quad_BotLeft = (_Frame.GetFirstChild("Quad_BotLeft") as CMlQuad);
+    declare Quad_Bot = (_Frame.GetFirstChild("Quad_Bot") as CMlQuad);
+    declare Quad_BotRight = (_Frame.GetFirstChild("Quad_BotRight") as CMlQuad);
+
+    declare halfWidth = _Size.X / 2.0;
+    declare halfHeight = _Size.Y / 2.0;
+
+    Quad_TopLeft.RelativePosition_V3.X = -halfWidth;
+    Quad_TopLeft.RelativePosition_V3.Y = halfHeight;
+    if (_Corners.TopLeft) {
+        Quad_TopLeft.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/Corner.png");
+        Quad_TopLeft.ModulateColor = _Color;
+    } else {
+        Quad_TopLeft.ChangeImageUrl("");
+        Quad_TopLeft.BgColor = _Color;
+    }
+
+    Quad_TopRight.RelativePosition_V3.X = halfWidth;
+    Quad_TopRight.RelativePosition_V3.Y = halfHeight;
+    if (_Corners.TopRight) {
+        Quad_TopRight.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/Corner.png");
+        Quad_TopRight.ModulateColor = _Color;
+    } else {
+        Quad_TopRight.ChangeImageUrl("");
+        Quad_TopRight.BgColor = _Color;
+    }
+
+    Quad_BotLeft.RelativePosition_V3.X = -halfWidth;
+    Quad_BotLeft.RelativePosition_V3.Y = -halfHeight;
+    if (_Corners.BotLeft) {
+        Quad_BotLeft.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/Corner.png");
+        Quad_BotLeft.ModulateColor = _Color;
+    } else {
+        Quad_BotLeft.ChangeImageUrl("");
+        Quad_BotLeft.BgColor = _Color;
+    }
+
+    Quad_BotRight.RelativePosition_V3.X = halfWidth;
+    Quad_BotRight.RelativePosition_V3.Y = -halfHeight;
+    if (_Corners.BotRight) {
+        Quad_BotRight.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/Corner.png");
+        Quad_BotRight.ModulateColor = _Color;
+    } else {
+        Quad_BotRight.ChangeImageUrl("");
+        Quad_BotRight.BgColor = _Color;
+    }
+
+    Quad_Top.RelativePosition_V3.X = -halfWidth + 1.666666;
+    Quad_Top.RelativePosition_V3.Y = halfHeight;
+    Quad_Top.Size.X = _Size.X - 3.333333;
+    Quad_Top.BgColor = _Color;
+
+    Quad_Bot.RelativePosition_V3.X = -halfWidth + 1.666666;
+    Quad_Bot.RelativePosition_V3.Y = -halfHeight + 1.666666;
+    Quad_Bot.Size.X = _Size.X - 3.333333;
+    Quad_Bot.BgColor = _Color;
+
+    Quad_Middle.RelativePosition_V3.X = -halfWidth;
+    Quad_Middle.RelativePosition_V3.Y = halfHeight - 1.666666;
+    Quad_Middle.Size.X = _Size.X;
+    Quad_Middle.Size.Y = _Size.Y - 3.333333;
+    Quad_Middle.BgColor = _Color;
+}
+
+Void Private_ResizeWrapper(CMlPage _Dialog, CMlPage _Wrapper, Real _Split) {
+    declare Label_Close      = (_Wrapper.GetFirstChild("Label_Close")      as CMlLabel);
+    declare Frame_BG_Header  = (_Wrapper.GetFirstChild("Frame_BG_Header")  as CMlFrame);
+    declare Frame_BG_Body    = (_Wrapper.GetFirstChild("Frame_BG_Body")    as CMlFrame);
+    declare Frame_BG2_Header = (_Wrapper.GetFirstChild("Frame_BG2_Header") as CMlFrame);
+    declare Frame_BG2_Body   = (_Wrapper.GetFirstChild("Frame_BG2_Body")   as CMlFrame);
+
+    declare Vec2 WrapperPos;
+    declare Vec2 WrapperBottomRight;
+    foreach (Control in _Dialog.MainFrame.Controls) {
+        if (Control.AbsolutePosition_V3.X < WrapperPos.X) {
+            WrapperPos.X = Control.AbsolutePosition_V3.X;
+        }
+        if (Control.AbsolutePosition_V3.Y > WrapperPos.Y) {
+            WrapperPos.Y = Control.AbsolutePosition_V3.Y;
+        }
+        if (Control.Size.X + Control.AbsolutePosition_V3.X > WrapperBottomRight.X) {
+            WrapperBottomRight.X = Control.Size.X + Control.AbsolutePosition_V3.X;
+        }
+        if (Control.AbsolutePosition_V3.Y - Control.Size.Y < WrapperBottomRight.Y) {
+            WrapperBottomRight.Y = Control.AbsolutePosition_V3.Y - Control.Size.Y;
+        }
+    }
+
+    declare WrapperSize = WrapperBottomRight - WrapperPos;
+    WrapperSize.X = ML::Abs(WrapperSize.X);
+    WrapperSize.Y = ML::Abs(WrapperSize.Y);
+
+    Label_Close.RelativePosition_V3.X = WrapperPos.X + WrapperSize.X - 4.833333;
+    Label_Close.RelativePosition_V3.Y = WrapperPos.Y - 3.833333;
+
+
+    if (_Split == 0.) {
+        Frame_BG_Header.RelativePosition_V3.X = WrapperPos.X + WrapperSize.X / 2.;
+        Frame_BG_Header.RelativePosition_V3.Y = WrapperPos.Y - 8.833333;
+        Private_ResizeRectangle(Frame_BG_Header, K_CornersToggle {
+            TopLeft = True,
+            TopRight = True,
+            BotLeft = False,
+            BotRight = False
+        }, <WrapperSize.X, 17.666666>, <.324, .3275, .3484>);
+    
+    
+        Frame_BG_Body.RelativePosition_V3.X = WrapperPos.X + WrapperSize.X / 2.;
+        Frame_BG_Body.RelativePosition_V3.Y = WrapperPos.Y - WrapperSize.Y / 2. - 8.833333;
+        Private_ResizeRectangle(Frame_BG_Body, K_CornersToggle {
+            TopLeft = False,
+            TopRight = False,
+            BotLeft = True,
+            BotRight = True
+        }, <WrapperSize.X, WrapperSize.Y - 17.666666>, <.09, .09, .09>);
+
+        Frame_BG2_Header.Hide();
+        Frame_BG2_Body.Hide();
+    } else {
+        Frame_BG_Header.RelativePosition_V3.X = WrapperPos.X + (_Split - 5.25) / 2.;
+        Frame_BG_Header.RelativePosition_V3.Y = WrapperPos.Y - 8.833333;
+        Private_ResizeRectangle(Frame_BG_Header, K_CornersToggle {
+            TopLeft = True,
+            TopRight = True,
+            BotLeft = False,
+            BotRight = False
+        }, <_Split - 5.25, 17.666666>, <.324, .3275, .3484>);
+    
+        Frame_BG_Body.RelativePosition_V3.X = WrapperPos.X + (_Split - 5.25) / 2.;
+        Frame_BG_Body.RelativePosition_V3.Y = WrapperPos.Y - WrapperSize.Y / 2. - 8.833333;
+        Private_ResizeRectangle(Frame_BG_Body, K_CornersToggle {
+            TopLeft = False,
+            TopRight = False,
+            BotLeft = True,
+            BotRight = True
+        }, <_Split - 5.25, WrapperSize.Y - 17.666666>, <.09, .09, .09>);
+
+
+        Frame_BG2_Header.RelativePosition_V3.X = WrapperPos.X + (WrapperSize.X + _Split) / 2.;
+        Frame_BG2_Header.RelativePosition_V3.Y = WrapperPos.Y - 8.833333;
+        Private_ResizeRectangle(Frame_BG2_Header, K_CornersToggle {
+            TopLeft = True,
+            TopRight = True,
+            BotLeft = False,
+            BotRight = False
+        }, <WrapperSize.X - _Split - 5.25, 17.666666>, <.324, .3275, .3484>);
+    
+        Frame_BG2_Body.RelativePosition_V3.X = WrapperPos.X + (WrapperSize.X + _Split) / 2.;
+        Frame_BG2_Body.RelativePosition_V3.Y = WrapperPos.Y - WrapperSize.Y / 2. - 8.833333;
+        Private_ResizeRectangle(Frame_BG2_Body, K_CornersToggle {
+            TopLeft = False,
+            TopRight = False,
+            BotLeft = True,
+            BotRight = True
+        }, <WrapperSize.X - _Split - 5.25, WrapperSize.Y - 17.666666>, <.09, .09, .09>);
+
+        Frame_BG2_Header.Show();
+        Frame_BG2_Body.Show();
+    }
+}
+
+
+// Opens a dialog
+
+K_Result Prompt(Text _ID, Text _Procedure_ID, Real _Split) {
+    declare Result = K_Result { Over = False };
+
+    if (G_Dialogs[_ID].Pending) {
+        if (G_Queue.count > 0 && G_Queue[0] == _Procedure_ID) {
+            G_Dialogs[_ID].Pending = False;
+
+            // Set current dialog
+            declare K_Dialog DialogLib_CurrentDialog for LocalUser;
+            DialogLib_CurrentDialog = G_Dialogs[_ID];
+            DialogLib_CurrentDialog.Aborted = False;
+            G_Current = _Procedure_ID;
+            
+            // Enforce the Dialog controls z-index
+            declare MLPage <=> Layers::Get("DialogLib__" ^ _ID).LocalPage;
+            foreach (Control in MLPage.MainFrame.Controls) {
+                Control.ZIndex = 1000.;
+            }
+
+            // Show dialog
+            Layers::Attach("DialogLib__" ^ _ID);
+            Layers::Attach("DialogLib_Backdrop");
+            Audio.PlaySoundEvent(CAudioManager::ELibSound::ShowDialog, 0, 0.0);
+
+            Private_ResizeWrapper(MLPage, Layers::Get("DialogLib_Backdrop").LocalPage, _Split);
+        } else {
+            G_Queue.add(_Procedure_ID);
+        }
+    } else {
+        declare K_Dialog DialogLib_CurrentDialog for LocalUser;
+        declare Boolean Dialog_Closed = False;
+        declare Text[] Dialog_CustomData;
+
+        foreach (Event in PendingEvents) {
+            if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent && Event.CustomEventType == DialogLib_CurrentDialog.Close_Event) {
+                Dialog_Closed = True;
+                foreach (Data in Event.CustomEventData) {
+                    Dialog_CustomData.add(Data);
+                }
+            }
+        }
+
+        if (Dialog_Closed || DialogLib_CurrentDialog.Aborted) {
+            Layers::Detach("DialogLib__" ^ _ID);
+            Layers::Detach("DialogLib_Backdrop");
+            Audio.PlaySoundEvent(CAudioManager::ELibSound::HideDialog, 0, 0.0);
+
+            NextDialog();
+
+            Result.Over = True;
+            Result.Success = !DialogLib_CurrentDialog.Aborted;
+            foreach (T in Dialog_CustomData) {
+                Result.CustomData.add(T);
+            }
+
+            G_Dialogs[_ID].Pending = True;
+        }
+    }
+
+    return Result;
+}
