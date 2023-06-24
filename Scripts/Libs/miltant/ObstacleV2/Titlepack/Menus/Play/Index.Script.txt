@@ -2,11 +2,17 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"			as SubMenu
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Index.Script.txt"	as Campaign
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Servers/Index.Script.txt"	as Servers
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Local/Index.Script.txt"		as Local
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"		as ExplorerDialog
 
+declare Boolean G_PendingStartLocalPlay;
 
 Text GetName() {
 	return "play";
+}
+
+Void StartLocalPlay() {
+	if (G_PendingStartLocalPlay)
+		G_PendingStartLocalPlay = !ExplorerDialog::StartLocalPlay();
 }
 
 Void Load() {
@@ -27,13 +33,12 @@ Void Load() {
 	declare SubMenu::K_SubMenu Local;
 	Local.Name = "local";
 	Local.Image = "file://Media/Images/Obstacle/Moods/local.png";
-	Local.AutoNavigation = False;
+	Local.PreventDefault = True;
 	SubMenus.add(Local);
-	Local::Load();
 
 	declare SubMenu::K_SubMenu Tutorials;
 	Tutorials.Name = "tutorials";
-	Tutorials.AutoNavigation = False;
+	Tutorials.PreventDefault = True;
 	SubMenus.add(Tutorials);
 
 
@@ -48,5 +53,22 @@ Void Load() {
 Void Loop() {
 	Campaign::Loop();
 	Servers::Loop();
-	Local::Loop();
+
+	foreach(Event in PendingEvents) {
+		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
+			 Event.CustomEventData.count > 0 &&
+			 Event.CustomEventType == "window_load") {
+			switch (Event.CustomEventData[0]) {
+				case "local": {
+					ExplorerDialog::Load("Map");
+					G_PendingStartLocalPlay = True;
+				}
+				case "tutorials": {
+					
+				}
+			}
+		}
+	}
+
+	StartLocalPlay();
 }

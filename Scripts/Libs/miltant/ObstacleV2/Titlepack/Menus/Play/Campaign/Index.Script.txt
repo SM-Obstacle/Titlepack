@@ -293,43 +293,77 @@ Void Load() {
 	FileList = DataFileMgr.Map_GetGameList("Campaigns\\", True, False, True).Id;
 
 	// TODO get from the API and move to the loop
-
-	declare K_Map Map1;
-	Map1.UID = "cVajuk5onbAPDNyBlmmwYfj7Knd";
-	Map1.Name = "My map";
-	Map1.Author = "Your mom";
-	Map1.PersonalBest = 6000000;
-	declare K_Map Map2;
-	Map2.UID = "_4sqKTSX5WCWND63fgPG2WV43Uj";
-	declare K_Map Map3;
-	Map3.UID = "Q_bctfrszJtFfuT1VB5onreiKQc";
-	declare K_Map Map4;
-	Map4.UID = "bao0k0CvZGPTS82PrtURLa0s148";
-	declare K_Map Map5;
-	Map5.UID = "qWY6lPqGrjyePKzdI1ns94B5Di2";
-	declare K_Map Map6;
-	Map6.UID = "HFFv6GrhyqgnHvHeEbhbdGCShk3";
-	declare K_Map Map7;
-	Map7.UID = "zVmgYK7DdmutRgFitrqC0irIKHg";
-
-	declare K_Campaign first;
-	first.Name = "Summer 2023";
-	first.NameLn1 = "Summer";
-	first.NameLn2 = "2023";
-	first.MXId = 26;
-	first.Type = 1;
-	first.Banner = "file://Media/Images/Obstacle/Campaign/SpringBanner01.png";
-	first.Maps = [
-		Map1,
-		Map2,
-		Map3,
-		Map4,
-		Map5,
-		Map6,
-		Map7
-	];
 	CampaignList = [
-		1 => first
+		1 => K_Campaign {
+			Name = "Summer 2023",
+			NameLn1 = "Summer",
+			NameLn2 = "2023",
+			MXId = 26,
+			Type = 1,
+			Banner = "file://Media/Images/Obstacle/Campaign/SpringBanner01.png",
+			Maps = [
+				K_Map {
+					UID = "Okx2W7jKXCue7s58kpcStl9vRF3",
+					Name = "A Wasted Hymn",
+					Author = "errorcat",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "41Fei0ryxL3DWCKUpSBXnqvDF37",
+					Name = "Cosy Night",
+					Author = "pixou",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "TcwGFWuciPoKzccgWa6wRVM7yvd",
+					Name = "Fairy Mania",
+					Author = "khass",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "eKbgGOAuuwUP6ByvWlP8G728fuc",
+					Name = "Ground Control",
+					Author = "khass",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "aZyUUKMIvsPW8Uw9lMpj4flO4hi",
+					Name = "Little journey",
+					Author = "pixou",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "KkqC5yQSQ18XyhEfpqMLER3vAjc",
+					Name = "Manspach",
+					Author = "Khass",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "TEDQRUPTU1VkGrzBKLhIOY9cYV1",
+					Name = "Reborn",
+					Author = "kiwi & khass",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "0pt13QpJ3yTryi1JgNa4saeU2sd",
+					Name = "Sunshine Valley",
+					Author = "pixou",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "tSd082VQJ51_71EXvCobORPlhZl",
+					Name = "Broken Path",
+					Author = "errorcat",
+					PersonalBest = 6000000
+				},
+				K_Map {
+					UID = "7ki7DAx8RGHufasKBLzlHnvFMUj",
+					Name = "Rationality",
+					Author = "errorcat",
+					PersonalBest = 6000000
+				}
+			]
+		}
 	];
 	NeedRefresh = False;
 }
@@ -369,7 +403,7 @@ Void Loop() {
 					foreach (File_I => File in CampaignFiles[MXId]) {
 						if (File.MapUid == Map.UID) {
 							CampaignList[MXId].Maps[Map_I].Path = File.FileName;
-							CampaignList[MXId].Maps[Map_I].Thumbnail = "file://Thumbnails/MapUid/" ^ Map.UID;
+							CampaignList[MXId].Maps[Map_I].Thumbnail = "file://Thumbnails/MapUid/" ^ Map.UID ^ "/";
 							
 							Online = False;
 							FullOnline = False;
@@ -377,7 +411,7 @@ Void Loop() {
 						}
 					}
 					if (Online) {
-						CampaignList[MXId].Maps[Map_I].Path = "https://sm.mania-exchange.com/maps/download/43034" ^ Map.UID;
+						// CampaignList[MXId].Maps[Map_I].Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.UID;
 						CampaignList[MXId].Maps[Map_I].Thumbnail = "https://sm.mania-exchange.com/maps/screenshot/normal/" ^ Map.UID;
 
 						PartialOnline = True;

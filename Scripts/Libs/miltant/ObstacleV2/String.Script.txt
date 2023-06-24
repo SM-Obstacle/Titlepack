@@ -13,7 +13,7 @@ Vec3 NudgeDark(Vec3 _Color) {
     declare B = _Color.Z;
     declare Grey = 0.2126 * R + 0.7152 * G + 0.0722 * B;
 
-    while (Grey < .25) {
+    while (Grey < .3) {
         R = ML::Clamp(R * 1.2, .1, 1.);
         G = ML::Clamp(G * 1.2, .1, 1.);
         B = ML::Clamp(B * 1.2, .1, 1.);
@@ -42,7 +42,6 @@ Text ContrastString(Text _Input) { // todo: better handle short color codes
             }
         }
         declare OriginalColor  = CL::HexToRgb(Hex);
-        
         declare NewHex         = CL::RgbToHex(NudgeDark(OriginalColor));
 
         _Output = TL::Replace(_Output, Code, "$" ^ NewHex);

@@ -43,9 +43,9 @@
 	Text server_description;
 	Text server_login;
 	Text server_title;
-	Integer server_ladder_limit_min;
-	Integer server_ladder_limit_max;
-	Integer server_average_ladder_points;
+	Real server_ladder_limit_min;
+	Real server_ladder_limit_max;
+	Real server_average_ladder_points;
 	Integer server_player_count;
 	Integer server_player_max;
 	Integer server_spectator_count;
@@ -67,6 +67,8 @@
 	Text server_build_version;
 	Text server_mode_version;
 	Boolean server_is_favourite;
+	Integer server_ping;
+	Integer last_ping;
 }
 
 #Const K_ServerInfo_ML """
@@ -75,9 +77,9 @@
 	Text server_description;
 	Text server_login;
 	Text server_title;
-	Integer server_ladder_limit_min;
-	Integer server_ladder_limit_max;
-	Integer server_average_ladder_points;
+	Real server_ladder_limit_min;
+	Real server_ladder_limit_max;
+	Real server_average_ladder_points;
 	Integer server_player_count;
 	Integer server_player_max;
 	Integer server_spectator_count;
@@ -99,5 +101,7 @@
 	Text server_build_version;
 	Text server_mode_version;
 	Boolean server_is_favourite;
+	Integer server_ping;
+	Integer last_ping;
 }
 """

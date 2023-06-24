@@ -9,6 +9,9 @@ main() {
 	Background::Load();
 	ObsStore::Load();
 
+	declare CVideo[Text] ObsStore_Previews for LocalUser;
+	ObsStore_Previews.clear();
+
 	while(True) {
 		yield;
 		

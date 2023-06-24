@@ -99,13 +99,13 @@ ChannelInfoStructs::K_ServerInfo[] GetServersInfos()
 			ServerInfos.server_title                 = Server["title"];
 
 		if (Server.existskey("ladder_limit_min"))
-			ServerInfos.server_ladder_limit_min      = TextLib::ToInteger(Server["ladder_limit_min"]);
+			ServerInfos.server_ladder_limit_min      = TextLib::ToReal(Server["ladder_limit_min"]);
 
 		if (Server.existskey("ladder_limit_max"))
-			ServerInfos.server_ladder_limit_max      = TextLib::ToInteger(Server["ladder_limit_max"]);
+			ServerInfos.server_ladder_limit_max      = TextLib::ToReal(Server["ladder_limit_max"]);
 
 		if (Server.existskey("average_ladder_points"))
-			ServerInfos.server_average_ladder_points = TextLib::ToInteger(Server["average_ladder_points"]);
+			ServerInfos.server_average_ladder_points = TextLib::ToReal(Server["average_ladder_points"]);
 
 		if (Server.existskey("player_count"))
 			ServerInfos.server_player_count          = TextLib::ToInteger(Server["player_count"]);
@@ -223,9 +223,7 @@ Void Private_FetchServerListAsync(Text[Text] _Filters, Text _OrderBy, Text _Orde
 		declare Text ProjectEnviro for LocalUser;
 		BrowsingFactor = """environments[]={{{ProjectEnviro}}}""";
 	}
-	log("""{{{G_Base_API_Url}}}/ingame/servers/online?{{{BrowsingFactor}}}&{{{QueryString}}}""");
-	log(Http_GetHeaders());
-
+	
 	G_Request = Http.CreateGet("""{{{G_Base_API_Url}}}/ingame/servers/online?{{{BrowsingFactor}}}&{{{QueryString}}}""", False, Http_GetHeaders());
 }
 

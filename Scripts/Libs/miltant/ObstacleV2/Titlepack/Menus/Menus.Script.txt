@@ -1,10 +1,13 @@
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Editors/Index.Script.txt"		as Editors
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Credits/Index.Script.txt"		as Credits
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Index.Script.txt"		as Play
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Home/Index.Script.txt"		as Home
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
-#Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"			as Layers
-#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Editors/Index.Script.txt"			as Editors
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Credits/Index.Script.txt"			as Credits
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Index.Script.txt"			as Play
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Home/Index.Script.txt"			as Home
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"				as Windows
+#Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"				as Layers
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"							as Styles
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/JoinServer/Index.Script.txt"	as ServerDialog
+
+declare Text G_ReqServerLogin;
 
 Text Build() {
 	declare ML_Text =  """
@@ -77,7 +80,7 @@ Text Build() {
 				if (!PageIsVisible && PendingEvents.count == 0) continue;
 
 				foreach(Event in PendingEvents) {
-                    {{{Styles::GetEventLoopActiveItem()}}}
+					{{{Styles::GetEventLoopActiveItem()}}}
 				}
 			}
 		}
@@ -101,39 +104,52 @@ Void Load() {
 
 	Home::Load();
 	Windows::Load(Home::GetName());
+
+    ServerDialog::Load();
+}
+
+Void JoinServer() {
+	if (G_ReqServerLogin != "" && ServerDialog::Join(G_ReqServerLogin)) {
+		G_ReqServerLogin = "";
+	}
 }
 
 
 
 Void Loop() {
 	foreach(Event in PendingEvents) {
-		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
-			 Event.CustomEventData.count > 0 &&
-			 Event.CustomEventType == "menu_item_click") {
-			switch (Event.CustomEventData[0]) {
-				case "home": {
-					Windows::Load(Home::GetName());
+		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent && Event.CustomEventData.count > 0) {
+			switch (Event.CustomEventType) {
+				case "menu_item_click": {
+					switch (Event.CustomEventData[0]) {
+						case "home": {
+							Windows::Load(Home::GetName());
+						}
+		
+						case "editors": {
+							Windows::Load(Editors::GetName());
+						}
+		
+						case "profile": {
+							Menu_Profile();
+							yield;
+						}
+		
+						case "play": {
+							Windows::Load(Play::GetName());
+						}
+		
+						case "credits": {
+							Windows::Load(Credits::GetName());
+						}
+		
+						case "quit": {
+							Menu_Quit();
+						}
+					}
 				}
-
-				case "editors": {
-					Windows::Load(Editors::GetName());
-				}
-
-				case "profile": {
-					Menu_Profile();
-					yield;
-				}
-
-				case "play": {
-					Windows::Load(Play::GetName());
-				}
-
-				case "credits": {
-					Windows::Load(Credits::GetName());
-				}
-
-				case "quit": {
-					Menu_Quit();
+				case "join_server": {
+					G_ReqServerLogin = Event.CustomEventData[0];
 				}
 			}
 		}
@@ -144,4 +160,5 @@ Void Loop() {
 	Credits::Loop();
 	Play::Loop();
 	Windows::Loop();
+	JoinServer();
 }

@@ -2,52 +2,62 @@
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"		as SubMenu
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"	as ExplorerDialog
-#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/NewMap/Index.Script.txt"	as NewMapDialog
 
+declare Boolean G_PendingStartMapEditor;
+declare Boolean G_PendingStartReplayEditor;
 
 Text GetName() {
 	return "editors";
 }
 
+Void StartMapEditor() {
+	if (G_PendingStartMapEditor)
+		G_PendingStartMapEditor = !ExplorerDialog::StartMapEditor();
+}
+
+Void StartReplayEditor() {
+	if (G_PendingStartReplayEditor)
+		G_PendingStartReplayEditor = !ExplorerDialog::StartReplayEditor();
+}
+
 Void Load() {
-	ExplorerDialog::Load();
-	NewMapDialog::Load();
+	G_PendingStartMapEditor = False;
 
 	declare SubMenu::K_SubMenu[] SubMenus;
 
 	declare SubMenu::K_SubMenu Maps;
 	Maps.Name = "Maps";
-	Maps.AutoNavigation = False;
+	Maps.PreventDefault = True;
 	Maps.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Maps);
 
 	declare SubMenu::K_SubMenu Replay;
 	Replay.Name = "Replay";
-	Replay.AutoNavigation = False;
+	Replay.PreventDefault = True;
 	Replay.Image = "file://Media/Images/Obstacle/Moods/day.png";
 	SubMenus.add(Replay);
 
 	declare SubMenu::K_SubMenu Item;
 	Item.Name = "Item";
-	Item.AutoNavigation = False;
+	Item.PreventDefault = True;
 	Item.Image = "file://Media/Images/Obstacle/Moods/night.png";
 	SubMenus.add(Item);
 
 	declare SubMenu::K_SubMenu Action;
 	Action.Name = "Action";
-	Action.AutoNavigation = False;
+	Action.PreventDefault = True;
 	Action.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Action);
 
 	declare SubMenu::K_SubMenu Interface;
 	Interface.Name = "Interface";
-	Interface.AutoNavigation = False;
+	Interface.PreventDefault = True;
 	Interface.Image = "file://Media/Images/Obstacle/Moods/sunset.png";
 	SubMenus.add(Interface);
 
 	declare SubMenu::K_SubMenu Ghost;
 	Ghost.Name = "Ghost";
-	Ghost.AutoNavigation = False;
+	Ghost.PreventDefault = True;
 	Ghost.Image = "file://Media/Images/Obstacle/Moods/none.png";
 	SubMenus.add(Ghost);
 
@@ -67,26 +77,12 @@ Void Loop() {
 			 Event.CustomEventType == "window_load") {
 			switch (Event.CustomEventData[0]) {
 				case "Maps": {
-					declare Map = ExplorerDialog::Pick("Pick a map", "Map");
-					if (Map != "") {
-						TitleControl.EditMap(
-							Map, 
-							"MapTypes/ShootMania/ObstacleTitleArena.Script.txt",
-							"""<mode_script_settings>
-								<setting name='S_Mode'					value=''		type='text'/>
-								<setting name='S_IsOfficialMap'			value='False'	type='boolean'/>
-								<setting name='S_Gameplay_Acceleration'	value='1.'		type='real'/>
-								<setting name='S_Gameplay_Control'		value='1.'		type='real'/>
-								<setting name='S_Gameplay_Gravity'		value='1.'		type='real'/>
-							</mode_script_settings>"""
-						);
-					}
-					// log(NewMapDialog::Craft());
+					ExplorerDialog::Load("Map", True);
+					G_PendingStartMapEditor = True;
 				}
 				case "Replay": {
-					declare Replays = ExplorerDialog::MultiPick("Pick one or several replays", "Replay");
-					if (Replays.count > 0)
-						TitleControl.EditReplay(Replays);
+					ExplorerDialog::Load("Replay");
+					G_PendingStartReplayEditor = True;
 				}
 				case "Item": {
 					TitleControl.OpenEditor(CTitleControl::EEditorType::ItemEditor);
@@ -100,12 +96,13 @@ Void Loop() {
 				case "Ghost": {
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
-				default: {
-					continue;
+				case "Module": {
+					TitleControl.OpenEditor(CTitleControl::EEditorType::ModuleStudio);
 				}
 			}
-
-			yield;
 		}
 	}
+
+	StartMapEditor();
+	StartReplayEditor();
 }

@@ -8,10 +8,10 @@
 Void Load() {
     Background::Load();
     Menus::Load();
-    // Auth::Init();
+    Auth::Init();
 }
 
 Void Loop() {
     Menus::Loop();
-    // Auth::Loop();
+    Auth::Loop();
 }

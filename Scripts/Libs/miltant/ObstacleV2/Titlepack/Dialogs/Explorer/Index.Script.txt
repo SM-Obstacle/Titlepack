@@ -1,319 +1,71 @@
-#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"   as Dialogs
-#Include "Libs/miltant/ObstacleV2/Titlepack/Store.Script.txt"           as ObsStore
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"				as Dialogs
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Manialink.Script.txt"	as Manialink
 
-#Const C_Dialog_Close "Explorer_Close"
 
-Text Build() {
-    return """
-<manialink version="3">
-    <framemodel id="EmoteTile">
-        <label pos="23.17 -12.83" halign="center" valign="center2" text="" textcolor="fff" textsize="10" id="Label_Emote"/>
-        <label pos="23.17 -25.5" halign="center" valign="center2" text="batman" textfont="light" textcolor="fff" textsize="2" size="46" id="Label_Name"/>
-        <quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" style="Bgs1InRace" substyle="HealthBar" modulatecolor="414245"/>
-    </framemodel>
+Void Load(Text _FileType, Boolean _New) {
+	Dialogs::RegisterDialog("explorer", Manialink::Build(_FileType, _New), Manialink::C_Dialog_Close);
+}
+Void Load(Text _FileType) {
+	Load(_FileType, False);
+}
 
-    <framemodel id="ThumbnailTile" size="46.33 30.67">
-        <label pos="23.17 -27.17" halign="center" valign="center2" text="A Wasted Hymn" textfont="light" textcolor="fff" textsize="2" size="46" id="Label_Name"/>
-        <quad pos="0 -23.17" size="46.33 19.33" image="file://Media/Images/Obstacle/Explorer/FMap.png" id="Quad_Banner"/>
-        <quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" style="Bgs1InRace" substyle="HealthBar" modulatecolor="414245"/>
-    </framemodel>
+Boolean StartMapEditor() {
+	declare Status = Dialogs::Prompt("explorer", "explorer__start_map_editor", 85.25);
 
-    <frame pos="-104.25 49.75" size="208.5 99.5">
-        <frame id="Frame_Header">
-            <label pos="3.7 -2" text="Pick a map" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
-            <frame pos="12.6 -11.9">
-                <label text="    Back" textprefix="$t" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
-                <quad size="18.5 6" id="Quad_Back" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"/>
-            </frame>
+	// Do these do anything?
+	// """<mode_script_settings>
+	// 	<setting name="S_Mode"					value="		type="text"/>
+	// 	<setting name="S_IsOfficialMap"			value="False"	type="boolean"/>
+	// 	<setting name="S_Gameplay_Acceleration"	value="1."		type="real"/>
+	// 	<setting name="S_Gameplay_Control"		value="1."		type="real"/>
+	// 	<setting name="S_Gameplay_Gravity"		value="1."		type="real"/>
+	// </mode_script_settings>"""
 
-            <entry textcolor="fff" textfont="light" pos="59 -9" size="97 7" default="$ff0$z Downloaded/cheesebullets/run"
-                selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
-            <label textcolor="fff" pos="48.33 -9" text="" valign="center2" halign="center" id="Label_Parent" scriptevents="1"/>
-            <label textcolor="fff" pos="55.33 -9" text="" valign="center2" halign="center" id="Label_Refresh" scriptevents="1"/>
-            <label textcolor="fff" pos="160.17 -9" text="" valign="center2" halign="center"/>
-            <quad pos="44.33 -5.17" size="120.17 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search"
-                scriptevents="1" modulatecolor="000" opacity="0.5"/>
-        </frame>
+	if (Status.Over) {
+		wait(TitleControl.IsReady);
+		
+		if (Status.Success) {
+			if (Status.CustomData.count == 3) {
+				declare Deco = Status.CustomData[0] ^ "48x48" ^ Status.CustomData[1];
+				declare Mod = Status.CustomData[2];
 
-        <frame id="Frame_Body" pos="2 -19">
-            <frame size="196 79" scroll="1" scrollmax="0 100" id="Frame_Content">
-                <frame id="Frame_Emotes" pos="1">
-                    <frameinstance modelid="EmoteTile" pos="1.33 -1.5" data-index="0"/>
-                    <frameinstance modelid="EmoteTile" pos="50.67 -1.5" data-index="1"/>
-                    <frameinstance modelid="EmoteTile" pos="100 -1.5" data-index="2"/>
-                    <frameinstance modelid="EmoteTile" pos="149.33 -1.5" data-index="3"/>
-
-                    <frameinstance modelid="EmoteTile" pos="1.33 -35.17" data-index="4"/>
-                    <frameinstance modelid="EmoteTile" pos="50.67 -35.17" data-index="5"/>
-                    <frameinstance modelid="EmoteTile" pos="100 -35.17" data-index="6"/>
-                    <frameinstance modelid="EmoteTile" pos="149.33 -35.17" data-index="7"/>
-
-                    <frameinstance modelid="EmoteTile" pos="1.33 -68.83" data-index="8"/>
-                    <frameinstance modelid="EmoteTile" pos="50.67 -68.83" data-index="9"/>
-                    <frameinstance modelid="EmoteTile" pos="100 -68.83" data-index="10"/>
-                    <frameinstance modelid="EmoteTile" pos="149.33 -68.83" data-index="11"/>
-
-                    <frameinstance modelid="EmoteTile" pos="1.33 -102.5" data-index="12"/>
-                    <frameinstance modelid="EmoteTile" pos="50.67 -102.5" data-index="13"/>
-                    <frameinstance modelid="EmoteTile" pos="100 -102.5" data-index="14"/>
-                    <frameinstance modelid="EmoteTile" pos="149.33 -102.5" data-index="15"/>
-                </frame>
-                <frame id="Frame_Thumbnail" pos="1">
-                    <frameinstance modelid="ThumbnailTile" pos="1.33 -1.5" data-index="0"/>
-                    <frameinstance modelid="ThumbnailTile" pos="50.67 -1.5" data-index="1"/>
-                    <frameinstance modelid="ThumbnailTile" pos="100 -1.5" data-index="2"/>
-                    <frameinstance modelid="ThumbnailTile" pos="149.33 -1.5" data-index="3"/>
-
-                    <frameinstance modelid="ThumbnailTile" pos="1.33 -35.17" data-index="4"/>
-                    <frameinstance modelid="ThumbnailTile" pos="50.67 -35.17" data-index="5"/>
-                    <frameinstance modelid="ThumbnailTile" pos="100 -35.17" data-index="6"/>
-                    <frameinstance modelid="ThumbnailTile" pos="149.33 -35.17" data-index="7"/>
-
-                    <frameinstance modelid="ThumbnailTile" pos="1.33 -68.83" data-index="8"/>
-                    <frameinstance modelid="ThumbnailTile" pos="50.67 -68.83" data-index="9"/>
-                    <frameinstance modelid="ThumbnailTile" pos="100 -68.83" data-index="10"/>
-                    <frameinstance modelid="ThumbnailTile" pos="149.33 -68.83" data-index="11"/>
-
-                    <frameinstance modelid="ThumbnailTile" pos="1.33 -102.5" data-index="12"/>
-                    <frameinstance modelid="ThumbnailTile" pos="50.67 -102.5" data-index="13"/>
-                    <frameinstance modelid="ThumbnailTile" pos="100 -102.5" data-index="14"/>
-                    <frameinstance modelid="ThumbnailTile" pos="149.33 -102.5" data-index="15"/>
-                </frame>
-                <quad size="300 500" scriptevents="1" id="Quad_Bg" pos="-50 50"/>
-            </frame>
-        </frame>
-    </frame>
-    <script><![CDATA[
-	#Include "MathLib" as ML
-	#Include "TextLib" as TL
-
-    {{{ObsStore::ML_K_MapInfo()}}}
-
-    #Struct K_Tile {
-        Text Image;
-        Text Icon;
-        Text Name;
-        Text DisplayName;
-        Boolean IsFolder;
-    }
-    
-    declare K_Tile[][Text] Folders;
-	declare Text G_CurrentFolder;
-    declare Boolean G_NeedRerender;
-    declare Text G_Selected_Name;
-
-    Void BrowseAbsolute(Text _Path) {
-        if (!Folders.existskey(_Path)) {
-            return;
-        }
-        G_CurrentFolder = _Path;
-        G_Selected_Name = "";
-        G_NeedRerender = True;
-
-		declare Frame_Content = (Page.GetFirstChild("Frame_Content") as CMlFrame);
-        declare Quad_Bg = (Page.GetFirstChild("Quad_Bg") as CMlQuad);
-		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
-
-        Frame_Content.ScrollBumpTop();
-        Frame_Content.ScrollMax.Y = ML::Max(0., ML::FloorInteger(Folders[G_CurrentFolder].count / 4.) * 33.5 - 200.);
-        Quad_Bg.Size.Y = Folders[G_CurrentFolder].count / 4. * 33.5 + 200.;
-        Entry_Search.Value = G_CurrentFolder;
-    }
-
-    Void BrowseRelative(Text _Path) {
-        BrowseAbsolute(G_CurrentFolder ^ _Path ^ "/");
-    }
-
-	Void Update() {
-        declare K_MapInfo[][Text] ObsStore_Maps for LocalUser;
-
-        Folders.clear();
-        Folders["/"] = [];
-        
-        foreach (Folder => Maps in ObsStore_Maps) {
-            declare Parents = TL::Split("\\", Folder);
-            declare CurrentPath = "/";
-
-            foreach (Parent in TL::Split("\\", Folder)) {
-                if (!Folders.existskey(CurrentPath)) {
-                    Folders[CurrentPath] = [];
-                }
-                declare Found = False;
-                foreach (Tile in Folders[CurrentPath]) {
-                    if (Tile.Name == Parent) {
-                        Found = True;
-                        break;
-                    }
-                }
-                if (!Found) {
-                    Folders[CurrentPath].add(K_Tile {
-                        Icon = "",
-                        Name = Parent,
-                        DisplayName = Parent,
-                        IsFolder = True
-                    });
-                }
-                CurrentPath ^= Parent ^ "/";
-            }
-            if (!Folders.existskey(CurrentPath)) {
-                Folders[CurrentPath] = [];
-            }
-            
-            foreach (I => Map in Maps) {
-                Folders[CurrentPath].add(K_Tile {
-                    Image = "file://Thumbnails/MapUid/" ^ Map.MapUid ^ "/",
-                    Name = Map.FileName,
-                    DisplayName = Map.Name,
-                    IsFolder = False
-                });
-            }
-        }
-
-        BrowseAbsolute(G_CurrentFolder);
-	}
-
-	main () {
-		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
-		declare Frame_Content = (Page.GetFirstChild("Frame_Content") as CMlFrame);
-        declare Frame_Emotes = (Page.GetFirstChild("Frame_Emotes") as CMlFrame);
-        declare Frame_Thumbnail = (Page.GetFirstChild("Frame_Thumbnail") as CMlFrame);
-
-		declare Text ObsStore_SelectedMap_Name for LocalUser;
-		declare Text ObsStore_SelectedMap for LocalUser;
-        declare K_MapInfo[][Text] ObsStore_Maps for LocalUser;
-        declare Integer ObsStore_Maps_LastUpdate for LocalUser;
-        declare Integer Maps_LastUpdate = 0;
-        declare Integer RefreshDebouncer = 0;
-        declare Integer LastClick = 0;
-        declare LastScrollOffset = 0.;
-        G_NeedRerender = True;
-        declare TilesScrollOffset = 0;
-
-        G_CurrentFolder = "/";
-
-		while (True) {
-            if (ObsStore_Maps_LastUpdate != Maps_LastUpdate) {
-                ObsStore_Maps_LastUpdate = Maps_LastUpdate;
-                Update();
-            }
-			foreach (Event in PendingEvents) {
-				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
-					switch (Event.ControlId) {
-                        case "Quad_Back": {
-							SendCustomEvent("{{{C_Dialog_Close}}}", Text[]);
-                        }
-						case "Quad_Search": {
-                            Entry_Search.StartEdition();
-						}
-                        case "Label_Refresh": {
-                            if (Now - RefreshDebouncer > 2000) {
-                                RefreshDebouncer = Now;
-                                SendCustomEvent("ObsStore_RefreshMaps", Text[]);
-                            }
-                        }
-                        case "Label_Parent": {
-                            declare Parents = TL::Split("/", G_CurrentFolder);
-                            declare NewPath = "/";
-                            for (I, 1, Parents.count - 2) {
-                                NewPath ^= Parents[I] ^ "/";
-                            }
-                            BrowseAbsolute(NewPath);
-                        }
-                        case "Quad_Trigger": {
-                            if (!Event.Control.Parent.DataAttributeExists("index"))
-                                break;
-                            
-                            declare Index = TL::ToInteger(Event.Control.Parent.DataAttributeGet("index")) + TilesScrollOffset;
-                            declare Tile = Folders[G_CurrentFolder][Index];
-                            if (LastClick + 500 > Now && G_Selected_Name == Tile.Name) {
-                                if (Tile.IsFolder) {
-                                    BrowseRelative(Tile.Name);
-                                } else {
-                                    SendCustomEvent("{{{C_Dialog_Close}}}", [Tile.Name]);
-                                }
-                            } else {
-                                LastClick = Now;
-                                G_Selected_Name = Tile.Name;
-                                if (!Tile.IsFolder) {
-                                    ObsStore_SelectedMap = Tile.Image;
-                                    ObsStore_SelectedMap_Name = Tile.DisplayName;
-                                }
-                            }
-                        }
-                        
-                        default: {
-                            log(Event.ControlId);
-                        }
-					}
-				}
+				TitleControl.EditNewMap(
+					"Storm", Deco, Mod, "", "", "MapTypes/ShootMania/ObstacleTitleArena.Script.txt", ""
+				);
+			} else if (Status.CustomData.count > 0) {
+				TitleControl.EditMap(Status.CustomData[0], "MapTypes/ShootMania/ObstacleTitleArena.Script.txt", "");
 			}
-
-            if (LastScrollOffset != Frame_Content.ScrollOffset.Y) {
-                LastScrollOffset = Frame_Content.ScrollOffset.Y;
-                G_NeedRerender = True;
-            }
-
-            if (G_NeedRerender) {
-                G_NeedRerender = False;
-
-                for (I, 0, 15) {
-                    Frame_Emotes.Controls[I].Hide();
-                    Frame_Thumbnail.Controls[I].Hide();
-
-                    if (Folders.existskey(G_CurrentFolder)) {
-                        if (Folders[G_CurrentFolder].count > I) {
-                            declare Tile = Folders[G_CurrentFolder][I];
-                            
-                            if (Tile.Image != "") {
-                                declare Frame_Instance = (Frame_Thumbnail.Controls[I] as CMlFrame);
-                                Frame_Instance.Show();
-    
-                                declare Quad_Trigger = (Frame_Instance.GetFirstChild("Quad_Trigger") as CMlQuad);
-                                declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
-    
-                                Quad_Trigger.ChangeImageUrl("file://Thumbnails/MapUid/" ^ Tile.Image);
-                                Label_Name.SetText(Tile.DisplayName);
-                            } else {
-                                declare Frame_Instance = (Frame_Emotes.Controls[I] as CMlFrame);
-                                Frame_Instance.Show();
-    
-                                declare Label_Emote = (Frame_Instance.GetFirstChild("Label_Emote") as CMlLabel);
-                                declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
-    
-                                Label_Emote.SetText(Tile.Icon);
-                                Label_Name.SetText(Tile.DisplayName);
-                            }
-                        }
-                    }
-                }
-            }
-
-			yield;
 		}
 	}
-]]></script>
-</manialink>
-""";
+	return Status.Over;
 }
 
-Void Load() {
-    Dialogs::RegisterDialog("explorer", "", Build(), C_Dialog_Close);
+Boolean StartReplayEditor() {
+	declare Status = Dialogs::Prompt("explorer", "explorer__start_replay_editor", 0.);
+
+	if (Status.Over) {
+		wait(TitleControl.IsReady);
+		
+		if (Status.Success) {
+			if (Status.CustomData.count > 0) {
+				TitleControl.EditReplay(Status.CustomData);
+			}
+		}
+	}
+	return Status.Over;
 }
 
-Text Pick(Text _Title, Text _FileType) {
-    declare Result = Dialogs::PromptWithTitle("explorer", "explorer_" ^ _FileType, _Title);
+Boolean StartLocalPlay() {
+	declare Status = Dialogs::Prompt("explorer", "explorer__start_localplay", 0.);
 
-    if (Result.Success && Result.CustomData.count > 0) {
-        return Result.CustomData[0];
-    }
-    return "";
-}
-
-Text[] MultiPick(Text _Title, Text _FileType) {
-    declare Result = Dialogs::PromptWithTitle("explorer", "explorer_" ^ _FileType, _Title);
-
-    if (Result.Success) {
-        return Result.CustomData;
-    }
-    return [];
+	if (Status.Over) {
+		wait(TitleControl.IsReady);
+		
+		if (Status.Success) {
+			if (Status.CustomData.count > 0) {
+				TitleControl.PlayMap(Status.CustomData[0], "Shootmania/Obstacle.Script.txt", "");
+			}
+		}
+	}
+	return Status.Over;
 }

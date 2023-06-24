@@ -132,6 +132,8 @@ Text Build() {
 	main() {
 		{{{Styles::GetInitFrameMenus()}}}
 		G_Frame_VisibleContent = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
+
+		declare Text[][Text] ObsStore_Requests for LocalUser;
 		
 		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
 
@@ -168,38 +170,6 @@ Text Build() {
 				Quad_ScrollTrigger.Size.Y = ML::Max(100., ObsStore_TopServers.count * 10.) + 5.;
 				
 				UpdateServers(ML::Min(TopServerIndex, ObsStore_TopServers.count - 11));
-			}
-
-			switch (TitleControl.LatestResult) {
-				case CTitleControl::EResult::Success: {
-					if (Context == 1) {
-
-					}
-				}
-				case CTitleControl::EResult::Error_Net_ServerNotFound: {
-					
-				}
-				case CTitleControl::EResult::Error_Net_ServerUnreachable: {
-					
-				}
-				case CTitleControl::EResult::Error_Net_Disconnected: {
-					
-				}
-				case CTitleControl::EResult::Error_Net_WrongPassword: {
-					
-				}
-				case CTitleControl::EResult::Error_Network_OnlineExpired: {
-					
-				}
-				case CTitleControl::EResult::Error_Network_ServerFull: {
-					
-				}
-				// CTitleControl::EResult::Error_Abort
-				// CTitleControl::EResult::Error_Internal
-				// CTitleControl::EResult::Error_DataMgr
-				default: {
-					
-				}
 			}
 
 			foreach(Event in PendingEvents) {
@@ -239,6 +209,18 @@ Text Build() {
 				} else {
 					Quad_Back.Hide();
 				}
+
+				// if (ServerIndex < ObsStore_TopServers.count && ServerIndex >= 0) {
+				// 	if (ObsStore_TopServers[ServerIndex].server_ping == 0) {
+				// 		if (!ObsStore_Requests.existskey("Lookup_ServerInfo"))
+				// 			ObsStore_Requests["Lookup_ServerInfo"] = [];
+							
+				// 		ObsStore_Requests["Lookup_ServerInfo"].add(ObsStore_TopServers[ServerIndex].server_login);
+				// 	} else {
+				// 		declare Label_Ping = (FrameInstance.GetFirstChild("Label_Ping") as CMlLabel);
+				// 		Label_Ping.SetText("" ^ ObsStore_TopServers[ServerIndex].server_ping);
+				// 	}
+				// }
 			}
 		}
 	}
