@@ -200,11 +200,6 @@ Void UpdatePlayersSkin(Ident _SkinId) {
  * Returns: boolean is the map valid
  */
 Boolean PrepareMap(Text ModeName) {
-    if (Settings::GetEnableRecords()) {
-        API::ReplaceOrCreateMap();
-    }
-
-
     G_CheckpointsTotal = 0;
     G_IsRandomizerMap = False;
     G_RandomizerMap_Landmarks.clear();
@@ -282,6 +277,10 @@ Boolean PrepareMap(Text ModeName) {
     declare MapVersion = Map::GetMapTypeVersion();
     if (MapVersion < 2) {
         UIManager.UIAll.SendChat("$f00WARNING: This is an old map, please disable fast respawn in the settings if some cps are made with poles!");
+    }
+
+    if (Settings::GetEnableRecords()) {
+        API::ReplaceOrCreateMap(G_CheckpointsTotal);
     }
 
     return True;

@@ -11,9 +11,10 @@
 #Const C_UnauthorizedStatusCode 401
 
 #Const C_MP_App_Id			"de1ce3ba8e"
-#Const C_MP_App_Secret	"52877e3c1aa428eeb75a042c52caa01fb74a7526"
-#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=token&"
-#Const C_MP_Redirect		"http://192.168.1.113:3001/player/give_token"
+#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
+#Const C_MP_Redirect		"https://obstacle.titlepack.io/give_token"
+//#Const C_MP_Redirect		"http://192.168.1.30:8000/give_token"
+//#Const C_MP_Redirect		"http://192.168.1.30:3001/player/give_token"
 // #Const C_MP_Redirect "https://api.obstacle.ovh/player/give_token"
 // #Const C_MP_Redirect "http://localhost:3000/player/give_token"
 
@@ -29,8 +30,8 @@
 
 #Struct K_UpdatePlayerBody {
 	Text login;
-	Text nickname;
-	Text country;	
+	Text name;
+	Text zone_path;	
 }
 
 #Struct K_UpdatePlayerResponse {
@@ -42,6 +43,7 @@
 #Struct K_GetTokenBody {
 	Text login;
 	Text state;
+	Text redirect_uri;
 }
 
 #Struct K_GetTokenResponse {
@@ -67,7 +69,11 @@ Text Private_UpdateToken() {
 
 	declare login = LocalUser.Login;
 	declare Text state = login ^ Now;
-	declare body = K_GetTokenBody { login = login, state = state };
+	declare body = K_GetTokenBody {
+		login = login,
+		state = state,
+		redirect_uri = C_MP_Redirect
+	};
 	
 	declare req = Http.CreatePost(
 		Constants::C_HostUrl ^ "player/get_token",
@@ -76,7 +82,6 @@ Text Private_UpdateToken() {
 		
 	OpenLink(C_MP_Link
 		^ "client_id=" ^ C_MP_App_Id
-		^ "&client_secret=" ^ C_MP_App_Secret
 		^ "&redirect_uri=" ^ C_MP_Redirect
 		^ "&state=" ^ state
 		^ "&scope=basic",
@@ -103,9 +108,11 @@ Text Private_UpdateToken() {
 Boolean Private_UpdatePlayer(Text _Secret) {
 	declare body = K_UpdatePlayerBody {
 		login = LocalUser.Login,
-		nickname = LocalUser.Name,
-		country = LocalUser.ZonePath
+		name = LocalUser.Name,
+		zone_path = LocalUser.ZonePath
 	};
+
+	log(Constants::C_HostUrl);
 
 	declare req = Http.CreatePost(
 		Constants::C_HostUrl ^ "player/update",

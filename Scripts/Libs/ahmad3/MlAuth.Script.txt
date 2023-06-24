@@ -17,13 +17,6 @@
 #Const  Version     "2023-04-01"
 #Const  ScriptName  "Auth.Script.txt"
 
-#Const C_MP_App_Id			"de1ce3ba8e"
-#Const C_MP_App_Secret	"52877e3c1aa428eeb75a042c52caa01fb74a7526"
-#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=token&"
-#Const C_MP_Redirect		"http://192.168.1.113:3001/player/give_token"
-// #Const C_MP_Redirect "https://api.obstacle.ovh/player/give_token"
-// #Const C_MP_Redirect "http://localhost:3000/player/give_token"
-
 #Struct K_Banishment {
     Integer id;
     Text date_ban;
@@ -55,21 +48,21 @@ Text GetLayer() {
 #Include "TimeLib" as TimeLib
 #Include "TextLib" as TL
 
-#Const C_Token_Ttl 43200000 // 1000*60*60*12
-
-#Const C_HostUrl "http://192.168.1.113:3001/"
+//#Const C_HostUrl "http://192.168.1.30:3001/"
+#Const C_HostUrl "https://obstacle.titlepack.io/api/"
 //#Const C_HostUrl "http://localhost:3000/"
 //#Const C_HostUrl "https://api.obstacle.ovh/"
 #Const C_MP_App_Id			"de1ce3ba8e"
-#Const C_MP_App_Secret	"52877e3c1aa428eeb75a042c52caa01fb74a7526"
-#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=token&"
-#Const C_MP_Redirect		"http://192.168.1.113:3001/player/give_token"
+#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
+//#Const C_MP_Redirect		"http://192.168.1.30:8000/give_token"
+#Const C_MP_Redirect   "https://obstacle.titlepack.io/give_token"
 // #Const C_MP_Redirect "https://api.obstacle.ovh/player/give_token"
 // #Const C_MP_Redirect "http://localhost:3000/player/give_token"
 
 #Struct K_GetTokenBody {
 	Text login;
 	Text state;
+	Text redirect_uri;
 }
 
 #Struct K_GetTokenResponse {
@@ -93,7 +86,8 @@ Text UpdateToken() {
 	declare Text state = login ^ Now;
 	declare body = K_GetTokenBody {
 		login = login,
-		state = state
+		state = state,
+		redirect_uri = C_MP_Redirect
 	};
 	
 	declare req = Http.CreatePost(
@@ -103,7 +97,6 @@ Text UpdateToken() {
 		
 	OpenLink(C_MP_Link
 		^ "client_id=" ^ C_MP_App_Id
-		^ "&client_secret=" ^ C_MP_App_Secret
 		^ "&redirect_uri=" ^ C_MP_Redirect
 		^ "&state=" ^ state
 		^ "&scope=basic",

@@ -34,28 +34,23 @@
     Integer Type;
 }
 
-#Struct K_MapAuthor {
-    Text login;
-    Text nickname;
-    Text zone_path;
-}
-
-#Struct K_UpdateMapBody {
-    Text name;
-    Text map_uid;
-    K_MapAuthor author;
-}
-
 #Struct K_UpdatePlayerBody {
     Text login;
-    Text nickname;
-    Text country;
+    Text name;
+    Text zone_path;
 }
 
 #Struct K_UpdatePlayerResponse {
     Text login;
     Boolean banned;
     Auth::K_Banishment current_ban;
+}
+
+#Struct K_UpdateMapBody {
+    Text name;
+    Text map_uid;
+    Integer cps_number;
+    K_UpdatePlayerBody author;
 }
 
 #Struct K_HasFinishedBody {
@@ -152,13 +147,14 @@ Void Init() {
 /////////////////////////////////////////////////////////////////
 
 // Send map infos
-Void ReplaceOrCreateMap() {
+Void ReplaceOrCreateMap(Integer _CpsNumber) {
     declare body = K_UpdateMapBody {
         name = Map.MapName,
         map_uid = ""^Map.Id,
-        author = K_MapAuthor {
+        cps_number = _CpsNumber,
+        author = K_UpdatePlayerBody {
             login = Map.AuthorLogin,
-            nickname = Map.AuthorNickName,
+            name = Map.AuthorNickName,
             zone_path = Map.AuthorZonePath
         }
     };
@@ -170,8 +166,8 @@ Void ReplaceOrCreateMap() {
 Void ReplaceOrCreatePlayer(CSmPlayer _Player) {
     declare body = K_UpdatePlayerBody {
         login = _Player.User.Login,
-        nickname = _Player.User.Name,
-        country = _Player.User.ZonePath
+        name = _Player.User.Name,
+        zone_path = _Player.User.ZonePath
     };
 
     SendPost("player/update", body.tojson(), Constants::C_Request_ReplaceOrCreatePlayer, _Player, G_PostHeaders);
@@ -194,14 +190,11 @@ Void PlayerFinished(CSmPlayer _Player) {
     log("flags:" ^ Flags);
 
     declare lastCpTimes = Player::getLastCPTimes(_Player);
+    declare lastCpTime = 0;
     declare Integer[] cps;
-    if (lastCpTimes.count > 0) {
-        foreach (time in lastCpTimes) {
-            if (time == LastRun)
-                cps.add(time);
-            else
-                cps.add(LastRun - time);
-        }
+    foreach (time in lastCpTimes) {
+        cps.add(time - lastCpTime);
+        lastCpTime = time;
     }
 
     declare body = K_HasFinishedBody {
