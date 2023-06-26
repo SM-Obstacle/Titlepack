@@ -46,19 +46,19 @@ Text Build(Text _FileType, Boolean _New) {
 			<quad pos="38.08 -23.49" size="83.5 46.97" id="Quad_Preview" halign="center" valign="center2" keepratio="Fit"/>
 			
 			<frame pos="0 -51" id="Frame_Deco">
-				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Deco_Minus" scriptevents="1" hidden="1" focusareacolor2="ccc5"/>
+				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Deco_Minus" scriptevents="1" hidden="1" focusareacolor1="0000" focusareacolor2="ccc5"/>
 				<label pos="38.08 -4" size="40 8" text="Land" halign="center" valign="center2" id="Label_Deco"/>
-				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Deco_Plus" scriptevents="1" focusareacolor2="ccc5"/>
+				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Deco_Plus" scriptevents="1" focusareacolor1="0000" focusareacolor2="ccc5"/>
 			</frame>
 			<frame pos="0 -61" id="Frame_Mood">
-				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mood_Minus" scriptevents="1" focusareacolor2="ccc5"/>
+				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mood_Minus" scriptevents="1" focusareacolor1="0000" focusareacolor2="ccc5"/>
 				<label pos="38.08 -4" size="40 8" text="Day" halign="center" valign="center2" id="Label_Mood"/>
-				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mood_Plus" scriptevents="1" focusareacolor2="ccc5"/>
+				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mood_Plus" scriptevents="1" focusareacolor1="0000" focusareacolor2="ccc5"/>
 			</frame>
 			<frame pos="0 -71" id="Frame_Mod">
-				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mod_Minus" scriptevents="1" hidden="1" focusareacolor2="ccc5"/>
+				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mod_Minus" scriptevents="1" hidden="1" focusareacolor1="0000" focusareacolor2="ccc5"/>
 				<label pos="38.08 -4" size="40 8" text="Default Textures" halign="center" valign="center2" id="Label_Mod"/>
-				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mod_Plus" scriptevents="1" hidden="1" focusareacolor2="ccc5"/>
+				<label pos="68.08 -4" size="8 8" text="" halign="center" valign="center2" id="Mod_Plus" scriptevents="1" hidden="1" focusareacolor1="0000" focusareacolor2="ccc5"/>
 			</frame>
 
 			<frame pos="38.08 -86">
