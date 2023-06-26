@@ -1,0 +1,402 @@
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI2.Script.txt"    as MultiplayerAPI
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt" as ChannelInfoStructs
+#Include "Libs/miltant/ObstacleV2/Indexer.Script.txt"	                                             as Indexer
+#Include "Libs/miltant/ObstacleV2/TitlePack/Dialogs/UI.Script.txt"	                                 as UI
+#Include "TextLib" as TL
+
+#Struct K_MapInfo {
+    Text MapUid;
+    Text Author;
+    Boolean IsPlayable;
+    Integer TMObjective_AuthorTime;
+    Integer TMObjective_GoldTime;
+    Integer TMObjective_SilverTime;
+    Integer TMObjective_BronzeTime;
+    Text Name;
+    Text Path;
+    Text FileName;
+}
+
+#Struct K_FileInfo {
+    Text Name;
+    Text FileName;
+}
+
+Text ML_K_MapInfo() {
+    return """
+#Struct K_MapInfo {
+    Text MapUid;
+    Text Author;
+    Boolean IsPlayable;
+    Integer TMObjective_AuthorTime;
+    Integer TMObjective_GoldTime;
+    Integer TMObjective_SilverTime;
+    Integer TMObjective_BronzeTime;
+    Text Name;
+    Text Path;
+    Text FileName;
+}""";
+}
+
+Text ML_K_FileInfo() {
+    return """
+#Struct K_FileInfo {
+    Text Name;
+    Text FileName;
+}""";
+}
+
+declare ChannelInfoStructs::K_ServerInfo[Text] ServersCache;
+declare Text G_FetchingServer;
+declare Integer G_FetchingServer_Time;
+
+declare Boolean G_MapsHasFetched;
+declare CTaskResult_MapList	G_MapsTaskResult;
+
+declare Boolean G_ReplaysHasFetched;
+declare CTaskResult_ReplayList	G_ReplaysTaskResult;
+
+declare Boolean G_SkinsHasFetched;
+declare CTaskResult_FileList	G_SkinsTaskResult;
+
+declare Text[] G_Maps;
+declare Text[] G_Replays;
+declare Text[] G_Servers;
+
+Void RefreshMultiplayer() {
+    MultiplayerAPI::FetchServerListAsync();
+}
+
+Void Load_Multiplayer() {
+    MultiplayerAPI::Load();
+    RefreshMultiplayer();
+}
+
+Void Loop_Multiplayer() {
+    declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
+	if (MultiplayerAPI::HasFetched()) {
+		declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+
+		declare Servers = MultiplayerAPI::GetServersInfos();
+		if (Servers.count > 0) {
+            ObsStore_TopServers.clear();
+
+            foreach (Server in Servers) {
+                if (ServersCache.existskey(Server.server_login)) {
+                    ServersCache[Server.server_login].server_name               = Server.server_name;
+                    ServersCache[Server.server_login].server_description        = Server.server_description;
+                    ServersCache[Server.server_login].server_spectator_count    = Server.server_spectator_count;
+                    ServersCache[Server.server_login].server_player_count       = Server.server_player_count + Server.server_spectator_count;
+                    ServersCache[Server.server_login].server_is_private         = Server.server_is_private;
+                    ServersCache[Server.server_login].server_is_spectator_private=Server.server_is_spectator_private;
+                    ServersCache[Server.server_login].server_maps_count         = Server.server_maps_count;
+                    ServersCache[Server.server_login].server_build_version      = Server.server_build_version;
+                    ServersCache[Server.server_login].server_mode_version       = Server.server_mode_version;
+                } else {
+                    ServersCache[Server.server_login] = Server;
+                }
+
+                ObsStore_TopServers.add(ServersCache[Server.server_login]);
+            }
+		}
+        ObsStore_LastUpdate_TopServers = Now;
+
+        G_Servers.clear();
+        foreach (Server in Servers) {
+            G_Servers.add(Server.server_login);
+        }
+	} else if (Now - ObsStore_LastUpdate_TopServers > 20000 && !MultiplayerAPI::HasStartedFetch()) {
+        MultiplayerAPI::FetchServerListAsync();
+    }
+}
+
+Void Loop_ServerInfo(Text[] _Servers) {
+    if (!TitleControl.IsReady)
+        return;
+    
+    if (G_FetchingServer != "") {
+        switch (TitleControl.LatestResult) {
+            case CTitleControl::EResult::Success: {
+                if (G_FetchingServer_Time == 0) {
+                    declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+                    foreach (I => Server in ObsStore_TopServers) {
+                        if (Server.server_login == G_FetchingServer) {
+                            if (TitleControl.GetServerInfo_Result == Null)
+                                break;
+
+                            ObsStore_TopServers[I].server_name = TitleControl.GetServerInfo_Result.ServerName;
+                            ObsStore_TopServers[I].server_description = TitleControl.GetServerInfo_Result.Comment;
+                            ObsStore_TopServers[I].server_spectator_count = TitleControl.GetServerInfo_Result.SpectatorCount;
+                            ObsStore_TopServers[I].server_player_count = TitleControl.GetServerInfo_Result.PlayerCount + ObsStore_TopServers[I].server_spectator_count;
+                            ObsStore_TopServers[I].server_player_max = TitleControl.GetServerInfo_Result.MaxPlayerCount;
+                            ObsStore_TopServers[I].server_ladder_limit_min = TitleControl.GetServerInfo_Result.PlayersLevelMin;
+                            ObsStore_TopServers[I].server_ladder_limit_max = TitleControl.GetServerInfo_Result.PlayersLevelMax;
+                            ObsStore_TopServers[I].server_average_ladder_points = TitleControl.GetServerInfo_Result.PlayersLevelAvg;
+                            ObsStore_TopServers[I].server_game_mode = TitleControl.GetServerInfo_Result.ModeName;
+                            ObsStore_TopServers[I].server_maps_count = TitleControl.GetServerInfo_Result.NbChallenges;
+                            ObsStore_TopServers[I].server_build_version = TitleControl.GetServerInfo_Result.ServerVersionBuild;
+                            ObsStore_TopServers[I].server_is_favourite = TitleControl.GetServerInfo_Result.IsFavourite;
+                            ObsStore_TopServers[I].server_is_lobby = TitleControl.GetServerInfo_Result.IsLobbyServer;
+                            ObsStore_TopServers[I].server_is_private = TitleControl.GetServerInfo_Result.IsPrivate;
+                            ObsStore_TopServers[I].server_is_spectator_private = TitleControl.GetServerInfo_Result.IsPrivateForSpectator;
+
+                            ObsStore_TopServers[I].server_players.clear();
+                            foreach (Player in TitleControl.GetServerInfo_Result.PlayerNames) {
+                                ObsStore_TopServers[I].server_players.add(Player);
+                            }
+
+                            ObsStore_TopServers[I].server_maps.clear();
+                            foreach (Map in TitleControl.GetServerInfo_Result.ChallengeNames) {
+                                ObsStore_TopServers[I].server_maps.add(Map);
+                            }
+
+                            ServersCache[Server.server_login] = ObsStore_TopServers[I];
+
+
+                            declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
+                            ObsStore_LastUpdate_TopServers = Now;
+                            break;
+                        }
+                    }
+                    G_FetchingServer = "";
+                } else {
+                    G_FetchingServer_Time = 0;
+
+                    declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+                    foreach (I => Server in ObsStore_TopServers) {
+                        if (Server.server_login == G_FetchingServer) {
+                            if (!ServersCache.existskey(Server.server_login))
+                                ServersCache[Server.server_login] = Server;
+                            ObsStore_TopServers[I].server_ping = Now - G_FetchingServer_Time;
+                            ServersCache[Server.server_login].server_ping = ObsStore_TopServers[I].server_ping;
+                            break;
+                        }
+                    }
+                }
+            }
+            // case CTitleControl::EResult::Error_Net_ServerNotFound: {
+                
+            // }
+            // case CTitleControl::EResult::Error_Net_ServerUnreachable: {
+            //    declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+            //     foreach (I => Server in ObsStore_TopServers) {
+            //         if (Server.server_login == G_FetchingServer) {
+            //             ObsStore_TopServers[I].server_is_private = True;
+            //             ObsStore_TopServers[I].server_is_spectator_private = True;
+            //             ObsStore_TopServers[I].server_ping = Now - G_FetchingServer_Time;
+            //             if (!ServersCache.existskey(Server.server_login))
+            //                 ServersCache[Server.server_login] = Server;
+            //             ServersCache[Server.server_login].server_ping = ObsStore_TopServers[I].server_ping;
+            //             break;
+            //         }
+            //     }
+            // }
+            // case CTitleControl::EResult::Error_Net_Disconnected: {
+                
+            // }
+            // case CTitleControl::EResult::Error_Net_WrongPassword: {
+                
+            // }
+            // case CTitleControl::EResult::Error_Network_OnlineExpired: {
+                
+            // }
+            // case CTitleControl::EResult::Error_Network_ServerFull: {
+                
+            // }
+            // CTitleControl::EResult::Error_Abort
+            // CTitleControl::EResult::Error_Internal
+            // CTitleControl::EResult::Error_DataMgr
+            default: {
+                UI::Notice_Async(G_FetchingServer ^ " " ^ TitleControl.LatestResult, "Failed to fetch server info for " ^ G_FetchingServer ^ " (" ^ TitleControl.LatestResult ^ ")");
+                // log("Failed to fetch server info for " ^ G_FetchingServer ^ " (" ^ TitleControl.LatestResult ^ ")");
+            }
+        }
+    }
+
+    if (G_FetchingServer == "" && _Servers.count > 0) {
+        G_FetchingServer = _Servers[0];
+        G_FetchingServer_Time = Now;
+
+        TitleControl.GetServerInfo(G_FetchingServer);
+    }
+}
+
+Void Load_Maps() {
+    G_MapsHasFetched = False;
+    if (G_MapsTaskResult != Null) {
+        DataFileMgr.TaskResult_Release(G_MapsTaskResult.Id);
+    }
+	G_MapsTaskResult = DataFileMgr.Map_GetGameList("", True);
+}
+
+Void Loop_Maps() {
+	if (!G_MapsHasFetched && G_MapsTaskResult != Null && !G_MapsTaskResult.IsProcessing && G_MapsTaskResult.HasSucceeded) {
+		G_MapsHasFetched = True;
+        
+        declare K_MapInfo[Text][Text] ObsStore_Maps for LocalUser;
+        declare Integer ObsStore_Maps_LastUpdate for LocalUser;
+        G_Maps.clear();
+        ObsStore_Maps.clear();
+        ObsStore_Maps_LastUpdate = Now;
+        
+        foreach (I => Map in G_MapsTaskResult.MapInfos) {
+            if ( Map.CollectionName != "Storm" ||
+                !(
+                    TL::EndsWith("ObstacleTitleArena", Map.MapType) ||
+                    TL::EndsWith("ObstacleArena", Map.MapType) ||
+                    TL::EndsWith("ObstacleTitleArenaOld", Map.MapType) ||
+                    TL::EndsWith("TimeAttackArena", Map.MapType) ||
+                    TL::EndsWith("ObstacleBetaArena", Map.MapType) ||
+                    TL::EndsWith("Randomizer", Map.MapType)
+                )
+            ) continue;
+
+            if (!ObsStore_Maps.existskey(Map.Path)) {
+                ObsStore_Maps[Map.Path] = [];
+            }
+            ObsStore_Maps[Map.Path][Map.Name] = K_MapInfo {
+                MapUid =  Map.MapUid,
+                Author = Map.AuthorLogin,
+                IsPlayable = Map.IsPlayable,
+                TMObjective_AuthorTime = Map.TMObjective_AuthorTime,
+                TMObjective_GoldTime = Map.TMObjective_GoldTime,
+                TMObjective_SilverTime = Map.TMObjective_SilverTime,
+                TMObjective_BronzeTime = Map.TMObjective_BronzeTime,
+                Name = Map.Name,
+                Path = Map.Path,
+                FileName = Map.FileName
+            };
+            G_Maps.add(Map.FileName);
+        }
+	}
+}
+
+Void RefreshMaps() {
+    DataFileMgr.Map_RefreshFromDisk();
+    Load_Maps();
+}
+
+Void Load_Replays() {
+    G_ReplaysHasFetched = False;
+    if (G_ReplaysTaskResult != Null) {
+        DataFileMgr.TaskResult_Release(G_ReplaysTaskResult.Id);
+    }
+	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList("", True);
+}
+
+Void Loop_Replays() {
+	if (!G_ReplaysHasFetched && G_ReplaysTaskResult != Null && !G_ReplaysTaskResult.IsProcessing && G_ReplaysTaskResult.HasSucceeded) {
+		G_ReplaysHasFetched = True;
+        
+        declare K_MapInfo[Text][Text] ObsStore_Replays for LocalUser;
+        declare Integer ObsStore_Replays_LastUpdate for LocalUser;
+        G_Replays.clear();
+        ObsStore_Replays.clear();
+        ObsStore_Replays_LastUpdate = Now;
+        
+        foreach (I => Replay in G_ReplaysTaskResult.ReplayInfos) {
+            if (!ObsStore_Replays.existskey(Replay.Path)) {
+                ObsStore_Replays[Replay.Path] = [];
+            }
+            ObsStore_Replays[Replay.Path][Replay.Name] = K_MapInfo {
+                MapUid =  Replay.MapUid,
+                Name = Replay.Name,
+                Path = Replay.Path,
+                FileName = Replay.FileName
+            };
+            G_Replays.add(Replay.FileName);
+        }
+	}
+}
+
+Void RefreshReplays() {
+    DataFileMgr.Replay_RefreshFromDisk();
+    Load_Replays();
+}
+
+Void Load_Skins() {
+    G_SkinsHasFetched = False;
+    if (G_SkinsTaskResult != Null) {
+        DataFileMgr.TaskResult_Release(G_SkinsTaskResult.Id);
+    }
+	G_SkinsTaskResult = DataFileMgr.Media_GetGameList(CDataFileMgr::EMediaType::Skins, "Storm/Mod/", True);
+}
+
+Void Loop_Skins() {
+    if (!G_SkinsHasFetched && G_SkinsTaskResult != Null && !G_SkinsTaskResult.IsProcessing && G_SkinsTaskResult.HasSucceeded) {
+		G_SkinsHasFetched = True;
+        
+        declare K_FileInfo[] ObsStore_Skins for LocalUser;
+        ObsStore_Skins.clear();
+        ObsStore_Skins.add(K_FileInfo { Name = "Default Textures", FileName = "" });
+
+        foreach (FileName in G_SkinsTaskResult.Files) {
+            // +? is non greedy, dank
+            declare Matches = TL::RegexMatch("^Storm\\\\Mod.*\\\\(.+?)(\\.zip)?$", FileName, "i");
+            declare Name = FileName;
+
+            if (Matches.count > 1)
+                Name = Matches[1];
+            
+            Name = TL::RegexReplace("[-_.,+\\(\\)\\[\\]\\s]+", Name, "g", " ");
+            ObsStore_Skins.add(K_FileInfo { Name = Name, FileName = FileName });
+        }
+    }
+}
+
+Void Load() {
+    Load_Multiplayer();
+    Load_Maps();
+    Load_Replays();
+    Load_Skins();
+}
+
+Void Loop() {
+    Loop_Multiplayer();
+    Loop_Maps();
+    Loop_Replays();
+    Loop_Skins();
+
+    declare Text[][Text] ObsStore_Requests for LocalUser;
+    declare Text[] Requests_Keys for LocalUser;
+
+    foreach (Req => Args in ObsStore_Requests) {
+        switch (Req) {
+            case "Index_Maps": {
+                declare Integer ObsStore_Maps_LastUpdate for LocalUser;
+                declare Integer ObsStore_Maps_Index_LastUpdate for LocalUser;
+                if (ObsStore_Maps_Index_LastUpdate < ObsStore_Maps_LastUpdate) {
+                    Indexer::Index("Maps", G_Maps);
+                    ObsStore_Maps_Index_LastUpdate = Now;
+                }
+            }
+            case "Search_Maps": {
+                declare Text[] ObsStore_Maps_SearchResults for LocalUser;
+                log("Searching maps: " ^ Args[0]);
+                if (Args.count > 0) {
+                    ObsStore_Maps_SearchResults = Indexer::Search(Args[0], "Maps", 8);
+                }
+            }
+            case "Lookup_ServerInfo": {
+                Requests_Keys = Args;
+            }
+            case "Index_Servers": {
+                declare Integer ObsStore_Servers_LastUpdate for LocalUser;
+                declare Integer ObsStore_Servers_Index_LastUpdate for LocalUser;
+                if (ObsStore_Servers_Index_LastUpdate < ObsStore_Servers_LastUpdate) {
+                    //Indexer::Index("Servers", G_Servers);
+                    ObsStore_Servers_Index_LastUpdate = Now;
+                }
+            }
+            case "Search_Servers": {
+                declare Text[] ObsStore_Servers_SearchResult for LocalUser;
+                if (Args.count > 0) {
+                    ObsStore_Servers_SearchResult = Indexer::Search(Args[0], "Servers", 24);
+                }
+            }
+        }
+    }
+    ObsStore_Requests.clear();
+
+    Loop_ServerInfo(Requests_Keys);
+}

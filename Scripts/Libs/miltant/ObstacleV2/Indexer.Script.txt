@@ -1,0 +1,113 @@
+#Include "TextLib" as TL
+#Include "MathLib" as ML
+
+#Struct K_Node {
+    Text[] Tokens;
+    Text OriginalString;
+    Integer Score;
+}
+
+declare K_Node[][Text] G_Indexes;
+
+// This function tokenizes a string into trigrams and returns a node containing the tokens and the original string
+K_Node TokenizeTrigram(Text _Input) {
+    declare Node = K_Node {
+        OriginalString = _Input,
+        Score = 0
+    };
+
+    declare Input = TL::StripFormatting(_Input);
+    Input = TL::ToLowerCase(_Input);
+    Input = TL::RegexReplace("\\.[^\\.]+\\.gbx$", Input, "g", "");
+
+    foreach (Word in TL::RegexFind("[a-zA-Z0-9]+", Input, "g")) {
+        for (I, 0, TL::Length(Word) - 3) {
+            Node.Tokens.add(TL::SubString(Word, I, 3));
+        }
+    }
+    return Node;
+}
+
+// This function creates a trigram index for a given context and array of inputs
+Void Index(Text _Context, Text[] _Input) {
+    declare K_Node[] TMP;
+    foreach (Input in _Input) {
+        TMP.add(TokenizeTrigram(Input));
+    }
+    G_Indexes[_Context] = TMP;
+}
+
+// This function calculates the score for a single node
+Integer CalculateScore(K_Node _Node, Text _Query) {
+    declare Score = 0;
+    foreach (Token in _Node.Tokens) {
+        if (TL::Find(Token, _Query, True, True)) {
+            Score = Score + 1;
+        }
+    }
+    return Score;
+}
+
+// This function scores all the nodes in a given context
+Void ScoreAllNodes(Text _Context, Text _Query) {
+    declare SafeQuery = TL::ToLowerCase(_Query);
+    SafeQuery = TL::RegexReplace("[^a-zA-Z0-9]", SafeQuery, "g", "");
+    for (I, 0, G_Indexes[_Context].count - 1) {
+        G_Indexes[_Context][I].Score = CalculateScore(G_Indexes[_Context][I], SafeQuery);
+    }
+}
+
+Void QuickSort(K_Node[] _Array, Integer _Low, Integer _High) {
+    declare Array = _Array;
+    if (_Low < _High) {
+        // Partition
+        declare Pivot = Array[_High];
+        declare Integer I = (_Low - 1);
+     
+        for (J, _Low,_High - 1) {
+            if (Array[J].Score >= Pivot.Score) {
+                I = I + 1;
+    
+                //Swap
+                declare Temp = Array[I];
+                Array[I] = Array[J];
+                Array[J] = Temp;
+            }
+        }
+    
+        //Swap
+        declare Temp = Array[I + 1];
+        Array[I + 1] = Array[_High];
+        Array[_High] = Temp;
+    
+        // Sort Partitions
+        declare PartitionIndex = I + 1;
+        QuickSort(Array, _Low, PartitionIndex - 1);
+        QuickSort(Array, PartitionIndex + 1, _High);
+    }
+}
+
+// This function sorts the nodes in a given context by their score
+Void SortNodes(Text _Context) {
+    QuickSort(G_Indexes[_Context], 0, G_Indexes[_Context].count - 1);
+}
+
+// This function returns the top results for a search query
+Text[] Search(Text _Query, Text _Context, Integer _Limit) {
+    if (!G_Indexes.existskey(_Context))
+        return [];
+
+    declare Text[] Results;
+    
+    // Score all nodes and sort them
+    ScoreAllNodes(_Context, _Query);
+    SortNodes(_Context);
+    
+    // Return the top results
+    for (I, 0, ML::Min(_Limit, G_Indexes[_Context].count) - 1) {
+        if (G_Indexes[_Context][I].Score > 0)
+            Results.add(G_Indexes[_Context][I].OriginalString);
+    }
+    
+    return Results;
+}

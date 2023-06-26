@@ -1,0 +1,146 @@
+Text GetStyleSheet() {
+	return """<stylesheet>
+		<style class="lato" textcolor="fff" textfont="light"/>
+		<style class="lator" textcolor="fff" textfont="regular"/>
+	</stylesheet>""";
+}
+
+Text GetDeclareGlobals() {
+	return """
+	Void HandleMouseEvent(CMlScriptEvent _Event) {
+		if (!_Event.Control.DataAttributeExists("target")) return;
+		declare Frame_MenuItem = (_Event.Control.Parent as CMlFrame);
+
+		declare Duration = 200;
+		if (_Event.Control.DataAttributeExists("anim-length")) {
+			Duration = TL::ToInteger(_Event.Control.DataAttributeGet("anim-length"));
+		}
+
+		declare AttributeAnim = "target-anim";
+		declare EasingType = CAnimManager::EAnimManagerEasing::QuadIn;
+		
+		if (_Event.Type == CMlScriptEvent::Type::MouseOver) {
+			declare Vec3[Text] ModulateColor_Target for _Event.Control;
+			
+			foreach (Id => Color in ModulateColor_Target) {
+				declare Quad = (Frame_MenuItem.GetFirstChild(Id) as CMlQuad);
+				Quad.ModulateColor = Color;
+			}
+		} else {
+			declare Vec3[Text] ModulateColor_Default for _Event.Control;
+
+			foreach (Id => Color in ModulateColor_Default) {
+				declare Quad = (Frame_MenuItem.GetFirstChild(Id) as CMlQuad);
+				Quad.ModulateColor = Color;
+			}
+			
+			EasingType = CAnimManager::EAnimManagerEasing::QuadOut;
+			AttributeAnim = "default-anim";
+		}
+
+		declare Targets = TL::Split(" ", _Event.Control.DataAttributeGet("target"));
+		declare States = TL::RegexFind("<[^!>][^>]*>", _Event.Control.DataAttributeGet(AttributeAnim), "g");
+
+		foreach (I => Target in Targets) {
+			AnimMgr.Add(
+				Frame_MenuItem.GetFirstChild(Target),
+				States[I],
+				Duration,
+				EasingType
+			);
+		}
+	}
+
+	Vec3[Text] ParseModulateColor (Text[] _Targets, Text _XML) {
+		declare Tags = TL::RegexFind("<[^!>][^>]*>", _XML, "g");
+		declare Vec3[Text] Results;
+
+		foreach (I => Tag in Tags) {
+			declare Match = TL::RegexMatch("modulatecolor=\"([abcdef\\d]{1,8})\"", Tag, "i");
+			if (Match.count == 2 && TL::Length(Match[1]) > 0) {
+				Results[_Targets[I]] = CL::HexToRgb(Match[1]);
+			}
+		}
+		return Results;
+	}
+	""";
+}
+
+Text GetInitFrameMenus() {
+	return """
+	declare Frame_Menus = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
+	foreach (MenuContainer in Frame_Menus.Controls) {
+		declare Frame_MenuItem = (MenuContainer as CMlFrame);
+		declare Quad_Trigger = (Frame_MenuItem.GetFirstChild("Quad_Trigger") as CMlQuad);
+		
+		if (Quad_Trigger == Null) continue;
+
+		if (Frame_MenuItem.DataAttributeExists("name")) {
+			declare Text ItemId for Quad_Trigger;
+			ItemId = Frame_MenuItem.DataAttributeGet("name");
+		}
+		declare Targets = TL::Split(" ", Quad_Trigger.DataAttributeGet("target"));
+
+		if (Quad_Trigger.DataAttributeExists("default-anim")) {
+			declare Vec3[Text] ModulateColor_Default for Quad_Trigger;
+			ModulateColor_Default = ParseModulateColor(Targets, Quad_Trigger.DataAttributeGet("default-anim"));
+		}
+
+		if (Quad_Trigger.DataAttributeExists("target-anim")) {
+			declare Vec3[Text] ModulateColor_Target for Quad_Trigger;
+			ModulateColor_Target = ParseModulateColor(Targets, Quad_Trigger.DataAttributeGet("target-anim"));
+		}
+	}""";
+}
+
+Text GetEventLoopActiveItem(Text _EventName) {
+	declare ML = """
+	switch(Event.Type) {""";
+	if (_EventName != "") {	
+		ML ^= """
+		case CMlScriptEvent::Type::MouseClick: {
+			declare Text Id;
+			if (Event.Control.DataAttributeExists("name")) {
+				Id = Event.Control.DataAttributeGet("name");
+			} else {
+				declare Text ItemId for Event.Control;
+				Id = ItemId;
+			}
+			if (Id != "") {
+				if ( Event.Control.DataAttributeExists("preventdefault")
+				  && Event.Control.DataAttributeGet("preventdefault") == "True"
+				)
+					SendCustomEvent("{{{_EventName}}}", [Id, "preventdefault"]);
+				else {
+					SendCustomEvent("{{{_EventName}}}", [Id]);
+					Audio.PlaySoundEvent(CAudioManager::ELibSound::ShowMenu, 0, 0.0);
+				}
+			}
+			HandleMouseEvent(Event);
+		}
+""";
+	}
+	
+	ML ^=  """
+		case CMlScriptEvent::Type::MouseOver: {
+			HandleMouseEvent(Event);
+		}
+
+		case CMlScriptEvent::Type::MouseOut: {
+			HandleMouseEvent(Event);
+		}
+	}""";
+
+	return ML;
+}
+
+Text GetEventLoopActiveItem() {
+	return GetEventLoopActiveItem("menu_item_click");
+}
+
+Text GetLoopActiveItem() {
+	return """
+	foreach(Event in PendingEvents) {
+		{{{GetEventLoopActiveItem()}}}
+	}""";
+}

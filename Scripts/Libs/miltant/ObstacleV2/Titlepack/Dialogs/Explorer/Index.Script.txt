@@ -1,0 +1,71 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"				as Dialogs
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Manialink.Script.txt"	as Manialink
+
+
+Void Load(Text _FileType, Boolean _New) {
+	Dialogs::RegisterDialog("explorer", Manialink::Build(_FileType, _New), Manialink::C_Dialog_Close);
+}
+Void Load(Text _FileType) {
+	Load(_FileType, False);
+}
+
+Boolean StartMapEditor() {
+	declare Status = Dialogs::Prompt("explorer", "explorer__start_map_editor", 85.25);
+
+	// Do these do anything?
+	// """<mode_script_settings>
+	// 	<setting name="S_Mode"					value="		type="text"/>
+	// 	<setting name="S_IsOfficialMap"			value="False"	type="boolean"/>
+	// 	<setting name="S_Gameplay_Acceleration"	value="1."		type="real"/>
+	// 	<setting name="S_Gameplay_Control"		value="1."		type="real"/>
+	// 	<setting name="S_Gameplay_Gravity"		value="1."		type="real"/>
+	// </mode_script_settings>"""
+
+	if (Status.Over) {
+		wait(TitleControl.IsReady);
+		
+		if (Status.Success) {
+			if (Status.CustomData.count == 3) {
+				declare Deco = Status.CustomData[0] ^ "48x48" ^ Status.CustomData[1];
+				declare Mod = Status.CustomData[2];
+
+				TitleControl.EditNewMap(
+					"Storm", Deco, Mod, "", "", "MapTypes/ShootMania/ObstacleTitleArena.Script.txt", ""
+				);
+			} else if (Status.CustomData.count > 0) {
+				TitleControl.EditMap(Status.CustomData[0], "MapTypes/ShootMania/ObstacleTitleArena.Script.txt", "");
+			}
+		}
+	}
+	return Status.Over;
+}
+
+Boolean StartReplayEditor() {
+	declare Status = Dialogs::Prompt("explorer", "explorer__start_replay_editor", 0.);
+
+	if (Status.Over) {
+		wait(TitleControl.IsReady);
+		
+		if (Status.Success) {
+			if (Status.CustomData.count > 0) {
+				TitleControl.EditReplay(Status.CustomData);
+			}
+		}
+	}
+	return Status.Over;
+}
+
+Boolean StartLocalPlay() {
+	declare Status = Dialogs::Prompt("explorer", "explorer__start_localplay", 0.);
+
+	if (Status.Over) {
+		wait(TitleControl.IsReady);
+		
+		if (Status.Success) {
+			if (Status.CustomData.count > 0) {
+				TitleControl.PlayMap(Status.CustomData[0], "Shootmania/Obstacle.Script.txt", "");
+			}
+		}
+	}
+	return Status.Over;
+}

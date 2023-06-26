@@ -1,0 +1,21 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Background/Index.Script.txt"                            as Background
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Menus.Script.txt"                                 as Menus
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/TokenManager.Script.txt"                             as Auth
+
+#Include "MathLib"	as ML
+
+
+Void Load() {
+    Background::Load();
+    Menus::Load();
+    Auth::Init();
+
+    // TODO avoid dropping events
+    yield;
+    Background::LoadLate();
+}
+
+Void Loop() {
+    Menus::Loop();
+    Auth::Loop();
+}

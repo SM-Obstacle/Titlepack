@@ -1,0 +1,37 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
+
+
+Text GetName() {
+	return "credits";
+}
+
+Text Build() {
+	return """
+<manialink version="3" name="L_Obstacle_Credits">
+	{{{Styles::GetStyleSheet()}}}
+	<frame pos="-100 50">
+		<label text="Credits" pos="72.33 -5.6" textsize="5" id="Label_Home" scriptevents="1"/> 
+		<quad size="320 16.67" bgcolor="0009"/>
+	</frame>
+
+	<script><![CDATA[
+	
+	]]></script>
+</manialink>""";
+}
+
+Void Load() {
+	declare Windows::K_Window Window;
+	Window.Name = GetName();
+	Window.Manialink = Build();
+	Window.Animation = CUILayer::EUILayerAnimation::RightSlow;
+
+	Windows::CreateWindow(Window);
+}
+
+Void Loop() {
+	// foreach(Event in PendingEvents) {
+		
+	// }
+}

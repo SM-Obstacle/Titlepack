@@ -1,0 +1,242 @@
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"									as Windows
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"												as Styles
+#Include "Libs/miltant/ObstacleV2/String.Script.txt"													as StringLib
+
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
+
+Text GetName() {
+	return "online";
+}
+
+Text Build() {
+	return """
+	<!-- 
+		opacity menus:
+			- base: 0.5
+			- hover: 70%
+			- active: 90%
+	 -->
+<framemodel id="Server">
+	<quad size="4.67 3.5" pos="4.17 -4.5" valign="center" halign="center" keepratio="Cover" id="Quad_Flag"/>
+	<label textcolor="fff" pos="8 -4.5" size="110" valign="center2" textfont="light" textsize="2.6" id="Label_Name"/>
+	<label textcolor="fff" pos="130.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Private"/>
+	<label textcolor="fff" pos="134.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Fav"/> <!--  -->
+	<label textcolor="fff" pos="142 -4.5" valign="center2" textfont="light" textsize="2.6" size="21" id="Label_Players"/>
+	<label textcolor="fff" pos="176 -4.5" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right" id="Label_Ping"/>
+	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_ms"/>
+	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_graph"/>
+
+	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="fff" id="Quad_Back" hidden="1"/>
+	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="000"
+		id="Quad_Trigger" data-target="Quad_Trigger" scriptevents="1"
+		data-default-anim="<quad modulatecolor=&quot;000&quot;/>"
+		data-target-anim="<quad modulatecolor=&quot;fff&quot;/>"/>
+</framemodel>
+
+
+<frame pos="-91.67 45.83" data-name="filter_all">
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
+</frame>
+<frame pos="-81.17 45.83" data-name="filter_history">
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
+</frame>
+<frame pos="-70.67 45.83" data-name="filter_favorites">
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
+</frame>
+
+
+<label textcolor="fff" pos="66.2 42.17" text="" valign="center2" halign="center"/>
+<entry textcolor="fff" textfont="light" pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
+<quad pos="-60.17 45.83" size="130.83 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search" scriptevents="1" opacity="0.5"/>
+
+<frame pos="72.33 45.83" data-name="create">
+	<label textcolor="fff" pos="4.42 -4.17" text="" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
+</frame>
+<frame pos="72.33 45.83" data-name="buy" hidden="1">
+	<label textcolor="fff" pos="4.42 -3.67" text="$$" valign="center2" halign="center"/>
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
+</frame>
+<frame pos="82.83 45.83" data-name="sort">
+	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/><!--  -->
+	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
+	<frame pos="8.83 -8.17">
+		<quad size="29.83 18" image="file://Media/Images/Obstacle/Servers/Combo.png" halign="right" opacity="0.9"/>
+	</frame>
+</frame>
+
+<frame id="Server_List" pos="-91.67 36" size="190 95" scroll="1" scrollmax="0 100">
+	<frame id="Frame_Menus">
+		<frameinstance pos="0 10" modelid="Server" data-index="0"/>
+		<frameinstance pos="0 0" modelid="Server" data-index="1"/>
+		<frameinstance pos="0 -10" modelid="Server" data-index="2"/>
+		<frameinstance pos="0 -20" modelid="Server" data-index="3"/>
+		<frameinstance pos="0 -30" modelid="Server" data-index="4"/>
+		<frameinstance pos="0 -40" modelid="Server" data-index="5"/>
+		<frameinstance pos="0 -50" modelid="Server" data-index="6"/>
+		<frameinstance pos="0 -60" modelid="Server" data-index="7"/>
+		<frameinstance pos="0 -70" modelid="Server" data-index="8"/>
+		<frameinstance pos="0 -80" modelid="Server" data-index="9"/>
+		<frameinstance pos="0 -90" modelid="Server" data-index="10"/>
+		<frameinstance pos="0 -100" modelid="Server" data-index="11"/>
+	</frame>
+	<quad size="190 100" pos="0 10" scriptevents="1" id="Quad_ScrollTrigger"/>
+</frame>
+
+<script><![CDATA[
+	#Include "MathLib" as ML
+	#Include "TextLib" as TL
+	#Include "ColorLib" as CL
+
+	{{{ChannelInfoStructs::K_ServerInfo_ML}}}
+	{{{Styles::GetDeclareGlobals()}}}
+	{{{StringLib::ExportContrast()}}}
+
+	declare CMlFrame G_Frame_VisibleContent;
+
+	Void UpdateServers(Integer TopServerIndex) {
+		declare K_ServerInfo[] ObsStore_TopServers for LocalUser;
+		G_Frame_VisibleContent.RelativePosition_V3.Y = TopServerIndex * -10.;
+		
+		for (I, 0, 11) {
+			declare FrameInstance = (G_Frame_VisibleContent.Controls[I] as CMlFrame);
+			declare Integer ServerIndex = TopServerIndex + I - 1;
+
+			if (ServerIndex < 0 || ServerIndex >= ObsStore_TopServers.count) {
+				FrameInstance.Visible = False;
+				continue;
+			}
+			declare Server = ObsStore_TopServers[ServerIndex];
+			FrameInstance.Visible = True;
+			FrameInstance.DataAttributeSet("login", Server.server_login);
+
+			declare Quad_Flag = (FrameInstance.GetFirstChild("Quad_Flag") as CMlQuad);
+			declare Label_Name = (FrameInstance.GetFirstChild("Label_Name") as CMlLabel);
+			declare Label_Private = (FrameInstance.GetFirstChild("Label_Private") as CMlLabel);
+			declare Label_Fav = (FrameInstance.GetFirstChild("Label_Fav") as CMlLabel);
+			declare Label_Players = (FrameInstance.GetFirstChild("Label_Players") as CMlLabel);
+			declare Label_Ping = (FrameInstance.GetFirstChild("Label_Ping") as CMlLabel);
+
+			Quad_Flag.ChangeImageUrl(Server.server_zone);
+			Label_Name.SetText(ContrastString(Server.server_name));
+			Label_Private.Visible = Server.server_is_private;
+			Label_Fav.Visible = False;
+			Label_Players.SetText(Server.server_player_count ^ "/" ^ Server.server_player_max);
+			// Label_Ping.SetText(Server.server_ping);
+		}
+	}
+	
+	main() {
+		{{{Styles::GetInitFrameMenus()}}}
+		G_Frame_VisibleContent = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
+
+		declare Text[][Text] ObsStore_Requests for LocalUser;
+		
+		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
+
+		declare Server_List = (Page.GetFirstChild("Server_List") as CMlFrame);
+		declare Quad_ScrollTrigger = (Server_List.GetFirstChild("Quad_ScrollTrigger") as CMlQuad);
+		declare Vec2 ScrollOffset;
+		declare K_ServerInfo[] ObsStore_TopServers for LocalUser;
+		declare Integer TopServerIndex;
+		declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
+		declare Integer LastUpdate;
+		declare Integer SelectedServerIndex;
+		declare Integer LastClick = Now;
+		declare Integer PreviousSelectedServerIndex;
+
+		declare Integer Context;
+		declare K_ServerInfo[Text] ServersCache;
+
+		
+		while(True) {
+			yield;
+
+			if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+			if (Server_List.ScrollOffset != ScrollOffset) {
+				ScrollOffset = Server_List.ScrollOffset;
+				TopServerIndex = ML::FloorInteger(ScrollOffset.Y / 10.);
+				
+				UpdateServers(TopServerIndex);
+			}
+
+			if (LastUpdate != ObsStore_LastUpdate_TopServers && Now - LastClick > 1500) {
+				LastUpdate = ObsStore_LastUpdate_TopServers;
+				Server_List.ScrollMax.Y = ML::Max(0., ObsStore_TopServers.count * 10. - 100.) + 5.;
+				Quad_ScrollTrigger.Size.Y = ML::Max(100., ObsStore_TopServers.count * 10.) + 5.;
+				
+				UpdateServers(ML::Min(TopServerIndex, ObsStore_TopServers.count - 11));
+			}
+
+			foreach(Event in PendingEvents) {
+				switch (Event.Type) {
+					case CMlScriptEvent::Type::MouseClick: {
+						switch (Event.ControlId) {
+							case "Quad_Search": {
+								Entry_Search.StartEdition();
+							}
+							case "Quad_Trigger": {
+								declare Frame = Event.Control.Parent;
+								declare Integer ServerIndex = TopServerIndex + TL::ToInteger(Frame.DataAttributeGet("index")) - 1;
+								
+								if (Frame.DataAttributeExists("index")) {
+									if (Now - LastClick < 500 && ServerIndex == SelectedServerIndex) {
+										SendCustomEvent("join_server", [Frame.DataAttributeGet("login")]);
+									} else {
+										PreviousSelectedServerIndex = SelectedServerIndex;
+										SelectedServerIndex = ServerIndex;
+									}
+									LastClick = Now;
+								}
+							}
+						}
+					}
+				}
+				{{{Styles::GetEventLoopActiveItem("")}}}
+			}
+
+			for (I, 0, 11) {
+				declare FrameInstance = (G_Frame_VisibleContent.Controls[I] as CMlFrame);
+				declare Quad_Back = (FrameInstance.GetFirstChild("Quad_Back") as CMlQuad);
+
+				declare Integer ServerIndex = TopServerIndex + I - 1;
+				if (SelectedServerIndex == ServerIndex) {
+					Quad_Back.Show();
+				} else {
+					Quad_Back.Hide();
+				}
+
+				// if (ServerIndex < ObsStore_TopServers.count && ServerIndex >= 0) {
+				// 	if (ObsStore_TopServers[ServerIndex].server_ping == 0) {
+				// 		if (!ObsStore_Requests.existskey("Lookup_ServerInfo"))
+				// 			ObsStore_Requests["Lookup_ServerInfo"] = [];
+							
+				// 		ObsStore_Requests["Lookup_ServerInfo"].add(ObsStore_TopServers[ServerIndex].server_login);
+				// 	} else {
+				// 		declare Label_Ping = (FrameInstance.GetFirstChild("Label_Ping") as CMlLabel);
+				// 		Label_Ping.SetText("" ^ ObsStore_TopServers[ServerIndex].server_ping);
+				// 	}
+				// }
+			}
+		}
+	}
+]]></script>
+""";
+}
+
+Void Load() {
+	declare Windows::K_Window Window;
+	Window.Name = GetName();
+	Window.Manialink = Build();
+	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
+
+	Windows::CreateWindow(Window);
+}
+
+Void Loop() {
+	
+}

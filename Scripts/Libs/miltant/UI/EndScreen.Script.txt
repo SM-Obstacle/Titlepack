@@ -1,0 +1,54 @@
+#Const  Version     "2023-05-06"
+#Const  ScriptName  "EndScreen.Script.txt"
+
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:Glitches">
+<frame pos="-48.5 62">
+	<frame>
+		<label pos="4.33 -7.5" size="85.8 8.91" text="summer" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
+		<label pos="5.17 -16.67" size="47.4 4.77" text="2023" textprefix="$t" textfont="lato" textsize="5" textcolor="fff"/>
+		<quad size="96.67 35" image="file://Media/Images/Obstacle/Campaign/SpringBanner01-Mini.png"/>
+	</frame>
+	
+	<frame pos="0 -40">
+		<label pos="32.5 -3.17" size="50 5" text="Storm cores" textcolor="fff" halign="center" textfont="lato"/>
+		<label pos="32.5 -9.5" size="50 4" text="hascrashed" textcolor="fff" halign="center" textfont="lato" textsize="1.2"/>
+		
+		<frame pos="5.55 -14.2">
+			<label pos="27.17 -6.21" size="50.67 7.33" text="Personal best" halign="center" textcolor="fff" textsize="6.3" textfont="lato"/>
+			<frame pos="0 -16.33">
+				<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/author.png"/>
+				<quad pos="24" size="12 12" image="file://Media/Images/Obstacle/Medals/gold.png"/>
+				<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/silver.png"/>
+				<quad pos="17" size="12 12" image="file://Media/Images/Obstacle/Medals/bronze.png"/>
+			</frame>
+			<label pos="27.17 -31.17" size="50.67 7.33" text="Rank 50" halign="center" textcolor="fff" textsize="6.3" textfont="lato"/>
+			<label pos="27.17 -40.5" size="50.67 7.33" text="00:30.23" halign="center" textcolor="fff" textsize="3" textfont="lato"/>
+			<quad size="54.33 48.7" image="file://Media/Images/Obstacle/Campaign/Ingame/Aside.png"/>
+		</frame>
+		
+		<frame pos="77.6 -19">
+			<frame>
+				<label halign="center" valign="center2" size="28.67 8" text="Improve" textsize="2.7"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"/>
+			</frame>
+			<frame pos="0 -11">
+				<label halign="center" valign="center2" size="28.67 8" text="Save Replay" textsize="2.7"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"/>
+			</frame>
+			<frame pos="0 -28">
+				<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"/>
+			</frame>
+			<frame pos="0 -39">
+				<label halign="center" valign="center2" size="28.67 8" text="Quit" textsize="2.7"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"/>
+			</frame>
+		</frame>
+	</frame>
+		
+	<quad pos="0 -35" size="96.67 78.17"  image="file://Media/Images/Obstacle/Campaign/Background.png"/>
+</frame>
+</manialink>""";
+}
