@@ -9,6 +9,10 @@ Void Load() {
     Background::Load();
     Menus::Load();
     Auth::Init();
+
+    // TODO avoid dropping events
+    yield;
+    Background::LoadLate();
 }
 
 Void Loop() {

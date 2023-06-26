@@ -1,0 +1,74 @@
+Text Build() {
+	return """
+<manialink version="3" name="L_Background">
+	<frame z-index="-1000">
+		<label id="Label_Mute" halign="center" valign="center" size="20 20" focusareacolor1="0000" focusareacolor2="0000"
+			text="" textcolor="ffff" pos="144 -80" textsize="7" opacity="0.5" scriptevents="1" z-index="5"/>
+		<quad id="Quad_Background" halign="center" valign="center" size="320 180"/>
+	</frame>
+	
+	
+	<script><![CDATA[
+
+		declare CVideo G_Video;
+
+		Void StopVideo()
+		{
+			if (G_Video != Null)
+			{
+				G_Video.Stop();
+			}
+		}
+
+		Void PlayVideo(Text _VideoPath, Boolean _Looping)
+		{
+			StopVideo();
+			G_Video = Video.CreateVideo(_VideoPath, _Looping, True);
+			G_Video.Play();
+			// G_Video.Image.DefaultVideoTimer = CImage::EVideoTimer::Human;
+		}
+
+		Void PlayVideo(Text _VideoPath)
+		{
+			PlayVideo(_VideoPath, False);
+		}
+
+		main() {
+			declare Quad_Background = (Page.GetFirstChild("Quad_Background") as CMlQuad);
+			declare Real ObsStore_BackgroundPlayCursor for LocalUser;
+
+			PlayVideo("file://Media/Images/Logos/opening_intro.webm");
+			Quad_Background.Image = G_Video.Image;
+
+			while(True) {
+				yield;
+
+				if (G_Video.IsPlaying) {
+					ObsStore_BackgroundPlayCursor = G_Video.PlayCursor;
+				} else {
+					PlayVideo("file://Media/Images/Logos/opening_loop.webm", True);
+					Quad_Background.Image = G_Video.Image;
+				}
+
+				if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+				foreach(Event in PendingEvents) {
+					switch(Event.Type) {
+						case CMlEvent::Type::PluginCustomEvent: {
+							switch(Event.CustomEventType) {
+								case "Titlepack_Background_Hide" : {
+									Quad_Background.Hide();
+								}
+								case "Titlepack_Background_Show" : {
+									Quad_Background.Show();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	]]></script>
+</manialink>
+	""";
+}

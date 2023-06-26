@@ -113,6 +113,13 @@ Void RegisterDialog(Text _ID, Text _Content, Text _Close_Event) {
     Layers::Create("DialogLib__" ^ _ID, _Content);
 }
 
+Void DestroyDialog(Text _ID) {
+    if (G_Dialogs.existskey(_ID)) {
+        G_Dialogs.removekey(_ID);
+        Layers::Destroy("DialogLib__" ^ _ID);
+    }
+}
+
 // Check if a dialog is registered
 Boolean DialogRegistered(Text _ID) {
 	return G_Dialogs.existskey(_ID);
@@ -216,7 +223,7 @@ Void Private_ResizeRectangle(CMlFrame _Frame, K_CornersToggle _Corners, Vec2 _Si
     Quad_Middle.BgColor = _Color;
 }
 
-Void Private_ResizeWrapper(CMlPage _Dialog, CMlPage _Wrapper, Real _Split) {
+Void Private_ResizeWrapper(CMlPage _Dialog, CMlPage _Wrapper, Real _Split, Boolean _NoClose) {
     declare Label_Close      = (_Wrapper.GetFirstChild("Label_Close")      as CMlLabel);
     declare Frame_BG_Header  = (_Wrapper.GetFirstChild("Frame_BG_Header")  as CMlFrame);
     declare Frame_BG_Body    = (_Wrapper.GetFirstChild("Frame_BG_Body")    as CMlFrame);
@@ -244,6 +251,7 @@ Void Private_ResizeWrapper(CMlPage _Dialog, CMlPage _Wrapper, Real _Split) {
     WrapperSize.X = ML::Abs(WrapperSize.X);
     WrapperSize.Y = ML::Abs(WrapperSize.Y);
 
+    Label_Close.Visible = !_NoClose;
     Label_Close.RelativePosition_V3.X = WrapperPos.X + WrapperSize.X - 4.833333;
     Label_Close.RelativePosition_V3.Y = WrapperPos.Y - 3.833333;
 
@@ -316,7 +324,7 @@ Void Private_ResizeWrapper(CMlPage _Dialog, CMlPage _Wrapper, Real _Split) {
 
 // Opens a dialog
 
-K_Result Prompt(Text _ID, Text _Procedure_ID, Real _Split) {
+K_Result Prompt(Text _ID, Text _Procedure_ID, Real _Split, Boolean _NoClose) {
     declare Result = K_Result { Over = False };
 
     if (G_Dialogs[_ID].Pending) {
@@ -340,7 +348,7 @@ K_Result Prompt(Text _ID, Text _Procedure_ID, Real _Split) {
             Layers::Attach("DialogLib_Backdrop");
             Audio.PlaySoundEvent(CAudioManager::ELibSound::ShowDialog, 0, 0.0);
 
-            Private_ResizeWrapper(MLPage, Layers::Get("DialogLib_Backdrop").LocalPage, _Split);
+            Private_ResizeWrapper(MLPage, Layers::Get("DialogLib_Backdrop").LocalPage, _Split, _NoClose);
         } else {
             G_Queue.add(_Procedure_ID);
         }
@@ -376,4 +384,17 @@ K_Result Prompt(Text _ID, Text _Procedure_ID, Real _Split) {
     }
 
     return Result;
+}
+
+
+K_Result Prompt(Text _ID, Text _Procedure_ID, Real _Split) {
+    return Prompt(_ID, _Procedure_ID, _Split, False);
+}
+
+K_Result Prompt(Text _ID, Text _Procedure_ID, Boolean _NoClose) {
+    return Prompt(_ID, _Procedure_ID, 0., _NoClose);
+}
+
+K_Result Prompt(Text _ID, Text _Procedure_ID) {
+    return Prompt(_ID, _Procedure_ID, 0., False);
 }

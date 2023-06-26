@@ -1,6 +1,7 @@
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/MultiplayerAPI2.Script.txt"    as MultiplayerAPI
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt" as ChannelInfoStructs
 #Include "Libs/miltant/ObstacleV2/Indexer.Script.txt"	                                             as Indexer
+#Include "Libs/miltant/ObstacleV2/TitlePack/Dialogs/UI.Script.txt"	                                 as UI
 #Include "TextLib" as TL
 
 #Struct K_MapInfo {
@@ -110,50 +111,54 @@ Void Loop_Multiplayer() {
 }
 
 Void Loop_ServerInfo(Text[] _Servers) {
+    if (!TitleControl.IsReady)
+        return;
+    
     if (G_FetchingServer != "") {
         switch (TitleControl.LatestResult) {
             case CTitleControl::EResult::Success: {
                 if (G_FetchingServer_Time == 0) {
-                    if (TitleControl.IsReady) {
-                        declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
-                        foreach (I => Server in ObsStore_TopServers) {
-                            if (Server.server_login == G_FetchingServer) {
-                                ObsStore_TopServers[I].server_name = TitleControl.GetServerInfo_Result.ServerName;
-                                ObsStore_TopServers[I].server_description = TitleControl.GetServerInfo_Result.Comment;
-                                ObsStore_TopServers[I].server_spectator_count = TitleControl.GetServerInfo_Result.SpectatorCount;
-                                ObsStore_TopServers[I].server_player_count = TitleControl.GetServerInfo_Result.PlayerCount + ObsStore_TopServers[I].server_spectator_count;
-                                ObsStore_TopServers[I].server_player_max = TitleControl.GetServerInfo_Result.MaxPlayerCount;
-                                ObsStore_TopServers[I].server_ladder_limit_min = TitleControl.GetServerInfo_Result.PlayersLevelMin;
-                                ObsStore_TopServers[I].server_ladder_limit_max = TitleControl.GetServerInfo_Result.PlayersLevelMax;
-                                ObsStore_TopServers[I].server_average_ladder_points = TitleControl.GetServerInfo_Result.PlayersLevelAvg;
-                                ObsStore_TopServers[I].server_game_mode = TitleControl.GetServerInfo_Result.ModeName;
-                                ObsStore_TopServers[I].server_maps_count = TitleControl.GetServerInfo_Result.NbChallenges;
-                                ObsStore_TopServers[I].server_build_version = TitleControl.GetServerInfo_Result.ServerVersionBuild;
-                                ObsStore_TopServers[I].server_is_favourite = TitleControl.GetServerInfo_Result.IsFavourite;
-                                ObsStore_TopServers[I].server_is_lobby = TitleControl.GetServerInfo_Result.IsLobbyServer;
-                                ObsStore_TopServers[I].server_is_private = TitleControl.GetServerInfo_Result.IsPrivate;
-                                ObsStore_TopServers[I].server_is_spectator_private = TitleControl.GetServerInfo_Result.IsPrivateForSpectator;
-
-                                ObsStore_TopServers[I].server_players.clear();
-                                foreach (Player in TitleControl.GetServerInfo_Result.PlayerNames) {
-                                    ObsStore_TopServers[I].server_players.add(Player);
-                                }
-
-                                ObsStore_TopServers[I].server_maps.clear();
-                                foreach (Map in TitleControl.GetServerInfo_Result.ChallengeNames) {
-                                    ObsStore_TopServers[I].server_maps.add(Map);
-                                }
-
-                                ServersCache[Server.server_login] = ObsStore_TopServers[I];
-
-
-                                declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
-                                ObsStore_LastUpdate_TopServers = Now;
+                    declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+                    foreach (I => Server in ObsStore_TopServers) {
+                        if (Server.server_login == G_FetchingServer) {
+                            if (TitleControl.GetServerInfo_Result == Null)
                                 break;
+
+                            ObsStore_TopServers[I].server_name = TitleControl.GetServerInfo_Result.ServerName;
+                            ObsStore_TopServers[I].server_description = TitleControl.GetServerInfo_Result.Comment;
+                            ObsStore_TopServers[I].server_spectator_count = TitleControl.GetServerInfo_Result.SpectatorCount;
+                            ObsStore_TopServers[I].server_player_count = TitleControl.GetServerInfo_Result.PlayerCount + ObsStore_TopServers[I].server_spectator_count;
+                            ObsStore_TopServers[I].server_player_max = TitleControl.GetServerInfo_Result.MaxPlayerCount;
+                            ObsStore_TopServers[I].server_ladder_limit_min = TitleControl.GetServerInfo_Result.PlayersLevelMin;
+                            ObsStore_TopServers[I].server_ladder_limit_max = TitleControl.GetServerInfo_Result.PlayersLevelMax;
+                            ObsStore_TopServers[I].server_average_ladder_points = TitleControl.GetServerInfo_Result.PlayersLevelAvg;
+                            ObsStore_TopServers[I].server_game_mode = TitleControl.GetServerInfo_Result.ModeName;
+                            ObsStore_TopServers[I].server_maps_count = TitleControl.GetServerInfo_Result.NbChallenges;
+                            ObsStore_TopServers[I].server_build_version = TitleControl.GetServerInfo_Result.ServerVersionBuild;
+                            ObsStore_TopServers[I].server_is_favourite = TitleControl.GetServerInfo_Result.IsFavourite;
+                            ObsStore_TopServers[I].server_is_lobby = TitleControl.GetServerInfo_Result.IsLobbyServer;
+                            ObsStore_TopServers[I].server_is_private = TitleControl.GetServerInfo_Result.IsPrivate;
+                            ObsStore_TopServers[I].server_is_spectator_private = TitleControl.GetServerInfo_Result.IsPrivateForSpectator;
+
+                            ObsStore_TopServers[I].server_players.clear();
+                            foreach (Player in TitleControl.GetServerInfo_Result.PlayerNames) {
+                                ObsStore_TopServers[I].server_players.add(Player);
                             }
+
+                            ObsStore_TopServers[I].server_maps.clear();
+                            foreach (Map in TitleControl.GetServerInfo_Result.ChallengeNames) {
+                                ObsStore_TopServers[I].server_maps.add(Map);
+                            }
+
+                            ServersCache[Server.server_login] = ObsStore_TopServers[I];
+
+
+                            declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
+                            ObsStore_LastUpdate_TopServers = Now;
+                            break;
                         }
-                        G_FetchingServer = "";
                     }
+                    G_FetchingServer = "";
                 } else {
                     G_FetchingServer_Time = 0;
 
@@ -173,7 +178,18 @@ Void Loop_ServerInfo(Text[] _Servers) {
                 
             // }
             // case CTitleControl::EResult::Error_Net_ServerUnreachable: {
-                // private server
+            //    declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+            //     foreach (I => Server in ObsStore_TopServers) {
+            //         if (Server.server_login == G_FetchingServer) {
+            //             ObsStore_TopServers[I].server_is_private = True;
+            //             ObsStore_TopServers[I].server_is_spectator_private = True;
+            //             ObsStore_TopServers[I].server_ping = Now - G_FetchingServer_Time;
+            //             if (!ServersCache.existskey(Server.server_login))
+            //                 ServersCache[Server.server_login] = Server;
+            //             ServersCache[Server.server_login].server_ping = ObsStore_TopServers[I].server_ping;
+            //             break;
+            //         }
+            //     }
             // }
             // case CTitleControl::EResult::Error_Net_Disconnected: {
                 
@@ -191,12 +207,13 @@ Void Loop_ServerInfo(Text[] _Servers) {
             // CTitleControl::EResult::Error_Internal
             // CTitleControl::EResult::Error_DataMgr
             default: {
+                UI::Notice_Async(G_FetchingServer ^ " " ^ TitleControl.LatestResult, "Failed to fetch server info for " ^ G_FetchingServer ^ " (" ^ TitleControl.LatestResult ^ ")");
                 // log("Failed to fetch server info for " ^ G_FetchingServer ^ " (" ^ TitleControl.LatestResult ^ ")");
             }
         }
     }
 
-    if (TitleControl.IsReady && G_FetchingServer == "" && _Servers.count > 0) {
+    if (G_FetchingServer == "" && _Servers.count > 0) {
         G_FetchingServer = _Servers[0];
         G_FetchingServer_Time = Now;
 

@@ -1,4 +1,5 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"   as Dialogs
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt"   as UI
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
 #Struct K { // K_ServerRecord
@@ -8,6 +9,8 @@
 }
 
 #Const C_Dialog_Close "JoinServer_Close"
+
+declare Integer PasswordJoinDialog;
 
 Text Build() {
 	return """
@@ -161,12 +164,68 @@ Text Build() {
 
 Void Load() {
 	Dialogs::RegisterDialog("joinserver", Build(), C_Dialog_Close);
+
+	PasswordJoinDialog = UI::NewDialog("", [
+			UI::K_Button {
+				ControlId = "Join_Button",
+				Label = "Play",
+				Default = True
+			},
+			UI::K_Button {
+				ControlId = "Spectate_Button",
+				Label = "Spectate",
+				Default = False
+			}
+		]
+	);
+
+	UI::Add(UI::K_Input {
+		ControlId = "Entry_Password",
+		Label = "",
+		Password = True,
+		AutoFocus = True
+	}, PasswordJoinDialog);
 }
 
 Boolean Join(Text _Login) {
 	declare Text ObsStore_ServerJoinTarget for LocalUser;
-	if (ObsStore_ServerJoinTarget != _Login)
+	if (ObsStore_ServerJoinTarget != _Login) {
 		ObsStore_ServerJoinTarget = _Login;
+		UI::UpdateTitle(PasswordJoinDialog, _Login);
+	}
+	declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+	declare CurrentServer_IsPrivate = False;
+	foreach (I => Server in ObsStore_TopServers) {
+		if (Server.server_login == _Login) {
+			CurrentServer_IsPrivate = Server.server_is_private;
+			break;
+		}
+	}
+
+	if (CurrentServer_IsPrivate) {
+		declare Dialogs::K_Dialog DialogLib_CurrentDialog for LocalUser;
+		if (DialogLib_CurrentDialog.Close_Event == C_Dialog_Close)
+			DialogLib_CurrentDialog.Aborted = True;
+
+		declare DialogState = UI::Prompt(PasswordJoinDialog);
+		if (DialogState.Over && DialogState.Success && DialogState.CustomData[1] == "Entry_Password") {
+			declare Text Password = DialogState.CustomData[2];
+			// declare Text SpectatingPassword = UI::GetControlValue(PasswordJoinDialog, "SpectatingPassword");
+
+			// declare persistent K[Text] ObsStore_Servers for LocalUser;
+			// if (ObsStore_Servers.existskey(_Login)) {
+			// 	Password = ObsStore_Servers[_Login].p;
+			// 	SpectatingPassword = ObsStore_Servers[_Login].s;
+			// }
+
+			wait(TitleControl.IsReady);
+			// OpenLink("maniaplanet://#join=atria_cup_04:@obstacle@smokegun", CManiaApp::ELinkType::ManialinkBrowser);
+
+			TitleControl.JoinServer(_Login, DialogState.CustomData[0] == "Spectate_Button", Password);
+		}
+
+		return DialogState.Over;
+	}
 
 	declare Status = Dialogs::Prompt("joinserver", "explorer__joinserver_main", 0.);
 
@@ -183,7 +242,7 @@ Boolean Join(Text _Login) {
 					Password = ObsStore_Servers[Status.CustomData[0]].p;
 					SpectatingPassword = ObsStore_Servers[Status.CustomData[0]].s;
 				}
-	
+				
 				TitleControl.JoinServer(Status.CustomData[0], Status.CustomData[1] == "True", "");
 			}
 		}

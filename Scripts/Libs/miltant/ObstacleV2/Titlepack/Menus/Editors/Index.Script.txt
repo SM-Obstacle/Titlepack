@@ -85,18 +85,23 @@ Void Loop() {
 					G_PendingStartReplayEditor = True;
 				}
 				case "Item": {
+					wait(TitleControl.IsReady);
 					TitleControl.OpenEditor(CTitleControl::EEditorType::ItemEditor);
 				}
 				case "Action": {
+					wait(TitleControl.IsReady);
 					TitleControl.OpenEditor(CTitleControl::EEditorType::ActionMaker);
 				}
 				case "Interface": {
+					wait(TitleControl.IsReady);
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
 				case "Ghost": {
+					wait(TitleControl.IsReady);
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
 				case "Module": {
+					wait(TitleControl.IsReady);
 					TitleControl.OpenEditor(CTitleControl::EEditorType::ModuleStudio);
 				}
 			}

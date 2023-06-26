@@ -1,9 +1,18 @@
-#Include "Libs/miltant/ObstacleV2/Titlepack/Background/Manialink.Script.txt"		as Manialink
+#Include "Libs/miltant/ObstacleV2/Titlepack/Background/MLBackground.Script.txt"		as MLBackground
+#Include "Libs/miltant/ObstacleV2/Titlepack/Background/MLForeground.Script.txt"		as MLForeground
 #Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"				as Layers
 
 Void Load() {
 	declare LayerName = "Obstacle_Background";
-	declare Text MLText = Manialink::Build();
+	declare Text MLText = MLBackground::Build();
+
+	Layers::Create(LayerName, MLText);
+	Layers::Attach(LayerName);
+}
+
+Void LoadLate() {
+	declare LayerName = "Obstacle_Foreground";
+	declare Text MLText = MLForeground::Build();
 
 	Layers::Create(LayerName, MLText);
 	Layers::Attach(LayerName);
