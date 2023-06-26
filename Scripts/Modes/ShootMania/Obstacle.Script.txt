@@ -176,6 +176,7 @@ SpawnScreen::CreateScores("Score.Points");
 ***Match_InitServer***
 ***
 ItemList_Begin();
+// G_InvisibleSkinId = ItemList_Add("StadiumCar");
 G_InvisibleSkinId = ItemList_AddWithSkin("DefaultPlayerModel", Constants::C_InvisibleSkin);
 //G_ObstacleModelId = ItemList_AddWithSkin(Constants::C_ObstacleModel, "Profile");
 //G_ObstacleModelId = ItemList_AddWithSkin("DefaultPlayerModel", Constants::C_ObstacleModel);
