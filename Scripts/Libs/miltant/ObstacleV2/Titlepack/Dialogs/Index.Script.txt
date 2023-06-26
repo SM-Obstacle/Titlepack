@@ -52,7 +52,7 @@ Void Initialize() {
     </framemodel>
 
     <frame z-index="999">
-        <label id="Label_Close" text="" size="5 5" halign="right" valign="top" scriptevents="1" focusareacolor1="0000" focusareacolor2="0000"/>
+        <label id="Label_Close" text="" size="5 5" halign="right" valign="top" scriptevents="1" focusareacolor1="0000" focusareacolor2="0000" textcolor="fff"/>
         <frameinstance id="Frame_BG_Header" modelid="rectangle"/>
         <frameinstance id="Frame_BG_Body" modelid="rectangle"/>
         <frameinstance id="Frame_BG2_Header" modelid="rectangle"/>

@@ -52,7 +52,7 @@ Text Build() {
 			
 			<frame pos="136.5 -1">
 				<label textprefix="  " text="Players" textfont="light" textcolor="fff" textsize="1.7" id="Label_TitlePlayers"/>
-				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="cb5" id="Quad_Players"/>
+				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="fff" id="Quad_Players"/>
 				<label textfont="light" textcolor="cb5" textsize="1.7" pos="67 0" halign="right" id="Label_Players"/>
 				
 				<frame size="134 31.83" pos="0 -5.83" scroll="1" scrollmax="0 30">
@@ -63,7 +63,7 @@ Text Build() {
 			
 			<frame pos="136.5 -39">
 				<label textprefix="  " text="Maps" textfont="light" textcolor="fff" textsize="1.7" id="Label_TitleMaps"/>
-				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="cb5" id="Quad_Maps"/>
+				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="fff" id="Quad_Maps"/>
 				<label textfont="light" textcolor="cb5" textsize="1.7" pos="67 0" halign="right" id="Label_Maps"/>
 				
 				<frame size="134 31.83" pos="0 -5.83" scroll="1" scrollmax="0 30">

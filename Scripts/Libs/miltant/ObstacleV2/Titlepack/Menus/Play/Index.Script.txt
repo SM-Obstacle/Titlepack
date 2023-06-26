@@ -38,7 +38,7 @@ Void Load() {
 
 	declare SubMenu::K_SubMenu Tutorials;
 	Tutorials.Name = "tutorials";
-	Local.Image = "file://Media/Images/Obstacle/Moods/tutorials.png";
+	Tutorials.Image = "file://Media/Images/Obstacle/Moods/tutorials.png";
 	Tutorials.PreventDefault = True;
 	SubMenus.add(Tutorials);
 
