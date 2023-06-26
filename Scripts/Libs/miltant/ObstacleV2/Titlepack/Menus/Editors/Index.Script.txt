@@ -28,7 +28,7 @@ Void Load() {
 	declare SubMenu::K_SubMenu Maps;
 	Maps.Name = "Maps";
 	Maps.PreventDefault = True;
-	Maps.Image = "file://Media/Images/Obstacle/Moods/none.png";
+	Maps.Image = "file://Media/Images/Obstacle/Moods/maps.png";
 	SubMenus.add(Maps);
 
 	declare SubMenu::K_SubMenu Replay;
@@ -46,7 +46,7 @@ Void Load() {
 	declare SubMenu::K_SubMenu Action;
 	Action.Name = "Action";
 	Action.PreventDefault = True;
-	Action.Image = "file://Media/Images/Obstacle/Moods/none.png";
+	Action.Image = "file://Media/Images/Obstacle/Moods/action.png";
 	SubMenus.add(Action);
 
 	declare SubMenu::K_SubMenu Interface;
@@ -58,7 +58,7 @@ Void Load() {
 	declare SubMenu::K_SubMenu Ghost;
 	Ghost.Name = "Ghost";
 	Ghost.PreventDefault = True;
-	Ghost.Image = "file://Media/Images/Obstacle/Moods/none.png";
+	Ghost.Image = "file://Media/Images/Obstacle/Moods/ghost.png";
 	SubMenus.add(Ghost);
 
 
