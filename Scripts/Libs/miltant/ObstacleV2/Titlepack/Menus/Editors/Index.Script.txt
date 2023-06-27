@@ -34,13 +34,13 @@ Void Load() {
 	declare SubMenu::K_SubMenu Replay;
 	Replay.Name = "Replay";
 	Replay.PreventDefault = True;
-	Replay.Image = "file://Media/Images/Obstacle/Moods/day.png";
+	Replay.Image = "file://Media/Images/Obstacle/Moods/replay.png";
 	SubMenus.add(Replay);
 
 	declare SubMenu::K_SubMenu Item;
 	Item.Name = "Item";
 	Item.PreventDefault = True;
-	Item.Image = "file://Media/Images/Obstacle/Moods/night.png";
+	Item.Image = "file://Media/Images/Obstacle/Moods/item.png";
 	SubMenus.add(Item);
 
 	declare SubMenu::K_SubMenu Action;
@@ -52,7 +52,7 @@ Void Load() {
 	declare SubMenu::K_SubMenu Interface;
 	Interface.Name = "Interface";
 	Interface.PreventDefault = True;
-	Interface.Image = "file://Media/Images/Obstacle/Moods/sunset.png";
+	Interface.Image = "file://Media/Images/Obstacle/Moods/interface.png";
 	SubMenus.add(Interface);
 
 	declare SubMenu::K_SubMenu Ghost;
