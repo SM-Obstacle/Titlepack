@@ -185,7 +185,6 @@ Void Greet() {
 	G_Errored = False;
 
 	declare persistent obsToken for LocalUser = "";
-	obsToken = "";
 
 	if (obsToken == "") {
 		declare WelcomeDialog = UI::NewDialog("Welcome to Obstacle!",
