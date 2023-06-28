@@ -82,7 +82,7 @@ Text GetLayer() {
         "9rs_79lkU09Edy3FCyjXNTPNj_j" => [75000, 68000, 63000, 59000],
         "uHN22ZmWSNesgZqOVcjgWYv7cPc" => [70000, 64000, 57000, 53000],
         "TcwGFWuciPoKzccgWa6wRVM7yvd" => [67000, 60000, 55000, 53000],
-        "EAEiCF4vRT_QwFh4X0P2UYy8FUd" => [53000, 48000, 44000, 41900],
+        "18FInhM7gAcqAgvwPwllYEDE6rk" => [53000, 48000, 44000, 41900],
         "pAv3QI4f8y6fbSU2qoMj4cFRQTi" => [52000, 46000, 43000, 41000],
         "G5Dm8fjoFSqS8nui1mP1wKZ4z_3" => [80000, 71000, 65000, 62000],
         "tSd082VQJ51_71EXvCobORPlhZl" => [80000, 71000, 66000, 63000],
@@ -209,7 +209,7 @@ Text GetLayer() {
 
                 declare CurrentHeight = 0.;
                 declare CurrentMedal = Medals.count - 1;
-                declare CurrentTime = GetMedal(3) + 1;
+                declare CurrentTime = Medals[0] + 1;
 
                 for (I, 0, 2) {
                     if (I < Ranks.count)
