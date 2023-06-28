@@ -9,7 +9,7 @@
 	<maker>SMStormMaker@nadeo</maker>
 	<base>SMStorm</base>
 	<player_model>ArenaPlayer</player_model>
-	<scriptcloud_enabled>true</scriptcloud_enabled>
+	<scriptcloud_enabled>false</scriptcloud_enabled>
 	<limit_camera_fov>false</limit_camera_fov>
 	<use_hmd>false</use_hmd>
 	<unlock_features>0</unlock_features>
