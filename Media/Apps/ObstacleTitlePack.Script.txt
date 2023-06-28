@@ -76,9 +76,6 @@ Text Private_UpdateToken() {
 		state = state,
 		redirect_uri = C_MP_Redirect
 	};
-
-	log(Constants::C_HostUrl ^ "player/get_token");
-	log(body.tojson());
 	
 	declare req = Http.CreatePost(
 		Constants::C_HostUrl ^ "player/get_token",
@@ -188,6 +185,7 @@ Void Greet() {
 	G_Errored = False;
 
 	declare persistent obsToken for LocalUser = "";
+	obsToken = "";
 
 	if (obsToken == "") {
 		declare WelcomeDialog = UI::NewDialog("Welcome to Obstacle!",

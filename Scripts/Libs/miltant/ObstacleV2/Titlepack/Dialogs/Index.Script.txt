@@ -8,7 +8,7 @@
 #Struct K_Dialog {
     Text Close_Event;
     Boolean Aborted;
-    CUILayer Layer;
+    Text BuildId;
     Boolean Pending;
 }
         
@@ -66,7 +66,7 @@ Void Initialize() {
         #Struct K_Dialog {
             Text Close_Event;
             Boolean Aborted;
-            CUILayer Layer;
+            Text BuildId;
             Boolean Pending;
         }
 
@@ -106,7 +106,9 @@ Void RegisterDialog(Text _ID, Text _Content, Text _Close_Event) {
 
     declare K_Dialog Dialog;
     Dialog.Close_Event = _Close_Event;
+    Dialog.Aborted = False;
     Dialog.Pending = True;
+    Dialog.BuildId = "DialogLib__" ^ _ID;
 
     // both update if already exists
     G_Dialogs[_ID] = Dialog;
@@ -131,7 +133,7 @@ Text Current() {
 }
 
 // Go to the next dialog in queue
-Void NextDialog() {
+Void Private_NextDialog() {
     if (G_Queue.count > 0)
         G_Queue.remove(G_Current);
     
@@ -146,7 +148,14 @@ Void NextDialog() {
 Void AbortDialog(Text _Procedure_ID) {
     if (G_Queue.exists(_Procedure_ID)) {
         if (G_Current == _Procedure_ID) {
-            NextDialog();
+            declare K_Dialog DialogLib_CurrentDialog for LocalUser;
+            if (Layers::Exists(DialogLib_CurrentDialog.BuildId)) {
+                DialogLib_CurrentDialog.Aborted = True;
+                Layers::Detach(DialogLib_CurrentDialog.BuildId);
+                Layers::Detach("DialogLib_Backdrop");
+            }
+
+            Private_NextDialog();
         } else {
             G_Queue.remove(_Procedure_ID);
         }
@@ -371,7 +380,7 @@ K_Result Prompt(Text _ID, Text _Procedure_ID, Real _Split, Boolean _NoClose) {
             Layers::Detach("DialogLib_Backdrop");
             Audio.PlaySoundEvent(CAudioManager::ELibSound::HideDialog, 0, 0.0);
 
-            NextDialog();
+            Private_NextDialog();
 
             Result.Over = True;
             Result.Success = !DialogLib_CurrentDialog.Aborted;

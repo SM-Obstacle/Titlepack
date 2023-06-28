@@ -68,10 +68,6 @@ Integer NewDialog(Text _Title) {
 	return NewDialog(_Title, K_Message{}, []);
 }
 
-Void CloseDialog(Integer _Dialog) {
-	Dialogs::DestroyDialog("Prompt_" ^ _Dialog);
-}
-
 Void UpdateTitle(Integer _Dialog, Text _Title) {
 	G_Dialogs[_Dialog].Title = _Title;
 	G_Dialogs[_Dialog].BuildId = "";
@@ -201,6 +197,10 @@ Void Build(Integer _Dialog) {
 """;
 	Dialogs::RegisterDialog("Prompt_" ^ _Dialog, ML_Text, C_Dialog_Close ^ _Dialog);   
 	G_Dialogs[_Dialog].BuildId = "Prompt_" ^ _Dialog;
+}
+
+Void CloseDialog(Integer _Dialog) {
+	Dialogs::AbortDialog("Auto" ^ G_Dialogs[_Dialog].BuildId);
 }
 
 Dialogs::K_Result Prompt(Integer _Dialog, Boolean _NoClose) {
