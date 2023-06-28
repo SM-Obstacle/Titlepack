@@ -312,6 +312,8 @@ Text Build() {
 										wait(TitleControl.IsReady);
 										TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
 										TimestampLastSelection = -1;
+									} else {
+										TimestampLastSelection = Now;
 									}
 								}
 							}
