@@ -1,14 +1,14 @@
 <maniaplanet_title version="4">
 	<id>obstacle@smokegun</id>
 	<name>obstacle@smokegun</name>
-	<desc></desc>
+	<desc>Do pew pew to go zooom</desc>
 	<url>ObstacleMP4</url>
 	<download_url></download_url>
 	<title_version>2.0</title_version>
-	<allowed_client_title_version></allowed_client_title_version>
+	<allowed_client_title_version>2.0</allowed_client_title_version>
 	<maker>SMStormMaker@nadeo</maker>
 	<base>SMStorm</base>
-	<player_model></player_model>
+	<player_model>ArenaPlayer</player_model>
 	<scriptcloud_enabled>true</scriptcloud_enabled>
 	<limit_camera_fov>false</limit_camera_fov>
 	<use_hmd>false</use_hmd>
