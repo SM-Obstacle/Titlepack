@@ -1,0 +1,260 @@
+#Include "Libs/miltant/Nadeo_Fork/Layers2.Script.txt" as Layers
+#Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
+#Include "Libs/smokegun/Constants.Script.txt" as Constants
+#Include "TextLib" as TL
+
+/*********************************************
+    CONSTANTS
+*********************************************/
+
+#Const  Version     "2023-28-06"
+#Const  ScriptName  "RecordsWidget.Script.txt"
+
+Text Private_GetSmallRecords() {
+    CustomUI::Add("Frame_Small_Records", <139., 75.>, <44., 34.>);
+    return """
+<frame id="Frame_Small_Records" class="LibCustomUI_Module">
+    <framemodel id="small_record">
+        <label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" textfont="light"/>
+        <label id="name" pos="-14 0" size="20 4" halign="left" valign="center2" textsize="1" textfont="light"/>
+        <label id="time" pos="20 0" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+    </framemodel>
+
+    <frame pos="139 75">
+        <frame id="Frame_Records" pos="0 -3">
+            <frameinstance modelid="small_record" pos="0 0" id="record0"/>
+            <frameinstance modelid="small_record" pos="0 -4" id="record1" />
+            <frameinstance modelid="small_record" pos="0 -8" id="record2"/>
+
+			<frame pos="-20 -13" id="Frame_Medal_0">
+				<quad pos="-1" size="4 4" image="file://Media/Images/Obstacle/Medals/champion.png" valign="center"/>
+        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Author Time" textfont="light"/>
+        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+			</frame>
+
+			<frame pos="-20 -18" id="Frame_Medal_1">
+				<quad pos="-1" size="4 4" image="file://Media/Images/Obstacle/Medals/gold.png" valign="center"/>
+        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Gold Time" textfont="light"/>
+        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+			</frame>
+
+			<frame pos="-20 -23" id="Frame_Medal_2">
+				<quad pos="-1" size="4 4" image="file://Media/Images/Obstacle/Medals/silver.png" valign="center"/>
+        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Silver Time" textfont="light"/>
+        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+			</frame>
+
+			<frame pos="-20 -28" id="Frame_Medal_3">
+				<quad pos="-1" size="4 4" image="file://Media/Images/Obstacle/Medals/bronze.png" valign="center"/>
+        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Bronze Time" textfont="light"/>
+        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+			</frame>
+        </frame>
+
+    	<quad size="44 34" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="top" scriptevents="1"/>
+    </frame>
+</frame>
+    """;
+}
+
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:RecordsWidget">
+<frame>
+    {{{Private_GetSmallRecords()}}}
+</frame>
+<script><!--
+    #Include "TextLib" as TL
+
+    #Const Summer23Medals [
+        "qpKzvXQaaJGvSsXPTNk_iVWmRTg" => [37000, 41000, 52000, 57000],
+        "Fcgbnv1RwTIdgRySDLwtyzzMj9j" => [29000, 24000, 19500, 18500],
+        "TEDQRUPTU1VkGrzBKLhIOY9cYV1" => [48000, 40000, 35000, 33000],
+        "LwyG1V32XJ7EhadoevREd6F_3L1" => [47000, 40000, 36000, 35000],
+        "90qdC1x5f2s4C4oFveHhimcwLzj" => [43000, 38000, 34000, 32000],
+        "eKbgGOAuuwUP6ByvWlP8G728fuc" => [50000, 45000, 40000, 38000],
+        "hzlKEVfxuGyriKXlTm__LoiVRAj" => [46000, 40000, 35000, 32750],
+        "VSn_Cz45JUGLH_LJaRBUKaRIQsh" => [52000, 45000, 41000, 38500],
+        "H5yHFPEOVcdmJv7DabEGYqhUSDc" => [45000, 40000, 36000, 35000],
+        "0u6aaVnLw1cbwUIi7I1hyP1EHT0" => [48000, 44000, 40000, 37500],
+        "7ki7DAx8RGHufasKBLzlHnvFMUj" => [70000, 63000, 58000, 54000],
+        "JTeY36K5VrDL7noJGzl4dqwPC5j" => [60000, 54000, 50000, 47000],
+        "9rs_79lkU09Edy3FCyjXNTPNj_j" => [75000, 68000, 63000, 59000],
+        "uHN22ZmWSNesgZqOVcjgWYv7cPc" => [70000, 64000, 57000, 53000],
+        "TcwGFWuciPoKzccgWa6wRVM7yvd" => [67000, 60000, 55000, 53000],
+        "EAEiCF4vRT_QwFh4X0P2UYy8FUd" => [53000, 48000, 44000, 41900],
+        "pAv3QI4f8y6fbSU2qoMj4cFRQTi" => [52000, 46000, 43000, 41000],
+        "G5Dm8fjoFSqS8nui1mP1wKZ4z_3" => [80000, 71000, 65000, 62000],
+        "tSd082VQJ51_71EXvCobORPlhZl" => [80000, 71000, 66000, 63000],
+        "KkqC5yQSQ18XyhEfpqMLER3vAjc" => [58000, 50000, 46000, 43500],
+        "uHYccBmFsS1kSLc45zLhlOya1eb" => [96000, 88000, 77000, 72000],
+        "F1bDc8HpEr3VjgXwuZh5m_2sb6e" => [80000, 70000, 64000, 61000],
+        "exsvJlTM1oQq1VJ8d9u2qSgFyla" => [78000, 71000, 66000, 64000],
+        "Okx2W7jKXCue7s58kpcStl9vRF3" => [88000, 81000, 76000, 74000],
+        "GwjMPymVycUB9NkGvk00juY4E55" => [80000, 72000, 64000, 61000]
+    ]
+
+    #Struct K_RankedRecord {
+        Integer rank;
+        Text login;
+        Text nickname;
+        Integer time;
+    }
+    
+    #Struct K_Response {
+        K_RankedRecord[] response;
+    }
+
+    declare CHttpRequest G_Req;
+    declare Boolean G_ReqPending;
+
+    Integer GetMedal(Integer Medal) {
+        if (Summer23Medals.existskey(Map.MapInfo.MapUid)) {
+            return Summer23Medals[Map.MapInfo.MapUid][Medal];
+        }
+        switch (Medal) {
+            case 0: {
+                return Map.MapInfo.TMObjective_BronzeTime;
+            }
+            case 1: {
+                return Map.MapInfo.TMObjective_SilverTime;
+            }
+            case 2: {
+                return Map.MapInfo.TMObjective_GoldTime;
+            }
+        }
+        return Map.MapInfo.TMObjective_AuthorTime;
+    }
+
+    Void UpdateRecords(Text _Login) {
+        declare params = "?mapId="^Map.Id^"&playerId="^_Login;
+        declare url = "{{{Constants::C_HostUrl}}}overview"^params;
+        G_Req = Http.CreateGet(url, True, "Accept: application/json");
+        G_ReqPending = True;
+    }
+
+    Void initNetRecordsUpdate() {
+        declare netwrite Net_RecordsUpdated for Teams[0] = -1;
+        Net_RecordsUpdated = -1;
+    }
+
+    main() {
+        {{{CustomUI::InjectMLInit()}}}
+        wait(InputPlayer != Null);
+
+        G_ReqPending = False;
+        declare LastPlayerLogin = "";
+        declare LastUpdate = -1;
+        declare UpdateUI = False;
+
+        declare Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
+        declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
+
+        initNetRecordsUpdate();
+
+        while (True) {
+            yield;
+
+            declare LocalPlayer <=> InputPlayer;
+            if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
+            if (LocalPlayer == Null) continue;
+
+            if (LocalPlayer.User.Login != LastPlayerLogin) {
+                LastUpdate = -1;
+                LastPlayerLogin = LocalPlayer.User.Login;
+            }
+
+            declare netread Net_RecordsUpdated for Teams[0] = -1;
+            if (Net_RecordsUpdated != LastUpdate) {
+                UpdateRecords(LocalPlayer.User.Login);
+                LastUpdate = Net_RecordsUpdated;
+            }
+
+            if (G_ReqPending && G_Req.IsCompleted)
+                UpdateUI = True;
+
+            if (UpdateUI) {
+                UpdateUI = False;
+                declare K_Response response;
+
+                if (G_ReqPending && G_Req.IsCompleted) {
+                    response.fromjson(G_Req.Result);
+                    Http.Destroy(G_Req);
+                    G_ReqPending = False;
+                }
+
+                declare PlayerRank = -1;
+                foreach (I => Record in response.response) {
+                    if (Record.login == LocalPlayer.User.Login) {
+                        PlayerRank = I;
+                        break;
+                    }
+                }
+
+                declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
+                declare Integer[] Ranks;
+                if (response.response.count > 0) {
+                    Ranks.add(0);
+
+                    if (PlayerRank < 3 || PlayerRank == -1) {
+                        if (response.response.count > 1)
+                            Ranks.add(1);
+                        if (response.response.count > 2)
+                            Ranks.add(2);
+                    } else {
+                        Ranks.add(PlayerRank - 1);
+                        Ranks.add(PlayerRank);
+                    }
+                }
+
+                declare CurrentHeight = 0.;
+                declare CurrentMedal = 0;
+                declare CurrentTime = GetMedal(3) + 1;
+
+                for (I, 0, 2) {
+                    if (I < Ranks.count)
+                        CurrentTime = response.response[Ranks[I]].time;
+
+                    while (CurrentMedal < Medals.count && Medals[CurrentMedal] < CurrentTime) {
+                        declare Frame <=> (Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
+                        declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
+
+                        Frame.RelativePosition_V3.Y = CurrentHeight;
+                        timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+                        CurrentHeight -= 5.;
+                        CurrentMedal +=1;
+                    }
+
+                    declare frame <=> (Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
+                    declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
+                    declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
+                    declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
+
+                    frame.RelativePosition_V3.Y = CurrentHeight;
+                    CurrentHeight -= 4.;
+                    if (I < Ranks.count && response.response.existskey(Ranks[I])) {
+                        rankLabel.SetText(""^response.response[Ranks[I]].rank);
+                        nameLabel.SetText(response.response[Ranks[I]].nickname);
+                        timeLabel.SetText(TL::TimeToText(response.response[Ranks[I]].time, True));
+                    } else {
+                        rankLabel.SetText("");
+                        nameLabel.SetText("---");
+                        timeLabel.SetText("--:--:--");
+                    }
+                }
+            }
+
+            foreach (Event in PendingEvents) {
+               switch (Event.Type) {
+                    case CMlScriptEvent::Type::MouseClick: {
+                        OpenLink("{{{Constants::C_WebsiteUrl}}}/map/"^Map.Id,  CMlScript::LinkType::ExternalBrowser);
+                    }
+                }
+            }
+            {{{CustomUI::InjectMLLoop()}}}
+        }
+    }
+--></script>
+</manialink>
+    """;
+}

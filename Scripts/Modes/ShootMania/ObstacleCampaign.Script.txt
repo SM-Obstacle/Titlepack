@@ -1,0 +1,10 @@
+#Extends "Modes/ShootMania/Obstacle.Script.txt"
+
+***Match_InitServer***
+***
+G_EnableRecords = False;
+G_ForceInvisibleSkin = False;
+G_IsCampaign = True;
+
+log("mode is Obstacle Campaign");
+***

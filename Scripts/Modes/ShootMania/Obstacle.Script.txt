@@ -20,6 +20,7 @@
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/miltant/UI/Markers.Script.txt" as Markers
 #Include "Libs/smokegun/UI/RecordsWidget.Script.txt" as RecordsWidget
+#Include "Libs/miltant/UI/MedalsWidget.Script.txt" as MedalsWidget
 #Include "Libs/smokegun/UI/TimeDiff.Script.txt" as TimeDiff
 #Include "Libs/smokegun/UI/Chrono.Script.txt" as Chrono
 #Include "Libs/miltant/UI/Glitches.Script.txt" as Glitches
@@ -275,7 +276,10 @@ if (Obstacle::IsRandomizerMap()) {
     G_EnableRecords = False;
     Layers::Detach("Records");
 } else if (Settings::GetEnableRecords() && G_EnableRecords) {
-    Layers::Create("Records", RecordsWidget::GetLayer());
+    if (G_IsCampaign)
+        Layers::Create("Records", MedalsWidget::GetLayer());
+    else
+        Layers::Create("Records", RecordsWidget::GetLayer());
     Layers::Attach("Records");
 }
 
@@ -726,7 +730,10 @@ Void CreateUI() {
     Layers::Create("Auth", MlAuth::GetLayer());
 
     if (Settings::GetEnableRecords()) {
-        Layers::Create("Records", RecordsWidget::GetLayer());
+        if (G_IsCampaign)
+            Layers::Create("Records", MedalsWidget::GetLayer());
+        else
+            Layers::Create("Records", RecordsWidget::GetLayer());
         Layers::Attach("Records");
     }
     Layers::Attach("Chrono");

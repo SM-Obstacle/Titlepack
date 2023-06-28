@@ -10,6 +10,10 @@
 	Text Thumbnail;
 	Text Path;
 	Integer PersonalBest;
+	Integer Bronze;
+	Integer Silver;
+	Integer Gold;
+	Integer Champion;
 }
 
 
@@ -42,7 +46,7 @@ Text Build() {
 <frame id="Frame_Campaign">
 	<framemodel id="MapCard">
 		<label pos="1 -4.5" valign="center2" textsize="5" textcolor="5F5F64" textfont="regular" id="Label_Num"/>
-		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/author.png" id="Quad_MedalC" hidden="1"/>
+		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_MedalC" hidden="1"/>
 		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1"/>
 		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1"/>
@@ -52,7 +56,7 @@ Text Build() {
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
 		<frame pos="0 53.67" clip="1" clipsizen="52.67 35.83" clipposn="26.63 -17.83">
 			<label text="" textcolor="fff" pos="26.5 -17.83" halign="center" valign="center2" textsize="10" id="Label_IconPlay"/>
-			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center"
+			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Play"
 				image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png" scriptevents="1"
 				data-target="Label_IconPlay Quad_Thumbnail" data-anim-length="70"
 				data-default-anim="<label scale=&quot;1&quot;/> <quad scale=&quot;1&quot;/>"
@@ -150,6 +154,10 @@ Text Build() {
 		Text Thumbnail;
 		Text Path;
 		Integer PersonalBest;
+		Integer Bronze;
+		Integer Silver;
+		Integer Gold;
+		Integer Champion;
 	}
 	
 	
@@ -167,14 +175,87 @@ Text Build() {
 	}
 
 	{{{Styles::GetDeclareGlobals()}}}
-		
-	main() {
+
+	Void UpdateMaps(Integer SelectedCampaign, Integer SelectedMap) {
 		declare Frame_Infos = (Page.GetFirstChild("Frame_Infos") as CMlFrame);
-		declare Label_IconPlay = (Page.GetFirstChild("Label_IconPlay") as CMlLabel);
 		declare Quad_Thumbnail = (Page.GetFirstChild("Quad_Thumbnail") as CMlQuad);
 		declare Label_Map = (Page.GetFirstChild("Label_Map") as CMlLabel);
 		declare Label_Mapper = (Page.GetFirstChild("Label_Mapper") as CMlLabel);
 		declare Label_PB = (Page.GetFirstChild("Label_PB") as CMlLabel);
+
+		declare K_Campaign[Integer] MapsList for Page;
+
+		Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
+		Label_Map.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Name);
+		Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
+
+		if (MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest < 1) {
+			Label_PB.TextColor = <1., 1., 1.>;
+			Label_PB.SetText("-- : -- : --");
+		} else {
+			// #E6D189
+			Label_PB.TextColor = <.901, .82, .537>;
+			Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
+		}
+		Frame_Infos.Show();
+
+		foreach (I => Map in MapsList[SelectedCampaign].Maps) {
+			declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
+			declare Button_Map = (Frame_Card.GetFirstChild("Button_Map") as CMlQuad);
+			declare Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
+			declare Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
+			declare Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
+			declare Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
+			declare Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
+
+			if (I < 9)
+				Label_Num.SetText("0" ^ (I + 1));
+			else
+				Label_Num.SetText("" ^ (I + 1));
+
+			if (SelectedMap == I) {
+				// #7D7E82
+				Button_Map.ModulateColor = <.49, .494, .3412>;
+			} else {
+				Button_Map.ModulateColor = <1., 1., 1.>;
+			}
+			
+			Quad_MedalB.Hide();
+			Quad_MedalS.Hide();
+			Quad_MedalG.Hide();
+			Quad_MedalC.Hide();
+
+			if (Map.PersonalBest > 0) {
+				// #C2AE47
+				Label_Num.TextColor = <.76, .682, .51>;
+
+				if (Map.PersonalBest <= Map.Champion) {
+					Quad_MedalC.Show();
+
+				} else {
+					if (Map.PersonalBest <= Map.Gold)
+						Quad_MedalG.Show();
+					if (Map.PersonalBest <= Map.Silver)
+						Quad_MedalS.Show();
+					if (Map.PersonalBest <= Map.Bronze)
+						Quad_MedalB.Show();
+				}
+			} else {
+				// #5F5F64
+				Label_Num.TextColor = <.373, .373, .392>;
+			}
+
+			Frame_Card.Show();
+		}
+
+		for (I, MapsList[SelectedCampaign].Maps.count, 24) {
+			declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
+			Frame_Card.Hide();
+		}
+	}
+		
+	main() {
+		declare Frame_Infos = (Page.GetFirstChild("Frame_Infos") as CMlFrame);
 
 		declare Quad_Banner = (Page.GetFirstChild("Quad_Banner") as CMlQuad);
 		declare Label_EventLn1 = (Page.GetFirstChild("Label_EventLn1") as CMlLabel);
@@ -184,60 +265,32 @@ Text Build() {
 		declare Integer SelectedCampaign as ControllerSelectedCampaign for Page = -1;
 		declare Integer SelectedCampaign = -1;
 		declare Integer SelectedMap = 1;
+		declare Boolean MapsNeedRefresh = False;
 		declare Integer TimestampLastSelection = -1;
 
+		wait(MapsList.existskey(ControllerSelectedCampaign));
+
 		while (True) {
-			if (ControllerSelectedCampaign != -1 && SelectedCampaign != ControllerSelectedCampaign) {
+			if (SelectedCampaign != ControllerSelectedCampaign) {
 				SelectedCampaign = ControllerSelectedCampaign;
+
 				Quad_Banner.ChangeImageUrl(MapsList[SelectedCampaign].Banner);
 				Label_EventLn1.SetText(MapsList[SelectedCampaign].NameLn1);
 				Label_EventLn2.SetText(MapsList[SelectedCampaign].NameLn2);
 
+				Frame_Infos.Hide();
 				SelectedMap = 0;
 				foreach (I => Map in MapsList[SelectedCampaign].Maps) {
 					if (Map.PersonalBest > 0)
 						SelectedMap += 1;
+					else break;
 				}
 				SelectedMap = SelectedMap % MapsList[SelectedCampaign].Maps.count;
-
-				Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
-				Label_Map.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Name);
-				Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
-
-				if (MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest < 1) {
-					Label_PB.SetText("-- : -- : --");
-				} else {
-					Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
-				}
-				Frame_Infos.Show();
-
-				foreach (I => Map in MapsList[SelectedCampaign].Maps) {
-					declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
-					declare Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
-					declare Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
-					declare Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
-					declare Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
-					declare Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
-
-					if (I < 9)
-						Label_Num.SetText("0" ^ (I + 1));
-					else
-						Label_Num.SetText("" ^ (I + 1));
-
-					if (Map.PersonalBest != -1 && MapsList[SelectedCampaign].FullOnline) {
-						// Quad_MedalC
-						// Quad_MedalG
-						// Quad_MedalS
-						// Quad_MedalB	
-					}
-
-					Frame_Card.Show();
-				}
-
-				for (I, MapsList[SelectedCampaign].Maps.count, 24) {
-					declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
-					Frame_Card.Hide();
-				}
+				MapsNeedRefresh = True;
+			}
+			if (MapsNeedRefresh) {
+				UpdateMaps(SelectedCampaign, SelectedMap);
+				MapsNeedRefresh = False;
 			}
 
 			foreach (Event in PendingEvents) {
@@ -252,22 +305,17 @@ Text Build() {
 									declare MapIndex = TL::ToInteger(TL::SubString(ClickedCard.ControlId, 5, TL::Length(ClickedCard.ControlId) - 4)) - 1;
 
 									if (MapIndex != SelectedMap) {
+										MapsNeedRefresh = True;
 										SelectedMap = MapIndex;
 										TimestampLastSelection = Now;
-										Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
-										Label_Map.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Name);
-										Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
-
-										if (MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest < 1) {
-											Label_PB.SetText("-- : -- : --");
-										} else {
-											Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
-										}										Frame_Infos.Show();
 									} else if (TimestampLastSelection != -1 && Now - TimestampLastSelection < 500) {
 										TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
 										TimestampLastSelection = -1;
 									}
 								}
+							}
+							case "Quad_Play": {
+								TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
 							}
 						}
 					}
@@ -290,11 +338,11 @@ Void Load() {
 	Windows::CreateWindow(Window);
 
 	// fatten, sort by date asc
-	FileList = DataFileMgr.Map_GetGameList("Campaigns\\", True, False, True).Id;
+	FileList = DataFileMgr.Map_GetGameList("\\Campaigns\\29\\", True, False, True).Id;
 
 	// TODO get from the API and move to the loop
 	CampaignList = [
-		1 => K_Campaign {
+		29 => K_Campaign {
 			Name = "Summer 2023",
 			NameLn1 = "Summer",
 			NameLn2 = "2023",
@@ -303,64 +351,179 @@ Void Load() {
 			Banner = "file://Media/Images/Obstacle/Campaign/SpringBanner01.png",
 			Maps = [
 				K_Map {
-					UID = "Okx2W7jKXCue7s58kpcStl9vRF3",
-					Name = "A Wasted Hymn",
-					Author = "errorcat",
-					PersonalBest = 6000000
+					UID = "qpKzvXQaaJGvSsXPTNk_iVWmRTg",
+					Bronze = 37000,
+					Silver = 41000,
+					Gold = 52000,
+					Champion = 57000
 				},
 				K_Map {
-					UID = "41Fei0ryxL3DWCKUpSBXnqvDF37",
-					Name = "Cosy Night",
-					Author = "pixou",
-					PersonalBest = 6000000
-				},
-				K_Map {
-					UID = "TcwGFWuciPoKzccgWa6wRVM7yvd",
-					Name = "Fairy Mania",
-					Author = "khass",
-					PersonalBest = 6000000
-				},
-				K_Map {
-					UID = "eKbgGOAuuwUP6ByvWlP8G728fuc",
-					Name = "Ground Control",
-					Author = "khass",
-					PersonalBest = 6000000
-				},
-				K_Map {
-					UID = "aZyUUKMIvsPW8Uw9lMpj4flO4hi",
-					Name = "Little journey",
-					Author = "pixou",
-					PersonalBest = 6000000
-				},
-				K_Map {
-					UID = "KkqC5yQSQ18XyhEfpqMLER3vAjc",
-					Name = "Manspach",
-					Author = "Khass",
-					PersonalBest = 6000000
+					UID = "Fcgbnv1RwTIdgRySDLwtyzzMj9j",
+					Bronze = 29000,
+					Silver = 24000,
+					Gold = 19500,
+					Champion = 18500
 				},
 				K_Map {
 					UID = "TEDQRUPTU1VkGrzBKLhIOY9cYV1",
-					Name = "Reborn",
-					Author = "kiwi & khass",
-					PersonalBest = 6000000
+					Bronze = 48000,
+					Silver = 40000,
+					Gold = 35000,
+					Champion = 33000
 				},
 				K_Map {
-					UID = "0pt13QpJ3yTryi1JgNa4saeU2sd",
-					Name = "Sunshine Valley",
-					Author = "pixou",
-					PersonalBest = 6000000
+					UID = "LwyG1V32XJ7EhadoevREd6F_3L1",
+					Bronze = 47000,
+					Silver = 40000,
+					Gold = 36000,
+					Champion = 35000
 				},
 				K_Map {
-					UID = "tSd082VQJ51_71EXvCobORPlhZl",
-					Name = "Broken Path",
-					Author = "errorcat",
-					PersonalBest = 6000000
+					UID = "90qdC1x5f2s4C4oFveHhimcwLzj",
+					Bronze = 43000,
+					Silver = 38000,
+					Gold = 34000,
+					Champion = 32000
+				},
+				K_Map {
+					UID = "eKbgGOAuuwUP6ByvWlP8G728fuc",
+					Bronze = 50000,
+					Silver = 45000,
+					Gold = 40000,
+					Champion = 38000
+				},
+				K_Map {
+					UID = "hzlKEVfxuGyriKXlTm__LoiVRAj",
+					Bronze = 46000,
+					Silver = 40000,
+					Gold = 35000,
+					Champion = 32750
+				},
+				K_Map {
+					UID = "VSn_Cz45JUGLH_LJaRBUKaRIQsh",
+					Bronze = 52000,
+					Silver = 45000,
+					Gold = 41000,
+					Champion = 38500
+				},
+				K_Map {
+					UID = "H5yHFPEOVcdmJv7DabEGYqhUSDc",
+					Bronze = 45000,
+					Silver = 40000,
+					Gold = 36000,
+					Champion = 35000
+				},
+				K_Map {
+					UID = "0u6aaVnLw1cbwUIi7I1hyP1EHT0",
+					Bronze = 48000,
+					Silver = 44000,
+					Gold = 40000,
+					Champion = 37500
 				},
 				K_Map {
 					UID = "7ki7DAx8RGHufasKBLzlHnvFMUj",
-					Name = "Rationality",
-					Author = "errorcat",
-					PersonalBest = 6000000
+					Bronze = 70000,
+					Silver = 63000,
+					Gold = 58000,
+					Champion = 54000
+				},
+				K_Map {
+					UID = "JTeY36K5VrDL7noJGzl4dqwPC5j",
+					Bronze = 60000,
+					Silver = 54000,
+					Gold = 50000,
+					Champion = 47000
+				},
+				K_Map {
+					UID = "9rs_79lkU09Edy3FCyjXNTPNj_j",
+					Bronze = 75000,
+					Silver = 68000,
+					Gold = 63000,
+					Champion = 59000
+				},
+				K_Map {
+					UID = "uHN22ZmWSNesgZqOVcjgWYv7cPc",
+					Bronze = 70000,
+					Silver = 64000,
+					Gold = 57000,
+					Champion = 53000
+				},
+				K_Map {
+					UID = "TcwGFWuciPoKzccgWa6wRVM7yvd",
+					Bronze = 67000,
+					Silver = 60000,
+					Gold = 55000,
+					Champion = 53000
+				},
+				K_Map {
+					UID = "EAEiCF4vRT_QwFh4X0P2UYy8FUd",
+					Bronze = 53000,
+					Silver = 48000,
+					Gold = 44000,
+					Champion = 41900
+				},
+				K_Map {
+					UID = "pAv3QI4f8y6fbSU2qoMj4cFRQTi",
+					Bronze = 52000,
+					Silver = 46000,
+					Gold = 43000,
+					Champion = 41000
+				},
+				K_Map {
+					UID = "G5Dm8fjoFSqS8nui1mP1wKZ4z_3",
+					Bronze = 80000,
+					Silver = 71000,
+					Gold = 65000,
+					Champion = 62000
+				},
+				K_Map {
+					UID = "tSd082VQJ51_71EXvCobORPlhZl",
+					Bronze = 80000,
+					Silver = 71000,
+					Gold = 66000,
+					Champion = 63000
+				},
+				K_Map {
+					UID = "KkqC5yQSQ18XyhEfpqMLER3vAjc",
+					Bronze = 58000,
+					Silver = 50000,
+					Gold = 46000,
+					Champion = 43500
+				},
+				K_Map {
+					UID = "uHYccBmFsS1kSLc45zLhlOya1eb",
+					Bronze = 96000,
+					Silver = 88000,
+					Gold = 77000,
+					Champion = 72000
+				},
+				K_Map {
+					UID = "F1bDc8HpEr3VjgXwuZh5m_2sb6e",
+					Bronze = 80000,
+					Silver = 70000,
+					Gold = 64000,
+					Champion = 61000
+				},
+				K_Map {
+					UID = "exsvJlTM1oQq1VJ8d9u2qSgFyla",
+					Bronze = 78000,
+					Silver = 71000,
+					Gold = 66000,
+					Champion = 64000
+				},
+				K_Map {
+					UID = "Okx2W7jKXCue7s58kpcStl9vRF3",
+					Bronze = 88000,
+					Silver = 81000,
+					Gold = 76000,
+					Champion = 74000
+				},
+				K_Map {
+					UID = "GwjMPymVycUB9NkGvk00juY4E55",
+					Bronze = 80000,
+					Silver = 72000,
+					Gold = 64000,
+					Champion = 61000
 				}
 			]
 		}
@@ -376,7 +539,7 @@ Void Loop() {
 		declare MapsList = (DataFileMgr.TaskResults[FileList] as CTaskResult_MapList);
 		
 		foreach (File in MapsList.MapInfos) {
-			declare Folder = TL::RegexMatch("""Campaigns\\([0-9]+)""", File.Path, "i")[1];
+			declare Folder = TL::RegexMatch("""^Campaigns\\([0-9]+)\\$""", File.Path, "i")[1];
 			if (Folder != "") {
 				declare MXId = TL::ToInteger(Folder);
 
@@ -404,7 +567,16 @@ Void Loop() {
 						if (File.MapUid == Map.UID) {
 							CampaignList[MXId].Maps[Map_I].Path = File.FileName;
 							CampaignList[MXId].Maps[Map_I].Thumbnail = "file://Thumbnails/MapUid/" ^ Map.UID ^ "/";
-							
+							CampaignList[MXId].Maps[Map_I].Name = File.Name;
+							CampaignList[MXId].Maps[Map_I].Author = File.AuthorNickName;
+
+							// if (MXId != 29) {
+								CampaignList[MXId].Maps[Map_I].Bronze = File.TMObjective_BronzeTime;
+								CampaignList[MXId].Maps[Map_I].Silver = File.TMObjective_SilverTime;
+								CampaignList[MXId].Maps[Map_I].Gold = File.TMObjective_GoldTime;
+								CampaignList[MXId].Maps[Map_I].Champion = File.TMObjective_AuthorTime;
+							// }
+
 							Online = False;
 							FullOnline = False;
 							break;

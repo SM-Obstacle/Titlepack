@@ -16,7 +16,7 @@
     CONSTANTS
 ***************************************/
 
-#Const Version  "2021-07-11"
+#Const Version  "2023-06-27"
 #Const ScriptName "Items.Script.txt"
 
 
@@ -27,9 +27,9 @@ Void LoadItems() {
     G_ItemIdents[Constants::C_ItemOffzone] = ItemList_Add(Constants::C_ItemOffzone);
     G_ItemIdents[Constants::C_ItemAmmo] = ItemList_Add(Constants::C_ItemAmmo);
     
-    // G_ItemIdents[Constants::C_Offzone01] = ItemList_Add(Constants::C_Offzone01);
-    // G_ItemIdents[Constants::C_Offzone10] = ItemList_Add(Constants::C_Offzone10);
-    // G_ItemIdents[Constants::C_Offzone20] = ItemList_Add(Constants::C_Offzone20);
+    foreach (Item in Constants::C_CustomItems) {
+        G_ItemIdents[Item] = ItemList_Add(Item);
+    }
 }
 
 Void Init() {

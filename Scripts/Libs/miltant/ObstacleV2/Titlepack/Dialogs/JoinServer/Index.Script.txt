@@ -134,9 +134,9 @@ Text Build() {
 						Label_Name.SetText(ObsStore_TopServers[I].server_name);
 						Label_Description.SetText(ObsStore_TopServers[I].server_description);
 						Label_Maps.SetText("" ^ ObsStore_TopServers[I].server_maps_count);
-						List_Maps.SetText(TL::Join("\n", ObsStore_TopServers[I].server_maps));
+						List_Maps.SetText(TL::Join("\n$z", ObsStore_TopServers[I].server_maps));
 						Label_Players.SetText(ObsStore_TopServers[I].server_player_count ^ "/" ^ ObsStore_TopServers[I].server_player_max);
-						List_Players.SetText(TL::Join("\n", ObsStore_TopServers[I].server_players));
+						List_Players.SetText(TL::Join("\n$z", ObsStore_TopServers[I].server_players));
 
 						Label_Favourite.RelativePosition_V3.X = Label_Name.ComputeWidth(Label_Name.Value) + 7.;
 						if (ObsStore_TopServers[I].server_is_favourite)

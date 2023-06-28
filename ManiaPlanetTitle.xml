@@ -1,6 +1,6 @@
 <maniaplanet_title version="4">
 	<id>obstacle@smokegun</id>
-	<name></name>
+	<name>obstacle@smokegun</name>
 	<desc></desc>
 	<url>ObstacleMP4</url>
 	<download_url></download_url>
@@ -8,14 +8,14 @@
 	<allowed_client_title_version></allowed_client_title_version>
 	<maker>SMStormMaker@nadeo</maker>
 	<base>SMStorm</base>
-	<player_model>ArenaPlayer</player_model>
+	<player_model></player_model>
 	<scriptcloud_enabled>true</scriptcloud_enabled>
 	<limit_camera_fov>false</limit_camera_fov>
 	<use_hmd>false</use_hmd>
 	<unlock_features>0</unlock_features>
 	<packaging>
 		<image name="Media\Images\Logos\PackImage.webm"/>
-		<logos name="Media\Images\Logos\Background.png"/>
+		<logos name="Media\Images\Logos\Logos.png"/>
 		<collection></collection>
 		<sortindex>100</sortindex>
 		<station_manialink url=""/>

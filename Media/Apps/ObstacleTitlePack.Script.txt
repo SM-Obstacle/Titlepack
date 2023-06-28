@@ -150,83 +150,83 @@ Boolean DetectOffline() {
 }
 
 main() {
-	if (!DetectOffline()) {
-		G_Errored = False;
+	// if (!DetectOffline()) {
+	// 	G_Errored = False;
 
-		declare persistent obsToken for LocalUser = "";
+	// 	declare persistent obsToken for LocalUser = "";
 		
-		if (obsToken == "") {
-			declare WelcomeDialog = UI::NewDialog("Welcome to Obstacle!",
-				UI::K_Message {
-					Label = "Before we race on, let's take a quick pit stop: We're\n"
-						^ "upgrading our system to include browser-based\n"
-						^ "authentication via Maniaplanet services.\n\n"
-						^ "This quick step ensures that only you can set\n"
-						^ "records under your name.\n\n"
-						^ "We appreciate your understanding and support.\n"
-						^ "Let's race on!"
-				}, [
-					UI::K_Button {
-						ControlId = "OK_Button",
-						Label = "Gear Up!",
-						Default = True
-					}
-				]
-			);
+	// 	if (obsToken == "") {
+	// 		declare WelcomeDialog = UI::NewDialog("Welcome to Obstacle!",
+	// 			UI::K_Message {
+	// 				Label = "Before we race on, let's take a quick pit stop: We're\n"
+	// 					^ "upgrading our system to include browser-based\n"
+	// 					^ "authentication via Maniaplanet services.\n\n"
+	// 					^ "This quick step ensures that only you can set\n"
+	// 					^ "records under your name.\n\n"
+	// 					^ "We appreciate your understanding and support.\n"
+	// 					^ "Let's race on!"
+	// 			}, [
+	// 				UI::K_Button {
+	// 					ControlId = "OK_Button",
+	// 					Label = "Gear Up!",
+	// 					Default = True
+	// 				}
+	// 			]
+	// 		);
 			
 	
-			ObsStore::Load();
+	// 		ObsStore::Load();
 	
-			declare MoveOn = False;
+	// 		declare MoveOn = False;
 	
-			while (!MoveOn) {
-				declare DialogState = UI::Prompt(WelcomeDialog, True);
-				MoveOn = DialogState.Over && DialogState.Success;
-				ObsStore::Loop();
-				yield;
-			}
-		} else {
-			ObsStore::Load();
-		}
+	// 		while (!MoveOn) {
+	// 			declare DialogState = UI::Prompt(WelcomeDialog, True);
+	// 			MoveOn = DialogState.Over && DialogState.Success;
+	// 			ObsStore::Loop();
+	// 			yield;
+	// 		}
+	// 	} else {
+	// 		ObsStore::Load();
+	// 	}
 	
-		declare CurrentAccount = Private_UpdatePlayer(obsToken);
+	// 	declare CurrentAccount = Private_UpdatePlayer(obsToken);
 	
-		if (CurrentAccount.banned) {
-			declare BanDialog = UI::NewDialog("Account Banned",
-				UI::K_Message {
-					Label = "We're sorry, but it appears that your account\n"
-						^ "has been banned from Obstacle.\n\n"
-						^ "This may be due to violation of our community\n"
-						^ "standards, like cheating or offensive behavior.\n\n"
-						^ "If you believe this is a mistake or if you'd like\n"
-						^ "to appeal the decision, please contact our\n"
-						^ "support team on discord.\n"
-				}, [
-					UI::K_Button {
-						ControlId = "OK_Button",
-						Label = "Understood",
-						Default = True
-					}
-				]
-			);
+	// 	if (CurrentAccount.banned) {
+	// 		declare BanDialog = UI::NewDialog("Account Banned",
+	// 			UI::K_Message {
+	// 				Label = "We're sorry, but it appears that your account\n"
+	// 					^ "has been banned from Obstacle.\n\n"
+	// 					^ "This may be due to violation of our community\n"
+	// 					^ "standards, like cheating or offensive behavior.\n\n"
+	// 					^ "If you believe this is a mistake or if you'd like\n"
+	// 					^ "to appeal the decision, please contact our\n"
+	// 					^ "support team on discord.\n"
+	// 			}, [
+	// 				UI::K_Button {
+	// 					ControlId = "OK_Button",
+	// 					Label = "Understood",
+	// 					Default = True
+	// 				}
+	// 			]
+	// 		);
 	
-			declare MoveOn = False;
+	// 		declare MoveOn = False;
 	
-			while (!MoveOn) {
-				declare DialogState = UI::Prompt(BanDialog, True);
-				MoveOn = DialogState.Over && DialogState.Success;
-				ObsStore::Loop();
-				yield;
-			}
-			Menu_Quit();
-			return;
-		}
-	
-		ObstacleController::Load();
-		Background::Load();
-	} else {
+	// 		while (!MoveOn) {
+	// 			declare DialogState = UI::Prompt(BanDialog, True);
+	// 			MoveOn = DialogState.Over && DialogState.Success;
+	// 			ObsStore::Loop();
+	// 			yield;
+	// 		}
+	// 		Menu_Quit();
+	// 		return;
+	// 	}
+	// } else {
 		ObsStore::Load();
-	}
+	// }
+
+	ObstacleController::Load();
+	Background::Load();
 
 
 	// declare CVideo[Text] ObsStore_Previews for LocalUser;

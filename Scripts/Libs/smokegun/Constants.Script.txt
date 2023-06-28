@@ -1,4 +1,4 @@
-#Const Version "2019-01-08"
+#Const Version "2023-06-27"
 #Const ScriptName "Constants.Script.txt"
 
 // Respawn
@@ -16,6 +16,18 @@
 #Const C_Offzone01 "Offzone\\Visible\\Offzone#01.Item.gbx"
 #Const C_Offzone10 "Offzone\\Visible\\Offzone#10.Item.gbx"
 #Const C_Offzone20 "Offzone\\Visible\\Offzone#20.Item.gbx"
+
+#Const C_CustomItems [
+    "Space\\Asteroide\\Asteroide#31_Pivot50.Item.gbx",
+    "Space\\Asteroide\\Asteroide#32_Pivot50.Item.gbx",
+    "Space\\Asteroide\\Asteroide#33_Pivot50.Item.gbx",
+    "Space\\Asteroide\\Asteroide#11_Pivot12.Item.gbx",
+    "Space\\Asteroide\\Asteroide#12_Pivot12.Item.gbx",
+    "Space\\Asteroide\\Asteroide#13_Pivot12.Item.gbx",
+    "Space\\Asteroide\\Asteroide#01_Pivot3.Item.gbx",
+    "Space\\Asteroide\\Asteroide#02_Pivot3.Item.gbx",
+    "Space\\Asteroide\\Asteroide#03_Pivot3.Item.gbx"
+]
 
 //#Const C_WebsiteUrl "https://www.obstacle.ovh"
 //#Const C_WebsiteUrl "http://192.168.1.30:8000"
