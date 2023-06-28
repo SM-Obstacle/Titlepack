@@ -17,7 +17,7 @@
 		<image name="Media\Images\Logos\PackImage.webm"/>
 		<logos name="Media\Images\Logos\Logos.png"/>
 		<collection></collection>
-		<sortindex>100</sortindex>
+		<sortindex>1</sortindex>
 		<station_manialink url=""/>
 		<station_noquickenter>false</station_noquickenter>
 		<boxcase_manialink url=""/>

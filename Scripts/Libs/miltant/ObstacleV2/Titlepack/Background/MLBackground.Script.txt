@@ -22,7 +22,9 @@ Text Build() {
 
 		Void PlayVideo(Text _VideoPath, Boolean _Looping)
 		{
-			StopVideo();
+			if (G_Video != Null)
+				Video.DestroyVideo(G_Video);
+				
 			G_Video = Video.CreateVideo(_VideoPath, _Looping, True);
 			G_Video.Play();
 			// G_Video.Image.DefaultVideoTimer = CImage::EVideoTimer::Human;
@@ -36,6 +38,7 @@ Text Build() {
 		main() {
 			declare Quad_Background = (Page.GetFirstChild("Quad_Background") as CMlQuad);
 			declare Real ObsStore_BackgroundPlayCursor for LocalUser;
+			declare IsLooping = False;
 
 			PlayVideo("file://Media/Images/Logos/opening_intro.webm");
 			Quad_Background.Image = G_Video.Image;
@@ -45,9 +48,10 @@ Text Build() {
 
 				if (G_Video.IsPlaying) {
 					ObsStore_BackgroundPlayCursor = G_Video.PlayCursor;
-				} else {
+				} else if (!IsLooping){
 					PlayVideo("file://Media/Images/Logos/opening_loop.webm", True);
 					Quad_Background.Image = G_Video.Image;
+					IsLooping = True;
 				}
 
 				if (!PageIsVisible && PendingEvents.count == 0) continue;

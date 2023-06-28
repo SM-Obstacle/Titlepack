@@ -3,11 +3,11 @@
 #Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"				as Layers
 
 Void Load() {
-	// declare LayerName = "Obstacle_Background";
-	// declare Text MLText = MLBackground::Build();
+	declare LayerName = "Obstacle_Background";
+	declare Text MLText = MLBackground::Build();
 
-	// Layers::Create(LayerName, MLText);
-	// Layers::Attach(LayerName);
+	Layers::Create(LayerName, MLText);
+	Layers::Attach(LayerName);
 }
 
 Void LoadLate() {
