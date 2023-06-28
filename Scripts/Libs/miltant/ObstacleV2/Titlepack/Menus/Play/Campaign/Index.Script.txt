@@ -309,12 +309,14 @@ Text Build() {
 										SelectedMap = MapIndex;
 										TimestampLastSelection = Now;
 									} else if (TimestampLastSelection != -1 && Now - TimestampLastSelection < 500) {
+										wait(TitleControl.IsReady);
 										TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
 										TimestampLastSelection = -1;
 									}
 								}
 							}
 							case "Quad_Play": {
+								wait(TitleControl.IsReady);
 								TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
 							}
 						}
