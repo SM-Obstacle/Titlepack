@@ -82,14 +82,34 @@ Text Private_UpdateToken() {
 		body.tojson(),
 		"Content-Type: application/json\nAccept: application/json");
 		
-	OpenLink(C_MP_Link
+	declare Link = C_MP_Link
 		^ "client_id=" ^ C_MP_App_Id
 		^ "&redirect_uri=" ^ C_MP_Redirect
 		^ "&state=" ^ state
-		^ "&scope=basic",
-		CManiaApp::ELinkType::ExternalBrowser);
-		
-	wait(req.IsCompleted);		
+		^ "&scope=basic";
+	OpenLink(Link, CManiaApp::ELinkType::ExternalBrowser);
+
+
+	declare PendingDialog = UI::NewDialog("Welcome to Obstacle!",
+		UI::K_Message {
+			Label = "Please follow the instructions in your browser,\n"
+			^ "or scan the  QR code bellow:"
+		}, []
+	);
+	UI::Add(UI::K_Image {
+		URL = "http://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" ^ TL::URLEncode(Link) ^ "&.png",
+		PlaceHolder = "(Click to load...)",
+		Width = 50,
+		Height = 50
+	}, PendingDialog);
+
+	while (!req.IsCompleted) {
+		UI::Prompt(PendingDialog, True);
+		yield;
+	}
+	UI::CloseDialog(PendingDialog);
+
+
 	if (req.StatusCode != 200) {
 		LogError("Error: " ^ req.StatusCode ^ req.Result);
 		Dialog_Message("An error occurred. Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
@@ -122,7 +142,8 @@ K_UpdatePlayerResponse Private_UpdatePlayer(Text _Secret) {
 		"Content-Type: application/json\nAccept: application/json\nPlayerLogin: " ^ LocalUser.Login
 		^ "\nAuthorization: " ^ _Secret ^ "\n");
 	
-	wait(req.IsCompleted);
+	wait (req.IsCompleted);
+
 	log("Update info: " ^ req.StatusCode ^ " " ^ req.Result);
 
 	if (req.StatusCode == C_UnauthorizedStatusCode && !G_Errored) {
@@ -154,6 +175,8 @@ main() {
 		G_Errored = False;
 
 		declare persistent obsToken for LocalUser = "";
+		// TODO REMOVE!
+		obsToken = "";
 		
 		if (obsToken == "") {
 			declare WelcomeDialog = UI::NewDialog("Welcome to Obstacle!",

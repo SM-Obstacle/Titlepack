@@ -11,6 +11,13 @@
 	Boolean AutoFocus;
 }
 
+#Struct K_Image {
+	Text URL;
+	Text PlaceHolder;
+	Integer Width;
+	Integer Height;
+}
+
 #Struct K_Message {
 	Text Label;
 }
@@ -61,6 +68,10 @@ Integer NewDialog(Text _Title) {
 	return NewDialog(_Title, K_Message{}, []);
 }
 
+Void CloseDialog(Integer _Dialog) {
+	Dialogs::DestroyDialog("Prompt_" ^ _Dialog);
+}
+
 Void UpdateTitle(Integer _Dialog, Text _Title) {
 	G_Dialogs[_Dialog].Title = _Title;
 	G_Dialogs[_Dialog].BuildId = "";
@@ -88,6 +99,21 @@ Void Add(K_Input _Control, Integer _Dialog) {
 	G_Dialogs[_Dialog].Manialink ^= """<frame pos="0 -{{{G_Dialogs[_Dialog].Height}}}" size="102.5 8">{{{ML_Text}}}</frame>""";
 	G_Dialogs[_Dialog].Inputs.add(_Control.ControlId);
 	G_Dialogs[_Dialog].Height += 10.;
+}
+
+Void Add(K_Image _Control, Integer _Dialog) {
+	declare ML_Text = "";
+	declare Attr = """size="{{{_Control.Width}}} {{{_Control.Height}}}" """;
+	if (_Control.PlaceHolder != "") {
+		Attr ^= "data-";
+	}
+	Attr ^= """image="{{{_Control.URL}}}" """;
+
+	ML_Text ^= """<quad {{{Attr}}}pos="51.25" halign="center" id="Quad_LazyLoad" scriptevents="1"/>""";
+	ML_Text ^= """<label pos="51.25 -{{{_Control.Height / 2}}}" size="101 {{{_Control.Height}}}" text="{{{_Control.PlaceHolder}}}" halign="center" valign="center2"/>""";
+
+	G_Dialogs[_Dialog].Manialink ^= """<frame pos="0 -{{{G_Dialogs[_Dialog].Height}}}" size="102.5 {{{_Control.Height + 1.}}}">{{{ML_Text}}}</frame>""";
+	G_Dialogs[_Dialog].Height += _Control.Height + 3.;
 }
 
 Void Build(Integer _Dialog) {
@@ -145,17 +171,20 @@ Void Build(Integer _Dialog) {
 	
 
 	main() {
-		declare CMlEntry[] Entry_Autofocus;
+		Page.GetClassChildren("Entry_Autofocus", Page.MainFrame, True);
+		if (Page.GetClassChildren_Result.count > 0)
+			Page.GetClassChildren_Result[0].Focus();
 
 		while (True) {
-			Page.GetClassChildren("Entry_Autofocus", Page.MainFrame, True);
-			if (Page.GetClassChildren_Result.count > 0)
-				Page.GetClassChildren_Result[0].Focus();
 
 			foreach (Event in PendingEvents) {
 				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
 					if (Event.Control.Parent.ControlId == "Frame_Buttons") {
 						SendCustomEvent("{{{C_Dialog_Close ^ _Dialog}}}", [Event.ControlId{{{MS_CompileInputs}}});
+					}
+					else if (Event.ControlId == "Quad_LazyLoad"){
+						log(Event.Control.DataAttributeGet("image"));
+						(Event.Control as CMlQuad).ChangeImageUrl(Event.Control.DataAttributeGet("image"));
 					}
 					else if (Event.Control.DataAttributeExists("focus")) {
 						(Event.Control.Parent.GetFirstChild(Event.Control.DataAttributeGet("focus")) as CMlEntry)
