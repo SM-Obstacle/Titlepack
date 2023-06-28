@@ -175,13 +175,13 @@ Boolean DetectOffline() {
 	declare Timestamp = Now;
 
 	while (!Req.IsCompleted) {
-		if (Timestamp + 5000 < Now)
+		if (Now > Timestamp + 5000)
 			return True;
 
 		yield;
 	}
 
-	return Req.StatusCode == 204 || Req.StatusCode == 200;
+	return Req.StatusCode != 204 && Req.StatusCode != 200;
 }
 
 Void Greet() {
