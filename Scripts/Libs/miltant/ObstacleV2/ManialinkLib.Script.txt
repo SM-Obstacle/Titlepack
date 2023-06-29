@@ -54,12 +54,10 @@ Text GetDeclareGlobals() {
 	Vec3[Text] ParseModulateColor (Text[] _Targets, Text _XML) {
 		declare Tags = TL::RegexFind("<[^!>][^>]*>", _XML, "g");
 		declare Vec3[Text] Results;
-		log(_Targets);
 		foreach (I => Tag in Tags) {
 			declare Match = TL::RegexMatch("modulatecolor=\"([abcdef\\d]{1,8})\"", Tag, "i");
 			if (Match.count == 2 && TL::Length(Match[1]) > 0) {
 				Results[_Targets[I]] = CL::HexToRgb(Match[1]);
-				log(Results[_Targets[I]]);
 			}
 		}
 		return Results;
