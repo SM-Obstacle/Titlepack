@@ -1,5 +1,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
+#Include "Libs/smokegun/Constants.Script.txt"									as Constants
+
 #Include "TextLib" as TL
 
 #Struct K_Map {
@@ -30,6 +32,20 @@
 	Boolean PartialOnline;
 }
 
+#Struct K_CampaignRequestBody {
+	Text login;
+	Text[] maps_uids;
+}
+
+#Struct K_CampaignResponseBody_Map {
+	Text map_uid;
+	Integer time;
+}
+
+#Struct K_CampaignResponseBody {
+	K_CampaignResponseBody_Map[] maps;
+}
+
 
 Text GetName() {
 	return "campaign";
@@ -39,6 +55,8 @@ Text GetName() {
 declare Ident FileList;
 declare K_Campaign[Integer] CampaignList;
 declare Boolean NeedRefresh;
+declare CHttpRequest G_APIRequest;
+declare Integer G_CampaignAPIPending;
 
 Text Build() {
 	return """
@@ -50,7 +68,10 @@ Text Build() {
 		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1"/>
 		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1"/>
-		<quad size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png" id="Button_Map" scriptevents="1"/>
+		<quad pos="14.75 -4.165" size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png" id="Button_Map" scriptevents="1" halign="center" valign="center"
+				data-target="Button_Map Label_Num" data-anim-length="70"
+				data-default-anim="<quad scale=&quot;1.&quot;/> <label textcolor=&quot;5F5F64&quot;/>"
+				data-target-anim="<quad scale=&quot;1.06&quot;/> <label textcolor=&quot;FFF&quot;/>"/>
 	</framemodel>
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
@@ -215,10 +236,16 @@ Text Build() {
 
 			if (SelectedMap == I) {
 				// #7D7E82
-				Button_Map.ModulateColor = <.49, .494, .3412>;
+				Button_Map.ModulateColor = <.49, .494, .51>;
 			} else {
 				Button_Map.ModulateColor = <1., 1., 1.>;
 			}
+			
+			declare Vec3[Text] ModulateColor_Default for Button_Map; // FFFFFF
+			declare Vec3[Text] ModulateColor_Target for Button_Map; // 7D7E82
+			ModulateColor_Default["Button_Map"] = <1., 1., 1.>;
+			ModulateColor_Target["Button_Map"] = <.49, .494, .51>;
+
 			
 			Quad_MedalB.Hide();
 			Quad_MedalS.Hide();
@@ -227,7 +254,7 @@ Text Build() {
 
 			if (Map.PersonalBest > 0) {
 				// #C2AE47
-				Label_Num.TextColor = <.76, .682, .51>;
+				Label_Num.TextColor = <.49, .494, .3412>;
 
 				if (Map.PersonalBest <= Map.Champion) {
 					Quad_MedalC.Show();
@@ -263,6 +290,7 @@ Text Build() {
 
 		declare K_Campaign[Integer] MapsList for Page;
 		declare Integer SelectedCampaign as ControllerSelectedCampaign for Page = -1;
+		declare Boolean TimesReloaded for Page = False;
 		declare Integer SelectedCampaign = -1;
 		declare Integer SelectedMap = 1;
 		declare Boolean MapsNeedRefresh = False;
@@ -288,9 +316,10 @@ Text Build() {
 				SelectedMap = SelectedMap % MapsList[SelectedCampaign].Maps.count;
 				MapsNeedRefresh = True;
 			}
-			if (MapsNeedRefresh) {
+			if (MapsNeedRefresh || TimesReloaded) {
 				UpdateMaps(SelectedCampaign, SelectedMap);
 				MapsNeedRefresh = False;
+				TimesReloaded = False;
 			}
 
 			foreach (Event in PendingEvents) {
@@ -340,6 +369,20 @@ Void Load() {
 	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
+
+	declare persistent ObsStore_UserToken for LocalUser = "";
+
+	if (ObsStore_UserToken != "") {
+		declare Body = K_CampaignRequestBody {
+			login = LocalUser.Login,
+			maps_uids = ["qpKzvXQaaJGvSsXPTNk_iVWmRTg","Fcgbnv1RwTIdgRySDLwtyzzMj9j","TEDQRUPTU1VkGrzBKLhIOY9cYV1","LwyG1V32XJ7EhadoevREd6F_3L1","90qdC1x5f2s4C4oFveHhimcwLzj","eKbgGOAuuwUP6ByvWlP8G728fuc","hzlKEVfxuGyriKXlTm__LoiVRAj","VSn_Cz45JUGLH_LJaRBUKaRIQsh","H5yHFPEOVcdmJv7DabEGYqhUSDc","0u6aaVnLw1cbwUIi7I1hyP1EHT0","7ki7DAx8RGHufasKBLzlHnvFMUj","JTeY36K5VrDL7noJGzl4dqwPC5j","9rs_79lkU09Edy3FCyjXNTPNj_j","uHN22ZmWSNesgZqOVcjgWYv7cPc","TcwGFWuciPoKzccgWa6wRVM7yvd","EAEiCF4vRT_QwFh4X0P2UYy8FUd","pAv3QI4f8y6fbSU2qoMj4cFRQTi","G5Dm8fjoFSqS8nui1mP1wKZ4z_3","tSd082VQJ51_71EXvCobORPlhZl","KkqC5yQSQ18XyhEfpqMLER3vAjc","uHYccBmFsS1kSLc45zLhlOya1eb","F1bDc8HpEr3VjgXwuZh5m_2sb6e","exsvJlTM1oQq1VJ8d9u2qSgFyla","Okx2W7jKXCue7s58kpcStl9vRF3","GwjMPymVycUB9NkGvk00juY4E55"]
+		};
+		
+		G_CampaignAPIPending = 29;
+		G_APIRequest = Http.CreatePost(Constants::C_HostUrl ^ "player/times", Body.tojson(), "Content-Type: application/json\nAccept: application/json\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);	
+	} else {
+		G_CampaignAPIPending = -1;
+	}
 
 	// fatten, sort by date asc
 	FileList = DataFileMgr.Map_GetGameList("\\Campaigns\\29\\", True, False, True).Id;
@@ -554,6 +597,28 @@ Void Loop() {
 		}
 
 		NeedRefresh = True;
+	}
+
+	if (G_CampaignAPIPending != -1 && G_APIRequest.IsCompleted) {
+		declare K_CampaignResponseBody Response;
+		if (Response.fromjson("""{"maps": {{{G_APIRequest.Result}}}}""")) {
+			declare Integer[Text] Times;
+			foreach (Map in Response.maps) {
+				Times[Map.map_uid] = Map.time;
+			}
+			foreach (I => Map in CampaignList[G_CampaignAPIPending].Maps) {
+				if (Times.existskey(Map.UID))
+					CampaignList[G_CampaignAPIPending].Maps[I].PersonalBest = Times[Map.UID];
+			}
+		}
+
+		G_CampaignAPIPending = -1;
+		Http.Destroy(G_APIRequest);
+
+		declare K_Campaign[Integer] MapsList for Windows::GetPage(GetName());
+		declare Boolean TimesReloaded for Windows::GetPage(GetName());
+		MapsList = CampaignList;
+		TimesReloaded = True;
 	}
 
 	if (NeedRefresh && CampaignList.count > 0) {

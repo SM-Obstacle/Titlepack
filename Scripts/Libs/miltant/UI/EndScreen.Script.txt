@@ -1,9 +1,11 @@
-#Const  Version     "2023-05-06"
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
+
+#Const  Version     "2023-29-06"
 #Const  ScriptName  "EndScreen.Script.txt"
 
 Text GetLayer() {
     return """
-<manialink version="3" name="Obstacle:Glitches">
+<manialink version="3" name="Obstacle:EndScreen">
 <frame pos="-48.5 62">
 	<frame>
 		<label pos="4.33 -7.5" size="85.8 8.91" text="summer" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
@@ -18,7 +20,7 @@ Text GetLayer() {
 		<frame pos="5.55 -14.2">
 			<label pos="27.17 -6.21" size="50.67 7.33" text="Personal best" halign="center" textcolor="fff" textsize="6.3" textfont="lato"/>
 			<frame pos="0 -16.33">
-				<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/author.png"/>
+				<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/champion.png"/>
 				<quad pos="24" size="12 12" image="file://Media/Images/Obstacle/Medals/gold.png"/>
 				<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/silver.png"/>
 				<quad pos="17" size="12 12" image="file://Media/Images/Obstacle/Medals/bronze.png"/>
@@ -31,24 +33,48 @@ Text GetLayer() {
 		<frame pos="77.6 -19">
 			<frame>
 				<label halign="center" valign="center2" size="28.67 8" text="Improve" textsize="2.7"/>
-				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
+					scriptevents="1" id="Quad_Improve"/>
 			</frame>
 			<frame pos="0 -11">
 				<label halign="center" valign="center2" size="28.67 8" text="Save Replay" textsize="2.7"/>
-				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
+					scriptevents="1" id="Quad_Replay"/>
 			</frame>
 			<frame pos="0 -28">
 				<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7"/>
-				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
+					scriptevents="1" id="Quad_Next"/>
 			</frame>
 			<frame pos="0 -39">
 				<label halign="center" valign="center2" size="28.67 8" text="Quit" textsize="2.7"/>
-				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
+					scriptevents="1" id="Quad_Quit"/>
 			</frame>
 		</frame>
 	</frame>
 		
 	<quad pos="0 -35" size="96.67 78.17"  image="file://Media/Images/Obstacle/Campaign/Background.png"/>
 </frame>
+
+<script><![CDATA[
+
+	{{{Styles::GetDeclareGlobals()}}}
+
+
+		
+	main() {
+		{{{Styles::GetInitFrameMenus()}}}
+		
+		while (True) {
+
+			foreach (Event in PendingEvents) {
+				{{{Styles::GetEventLoopActiveItem()}}}
+			}
+
+			yield;
+		}
+	}
+]]></script>
 </manialink>""";
 }

@@ -8,17 +8,10 @@ Text GetName() {
 
 Text Build() {
 	return """
-<manialink version="3" name="L_Obstacle_Credits">
-	{{{Styles::GetStyleSheet()}}}
-	<frame pos="-100 50">
-		<label text="Credits" pos="72.33 -5.6" textsize="5" id="Label_Home" scriptevents="1"/> 
-		<quad size="320 16.67" bgcolor="0009"/>
-	</frame>
-
-	<script><![CDATA[
-	
-	]]></script>
-</manialink>""";
+<frame pos="-149.33 72" scroll="1" scrollmax="0 80">
+	<quad size="298.67 240.67" image="file://Media/Images/Obstacle/Credits.png" scriptevents="1"/>
+</frame>
+""";
 }
 
 Void Load() {

@@ -67,7 +67,7 @@ Void LogError(Text _Msg) {
 Text Private_UpdateToken() {
 	LogMessage("Updating token...");
 
-	declare persistent obsToken for LocalUser = "";
+	declare persistent ObsStore_UserToken for LocalUser = "";
 
 	declare login = LocalUser.Login;
 	declare Text state = login ^ Now;
@@ -114,16 +114,16 @@ Text Private_UpdateToken() {
 		UI::Notice_Async("Error: " ^ req.StatusCode, "An error occurred.\nIf it persists please contact the Obstacle developers\n(i.e. @ahmadbky or @MiLTanT on discord).");
 		// UI.SendChat("An error occurred. Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
 		G_Errored = True;
-		return obsToken;
+		return ObsStore_UserToken;
 	}
 	
 	declare K_GetTokenResponse response;
 	response.fromjson(req.Result);
-	obsToken = response.token;
+	ObsStore_UserToken = response.token;
 
 	LogMessage("Token updated!");
 
-	return obsToken;
+	return ObsStore_UserToken;
 }
 
 K_UpdatePlayerResponse Private_UpdatePlayer(Text _Secret) {
@@ -156,6 +156,7 @@ K_UpdatePlayerResponse Private_UpdatePlayer(Text _Secret) {
 	log(req.Result);
 
 	if (err) {
+		log(res);
 		log("conversion not ok");
 		// return Null;
 	}
@@ -184,9 +185,9 @@ Boolean DetectOffline() {
 Void Greet() {
 	G_Errored = False;
 
-	declare persistent obsToken for LocalUser = "";
+	declare persistent ObsStore_UserToken for LocalUser = "";
 
-	if (obsToken == "") {
+	if (ObsStore_UserToken == "") {
 		declare WelcomeDialog = UI::NewDialog("Welcome to Obstacle!",
 			UI::K_Message {
 				Label = "Before we race on, let's take a quick pit stop: We're\n"
@@ -215,7 +216,7 @@ Void Greet() {
 		}
 	}
 
-	declare CurrentAccount = Private_UpdatePlayer(obsToken);
+	declare CurrentAccount = Private_UpdatePlayer(ObsStore_UserToken);
 
 	if (CurrentAccount.banned) {
 		declare BanDialog = UI::NewDialog("Account Banned",

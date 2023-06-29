@@ -80,7 +80,7 @@ Void LogError(Text _Msg) {
 Text UpdateToken() {
 	LogMessage("Updating token...");
 
-	declare persistent Text obsToken for LocalUser;
+	declare persistent Text ObsStore_UserToken for LocalUser;
 	
 	declare login = LocalUser.Login;
 	declare Text state = login ^ Now;
@@ -107,17 +107,17 @@ Text UpdateToken() {
 		LogError("Error: " ^ req.StatusCode ^ req.Result);
 		UI.SendChat("An error occurred. Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
 		SendCustomEvent("token_error", [login]);
-		return obsToken;
+		return ObsStore_UserToken;
 	}
 	
 	declare K_GetTokenResponse response;
 	response.fromjson(req.Result);
-	obsToken = response.token;
+	ObsStore_UserToken = response.token;
 
 	LogMessage("Token updated!");
 	SendCustomEvent("token_update", [login]);
 
-	return obsToken;
+	return ObsStore_UserToken;
 }
 
 Void initNetTokenUpdateVar() {

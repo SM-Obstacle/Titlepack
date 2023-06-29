@@ -43,8 +43,8 @@
  *********************************************/
 
 Text getToken(CSmPlayer _Player) {
-    declare persistent Text obsToken for _Player.User = "";
-    return obsToken;
+    declare persistent Text ObsStore_UserToken for _Player.User = "";
+    return ObsStore_UserToken;
 }
 
 Boolean isBanned(CSmPlayer _Player) {
