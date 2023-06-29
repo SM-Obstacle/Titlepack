@@ -230,14 +230,12 @@ Text Build() {
 			else
 				Label_Num.SetText("" ^ (I + 1));
 			
-			if (SelectedMap == I) {
-				// #7D7E82, #C2AE47
+			if (SelectedMap == I)
+				// #7D7E82
 				Button_Map.ModulateColor = <.373, .373, .392>;
-				Label_Num.TextColor = <1., 1., 1.>;
-			} else {
+			else
 				// #C2AE47
 				Button_Map.ModulateColor = <1., 1., 1.>;
-			}
 
 			Quad_MedalB.Hide();
 			Quad_MedalS.Hide();
@@ -245,7 +243,12 @@ Text Build() {
 			Quad_MedalC.Hide();
 
 			if (Map.PersonalBest > 0) {
-				Label_Num.TextColor = <.49, .494, .3412>;
+				if (SelectedMap == I)
+					// #FFAB4B
+					Label_Num.TextColor = <1., .671, .294>;
+				else
+					// #C2AE47
+					Label_Num.TextColor = <.49, .494, .3412>;
 
 				if (Map.PersonalBest <= Map.Champion) {
 					Quad_MedalC.Show();
@@ -258,8 +261,13 @@ Text Build() {
 					if (Map.PersonalBest <= Map.Bronze)
 						Quad_MedalB.Show();
 				}
-			} else if (SelectedMap != I) {
-				Label_Num.TextColor = <.373, .373, .392>;
+			} else {
+				if (SelectedMap == I)
+					// #fff
+					Label_Num.TextColor = <1., 1., 1.>;
+				else
+					// #C2AE47
+					Label_Num.TextColor = <.373, .373, .392>;
 			}
 
 			Frame_Card.Show();
