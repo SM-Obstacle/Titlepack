@@ -8,8 +8,8 @@ Text GetName() {
 
 Text Build() {
 	return """
-<frame pos="-149.33 72" scroll="1" scrollmax="0 80">
-	<quad size="298.67 240.67" image="file://Media/Images/Obstacle/Credits.png" scriptevents="1"/>
+<frame pos="0 72" scroll="1" scrollmax="0 124.83">
+	<quad halign="center" size="320 285.5" image="file://Media/Images/Obstacle/Credits.png" scriptevents="1" keepratio="Fit"/>
 </frame>
 """;
 }
