@@ -487,15 +487,9 @@ foreach (RS in PendingRespawns) {
                 UnspawnPlayer(RS.Player);
                 
                 declare UI <=> UIManager.GetUI(RS.Player);
-                if (UI != Null) {
-                    UI.SendNotice(
-                        TL::Compose("%1: %2",_("Finish"), "$<$0f0"^TL::TimeToText(LastRun, True)^"$>"),
-                        CUIConfig::ENoticeLevel::PlayerInfo, RS.Player.User, CUIConfig::EAvatarVariant::Default,
-                        CUIConfig::EUISound::Finish, 1);
-                }
+
                 UIManager.UIAll.UISequence = CUIConfig::EUISequence::EndRound;
                 
-                // Submit result
                 while (!UIManager.UIAll.UISequenceIsCompleted) {
                     MB_Yield();
                 }
@@ -523,7 +517,6 @@ foreach (Cap in PendingCaptures) {
     declare TookGoal = Obstacle::HandleCapture(Cap.Player);
 
     if (TookGoal) {
-        log(G_IsCampaign);
         if (!G_IsCampaign) {
             Obstacle::ObsRespawnPlayer(Cap.Player, True);
             Events::Valid(Cap);
@@ -533,14 +526,7 @@ foreach (Cap in PendingCaptures) {
     
             Solo_SetNewRecord (Cap.Player.Score, CMode::EMedal::Finished);
             UnspawnPlayer(Cap.Player);
-            
-            declare UI <=> UIManager.GetUI(Cap.Player);
-            if (UI != Null) {
-                UI.SendNotice(
-                    TL::Compose("%1: %2",_("Finish"), "$<$0f0"^TL::TimeToText(LastRun, True)^"$>"),
-                    CUIConfig::ENoticeLevel::PlayerInfo, Cap.Player.User, CUIConfig::EAvatarVariant::Default,
-                    CUIConfig::EUISound::Finish, 1);
-            }
+
             UIManager.UIAll.UISequence = CUIConfig::EUISequence::EndRound;
             
             // Submit result
@@ -764,7 +750,7 @@ Void CreateUI() {
     CustomUI::Attach();
 }
 
-Void DestroyUI() {
+Void DestroyUI(Boolean _Hard) {
     Layers::Detach("Chrono");
     Layers::Detach("Glitches");
     Layers::Detach("JumpBack");
@@ -784,12 +770,18 @@ Void DestroyUI() {
     Layers::Detach("RespawnBehavior");
     Layers::Detach("SpecKeys");
     Layers::Detach("SurvivalRanking");
-    Layers::Detach("Auth");
 
     //Layers::DetachReplay("SpecKeys");
-
     CustomUI::Unload();
-    UIManager.UILayerDestroyAll();
+
+    if (_Hard) {
+        Layers::Detach("Auth");
+        UIManager.UILayerDestroyAll();
+    }
+}
+
+Void DestroyUI() {
+    DestroyUI(True);
 }
 
 Void UpdateSettings() {
