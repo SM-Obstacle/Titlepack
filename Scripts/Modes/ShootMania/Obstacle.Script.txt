@@ -111,6 +111,7 @@ G_LastUsePvPCollisions = S_PvPCollisions;
 G_IsCampaign = False;
 
 UIManager.UIAll.OverlayHide321Go = False;
+UIManager.UIAll.UISequence_CanSkipIntroMT = False;
 ***
 
 ***Match_Rules***
@@ -155,17 +156,23 @@ foreach (Module in Hud.Modules) {
     }
 }
 
-if (Hud != Null && Hud.ScoresTable != Null) {
-    Hud.ScoresTable.Scores_Sort(CModulePlaygroundScoresTable::EScoreSortOrder::SMPoints);
-
-    Tabs::Load();
-    declare TabsLayer <=> Tabs::CreateTabPaneLayer(
-        [ "ScoresTab" => "Rankings"
-        , "CPTimes" => "Race"]
-       // , "KeysSettings" => "Inputs"]
-        , 15, 7, False);
-    TabsLayer.Type = CUILayer::EUILayerType::AltMenu;
-    UIManager.UIAll.UILayers.add(TabsLayer);
+if (Hud != Null) {
+    if (G_IsCampaign) {
+        UIManager.UIAll.OverlayHideCountdown == True;
+    } else {
+        if (Hud.ScoresTable != Null) {
+            Hud.ScoresTable.Scores_Sort(CModulePlaygroundScoresTable::EScoreSortOrder::SMPoints);
+        
+            Tabs::Load();
+            declare TabsLayer <=> Tabs::CreateTabPaneLayer(
+                [ "ScoresTab" => "Rankings"
+                , "CPTimes" => "Race"]
+            // , "KeysSettings" => "Inputs"]
+                , 15, 7, False);
+            TabsLayer.Type = CUILayer::EUILayerType::AltMenu;
+            UIManager.UIAll.UILayers.add(TabsLayer);
+        }
+    }
 }
 ***
 

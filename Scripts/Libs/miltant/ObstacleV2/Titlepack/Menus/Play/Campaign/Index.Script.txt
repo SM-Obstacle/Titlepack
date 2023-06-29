@@ -37,13 +37,9 @@
 	Text[] maps_uids;
 }
 
-#Struct K_CampaignResponseBody_Map {
+#Struct K_CampaignResponse_Map {
 	Text map_uid;
 	Integer time;
-}
-
-#Struct K_CampaignResponseBody {
-	K_CampaignResponseBody_Map[] maps;
 }
 
 
@@ -195,6 +191,11 @@ Text Build() {
 		Boolean PartialOnline;
 	}
 
+	#Struct MyStruct {
+		//  {Type} {propertyName}
+			Integer MyMember;
+			Text MyTextMember;
+		}
 	{{{Styles::GetDeclareGlobals()}}}
 
 	Void UpdateMaps(Integer SelectedCampaign, Integer SelectedMap) {
@@ -338,8 +339,7 @@ Text Build() {
 										SelectedMap = MapIndex;
 										TimestampLastSelection = Now;
 									} else if (TimestampLastSelection != -1 && Now - TimestampLastSelection < 500) {
-										wait(TitleControl.IsReady);
-										TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
+										SendCustomEvent("play_campaign", [""^SelectedCampaign, ""^SelectedMap]);
 										TimestampLastSelection = -1;
 									} else {
 										TimestampLastSelection = Now;
@@ -347,8 +347,7 @@ Text Build() {
 								}
 							}
 							case "Quad_Play": {
-								wait(TitleControl.IsReady);
-								TitleControl.PlayMap(MapsList[SelectedCampaign].Maps[SelectedMap].Path, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
+								SendCustomEvent("play_campaign", [""^SelectedCampaign, ""^SelectedMap]);
 							}
 						}
 					}
@@ -600,10 +599,10 @@ Void Loop() {
 	}
 
 	if (G_CampaignAPIPending != -1 && G_APIRequest.IsCompleted) {
-		declare K_CampaignResponseBody Response;
-		if (Response.fromjson("""{"maps": {{{G_APIRequest.Result}}}}""")) {
+		declare K_CampaignResponse_Map[] ResponseMaps;
+		if (ResponseMaps.fromjson(G_APIRequest.Result)) {
 			declare Integer[Text] Times;
-			foreach (Map in Response.maps) {
+			foreach (Map in ResponseMaps) {
 				Times[Map.map_uid] = Map.time;
 			}
 			foreach (I => Map in CampaignList[G_CampaignAPIPending].Maps) {
@@ -678,5 +677,27 @@ Void Loop() {
 		}
 
 		DataFileMgr.TaskResult_Release(FileList);
+	}
+
+	foreach (Event in PendingEvents) {
+		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent && Event.CustomEventType == "play_campaign") {
+			if (Event.CustomEventData.count == 2) {
+				declare Campaign = TL::ToInteger(Event.CustomEventData[0]);
+				declare Current_Map = TL::ToInteger(Event.CustomEventData[1]);
+				declare Text[] MapList;
+				declare MapListCount = CampaignList[Campaign].Maps.count;
+
+				for (I, 0, MapListCount - 1) {
+					MapList.add(
+						CampaignList[Campaign]
+							.Maps[(Current_Map + I) % MapListCount]
+							.Path
+					);
+				}
+
+				wait(TitleControl.IsReady);
+				TitleControl.PlayMapList(MapList, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
+			}
+		}
 	}
 }
