@@ -65,9 +65,9 @@ Text Build() {
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1"/>
 		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1"/>
 		<quad pos="14.75 -4.165" size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png" id="Button_Map" scriptevents="1" halign="center" valign="center"
-				data-target="Button_Map Label_Num" data-anim-length="70"
-				data-default-anim="<quad scale=&quot;1.&quot;/> <label textcolor=&quot;5F5F64&quot;/>"
-				data-target-anim="<quad scale=&quot;1.06&quot;/> <label textcolor=&quot;FFF&quot;/>"/>
+				data-target="Button_Map" data-anim-length="70"
+				data-default-anim="<quad scale=&quot;1.&quot;/>"
+				data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
 	</framemodel>
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
@@ -191,11 +191,6 @@ Text Build() {
 		Boolean PartialOnline;
 	}
 
-	#Struct MyStruct {
-		//  {Type} {propertyName}
-			Integer MyMember;
-			Text MyTextMember;
-		}
 	{{{Styles::GetDeclareGlobals()}}}
 
 	Void UpdateMaps(Integer SelectedCampaign, Integer SelectedMap) {
@@ -234,27 +229,22 @@ Text Build() {
 				Label_Num.SetText("0" ^ (I + 1));
 			else
 				Label_Num.SetText("" ^ (I + 1));
-
+			
 			if (SelectedMap == I) {
-				// #7D7E82
-				Button_Map.ModulateColor = <.49, .494, .51>;
+				// #7D7E82, #C2AE47
+				Button_Map.ModulateColor = <.373, .373, .392>;
+				Label_Num.TextColor = <1., 1., 1.>;
 			} else {
+				// #C2AE47
 				Button_Map.ModulateColor = <1., 1., 1.>;
 			}
-			
-			declare Vec3[Text] ModulateColor_Default for Button_Map; // FFFFFF
-			declare Vec3[Text] ModulateColor_Target for Button_Map; // 7D7E82
-			ModulateColor_Default["Button_Map"] = <1., 1., 1.>;
-			ModulateColor_Target["Button_Map"] = <.49, .494, .51>;
 
-			
 			Quad_MedalB.Hide();
 			Quad_MedalS.Hide();
 			Quad_MedalG.Hide();
 			Quad_MedalC.Hide();
 
 			if (Map.PersonalBest > 0) {
-				// #C2AE47
 				Label_Num.TextColor = <.49, .494, .3412>;
 
 				if (Map.PersonalBest <= Map.Champion) {
@@ -268,8 +258,7 @@ Text Build() {
 					if (Map.PersonalBest <= Map.Bronze)
 						Quad_MedalB.Show();
 				}
-			} else {
-				// #5F5F64
+			} else if (SelectedMap != I) {
 				Label_Num.TextColor = <.373, .373, .392>;
 			}
 

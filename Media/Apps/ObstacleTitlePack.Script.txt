@@ -179,7 +179,10 @@ Boolean DetectOffline() {
 		yield;
 	}
 
-	return Req.StatusCode != 204 && Req.StatusCode != 200;
+	declare Offline = Req.StatusCode != 204 && Req.StatusCode != 200;
+	Http.Destroy(Req);
+
+	return Offline;
 }
 
 Void Greet() {

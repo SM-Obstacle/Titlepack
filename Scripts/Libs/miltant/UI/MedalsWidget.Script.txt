@@ -211,9 +211,8 @@ Text GetLayer() {
                 declare CurrentMedal = Medals.count - 1;
                 declare CurrentTime = Medals[0] + 1;
 
-                for (I, 0, 2) {
-                    if (I < Ranks.count)
-                        CurrentTime = response.response[Ranks[I]].time;
+                foreach (I => Rank in Ranks) {
+                    CurrentTime = response.response[Rank].time;
 
                     while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
                         declare Frame <=> (Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
@@ -232,16 +231,36 @@ Text GetLayer() {
 
                     frame.RelativePosition_V3.Y = CurrentHeight;
                     CurrentHeight -= 4.;
-                    if (I < Ranks.count && response.response.existskey(Ranks[I])) {
-                        rankLabel.SetText(""^response.response[Ranks[I]].rank);
-                        nameLabel.SetText(response.response[Ranks[I]].nickname);
-                        timeLabel.SetText(TL::TimeToText(response.response[Ranks[I]].time, True));
-                    } else {
-                        rankLabel.SetText("");
-                        nameLabel.SetText("---");
-                        timeLabel.SetText("--:--:--");
+                    if (I < Ranks.count) {
+                        rankLabel.SetText(""^response.response[Rank].rank);
+                        nameLabel.SetText(response.response[Rank].nickname);
+                        timeLabel.SetText(TL::TimeToText(response.response[Rank].time, True));
                     }
                 }
+
+                while (CurrentMedal >= 0) {
+                    declare Frame <=> (Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
+                    declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
+
+                    Frame.RelativePosition_V3.Y = CurrentHeight;
+                    timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+                    CurrentHeight -= 5.;
+                    CurrentMedal -= 1;
+                }
+
+                for (I, Ranks.count, 2) {
+                    declare frame <=> (Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
+                    declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
+                    declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
+                    declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
+
+                    frame.RelativePosition_V3.Y = CurrentHeight;
+                    CurrentHeight -= 4.;
+                    
+                    rankLabel.SetText("");
+                    nameLabel.SetText("---");
+                    timeLabel.SetText("--:--:--");
+            }
             }
 
             foreach (Event in PendingEvents) {
