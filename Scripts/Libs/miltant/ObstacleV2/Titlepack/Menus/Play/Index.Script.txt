@@ -65,7 +65,16 @@ Void Loop() {
 					G_PendingStartLocalPlay = True;
 				}
 				case "tutorials": {
+					wait(TitleControl.IsReady);
+
+					declare Path = "MEDIABROWSER_HiddenResources\\tuto\\English.Map.Gbx";
 					
+					switch (LocalUser.Language) {
+						case "ru": {
+							Path = "MEDIABROWSER_HiddenResources\\tuto\\Russian.Map.Gbx";
+						}
+					}
+					TitleControl.PlayMap(Path, "Shootmania/Obstacle.Script.txt", "<mode_script_settings><setting name='S_EnableRecords' value='False' type='boolean'/></mode_script_settings>");
 				}
 			}
 		}

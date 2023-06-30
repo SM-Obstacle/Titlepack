@@ -150,8 +150,9 @@ Text Build() {
 			<quad size="62 123.83"  image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
 		</frame>
 
-		<label pos="6 -6.5" textsize="8" text="" textprefix="$t" textcolor="fff" textfont="regular" id="Label_EventLn1"/>
-		<label pos="6 -15.5" textsize="6" text="" textprefix="$t" textcolor="fff" textfont="light" id="Label_EventLn2"/>
+		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" textfont="regular" id="Label_EventLn1"/>
+		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" textfont="light" id="Label_EventLn2"/>
+		<label pos="181 -29.5" textsize="2" text="$fff$i$l[https://obstacle.titlepack.io/campaign/29/summer_23]Leaderboards..." textfont="light" halign="right"/>
 		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
 		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
@@ -392,7 +393,7 @@ Void Load() {
 	}
 
 	// fatten, sort by date asc
-	FileList = DataFileMgr.Map_GetGameList("\\Campaigns\\29\\", True, False, True).Id;
+	FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\29\\", True, False, True).Id;
 
 	// TODO get from the API and move to the loop
 	CampaignList = [
@@ -593,7 +594,7 @@ Void Loop() {
 		declare MapsList = (DataFileMgr.TaskResults[FileList] as CTaskResult_MapList);
 		
 		foreach (File in MapsList.MapInfos) {
-			declare Folder = TL::RegexMatch("""^Campaigns\\([0-9]+)\\$""", File.Path, "i")[1];
+			declare Folder = TL::RegexMatch("""^MEDIABROWSER_HiddenResources\\([0-9]+)\\$""", File.Path, "i")[1];
 			if (Folder != "") {
 				declare MXId = TL::ToInteger(Folder);
 

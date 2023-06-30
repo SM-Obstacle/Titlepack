@@ -206,7 +206,10 @@ Text Build(Text _FileType, Boolean _New) {
 		foreach (Folder => {{{_FileType}}}s in ObsStore_{{{_FileType}}}s) {
 			declare Parents = TL::Split("\\", Folder);
 			declare CurrentPath = "/";
-	
+			
+			if (Parents.count > 0 && Parents[0] == "MEDIABROWSER_HiddenResources")
+				continue;
+				
 			foreach (Parent in Parents) {
 				if (!Folders.existskey(CurrentPath)) {
 					Folders[CurrentPath] = [];
@@ -391,15 +394,19 @@ Text Build(Text _FileType, Boolean _New) {
 								case "Label_Refresh": {
 									SearchResults = False;
 
-									if (RefreshDebouncer + 2000 < Now) {
+									if (RefreshDebouncer + 1000 < Now) {
 										RefreshDebouncer = Now;
 										ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [];
 
 										declare Label_Refresh = (Page.GetFirstChild("Label_Refresh") as CMlLabel);
 										Label_Refresh.RelativeRotation = 0.;
 										AnimMgr.Add(
-											Label_Refresh, "<label rot=\"360\"/>",
-											2000, CAnimManager::EAnimManagerEasing::QuadOut
+											Label_Refresh, "<label rot=\"180\"/>",
+											1000, CAnimManager::EAnimManagerEasing::QuadOut
+										);
+										AnimMgr.AddChain(
+											Label_Refresh, "<label rot=\"0\"/>",
+											0, CAnimManager::EAnimManagerEasing::Linear
 										);
 									}
 								}

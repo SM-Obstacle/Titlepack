@@ -4,6 +4,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"	as ExplorerDialog
 
 declare Boolean G_PendingStartMapEditor;
+declare Boolean G_PendingStartGhostsEditor;
 declare Boolean G_PendingStartReplayEditor;
 
 Text GetName() {
@@ -15,6 +16,11 @@ Void StartMapEditor() {
 		G_PendingStartMapEditor = !ExplorerDialog::StartMapEditor();
 }
 
+Void StartGhostsEditor() {
+	if (G_PendingStartGhostsEditor)
+		G_PendingStartGhostsEditor = !ExplorerDialog::StartGhostsEditor();
+}
+
 Void StartReplayEditor() {
 	if (G_PendingStartReplayEditor)
 		G_PendingStartReplayEditor = !ExplorerDialog::StartReplayEditor();
@@ -22,6 +28,8 @@ Void StartReplayEditor() {
 
 Void Load() {
 	G_PendingStartMapEditor = False;
+	G_PendingStartGhostsEditor = False;
+	G_PendingStartReplayEditor = False;
 
 	declare SubMenu::K_SubMenu[] SubMenus;
 
@@ -97,8 +105,8 @@ Void Loop() {
 					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
 				}
 				case "Ghost": {
-					wait(TitleControl.IsReady);
-					TitleControl.OpenEditor(CTitleControl::EEditorType::InterfaceDesigner);
+					ExplorerDialog::Load("Map");
+					G_PendingStartGhostsEditor = True;
 				}
 				case "Module": {
 					wait(TitleControl.IsReady);
@@ -110,4 +118,5 @@ Void Loop() {
 
 	StartMapEditor();
 	StartReplayEditor();
+	StartGhostsEditor();
 }

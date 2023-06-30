@@ -394,6 +394,12 @@ Void Loop() {
                     ObsStore_Servers_SearchResult = Indexer::Search(Args[0], "Servers", 24);
                 }
             }
+            case "ObsStore_RefreshMaps": {
+                RefreshMaps();
+            }
+            case "ObsStore_RefreshReplays": {
+                RefreshReplays();
+            }
         }
     }
     ObsStore_Requests.clear();

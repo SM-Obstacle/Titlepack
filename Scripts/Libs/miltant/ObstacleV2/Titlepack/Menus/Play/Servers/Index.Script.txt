@@ -19,12 +19,12 @@ Text Build() {
 <framemodel id="Server">
 	<quad size="4.67 3.5" pos="4.17 -4.5" valign="center" halign="center" keepratio="Cover" id="Quad_Flag"/>
 	<label textcolor="fff" pos="8 -4.5" size="110" valign="center2" textfont="light" textsize="2.6" id="Label_Name"/>
-	<label textcolor="fff" pos="130.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Private"/>
-	<label textcolor="fff" pos="134.33 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Fav"/> <!--  -->
-	<label textcolor="fff" pos="142 -4.5" valign="center2" textfont="light" textsize="2.6" size="21" id="Label_Players"/>
-	<label textcolor="fff" pos="176 -4.5" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right" id="Label_Ping"/>
-	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_ms"/>
-	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_graph"/>
+	<label textcolor="fff" pos="151 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Private"/>
+	<label textcolor="fff" pos="144 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Fav"/> <!--  -->
+	<label textcolor="fff" pos="165 -4.5" valign="center2" textfont="light" textsize="2.6" size="21" id="Label_Players"/>
+	<label textcolor="fff" pos="176 -4.5" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right" id="Label_Ping" hidden="1"/>
+	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_ms" hidden="1"/>
+	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_graph" hidden="1"/>
 
 	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="fff" id="Quad_Back" hidden="1"/>
 	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="000"

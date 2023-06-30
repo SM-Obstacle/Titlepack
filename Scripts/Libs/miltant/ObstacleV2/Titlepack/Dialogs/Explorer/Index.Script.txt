@@ -40,6 +40,21 @@ Boolean StartMapEditor() {
 	return Status.Over;
 }
 
+Boolean StartGhostsEditor() {
+	declare Status = Dialogs::Prompt("explorer", "explorer__start_map_editor", 0.);
+
+	if (Status.Over) {
+		wait(TitleControl.IsReady);
+		
+		if (Status.Success) {
+			if (Status.CustomData.count > 0) {
+				TitleControl.EditGhosts(Status.CustomData[0]);
+			}
+		}
+	}
+	return Status.Over;
+}
+
 Boolean StartReplayEditor() {
 	declare Status = Dialogs::Prompt("explorer", "explorer__start_replay_editor", 0.);
 
