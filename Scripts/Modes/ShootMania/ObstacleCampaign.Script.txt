@@ -1,5 +1,7 @@
 #Extends "Modes/ShootMania/Obstacle.Script.txt"
 
+#Include "Libs/miltant/UI/EndScreen.Script.txt" as EndScreen
+
 ***Match_InitServer***
 ***
 G_EnableRecords = False;
@@ -7,4 +9,55 @@ G_ForceInvisibleSkin = False;
 G_IsCampaign = True;
 
 log("mode is Obstacle Campaign");
+***
+
+***Campaign_EndRound***
+***
+// DestroyUI(False);
+Layers::Create("EndScreen", EndScreen::GetLayer());
+Layers::Attach("EndScreen");
+
+UIManager.UIAll.OverlayHideNotices = True;
+UIManager.UIAll.UISequence = CUIConfig::EUISequence::Podium;
+
+declare Text CampaignEvent for Teams[0];
+
+while (True) {
+    yield;
+
+    if (CampaignEvent != "") {
+        switch (CampaignEvent) {
+            case "improve": {
+                foreach (Player in Players) {
+                    Obstacle::ObsRespawnPlayer(Player, True);
+                    Obstacle::NewPlayer(Player);
+                }
+            }
+            case "next_map": {
+                MB_Private_StopMatch();
+            }
+        }
+        UIManager.UIAll.UISequence = CUIConfig::EUISequence::Playing;
+        Layers::Detach("EndScreen");
+        // CreateUI();
+        break;
+    }
+}
+
+CampaignEvent = "";
+***
+
+***MB_Private_EnableLadder***
+***
+MB_Private_EnableLadder = False;
+***
+
+***MB_Private_EnablePodiumSequence***
+***
+MB_Private_EnablePodiumSequence = False;
+***
+
+***MB_Private_EnableChannelProgression***
+***
+MB_Private_EnableChannelProgression = True;
 ***

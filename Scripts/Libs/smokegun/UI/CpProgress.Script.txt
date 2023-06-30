@@ -34,6 +34,7 @@ Text GetLayer() {
         {{{CustomUI::InjectMLInit()}}}
         wait(InputPlayer != Null && Page != Null);
 
+        declare Frame_CPProgress <=> (Page.GetFirstChild("Frame_CPProgress") as CMlFrame);
         declare Label_CPProgress <=> (Page.GetFirstChild("Label_CPProgress") as CMlLabel);
         declare Label_CheckpointsTotal <=> (Page.GetFirstChild("Label_CheckpointsTotal") as CMlLabel);
 
@@ -54,24 +55,23 @@ Text GetLayer() {
             declare netread Net_StartTime for LocalPlayer = -1;
             declare netread Net_CpProgress for LocalPlayer = -1;
 
-            if (Label_CPProgress.Visible &&
-                (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0)) {
+            if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
                 Label_CPProgress.Hide();
-            } else if (LastCp != Net_CpProgress) {
-                Label_CPProgress.Show();
-                Label_CPProgress.SetText(""^Net_CpProgress);
+                Label_CheckpointsTotal.Hide();
+            } else {
+                if (LastCp != Net_CpProgress) {
+                    Label_CPProgress.Show();
+                    Label_CPProgress.SetText(""^Net_CpProgress);
+                }
+                if (LastCpTotal != Net_CheckpointsTotal) {
+                    Label_CheckpointsTotal.Show();
+                    if (Net_CheckpointsTotal > 1)
+                        Label_CheckpointsTotal.SetText(Net_CheckpointsTotal^" CPS");
+                    else
+                        Label_CheckpointsTotal.SetText(Net_CheckpointsTotal^" CP");
+                }
             }
 
-            if (Label_CheckpointsTotal.Visible &&
-                (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0)) {
-                Label_CheckpointsTotal.Hide();
-            } else if (LastCpTotal != Net_CheckpointsTotal) {
-                Label_CheckpointsTotal.Show();
-                if (Net_CheckpointsTotal > 1)
-                    Label_CheckpointsTotal.SetText(Net_CheckpointsTotal^" CPS");
-                else
-                    Label_CheckpointsTotal.SetText(Net_CheckpointsTotal^" CP");
-            }
             {{{CustomUI::InjectMLLoop()}}}
         }
     }

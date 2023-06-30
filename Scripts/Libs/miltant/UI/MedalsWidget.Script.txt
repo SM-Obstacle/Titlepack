@@ -11,9 +11,9 @@
 #Const  ScriptName  "RecordsWidget.Script.txt"
 
 Text Private_GetSmallRecords() {
-    CustomUI::Add("Frame_Small_Records", <139., 75.>, <44., 34.>);
+    CustomUI::Add("Frame_Medals_Records", <139., 75.>, <44., 34.>);
     return """
-<frame id="Frame_Small_Records" class="LibCustomUI_Module">
+<frame id="Frame_Medals_Records" class="LibCustomUI_Module">
     <framemodel id="small_record">
         <label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" textfont="light"/>
         <label id="name" pos="-14 0" size="20 4" halign="left" valign="center2" textsize="1" textfont="light"/>
@@ -142,12 +142,22 @@ Text GetLayer() {
         {{{CustomUI::InjectMLInit()}}}
         wait(InputPlayer != Null);
 
+		declare Integer[Text] CampaignRecords for LocalUser;
+
+        declare netread Net_StartTime for InputPlayer = -1;
+        declare netread Net_CheckpointsTotal for Teams[0] = -1;
+        declare netread Net_CpProgress for InputPlayer = -1;
+        declare netread Net_Time1 for InputPlayer = 0;
+        declare Integer CurrentPlayerRank for LocalUser = 0;
+        declare netread Net_RecordsUpdated for Teams[0] = -1;
+        declare LastUpdate = -1;
+        declare Running = False;
+
         G_ReqPending = False;
         declare LastPlayerLogin = "";
-        declare LastUpdate = -1;
         declare UpdateUI = False;
 
-        declare Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
+        declare Frame_Widget <=> (Page.GetFirstChild("Frame_Medals_Records") as CMlFrame);
         declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
 
         initNetRecordsUpdate();
@@ -159,19 +169,38 @@ Text GetLayer() {
             if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
             if (LocalPlayer == Null) continue;
 
+
+            if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
+                if (Frame_Widget.Visible)
+                    Frame_Widget.Hide();
+            } else if (!Frame_Widget.Visible) {
+                Frame_Widget.Show();
+            }
+
             if (LocalPlayer.User.Login != LastPlayerLogin) {
                 LastUpdate = -1;
                 LastPlayerLogin = LocalPlayer.User.Login;
             }
 
-            declare netread Net_RecordsUpdated for Teams[0] = -1;
-            if (Net_RecordsUpdated != LastUpdate) {
+            if (Net_RecordsUpdated != LastUpdate || (Net_CpProgress < 0 && Running) ) {
                 UpdateRecords(LocalPlayer.User.Login);
                 LastUpdate = Net_RecordsUpdated;
+                Running = False;
             }
 
-            if (G_ReqPending && G_Req.IsCompleted)
-                UpdateUI = True;
+            if (Net_CpProgress > -1) {
+                Running = True;
+            }
+
+            if (G_ReqPending && G_Req.IsCompleted) {
+                if (G_Req.StatusCode == 200)
+                    UpdateUI = True;
+                else {
+                    log("Error: "^G_Req.StatusCode);
+                    log(G_Req.Result);
+                    Http.Destroy(G_Req);
+                }
+            }
 
             if (UpdateUI) {
                 UpdateUI = False;
@@ -186,9 +215,15 @@ Text GetLayer() {
                 declare PlayerRank = -1;
                 foreach (I => Record in response.response) {
                     if (Record.login == LocalPlayer.User.Login) {
+                        CampaignRecords[Map.MapInfo.MapUid] = Record.time;
+                        CurrentPlayerRank = I + 1;
                         PlayerRank = I;
                         break;
                     }
+                }
+                if (PlayerRank == -1) {
+                    CampaignRecords[Map.MapInfo.MapUid] = 0;
+                    CurrentPlayerRank = response.response.count + 2;
                 }
 
                 // medals to display

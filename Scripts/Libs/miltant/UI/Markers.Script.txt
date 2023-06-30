@@ -216,7 +216,7 @@ main() {
 				if (Parts.count == 1)
 					Order = 0;
 
-				if (!LandmarksCache[Order].existskey(CP_Frame.Id))
+				if (!(LandmarksCache.existskey(Order) && LandmarksCache[Order].existskey(CP_Frame.Id)))
 					continue;
 				declare CSmMapLandmark CP_Landmark <=> LandmarksCache[Order][CP_Frame.Id];
 

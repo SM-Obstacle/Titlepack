@@ -34,7 +34,7 @@
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2023-04-11"
+#Const  Version     "2023-06-30"
 #Const  ScriptName  "ObstacleLib.Script.txt"
 
 

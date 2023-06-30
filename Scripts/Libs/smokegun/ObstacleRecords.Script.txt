@@ -330,6 +330,7 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
     }
 
     if (UpdateRecords) {
+        log("should update records");
         declare netwrite Net_RecordsUpdated for Teams[0] = Now;
         Net_RecordsUpdated = Now;
     }

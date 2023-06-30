@@ -12,7 +12,7 @@ Text GetLayer() {
     return """
 <manialink version="3" name="Obstacle:Chrono">
     <frame id="Frame_Chrono" class="LibCustomUI_Module">
-        <frame pos="0 -70">
+        <frame pos="0 -70" id="Frame_Chrono_Inner">
             <label id="Label_Chrono" pos="0 -0.5" size="40 10" halign="center" valign="center2" text="00:00:00" textfont="OswaldMono" textsize="7"/>
             <quad pos="0 0" size="40 10" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center"/>
         </frame>
@@ -32,6 +32,7 @@ Text GetLayer() {
         wait(InputPlayer != Null && Page != Null);
 
         declare Frame_Chrono        <=> (Page.GetFirstChild("Frame_Chrono") as CMlFrame);
+        declare Frame_Chrono_Inner  <=> (Frame_Chrono.GetFirstChild("Frame_Chrono_Inner") as CMlFrame);
         declare Label_Chrono        <=> (Frame_Chrono.GetFirstChild("Label_Chrono") as CMlLabel);
         Frame_Chrono.Visible = True;
 
@@ -48,6 +49,20 @@ Text GetLayer() {
             declare LocalPlayer <=> InputPlayer;
             if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
             if (LocalPlayer == Null) continue;
+
+
+            declare netread Net_StartTime for LocalPlayer = -1;
+            declare LastStartTime for LocalPlayer = -1;
+            declare netread Net_CheckpointsTotal for Teams[0] = -1;
+            declare netread Net_CpProgress for LocalPlayer = -1;
+
+            if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
+                if (Frame_Chrono_Inner.Visible)
+                    Frame_Chrono_Inner.Hide();
+                continue;
+            } else if (!Frame_Chrono_Inner.Visible) {
+                Frame_Chrono_Inner.Show();
+            }
 
             declare netread Net_UsedJump for LocalPlayer = False;
             if (PrevUsedJump != Net_UsedJump) {
@@ -70,9 +85,6 @@ Text GetLayer() {
                 else
                     Label_Chrono.TextColor = <1., 1., 1.>;
             }
-
-            declare netread Net_StartTime for LocalPlayer = -1;
-            declare LastStartTime for LocalPlayer = -1;
 
             if (Net_StartTime > 0) {
                 if (!Frame_Chrono.Visible)

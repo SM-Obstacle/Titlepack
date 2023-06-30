@@ -14,42 +14,47 @@ Text GetLayer() {
 	</frame>
 	
 	<frame pos="0 -40">
-		<label pos="32.5 -3.17" size="50 5" text="Storm cores" textcolor="fff" halign="center" textfont="lato"/>
-		<label pos="32.5 -9.5" size="50 4" text="hascrashed" textcolor="fff" halign="center" textfont="lato" textsize="1.2"/>
+		<label pos="32.5 -3.17" size="50 5" textcolor="fff" halign="center" textfont="lato" id="Label_Map"/>
+		<label pos="32.5 -9.5" size="50 4" textcolor="fff" halign="center" textfont="lato" textsize="1.2" id="Label_Author"/>
 		
 		<frame pos="5.55 -14.2">
-			<label pos="27.17 -6.21" size="50.67 7.33" text="Personal best" halign="center" textcolor="fff" textsize="6.3" textfont="lato"/>
-			<frame pos="0 -16.33">
-				<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/champion.png"/>
-				<quad pos="24" size="12 12" image="file://Media/Images/Obstacle/Medals/gold.png"/>
-				<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/silver.png"/>
-				<quad pos="17" size="12 12" image="file://Media/Images/Obstacle/Medals/bronze.png"/>
+			<label pos="27.17 -6.21" size="50.67 7.33" text="Personal best" halign="center" textcolor="fff" textsize="6.3" textfont="lato" id="Label_PB" opacity="0"/>
+			
+			<frame id="Frame_Record">
+				<frame pos="0 -16.33">
+					<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_Medal_3" hidden="1"/>
+					<quad pos="24" size="12 12" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_Medal_2" hidden="1"/>
+					<quad pos="20.5" size="12 12" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_Medal_1" hidden="1"/>
+					<quad pos="17" size="12 12" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_Medal_0" hidden="1"/>
+				</frame>
+				<label pos="27.17 -31.17" size="50.67 7.33" halign="center" textcolor="fff" textsize="6.3" textfont="lato" id="Label_Rank"/>
+				<label pos="27.17 -40.5" size="50.67 7.33" halign="center" textcolor="fff" textsize="3" textfont="lato" id="Label_Time"/>
 			</frame>
-			<label pos="27.17 -31.17" size="50.67 7.33" text="Rank 50" halign="center" textcolor="fff" textsize="6.3" textfont="lato"/>
-			<label pos="27.17 -40.5" size="50.67 7.33" text="00:30.23" halign="center" textcolor="fff" textsize="3" textfont="lato"/>
+
 			<quad size="54.33 48.7" image="file://Media/Images/Obstacle/Campaign/Ingame/Aside.png"/>
 		</frame>
 		
-		<frame pos="77.6 -19">
-			<frame>
-				<label halign="center" valign="center2" size="28.67 8" text="Improve" textsize="2.7"/>
+		<frame pos="77.6 -19" id="Frame_Menus">
+			<frame data-name="improve">
+				<label halign="center" valign="center2" size="28.67 8" text="Improve" textsize="2.7" id="Label"/>
 				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
-					scriptevents="1" id="Quad_Improve"/>
+					scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
+					data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
+					data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
 			</frame>
-			<frame pos="0 -11">
-				<label halign="center" valign="center2" size="28.67 8" text="Save Replay" textsize="2.7"/>
+			<frame pos="0 -11" data-name="next_map">
+				<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7" id="Label"/>
 				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
-					scriptevents="1" id="Quad_Replay"/>
+					scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
+					data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
+					data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
 			</frame>
-			<frame pos="0 -28">
-				<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7"/>
+			<frame pos="0 -22" data-name="quit">
+				<label halign="center" valign="center2" size="28.67 8" text="Quit" textsize="2.7" id="Label"/>
 				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
-					scriptevents="1" id="Quad_Next"/>
-			</frame>
-			<frame pos="0 -39">
-				<label halign="center" valign="center2" size="28.67 8" text="Quit" textsize="2.7"/>
-				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
-					scriptevents="1" id="Quad_Quit"/>
+					scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
+					data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
+					data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
 			</frame>
 		</frame>
 	</frame>
@@ -58,6 +63,55 @@ Text GetLayer() {
 </frame>
 
 <script><![CDATA[
+	#Include "MathLib" as ML
+	#Include "TextLib" as TL
+	#Include "ColorLib" as CL
+
+	#Const Summer23Medals [
+        "qpKzvXQaaJGvSsXPTNk_iVWmRTg" => [57000, 52000, 41000, 37000],
+        "Fcgbnv1RwTIdgRySDLwtyzzMj9j" => [29000, 24000, 19500, 18500],
+        "TEDQRUPTU1VkGrzBKLhIOY9cYV1" => [48000, 40000, 35000, 33000],
+        "LwyG1V32XJ7EhadoevREd6F_3L1" => [47000, 40000, 36000, 35000],
+        "90qdC1x5f2s4C4oFveHhimcwLzj" => [43000, 38000, 34000, 32000],
+        "eKbgGOAuuwUP6ByvWlP8G728fuc" => [50000, 45000, 40000, 38000],
+        "hzlKEVfxuGyriKXlTm__LoiVRAj" => [46000, 40000, 35000, 32750],
+        "VSn_Cz45JUGLH_LJaRBUKaRIQsh" => [52000, 45000, 41000, 38500],
+        "H5yHFPEOVcdmJv7DabEGYqhUSDc" => [45000, 40000, 36000, 35000],
+        "0u6aaVnLw1cbwUIi7I1hyP1EHT0" => [48000, 44000, 40000, 37500],
+        "7ki7DAx8RGHufasKBLzlHnvFMUj" => [70000, 63000, 58000, 54000],
+        "JTeY36K5VrDL7noJGzl4dqwPC5j" => [60000, 54000, 50000, 47000],
+        "9rs_79lkU09Edy3FCyjXNTPNj_j" => [75000, 68000, 63000, 59000],
+        "uHN22ZmWSNesgZqOVcjgWYv7cPc" => [70000, 64000, 57000, 53000],
+        "TcwGFWuciPoKzccgWa6wRVM7yvd" => [67000, 60000, 55000, 53000],
+        "18FInhM7gAcqAgvwPwllYEDE6rk" => [53000, 48000, 44000, 41900],
+        "pAv3QI4f8y6fbSU2qoMj4cFRQTi" => [52000, 46000, 43000, 41000],
+        "G5Dm8fjoFSqS8nui1mP1wKZ4z_3" => [80000, 71000, 65000, 62000],
+        "tSd082VQJ51_71EXvCobORPlhZl" => [80000, 71000, 66000, 63000],
+        "KkqC5yQSQ18XyhEfpqMLER3vAjc" => [58000, 50000, 46000, 43500],
+        "uHYccBmFsS1kSLc45zLhlOya1eb" => [96000, 88000, 77000, 72000],
+        "F1bDc8HpEr3VjgXwuZh5m_2sb6e" => [80000, 70000, 64000, 61000],
+        "exsvJlTM1oQq1VJ8d9u2qSgFyla" => [78000, 71000, 66000, 64000],
+        "Okx2W7jKXCue7s58kpcStl9vRF3" => [88000, 81000, 76000, 74000],
+        "GwjMPymVycUB9NkGvk00juY4E55" => [80000, 72000, 64000, 61000]
+    ]
+
+    Integer GetMedal(Integer Medal) {
+        if (Summer23Medals.existskey(Map.MapInfo.MapUid)) {
+            return Summer23Medals[Map.MapInfo.MapUid][Medal];
+        }
+        switch (Medal) {
+            case 0: {
+                return Map.MapInfo.TMObjective_BronzeTime;
+            }
+            case 1: {
+                return Map.MapInfo.TMObjective_SilverTime;
+            }
+            case 2: {
+                return Map.MapInfo.TMObjective_GoldTime;
+            }
+        }
+        return Map.MapInfo.TMObjective_AuthorTime;
+    }
 
 	{{{Styles::GetDeclareGlobals()}}}
 
@@ -65,14 +119,109 @@ Text GetLayer() {
 		
 	main() {
 		{{{Styles::GetInitFrameMenus()}}}
+        wait(InputPlayer != Null);
+
+		declare Label_Map = (Page.GetFirstChild("Label_Map") as CMlLabel);
+		declare Label_Author = (Page.GetFirstChild("Label_Author") as CMlLabel);
+		declare Label_PB = (Page.GetFirstChild("Label_PB") as CMlLabel);
+		declare Label_Rank = (Page.GetFirstChild("Label_Rank") as CMlLabel);
+		declare Label_Time = (Page.GetFirstChild("Label_Time") as CMlLabel);
+
+		declare Frame_Record = (Page.GetFirstChild("Frame_Record") as CMlFrame);
+		declare Quad_Medal_C = (Frame_Record.GetFirstChild("Quad_Medal_3") as CMlQuad);
+
+		declare Text CampaignEvent for Teams[0];
+		declare Integer[Text] CampaignRecords for LocalUser;
+		declare Boolean CampaignRecordsUpdated for LocalUser = False;
+		declare Integer LastRank = 0;
+		declare Integer CurrentPlayerRank for LocalUser = 0;
+		declare netread Net_Time1 for InputPlayer = 0;
+		declare netread Net_NewGoal for InputPlayer = 0;
+		declare NewGoal = 0;
 		
 		while (True) {
+			yield;
 
-			foreach (Event in PendingEvents) {
-				{{{Styles::GetEventLoopActiveItem()}}}
+			Label_Map.Value = Map.MapName;
+			Label_Author.Value = Map.AuthorNickName;
+			
+			if (!CampaignRecords.existskey(Map.MapInfo.MapUid)) {
+				continue;
 			}
 
-			yield;
+			declare RerenderUI = False;
+			if (LastRank != CurrentPlayerRank) {
+				RerenderUI = True;
+			}
+
+			if (Net_NewGoal != NewGoal) {
+				RerenderUI = True;
+			}
+
+			if (RerenderUI) {
+				NewGoal = Net_NewGoal;
+				declare Diff = "";
+
+				if (CampaignRecords[Map.MapInfo.MapUid] == 0 || CampaignRecords[Map.MapInfo.MapUid] > Net_Time1) {
+					Frame_Record.RelativePosition_V3.Y = 0.;
+					Label_PB.Opacity = 1.;
+
+					if (CampaignRecords[Map.MapInfo.MapUid] !=0) {
+						Diff = " ($0f0" ^ (Net_Time1 - CampaignRecords[Map.MapInfo.MapUid]) / 1000. ^ "$z)";
+					}
+					CampaignRecords[Map.MapInfo.MapUid] = Net_Time1;
+					CampaignRecordsUpdated = True;
+				} else {
+					Frame_Record.RelativePosition_V3.Y = 7.;
+					Label_PB.Opacity = 0.;
+
+					if (CampaignRecords[Map.MapInfo.MapUid] < Net_Time1) {
+						Diff = " ($f00+" ^ (Net_Time1 - CampaignRecords[Map.MapInfo.MapUid]) / 1000. ^ "$z)";
+					} else {
+						Diff = " (±0.00)";
+					}
+				}
+
+				declare RankDiff = "";
+				if (LastRank != CurrentPlayerRank) {
+					if (LastRank != 0)
+						RankDiff = " ($0f0" ^ (CurrentPlayerRank - LastRank) ^ "$z)";
+					LastRank = CurrentPlayerRank;
+				} else {
+					RankDiff = " (+0)";
+				}
+			
+				Label_Rank.Value = "Rank " ^ CurrentPlayerRank ^ RankDiff;
+				Label_Time.Value = TL::TimeToText(Net_Time1, True) ^ Diff;
+	
+				for (I, 0, 3) {
+					declare Quad_Medal = (Frame_Record.GetFirstChild("Quad_Medal_" ^ I) as CMlQuad);
+					Quad_Medal.Visible = Net_Time1 <= GetMedal(I);
+				}
+				if (Quad_Medal_C.Visible) {
+					for (I, 0, 2) {
+						declare Quad_Medal = (Frame_Record.GetFirstChild("Quad_Medal_" ^ I) as CMlQuad);
+						Quad_Medal.Hide();
+					}
+				}
+			}
+
+
+			foreach (Event in PendingEvents) {
+				{{{Styles::GetEventLoopActiveItem("campaign_action")}}}
+
+				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
+					if (Event.ControlId == "Quad_Trigger") {
+						declare Name = Event.Control.Parent.DataAttributeGet("name");
+						
+						if (Name == "quit") {
+							Playground.QuitServer(True);
+						} else {
+							CampaignEvent = Name;
+						}
+					}
+				}
+			}
 		}
 	}
 ]]></script>

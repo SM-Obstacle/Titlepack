@@ -82,11 +82,11 @@ Text Build() {
 		</frame>
 
 		<frame pos="0 15.67">
-			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textprefix="$t   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textprefix="   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
 			<quad size="53 11.83" bgcolor="0009"/>
 		</frame>
 		<frame pos="0 2">
-			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textprefix="$t   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textprefix="   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
 			<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
 		</frame>
 		<frame pos="0 -25">
@@ -212,7 +212,7 @@ Text Build() {
 		} else {
 			// #E6D189
 			Label_PB.TextColor = <.901, .82, .537>;
-			Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest));
+			Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest, True));
 		}
 		Frame_Infos.Show();
 
@@ -232,7 +232,7 @@ Text Build() {
 			
 			if (SelectedMap == I)
 				// #7D7E82
-				Button_Map.ModulateColor = <.373, .373, .392>;
+				Button_Map.ModulateColor = <.294, .333, .404>;
 			else
 				// #C2AE47
 				Button_Map.ModulateColor = <1., 1., 1.>;
@@ -243,12 +243,7 @@ Text Build() {
 			Quad_MedalC.Hide();
 
 			if (Map.PersonalBest > 0) {
-				if (SelectedMap == I)
-					// #FFAB4B
-					Label_Num.TextColor = <1., .671, .294>;
-				else
-					// #C2AE47
-					Label_Num.TextColor = <.49, .494, .3412>;
+				Label_Num.TextColor = <.761, .682, .278>;
 
 				if (Map.PersonalBest <= Map.Champion) {
 					Quad_MedalC.Show();
@@ -262,12 +257,11 @@ Text Build() {
 						Quad_MedalB.Show();
 				}
 			} else {
-				if (SelectedMap == I)
-					// #fff
-					Label_Num.TextColor = <1., 1., 1.>;
-				else
-					// #C2AE47
+				if (SelectedMap == I) {
+					Label_Num.TextColor = <.18, .18, .18>;
+				} else {
 					Label_Num.TextColor = <.373, .373, .392>;
+				}
 			}
 
 			Frame_Card.Show();
@@ -286,9 +280,13 @@ Text Build() {
 		declare Label_EventLn1 = (Page.GetFirstChild("Label_EventLn1") as CMlLabel);
 		declare Label_EventLn2 = (Page.GetFirstChild("Label_EventLn2") as CMlLabel);
 
+		declare Integer[Text] CampaignRecords for LocalUser;
+		declare Boolean CampaignRecordsUpdated for LocalUser = False;
+
 		declare K_Campaign[Integer] MapsList for Page;
 		declare Integer SelectedCampaign as ControllerSelectedCampaign for Page = -1;
 		declare Boolean TimesReloaded for Page = False;
+
 		declare Integer SelectedCampaign = -1;
 		declare Integer SelectedMap = 1;
 		declare Boolean MapsNeedRefresh = False;
@@ -313,6 +311,19 @@ Text Build() {
 				}
 				SelectedMap = SelectedMap % MapsList[SelectedCampaign].Maps.count;
 				MapsNeedRefresh = True;
+			}
+			if (CampaignRecordsUpdated) {
+				if (MapsList.existskey(SelectedCampaign)) {
+					foreach (I => Map in MapsList[SelectedCampaign].Maps) {
+						if (CampaignRecords.existskey(Map.UID)) {
+							MapsList[SelectedCampaign].Maps[I].PersonalBest = CampaignRecords[Map.UID];
+							SelectedMap = I;
+						}
+					}
+					SelectedMap = (SelectedMap + 1) % MapsList[SelectedCampaign].Maps.count;
+				}
+				CampaignRecordsUpdated = False;
+				TimesReloaded = True;
 			}
 			if (MapsNeedRefresh || TimesReloaded) {
 				UpdateMaps(SelectedCampaign, SelectedMap);

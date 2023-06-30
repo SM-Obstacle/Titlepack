@@ -31,7 +31,7 @@ Text GetLayer() {
     return """
 <manialink version="1" name="Obstacle:SpecKeys">
     <frame id="Frame_SpecKeys" scale="0.5" class="LibCustomUI_Module" hidden="1">
-        <frame posn="0. -35">
+        <frame posn="0. -35" id="Frame_SpecKeys_Inner">
             <frame posn="-17. -35">
                 <quad id="Down" posn="0 0" sizen="20 20" image="file://Media/Manialinks/Keyboard/Dark/Keyboard_Black_Arrow_Down.png"
                     opacity="0" modulatecolor="fff"/>
@@ -219,6 +219,8 @@ Text GetLayer() {
         {{{CustomUI::InjectMLInit()}}}
         wait(InputPlayer != Null && Page != Null);
 
+        declare Frame_SpecKeys_Inner <=> (Page.GetFirstChild("Frame_SpecKeys_Inner") as CMlFrame);
+
         Frame_SpecKeys <=> (Page.GetFirstChild("Frame_SpecKeys") as CMlFrame);
         Quad_Space <=> (Page.GetFirstChild("Space") as CMlQuad);
         Quad_Down <=> (Page.GetFirstChild("Down") as CMlQuad);
@@ -240,6 +242,22 @@ Text GetLayer() {
 
         while (True) {
             yield;
+
+            declare LocalPlayer <=> InputPlayer;
+            if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
+            if (LocalPlayer == Null) continue;
+
+            declare netread Net_StartTime for LocalPlayer = -1;
+            declare netread Net_CheckpointsTotal for Teams[0] = -1;
+            declare netread Net_CpProgress for LocalPlayer = -1;
+
+            if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
+                if (Frame_SpecKeys_Inner.Visible)
+                    Frame_SpecKeys_Inner.Hide();
+                continue;
+            } else if (!Frame_SpecKeys_Inner.Visible) {
+                Frame_SpecKeys_Inner.Show();
+            }
             
             if (!IsSpectator) {
                 UpdatePlayer();
