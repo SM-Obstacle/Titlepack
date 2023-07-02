@@ -40,13 +40,13 @@ Text Build() {
 			declare Real ObsStore_BackgroundPlayCursor for LocalUser;
 			declare IsLooping = False;
 
-			PlayVideo("file://Media/Images/Logos/opening_intro.webm");
+			// PlayVideo("file://Media/Images/Logos/opening_intro.webm");
 			Quad_Background.Image = G_Video.Image;
 
 			while(True) {
 				yield;
 
-				if (G_Video.IsPlaying) {
+				if (G_Video != Null && G_Video.IsPlaying) {
 					ObsStore_BackgroundPlayCursor = G_Video.PlayCursor;
 				} else if (!IsLooping){
 					PlayVideo("file://Media/Images/Logos/opening_loop.webm", True);

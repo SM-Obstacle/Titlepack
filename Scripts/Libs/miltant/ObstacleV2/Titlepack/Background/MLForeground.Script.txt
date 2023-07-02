@@ -49,8 +49,8 @@ Text Build() {
 
 			PlayMusic("file://Media/Musics/Menu/opening.ogg");
 
-			Audio.ForceEnableMusic = ObsStore_ForceMusic;
-			if (Audio.ForceEnableMusic) {
+			// Audio.ForceEnableMusic = ObsStore_ForceMusic;
+			if (ObsStore_ForceMusic) {
 				Label_Mute.SetText("");
 			} else {
 				Label_Mute.SetText("");
@@ -66,11 +66,11 @@ Text Build() {
 				}
 
 				if (ObsStore_BackgroundPlayCursor > 0. && G_Music.PlayCursor == 0.) {
-					if (!Audio.ForceEnableMusic) {
-						Audio.ForceEnableMusic = ObsStore_ForceMusic;
-						G_Music.PlayCursor = ObsStore_BackgroundPlayCursor;
+					if (!ObsStore_ForceMusic) {
+						// Audio.ForceEnableMusic = ObsStore_ForceMusic;
+						// G_Music.PlayCursor = ObsStore_BackgroundPlayCursor;
 
-						LastInteraction = Now;
+						// LastInteraction = Now;
 					}
 				} else if (!ObsStore_ForceMusic && Audio.LimitMusicVolumedB == 0.) {
 					Audio.LimitMusicVolumedB = -100.;
@@ -83,11 +83,11 @@ Text Build() {
 					switch(Event.Type) {
 						case CMlEvent::Type::MouseClick: {
 							if(Event.ControlId == "Label_Mute") {
-								Audio.ForceEnableMusic = !Audio.ForceEnableMusic;
-								ObsStore_ForceMusic = Audio.ForceEnableMusic;
+								ObsStore_ForceMusic = !ObsStore_ForceMusic;
+								// Audio.ForceEnableMusic = ObsStore_ForceMusic;
 								LastInteraction = Now;
 								
-								if (Audio.ForceEnableMusic) {
+								if (ObsStore_ForceMusic) {
 									Label_Mute.SetText("");
 									Audio.LimitMusicVolumedB = 0.;
 								} else {
