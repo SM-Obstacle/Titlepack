@@ -133,11 +133,6 @@ Text GetLayer() {
         G_ReqPending = True;
     }
 
-    Void initNetRecordsUpdate() {
-        declare netwrite Net_RecordsUpdated for Teams[0] = -1;
-        Net_RecordsUpdated = -1;
-    }
-
     main() {
         {{{CustomUI::InjectMLInit()}}}
         wait(InputPlayer != Null);
@@ -159,8 +154,6 @@ Text GetLayer() {
 
         declare Frame_Widget <=> (Page.GetFirstChild("Frame_Medals_Records") as CMlFrame);
         declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
-
-        initNetRecordsUpdate();
 
         while (True) {
             yield;
