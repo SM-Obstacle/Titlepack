@@ -41,7 +41,8 @@ Text Build() {
 			declare IsLooping = False;
 
 			// PlayVideo("file://Media/Images/Logos/opening_intro.webm");
-			Quad_Background.Image = G_Video.Image;
+			if (G_Video != Null)
+				Quad_Background.Image = G_Video.Image;
 
 			while(True) {
 				yield;
