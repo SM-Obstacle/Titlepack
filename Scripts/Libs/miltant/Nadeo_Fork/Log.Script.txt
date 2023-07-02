@@ -52,12 +52,7 @@ Text GetScriptName() {
  *	@param	_Text											The text to display
  */
 Void Log(Text _Text) {
-	if (Env::Get() == Env::Env_Development() || Env::Get() == Env::Env_Test()) {
-		log("[LOG]"^Now^"> "^_Text);
-	} else if (!G_LogWarning) {
-		G_LogWarning = True;
-		log("""[LOG]{{{Now}}}> [Log] Logs are disabled in the "{{{Env::Get()}}}" environment.""");
-	}
+	log("[LOG]"^Now^"> "^_Text);
 }
 Void Message(Text _Text) {
 	Log(_Text);

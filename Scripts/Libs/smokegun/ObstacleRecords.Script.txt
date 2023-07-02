@@ -98,6 +98,7 @@ Text LogPrefix() {
 Ident MakePost(Text _Url, Text _Data, Text _Headers) {
     if (Http.SlotsAvailable > 0) {
         Log::Log(LogPrefix()^" Sending request to "^_Url);
+        Log::Log(LogPrefix()^" Payload: "^_Data);
         declare request <=> Http.CreatePost(Constants::C_HostUrl^_Url, _Data, _Headers);
         return request.Id;
     }
@@ -271,6 +272,7 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
         if (!request.IsCompleted) continue;
 
         Log::Log(LogPrefix()^" Request done: ("^request.StatusCode^") "^request.Url);
+        Log::Log(LogPrefix()^" Response body: "^request.Result);
 
         if (request.StatusCode == Constants::C_UnauthorizedStatusCode
                 && !G_ErroredPlayers.exists(ReqData.PlayerLogin)) {
@@ -329,7 +331,6 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
     }
 
     if (UpdateRecords) {
-        log("should update records");
         declare netwrite Net_RecordsUpdated for Teams[0] = Now;
         Net_RecordsUpdated = Now;
     }
