@@ -333,7 +333,7 @@ Void LaunchGeneration(Text _TitlePackXMLAddOn)
 	declare CurrentPack <=> PackCreator.CurrentPack;
 	declare TitleInfo <=> TitleEdition.EditedTitleInfo;
 	PackChecks(PackCreator, CurrentPack, TitleInfo);
-	TitleInfo.Menus_ManiaAppFileName = "Media/Apps/MainMenuObstacle.Script.txt";
+	TitleInfo.Menus_ManiaAppFileName = "Media/Apps/ObstacleTitlePack.Script.txt";
 	ManagePackaging(TitleInfo);
 	GeneratePack(PackCreator, CurrentPack, TitleInfo, _TitlePackXMLAddOn);
 	if (G_GenerationSucceded) {

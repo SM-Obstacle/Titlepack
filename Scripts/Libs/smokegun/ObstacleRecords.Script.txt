@@ -275,8 +275,7 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
         if (request.StatusCode == Constants::C_UnauthorizedStatusCode
                 && !G_ErroredPlayers.exists(ReqData.PlayerLogin)) {
             // Token needs to be updated
-            declare CSmPlayer player = GetPlayer(ReqData.PlayerLogin);
-            declare netwrite Integer Net_TokenNeedsUpdate for player = -1;
+            declare netwrite Integer Net_TokenNeedsUpdate for UIManager.GetUI(SM::GetPlayer(ReqData.PlayerLogin)) = -1;
             Net_TokenNeedsUpdate = Now;
             G_WaitingToUpdateToken.add(ReqData);
             ToDelete.add(reqId);

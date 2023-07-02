@@ -8,13 +8,11 @@
 #Include "MathLib" as MathLib
 #Include "TimeLib" as TimeLib
 
-#Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
-
 /*********************************************
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2023-04-01"
+#Const  Version     "2023-07-02"
 #Const  ScriptName  "Auth.Script.txt"
 
 #Struct K_Banishment {
@@ -120,21 +118,16 @@ Text UpdateToken() {
 	return ObsStore_UserToken;
 }
 
-Void initNetTokenUpdateVar() {
-	declare netwrite Integer Net_TokenNeedsUpdate for InputPlayer = -1;
-	Net_TokenNeedsUpdate = -1;
-}
-
 main() {
 	declare lastTokenUpdate = -1;
-	wait(InputPlayer != Null);
+	wait(Page != Null);
 
-	initNetTokenUpdateVar();
+	declare netwrite Integer Net_TokenNeedsUpdate for UI = -1;
+	Net_TokenNeedsUpdate = -1;
 
 	while (True) {
 		yield;
 
-		declare netread Integer Net_TokenNeedsUpdate for InputPlayer;
 		if (Net_TokenNeedsUpdate != lastTokenUpdate) {
 			declare newToken = UpdateToken();
 			lastTokenUpdate = Net_TokenNeedsUpdate;

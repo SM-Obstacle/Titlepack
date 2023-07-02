@@ -71,7 +71,7 @@ Text GetLayer() {
         "Fcgbnv1RwTIdgRySDLwtyzzMj9j" => [29000, 24000, 19500, 18500],
         "TEDQRUPTU1VkGrzBKLhIOY9cYV1" => [48000, 40000, 35000, 33000],
         "LwyG1V32XJ7EhadoevREd6F_3L1" => [47000, 40000, 36000, 35000],
-        "90qdC1x5f2s4C4oFveHhimcwLzj" => [43000, 38000, 34000, 32000],
+        "90qdC1x5f2s4C4oFveHhimcwLzj" => [43000, 38000, 34000, 32500],
         "eKbgGOAuuwUP6ByvWlP8G728fuc" => [50000, 45000, 40000, 38000],
         "hzlKEVfxuGyriKXlTm__LoiVRAj" => [46000, 40000, 35000, 32750],
         "VSn_Cz45JUGLH_LJaRBUKaRIQsh" => [52000, 45000, 41000, 38500],

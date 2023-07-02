@@ -1,6 +1,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"   as Dialogs
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt"   as UI
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"				as Styles
 
 #Struct K { // K_ServerRecord
 	Integer t; //time
@@ -28,11 +29,15 @@ Text Build() {
 
 			<frame pos="12.6 -11.9">
 				<label text="Play" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
-				<quad size="18.5 6" id="Quad_Join" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"/>
+				<quad size="18.5 6" id="Quad_Join" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"
+					scriptevents="1" data-target="Quad_Join" data-anim-length="70"
+					data-default-anim="<quad scale=&quot;1&quot;/>" data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
 			</frame>
 			<frame pos="34 -11.9">
 				<label text="Spectate" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
-				<quad size="18.5 6" id="Quad_Spec" scriptevents="1" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BDefault.png"/>
+				<quad size="18.5 6" id="Quad_Spec" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BDefault.png"
+					scriptevents="1" data-target="Quad_Spec" data-anim-length="70"
+					data-default-anim="<quad scale=&quot;1&quot;/>" data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
 			</frame>
 
 		
@@ -74,9 +79,12 @@ Text Build() {
 		</frame>
 	</frame>
 <script><![CDATA[
+	#Include "MathLib" as ML
 	#Include "TextLib" as TL
+	#Include "ColorLib" as CL
 	
 	{{{ChannelInfoStructs::K_ServerInfo_ML}}}
+	{{{Styles::GetDeclareGlobals()}}}
 
 	main() {
 		declare Label_Name = (Page.GetFirstChild("Label_Name") as CMlLabel);
@@ -102,6 +110,7 @@ Text Build() {
 
 		while (True) {
 			foreach (Event in PendingEvents) {
+				{{{Styles::GetEventLoopActiveItem()}}}
 				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
 					if (Event.ControlId == "Quad_Join") {
 						SendCustomEvent("{{{C_Dialog_Close}}}", [ObsStore_ServerJoinTarget, "False"]);

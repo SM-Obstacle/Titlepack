@@ -1,4 +1,5 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"   as Dialogs
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"				as Styles
 #Include "TextLib" as TL
 
 #Const C_Dialog_Close "Prompt_Close"
@@ -136,7 +137,9 @@ Void Build(Integer _Dialog) {
 			declare Position = """pos="{{{89.75 - (I * 23.)}}} -4" """;
 
 			Frame_Buttons ^= """<label {{{Position}}}text="{{{Button.Label}}}" size="20.5" valign="center2" halign="center" textfont="regular" textsize="2.1" textcolor="fff"/>""";
-			Frame_Buttons ^= """<quad {{{Image}}}{{{Position}}}id="{{{Button.ControlId}}}" scriptevents="1" halign="center" valign="center" size="21.67 6.67"/>""";
+			Frame_Buttons ^= """<quad {{{Image}}}{{{Position}}}id="{{{Button.ControlId}}}" halign="center" valign="center" size="21.67 6.67"
+			scriptevents="1" data-target="{{{Button.ControlId}}}" data-anim-length="70"
+			data-default-anim="<quad scale=&quot;1&quot;/>" data-target-anim="<quad scale=&quot;1.04&quot;/>"/>""";
 		}
 		Frame_Buttons ^= "</frame>";
 		TotalHeight += 14.;
@@ -164,6 +167,11 @@ Void Build(Integer _Dialog) {
 		{{{Frame_Buttons}}}
 	</frame>
 <script><![CDATA[
+	#Include "MathLib" as ML
+	#Include "TextLib" as TL
+	#Include "ColorLib" as CL
+	
+	{{{Styles::GetDeclareGlobals()}}}
 	
 
 	main() {
@@ -174,6 +182,7 @@ Void Build(Integer _Dialog) {
 		while (True) {
 
 			foreach (Event in PendingEvents) {
+				{{{Styles::GetEventLoopActiveItem()}}}
 				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
 					if (Event.Control.Parent.ControlId == "Frame_Buttons") {
 						SendCustomEvent("{{{C_Dialog_Close ^ _Dialog}}}", [Event.ControlId{{{MS_CompileInputs}}});

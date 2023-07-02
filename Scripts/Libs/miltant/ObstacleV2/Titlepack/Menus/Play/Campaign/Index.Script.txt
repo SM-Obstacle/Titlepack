@@ -380,18 +380,6 @@ Void Load() {
 
 	declare persistent ObsStore_UserToken for LocalUser = "";
 
-	if (ObsStore_UserToken != "") {
-		declare Body = K_CampaignRequestBody {
-			login = LocalUser.Login,
-			maps_uids = ["qpKzvXQaaJGvSsXPTNk_iVWmRTg","Fcgbnv1RwTIdgRySDLwtyzzMj9j","TEDQRUPTU1VkGrzBKLhIOY9cYV1","LwyG1V32XJ7EhadoevREd6F_3L1","90qdC1x5f2s4C4oFveHhimcwLzj","eKbgGOAuuwUP6ByvWlP8G728fuc","hzlKEVfxuGyriKXlTm__LoiVRAj","VSn_Cz45JUGLH_LJaRBUKaRIQsh","H5yHFPEOVcdmJv7DabEGYqhUSDc","0u6aaVnLw1cbwUIi7I1hyP1EHT0","7ki7DAx8RGHufasKBLzlHnvFMUj","JTeY36K5VrDL7noJGzl4dqwPC5j","9rs_79lkU09Edy3FCyjXNTPNj_j","uHN22ZmWSNesgZqOVcjgWYv7cPc","TcwGFWuciPoKzccgWa6wRVM7yvd","EAEiCF4vRT_QwFh4X0P2UYy8FUd","pAv3QI4f8y6fbSU2qoMj4cFRQTi","G5Dm8fjoFSqS8nui1mP1wKZ4z_3","tSd082VQJ51_71EXvCobORPlhZl","KkqC5yQSQ18XyhEfpqMLER3vAjc","uHYccBmFsS1kSLc45zLhlOya1eb","F1bDc8HpEr3VjgXwuZh5m_2sb6e","exsvJlTM1oQq1VJ8d9u2qSgFyla","Okx2W7jKXCue7s58kpcStl9vRF3","GwjMPymVycUB9NkGvk00juY4E55"]
-		};
-		
-		G_CampaignAPIPending = 29;
-		G_APIRequest = Http.CreatePost(Constants::C_HostUrl ^ "player/times", Body.tojson(), "Content-Type: application/json\nAccept: application/json\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);	
-	} else {
-		G_CampaignAPIPending = -1;
-	}
-
 	// fatten, sort by date asc
 	FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\29\\", True, False, True).Id;
 
@@ -407,10 +395,10 @@ Void Load() {
 			Maps = [
 				K_Map {
 					UID = "qpKzvXQaaJGvSsXPTNk_iVWmRTg",
-					Bronze = 37000,
-					Silver = 41000,
-					Gold = 52000,
-					Champion = 57000
+					Bronze = 57000,
+					Silver = 52000,
+					Gold = 41000,
+					Champion = 37000
 				},
 				K_Map {
 					UID = "Fcgbnv1RwTIdgRySDLwtyzzMj9j",
@@ -438,7 +426,7 @@ Void Load() {
 					Bronze = 43000,
 					Silver = 38000,
 					Gold = 34000,
-					Champion = 32000
+					Champion = 32500
 				},
 				K_Map {
 					UID = "eKbgGOAuuwUP6ByvWlP8G728fuc",
@@ -584,6 +572,23 @@ Void Load() {
 		}
 	];
 	NeedRefresh = False;
+
+
+	if (ObsStore_UserToken != "") {
+		declare Body = K_CampaignRequestBody {
+			login = LocalUser.Login,
+			maps_uids = []
+		};
+
+		foreach (Map in CampaignList[29].Maps) {
+			Body.maps_uids.add(Map.UID);
+		}
+		
+		G_CampaignAPIPending = 29;
+		G_APIRequest = Http.CreatePost(Constants::C_HostUrl ^ "player/times", Body.tojson(), "Content-Type: application/json\nAccept: application/json\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);	
+	} else {
+		G_CampaignAPIPending = -1;
+	}
 }
 
 Void Loop() {
@@ -647,12 +652,12 @@ Void Loop() {
 							CampaignList[MXId].Maps[Map_I].Name = File.Name;
 							CampaignList[MXId].Maps[Map_I].Author = File.AuthorNickName;
 
-							// if (MXId != 29) {
+							if (MXId != 29) {
 								CampaignList[MXId].Maps[Map_I].Bronze = File.TMObjective_BronzeTime;
 								CampaignList[MXId].Maps[Map_I].Silver = File.TMObjective_SilverTime;
 								CampaignList[MXId].Maps[Map_I].Gold = File.TMObjective_GoldTime;
 								CampaignList[MXId].Maps[Map_I].Champion = File.TMObjective_AuthorTime;
-							// }
+							}
 
 							Online = False;
 							FullOnline = False;

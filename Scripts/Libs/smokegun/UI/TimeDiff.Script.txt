@@ -55,7 +55,7 @@ Text GetLayer() {
 
         main() {
             {{{CustomUI::InjectMLInit()}}}
-            wait(InputPlayer != Null);
+            wait(InputPlayer != Null && Page != Null);
 
             declare Frame_TimeDiff <=> (Page.GetFirstChild("Frame_TimeDiff") as CMlFrame);
             declare Label_Time <=> (Frame_TimeDiff.GetFirstChild("Label_Time") as CMlLabel);

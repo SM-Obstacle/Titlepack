@@ -82,7 +82,7 @@ Text GetLayer() {
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
-        wait(InputPlayer != Null);
+        wait(InputPlayer != Null && Page != Null);
 
         declare LastPlayerLogin = "";
         declare LastUpdate = -1;

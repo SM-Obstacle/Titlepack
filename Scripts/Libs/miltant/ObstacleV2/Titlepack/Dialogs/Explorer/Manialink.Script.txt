@@ -1,5 +1,6 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Store.Script.txt"           as ObsStore
 #Include "Libs/miltant/ObstacleV2/String.Script.txt"					as StringLib
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"				as Styles
 
 #Const C_Dialog_Close "Explorer_Close"
 
@@ -63,7 +64,9 @@ Text Build(Text _FileType, Boolean _New) {
 
 			<frame pos="38.08 -86">
 				<label text="Create" textprefix=" " textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
-				<quad size="18.5 6" id="Button_Confirm" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png" scriptevents="1"/>
+				<quad size="18.5 6" id="Button_Confirm" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"
+					scriptevents="1" data-target="Button_Confirm" data-anim-length="70"
+					data-default-anim="<quad scale=&quot;1&quot;/>" data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
 			</frame>
 		</frame>
 	</frame>
@@ -152,6 +155,8 @@ Text Build(Text _FileType, Boolean _New) {
 		Text Author;
 		Boolean IsFolder;
 	}
+
+	{{{Styles::GetDeclareGlobals()}}}
 
 	declare Integer G_SelectedDeco;
 	declare Integer G_SelectedMood;
@@ -368,6 +373,7 @@ Text Build(Text _FileType, Boolean _New) {
 			}
 
 			foreach (Event in PendingEvents) {
+				{{{Styles::GetEventLoopActiveItem()}}}
 				switch (Event.Type) {
 					case CMlScriptEvent::Type::EntrySubmit: {
 						if (Event.ControlId == "Entry_Search") {
