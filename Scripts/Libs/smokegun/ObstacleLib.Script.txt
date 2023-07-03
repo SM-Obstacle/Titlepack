@@ -163,9 +163,6 @@ Void NewPlayer(CSmPlayer _Player)
         ActionBind(_Player, CSmMode::EActionSlot::Slot_H, CSmMode::EActionInput::Movement);
     }
 
-    if (Settings::GetEnableRecords()) {
-        API::ReplaceOrCreatePlayer(_Player);
-    }
     Ladder::AddPlayer(_Player.Score);
 
     declare UI <=> UIManager.GetUI(_Player);
@@ -327,7 +324,19 @@ Void Private_SendXmlRpcCallback(Text _CallbackName, CSmPlayer _Player, Integer _
 Void Private_SendFinishedRun(CSmPlayer _Player, Integer _Run, Ident _GoalId) {
     Private_SendXmlRpcCallback("OnFinish", _Player, _Run, _GoalId);
     if (Settings::GetEnableRecords()) {
-        API::PlayerFinished(_Player);
+        declare netwrite _LastRun for UIManager.GetUI(_Player) = -1;
+        declare netwrite _RespawnCount for UIManager.GetUI(_Player) = 0;
+        declare netwrite Integer[] _LastCPTimes for UIManager.GetUI(_Player);
+
+        _LastRun = Player::getLastRun(_Player);
+        _RespawnCount = Player::getRespawnCount(_Player);
+
+        declare lastCpTime = 0;
+        _LastCPTimes.clear();
+        foreach (time in Player::getLastCPTimes(_Player)) {
+            _LastCPTimes.add(time - lastCpTime);
+            lastCpTime = time;
+        }
     }
 }
 

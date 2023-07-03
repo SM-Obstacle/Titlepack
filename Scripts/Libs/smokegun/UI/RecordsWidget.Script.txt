@@ -98,12 +98,17 @@ Text GetLayer() {
                 LastPlayerLogin = LocalPlayer.User.Login;
             }
 
-            if (Net_RecordsUpdated != LastUpdate) {
+            if (Net_RecordsUpdated != LastUpdate && Frame_Widget.Visible) {
                 UpdateRecords(LocalPlayer.User.Login);
                 LastUpdate = Net_RecordsUpdated;
             }
 
             if (G_Req != Null && G_Req.IsCompleted) {
+                if (G_Req.StatusCode != 200) {
+                    Http.Destroy(G_Req);
+                    G_Req = Null;
+                    continue;
+                }
                 declare K_Response response;
                 response.fromjson(G_Req.Result);
 
@@ -132,6 +137,9 @@ Text GetLayer() {
                         Control.Hide();
                     }
                 }
+
+                Http.Destroy(G_Req);
+                G_Req = Null;
             }
 
             foreach (Event in PendingEvents) {

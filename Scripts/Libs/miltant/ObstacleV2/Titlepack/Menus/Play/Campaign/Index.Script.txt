@@ -72,12 +72,12 @@ Text Build() {
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
 		<frame pos="0 53.67" clip="1" clipsizen="52.67 35.83" clipposn="26.63 -17.83">
-			<label text="" textcolor="fff" pos="26.5 -17.83" halign="center" valign="center2" textsize="10" id="Label_IconPlay"/>
+			<label text="" textcolor="fff" pos="26.5 -17.83" halign="center" valign="center2" textsize="10" id="Label_IconPlay" opacity="0.4"/>
 			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Play"
 				image="file://Media/Images/Obstacle/Campaign/FThumbnailMapClip.png" scriptevents="1"
 				data-target="Label_IconPlay Quad_Thumbnail" data-anim-length="70"
-				data-default-anim="<label scale=&quot;1&quot;/> <quad scale=&quot;1&quot;/>"
-				data-target-anim="<label scale=&quot;1.2&quot;/> <quad scale=&quot;1.06&quot;/>"/>
+				data-default-anim="<label scale=&quot;1&quot; opacity=&quot;0.4&quot;/> <quad scale=&quot;1&quot;/>"
+				data-target-anim="<label scale=&quot;1.2&quot; opacity=&quot;0.8&quot;/> <quad scale=&quot;1.06&quot;/>"/>
 			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Thumbnail" keepratio="Clip"/>
 		</frame>
 
@@ -152,7 +152,8 @@ Text Build() {
 
 		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" textfont="regular" id="Label_EventLn1"/>
 		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" textfont="light" id="Label_EventLn2"/>
-		<label pos="181 -29.5" textsize="2" text="$fff$i$l[https://obstacle.titlepack.io/campaign/29/summer_23]Leaderboards..." textfont="light" halign="right"/>
+		<label pos="181 -24.5" textsize="2" text="$fff$i$l[https://obstacle.titlepack.io/campaign/29/summer_23]Leaderboards..." textfont="light" halign="right"/>
+		<label pos="181 -29.5" textsize="1.7" text="Any feedback? Contact $iunmecrandomofficiel$i  on Discord" textfont="light" halign="right"/>
 		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
 		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
@@ -415,7 +416,7 @@ Void Load() {
 					Champion = 33000
 				},
 				K_Map {
-					UID = "LwyG1V32XJ7EhadoevREd6F_3L1",
+					UID = "GBEPgbo_hFst5xII2zoz7sP8xBe",
 					Bronze = 47000,
 					Silver = 40000,
 					Gold = 36000,
@@ -461,7 +462,7 @@ Void Load() {
 					Bronze = 48000,
 					Silver = 44000,
 					Gold = 40000,
-					Champion = 37500
+					Champion = 37000
 				},
 				K_Map {
 					UID = "7ki7DAx8RGHufasKBLzlHnvFMUj",
@@ -524,7 +525,7 @@ Void Load() {
 					Bronze = 80000,
 					Silver = 71000,
 					Gold = 66000,
-					Champion = 63000
+					Champion = 64000
 				},
 				K_Map {
 					UID = "KkqC5yQSQ18XyhEfpqMLER3vAjc",

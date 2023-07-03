@@ -112,7 +112,6 @@ G_LastUsePvPCollisions = S_PvPCollisions;
 G_IsCampaign = False;
 
 UIManager.UIAll.OverlayHide321Go = False;
-UIManager.UIAll.UISequence_CanSkipIntroMT = False;
 ***
 
 ***Match_Rules***
@@ -358,13 +357,6 @@ foreach (Event in UIManager.PendingEvents) {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 declare CP = TL::ToInteger(Event.CustomEventData[1]);
                 Obstacle::JumpToCheckpoint(Player, CP);
-            }
-            case "token_update": {
-                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
-                API::TokenReceivedFor(Player);
-            }
-            case "token_error": {
-                API::SetErrorFor(Event.CustomEventData[0]);
             }
             case "jumpback_request": {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
@@ -709,17 +701,18 @@ Void CreateUI() {
     Layers::Attach("Markers");
     Layers::Attach("SpecKeys");
     Layers::Attach("Auth");
+    
+    Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(G_IsCampaign));
+    Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));
+    Layers::Attach("RespawnBehavior");
+    Layers::Attach("NextMapVote");
 
     if (!G_IsCampaign) {
         Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
-        Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer());
-        Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));
         Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
         Layers::Create("Glitches", Glitches::GetLayer());
         
         Layers::Attach("SurvivalRanking");
-        Layers::Attach("RespawnBehavior");
-        Layers::Attach("NextMapVote");
         Layers::Attach("SpectatorCount");
         Layers::Attach("Glitches");
     }

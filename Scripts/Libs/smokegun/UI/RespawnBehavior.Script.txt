@@ -3,14 +3,14 @@
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
-#Const  Version     "2022-25-11"
+#Const  Version     "2023-03-06"
 #Const ScriptName "RespawnBehavior.Script.txt"
 
 Void Yield() {}
 
 Void UpdateLayer() {}
 
-Text GetLayer() {
+Text GetLayer(Boolean _HideRS) {
     CustomUI::Add("RespawnBehavior", <-80., 90.>, <30., 8.>, "top", "left");
     return """
 <manialink version="3" name="Obstacle:RespawnBehavior">
@@ -23,7 +23,7 @@ Text GetLayer() {
                 <label id="Label_F4" size="45 3" pos="-24 -1" textsize="1" halign="left" valign="top" textfont="OswaldMono" text="☐ Always restart from the beginning (F4)" scriptevents="1"/>
                 <label id="Label_F5" size="45 3" pos="-24 -5" textsize="1" halign="left" valign="top" textfont="OswaldMono" text="☐ Disable restart from the beginning (F5)" scriptevents="1"/>
                 <label id="Label_RSBugs" size="45 3" pos="-24 -9" textsize="1" halign="left" valign="top" textfont="OswaldMono" text="☐ Advanced: Allow respawn bugs" scriptevents="1"/>
-                <quad  size="50 13" style="BgRaceScore2" substyle="BgCardPlayer" pos="0 0" halign="center" valign="top"/>
+                <quad  size="50 13" style="BgRaceScore2" substyle="BgCardPlayer" pos="0 0" halign="center" valign="top" id="Quad_Background"/>
             </frame>
         </frame>
     </frame>
@@ -59,6 +59,13 @@ Text GetLayer() {
             return;
         Frame_Infos.Show();
         Quad_Indicator.RelativeRotation = 180.;
+    }
+
+    Void HideRS() {
+        declare Label_RSBugs <=> (Page.GetFirstChild("Label_RSBugs") as CMlLabel);
+        declare Quad_Background <=> (Page.GetFirstChild("Quad_Background") as CMlQuad);
+        Label_RSBugs.Hide();
+        Quad_Background.Size.Y = 9.;
     }
 
     Void CheckLabel(CMlLabel _Label) {
@@ -113,6 +120,7 @@ Text GetLayer() {
         declare Label_F5 <=> (Page.GetFirstChild("Label_F5") as CMlLabel);
         declare Label_RSBugs <=> (Page.GetFirstChild("Label_RSBugs") as CMlLabel);
 
+        if ({{{_HideRS}}}) HideRS();
         HideInfos();
 
         declare netwrite Net_RespawnBehavior for UI = {{{Constants::C_RespawnBehavior_Normal}}};

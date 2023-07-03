@@ -37,7 +37,7 @@ Text GetLayer() {
             if (!PageIsVisible)
                 continue;
 
-            if (GUIPlayer != InputPlayer) {
+            if (GUIPlayer != InputPlayer || InputPlayer == Null) {
                 Frame_Wrapper.Hide();
                 continue;
             }

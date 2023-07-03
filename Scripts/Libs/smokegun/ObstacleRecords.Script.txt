@@ -14,7 +14,6 @@
 
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/smokegun/Player.Script.txt" as Player
-#Include "Libs/miltant/RunFlags.Script.txt" as RunFlags
 
 #Include "Libs/ahmad3/MlAuth.Script.txt" as Auth
 
@@ -25,9 +24,6 @@
 #Const ScriptName "ObstacleRecords.Script.txt"
 
 #Struct SRequestData {
-    // We store the login and not the CSmPlayer instance
-    // because if the player despawns (i believe?), the insance will not be available anymore
-    Text PlayerLogin;
     Text Headers;
     Text Url;
     Text Data;
@@ -40,26 +36,11 @@
     Text zone_path;
 }
 
-#Struct K_UpdatePlayerResponse {
-    Text login;
-    Boolean banned;
-    Auth::K_Banishment current_ban;
-}
-
 #Struct K_UpdateMapBody {
     Text name;
     Text map_uid;
     Integer cps_number;
     K_UpdatePlayerBody author;
-}
-
-#Struct K_HasFinishedBody {
-    Integer time;
-    Integer respawn_count;
-    Text login;
-    Text map_uid;
-    Integer flags;
-    Integer[] cps;
 }
 
 #Struct K_HasFinishedResponse {
@@ -79,9 +60,7 @@ declare Text G_GetHeaders;
 // Requests
 declare SRequestData[Ident] G_WaitingToComplete;
 declare SRequestData[]  G_WaitingToSend;
-
-declare SRequestData[] G_WaitingToUpdateToken;
-declare Text[] G_ErroredPlayers;
+declare Integer G_UpdateRecords;
 
 /////////////////////////////////////////////////////////////////
 /////////////////////       TOOLS       /////////////////////////
@@ -105,22 +84,15 @@ Ident MakePost(Text _Url, Text _Data, Text _Headers) {
     return NullId;
 }
 
-Void SendPost(Text _Url, Text _Data, Integer _Type, CSmPlayer _Player, Text _Headers) {
-    declare Text PlayerLogin;
-    if (_Player == Null) PlayerLogin = "";
-    else PlayerLogin = _Player.User.Login;
+Void SendPost(Text _Url, Text _Data, Integer _Type, Text _Headers) {
     declare RequestData = SRequestData {
-        PlayerLogin = PlayerLogin,
         Headers = _Headers,
         Url = _Url,
         Data = _Data,
         Type = _Type
     };
 
-    declare Text authHeaders = "";
-    if (_Player != Null) authHeaders = "PlayerLogin: " ^ PlayerLogin
-        ^ "\nAuthorization: " ^ Player::getToken(_Player);
-    declare reqId = MakePost(_Url, _Data, _Headers ^ authHeaders);
+    declare reqId = MakePost(_Url, _Data, _Headers);
     if (reqId == NullId && G_WaitingToSend.count < 64) {
         Log::Log(LogPrefix()^" Queue up "^_Url^" (count: "^G_WaitingToSend.count^")");
         G_WaitingToSend.add(RequestData);
@@ -160,95 +132,7 @@ Void ReplaceOrCreateMap(Integer _CpsNumber) {
         }
     };
 
-    SendPost("map/insert", body.tojson(), Constants::C_Request_ReplaceOrCreateMap, Null, G_PostHeaders);
-}
-
-// Update player infos
-Void ReplaceOrCreatePlayer(CSmPlayer _Player) {
-    declare body = K_UpdatePlayerBody {
-        login = _Player.User.Login,
-        name = _Player.User.Name,
-        zone_path = _Player.User.ZonePath
-    };
-
-    SendPost("player/update", body.tojson(), Constants::C_Request_ReplaceOrCreatePlayer, _Player, G_PostHeaders);
-}
-
-// Send records
-Void PlayerFinished(CSmPlayer _Player) {
-    declare LastRun for _Player.Score = -1;
-    declare RespawnCount for _Player.Score = 0;
-    declare Flags = RunFlags::GetFlagsSum(
-        Player::usedRSBug(_Player),
-        Player::usedAltGlitch(_Player),
-        Player::usedPvPWeapons(_Player),
-        Player::usedPvPCollisions(_Player),
-        Player::usedSpeedHack(_Player)
-    );
-
-    declare state = _Player.User.Login ^ Now;
-
-    log("flags:" ^ Flags);
-
-    declare lastCpTimes = Player::getLastCPTimes(_Player);
-    declare lastCpTime = 0;
-    declare Integer[] cps;
-    foreach (time in lastCpTimes) {
-        cps.add(time - lastCpTime);
-        lastCpTime = time;
-    }
-
-    declare body = K_HasFinishedBody {
-        time = LastRun,
-        respawn_count = RespawnCount,
-        login = _Player.User.Login,
-        map_uid = ""^Map.Id,
-        flags = Flags,
-        cps = cps
-    };
-
-    SendPost("player/finished", body.tojson(), Constants::C_Request_PlayerFinished, _Player, G_PostHeaders);
-}
-
-Void TokenReceivedFor(CSmPlayer _Player) {
-    foreach (idx => req in G_WaitingToUpdateToken) {
-        if (req.PlayerLogin == _Player.User.Login) {
-            SendPost(req.Url, req.Data, req.Type, _Player, req.Headers);
-            declare _rem = G_WaitingToUpdateToken.removekey(idx);
-            break;
-        }
-    }
-}
-
-Void SetErrorFor(Text _PlayerLogin) {
-    if (G_ErroredPlayers.exists(_PlayerLogin)) return;
-    G_ErroredPlayers.add(_PlayerLogin);
-}
-
-Void Private_PlayerFinished(Text _BestRecordMsg, Text _WorseRecordMsg, Text _Response) {
-    declare K_HasFinishedResponse response;
-    response.fromjson(_Response);
-
-    declare Player = SM::GetPlayer(response.login);
-    declare PName = Player.User.Name;
-    declare NewTime = TL::TimeToText(response.new, True);
-    declare OldTime = TL::TimeToText(response.old, True);
-    declare DiffTime = TL::TimeToText(response.new - response.old, True);
-
-    if (response.has_improved && _BestRecordMsg != "") {
-        UIManager.UIAll.SendChat(TL::Compose(_BestRecordMsg, PName, NewTime, OldTime, DiffTime));
-    } else if (Player != Null && _WorseRecordMsg != "") {
-        UIManager.GetUI(Player).SendChat(TL::Compose(_WorseRecordMsg, PName, NewTime, OldTime, DiffTime));
-    }
-}
-
-Void Private_PlayerUpdated(Text _Response) {
-    declare K_UpdatePlayerResponse response;
-    response.fromjson(_Response);
-    if (response.banned) {
-        declare player = SM::GetPlayer(response.login);
-        Player::setBanned(player, response.current_ban);
-    }
+    SendPost("map/insert", body.tojson(), Constants::C_Request_ReplaceOrCreateMap, G_PostHeaders);
 }
 
 /////////////////////////////////////////////////////////////////
@@ -259,7 +143,6 @@ Void Private_PlayerUpdated(Text _Response) {
 Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
 {
     declare Ident[] ToDelete = [];
-    declare UpdateRecords = False;
 
     foreach (reqId => ReqData in G_WaitingToComplete) {
 
@@ -274,33 +157,17 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
         Log::Log(LogPrefix()^" Request done: ("^request.StatusCode^") "^request.Url);
         Log::Log(LogPrefix()^" Response body: "^request.Result);
 
-        if (request.StatusCode == Constants::C_UnauthorizedStatusCode
-                && !G_ErroredPlayers.exists(ReqData.PlayerLogin)) {
-            // Token needs to be updated
-            declare netwrite Integer Net_TokenNeedsUpdate for UIManager.GetUI(SM::GetPlayer(ReqData.PlayerLogin)) = -1;
-            Net_TokenNeedsUpdate = Now;
-            G_WaitingToUpdateToken.add(ReqData);
-            ToDelete.add(reqId);
-            continue;
-        }
-
         if (request.StatusCode == 200) {
 
             switch (ReqData.Type) {
-                case Constants::C_Request_PlayerFinished: {
-                    Private_PlayerFinished(_BestRecordMsg, _WorseRecordMsg, request.Result);
-                    UpdateRecords = True;
-                }
-                case Constants::C_Request_ReplaceOrCreatePlayer: {
-                    Private_PlayerUpdated(request.Result);
-                }
                 case Constants::C_Request_ReplaceOrCreateMap: {
-                    UpdateRecords = True;
+                    if (G_UpdateRecords == 0)
+                        G_UpdateRecords = Now;
                 }
             }
         }
         else {
-             UIManager.UIAll.SendChat(TL::Compose("OBSTACLE API ERROR(%1): Please contact the developer on Obstacle's discord.", ""^request.StatusCode));
+             UIManager.UIAll.SendChat(TL::Compose("OBSTACLE API ERROR(%1): Please contact the developers on Obstacle's discord.", ""^request.StatusCode));
         }
 
         ToDelete.add(reqId);
@@ -330,8 +197,27 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
         }
     }
 
-    if (UpdateRecords) {
+    
+    foreach (Player in Players) {
+        declare netread Net_RecordsUpdated as Player_Updated for UIManager.GetUI(Player) = False;
+        if (Player_Updated) {
+            log(Player.Login^" updated (server)");
+
+            if (G_UpdateRecords == 0)
+                G_UpdateRecords = Now + 3000;
+
+            log(G_UpdateRecords);
+        }
+        declare netread Net_PlayerBanned for UIManager.GetUI(Player) = Auth::Default_Ban();
+        if (Net_PlayerBanned.is_current) {
+            Player::setBanned(Player, Net_PlayerBanned);
+        }
+    }
+
+    if (G_UpdateRecords != 0 && Now > G_UpdateRecords) {
+        log("Signal: Updating records");
         declare netwrite Net_RecordsUpdated for Teams[0] = Now;
         Net_RecordsUpdated = Now;
+        G_UpdateRecords = 0;
     }
 }

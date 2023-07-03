@@ -116,3 +116,34 @@ Integer GetFlagsSum(Boolean Flag_RSBug, Boolean Flag_ALTGlitch, Boolean Flag_PvP
 Integer GetFlagsSum() {
 	return Private_GetFlagsSum(G_Flag_RSBug, G_Flag_ALTGlitch, G_Flag_PvPWeapons, G_Flag_PvPCollisions, G_Flag_SpeedHack);
 }
+
+Text ML_FlagSum() {
+	return """
+	#Const C_Flag_RSBug 1
+	#Const C_Flag_ALTGlitch 4
+	#Const C_Flag_PvPWeapons 16
+	#Const C_Flag_PvPCollisions 64
+	#Const C_Flag_SpeedHack 256
+	Integer Private_GetFlagsSum(Integer Flag_RSBug, Integer Flag_ALTGlitch, Integer Flag_PvPWeapons, Integer Flag_PvPCollisions, Integer Flag_SpeedHack) {
+		return Flag_RSBug * C_Flag_RSBug
+			 + Flag_ALTGlitch * C_Flag_ALTGlitch
+			 + Flag_PvPWeapons * C_Flag_PvPWeapons
+			 + Flag_PvPCollisions * C_Flag_PvPCollisions
+			 + Flag_SpeedHack * C_Flag_SpeedHack;
+	}
+	Integer GetFlagsSum(Boolean Flag_RSBug, Boolean Flag_ALTGlitch, Boolean Flag_PvPWeapons, Boolean Flag_PvPCollisions, Boolean Flag_SpeedHack) {
+		declare _1 = 1;
+		declare _2 = 1;
+		declare _3 = 1;
+		declare _4 = 1;
+		declare _5 = 1;
+	
+		if (!Flag_RSBug) _1 *= 2;
+		if (!Flag_ALTGlitch) _2 *= 2;
+		if (!Flag_PvPWeapons) _3 *= 2;
+		if (!Flag_PvPCollisions) _4 *= 2;
+		if (!Flag_SpeedHack) _5 *= 2;
+	
+		return Private_GetFlagsSum(_1, _2, _3, _4, _5);
+	}""";
+}
