@@ -224,9 +224,7 @@ Void PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _LastCpTi
 	if (Http.Requests[Req].StatusCode == 401) {
 		UpdateToken();
 	} else if (Http.Requests[Req].StatusCode == 200) {
-		declare netwrite Net_RecordsUpdated for UI = True;
-		Net_RecordsUpdated = True;
-		log("Records updated");
+		SendCustomEvent("records_updated", []);
 	} else {
 		log("Error: " ^ Http.Requests[Req].StatusCode ^ Http.Requests[Req].Result);
 		UI.SendChat("An error occurred (" ^ Http.Requests[Req].StatusCode ^ "). Please contact the developers (e.g. @ahmadbky or @MisterTicot).");
@@ -277,13 +275,9 @@ main() {
     declare netread Integer[] _LastCPTimes for UI;
     declare LastRun_Cache = _LastRun;
     declare RespawnCount_Cache = _RespawnCount;
-	
-	declare netwrite Net_RecordsUpdated for UI = False;
 
 	while (True) {
 		yield;
-
-		Net_RecordsUpdated = False;
 
 		if (_LastRun != LastRun_Cache || _RespawnCount != RespawnCount_Cache) {
 			if (_LastRun > 0) {

@@ -80,11 +80,11 @@ Text GetLayer() {
         wait(InputPlayer != Null && Page != Null);
 
         declare LastPlayerLogin = "";
-        declare LastUpdate = -1;
 
         declare Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
         declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
         declare netread Net_RecordsUpdated for Teams[0] = -1;
+        declare LastUpdate = Net_RecordsUpdated;
 
         while (True) {
             yield;
@@ -99,11 +99,14 @@ Text GetLayer() {
             }
 
             if (Net_RecordsUpdated != LastUpdate && Frame_Widget.Visible) {
+                log("RecordsWidget: Updating records");
                 UpdateRecords(LocalPlayer.User.Login);
                 LastUpdate = Net_RecordsUpdated;
             }
 
             if (G_Req != Null && G_Req.IsCompleted) {
+                log("RecordsWidget: Request completed");
+                log("RecordsWidget: Status code: " ^ G_Req.StatusCode);
                 if (G_Req.StatusCode != 200) {
                     Http.Destroy(G_Req);
                     G_Req = Null;

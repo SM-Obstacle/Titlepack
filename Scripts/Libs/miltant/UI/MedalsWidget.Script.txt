@@ -145,11 +145,11 @@ Text GetLayer() {
         declare netread Net_Time1 for InputPlayer = 0;
         declare Integer CurrentPlayerRank for LocalUser = 0;
         declare netread Net_RecordsUpdated for Teams[0] = -1;
-        declare LastUpdate = -1;
+        declare LastUpdate = Net_RecordsUpdated;
         declare Running = False;
 
         G_ReqPending = False;
-        declare LastPlayerLogin = "";
+        declare LastPlayerLogin = InputPlayer.User.Login;
         declare UpdateUI = False;
 
         declare Frame_Widget <=> (Page.GetFirstChild("Frame_Medals_Records") as CMlFrame);
@@ -170,15 +170,13 @@ Text GetLayer() {
                 Frame_Widget.Show();
             }
 
-            if (LocalPlayer.User.Login != LastPlayerLogin) {
-                LastUpdate = -1;
-                LastPlayerLogin = LocalPlayer.User.Login;
-            }
-
-            if (Net_RecordsUpdated != LastUpdate || (Net_CpProgress < 0 && Running) ) {
-                UpdateRecords(LocalPlayer.User.Login);
+            if (Net_RecordsUpdated != LastUpdate) {
+                log("Records updated " ^ LastUpdate ^ " -> " ^ Net_RecordsUpdated ^ " (running: " ^ Running ^ ")");
+                if (LastUpdate > 0 && Net_RecordsUpdated > 0) {
+                    UpdateRecords(LocalPlayer.User.Login);
+                    Running = False;
+                }
                 LastUpdate = Net_RecordsUpdated;
-                Running = False;
             }
 
             if (Net_CpProgress > -1) {

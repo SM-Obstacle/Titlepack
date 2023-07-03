@@ -537,7 +537,6 @@ foreach (Player in Players) {
                     declare UI <=> UIManager.GetUI(Player);
                     declare netread Boolean _AltMenu_Visible for UI = False;
 
-                    log(_AltMenu_Visible);
                     if  (_AltMenu_Visible){
                         Player::setUsedAltGlitch(Player, True);
                     }

@@ -1,10 +1,19 @@
 <maniaplanet_title version="4">
 	<id>obstacle@smokegun</id>
 	<name>obstacle@smokegun</name>
-	<desc>Made in maker 'Storm Maker'</desc>
+	<desc>Obstacle is the parkour mode of ShootMania!
+ - Learn the $imovement mechanics$i  of the game
+ - Compete for the $ibest times$i  on leaderboards and during cups
+ - $iBuild maps$i  to expand the lore and knowledge of shootmania!
+
+If you have any questions,
+Contacts:
+In game: miltant, ahmad3, smokegun
+Obstacle’s discord server: $lhttps://discord.gg/w2j64wXpjb$l
+Shootmania’s discord server: $lhttps://discord.gg/XG9aVHr4F2$l</desc>
 	<url>ObstacleMP4</url>
 	<download_url></download_url>
-	<title_version>2.1a</title_version>
+	<title_version>2.1b</title_version>
 	<allowed_client_title_version>2.0</allowed_client_title_version>
 	<maker>SMStormMaker@nadeo</maker>
 	<base>SMStorm</base>
