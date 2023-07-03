@@ -224,8 +224,8 @@ Void PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _LastCpTi
 	if (Http.Requests[Req].StatusCode == 401) {
 		UpdateToken();
 	} else if (Http.Requests[Req].StatusCode == 200) {
-		declare netwrite Net_RecordsUpdated for UI = True;
-		Net_RecordsUpdated = True;
+		declare netwrite Net_RecordsUpdated for UI = 0;
+		Net_RecordsUpdated = Now;
 		log("Records updated");
 	} else {
 		log("Error: " ^ Http.Requests[Req].StatusCode ^ Http.Requests[Req].Result);
@@ -277,14 +277,9 @@ main() {
     declare netread Integer[] _LastCPTimes for UI;
     declare LastRun_Cache = _LastRun;
     declare RespawnCount_Cache = _RespawnCount;
-	
-	declare netwrite Net_RecordsUpdated for UI = False;
 
 	while (True) {
 		yield;
-
-		Net_RecordsUpdated = False;
-
 		if (_LastRun != LastRun_Cache || _RespawnCount != RespawnCount_Cache) {
 			if (_LastRun > 0) {
 				PlayerFinished(_LastRun, _RespawnCount, _LastCPTimes);

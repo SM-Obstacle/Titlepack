@@ -199,8 +199,10 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
 
     
     foreach (Player in Players) {
-        declare netread Net_RecordsUpdated as Player_Updated for UIManager.GetUI(Player) = False;
-        if (Player_Updated) {
+        declare netread Net_RecordsUpdated for UIManager.GetUI(Player) = 0;
+        declare LastRecordUpdated for Player = 0;
+        if (Net_RecordsUpdated > LastRecordUpdated) {
+            LastRecordUpdated = Net_RecordsUpdated;
             log(Player.Login^" updated (server)");
 
             if (G_UpdateRecords == 0)
