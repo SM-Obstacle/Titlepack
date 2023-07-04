@@ -633,7 +633,7 @@ Void EditObjectives()
             {{{Property("0 0", "Bronze Medal", Entry("0 -5.5", "Entry_Bronze_Medal"))}}}
             {{{Property("0 -15", "Silver Medal", Entry("0 -5.5", "Entry_Silver_Medal"))}}}
             {{{Property("0 -30", "Gold Medal", Entry("0 -5.5", "Entry_Gold_Medal"))}}}
-            {{{Property("0 -45", "Champion Medal", Entry("0 -5.5", "Entry_Champion_Medal"))}}}
+            {{{Property("0 -45", "Master Medal", Entry("0 -5.5", "Entry_Champion_Medal"))}}}
         </frame>
     """;
 

@@ -468,8 +468,8 @@ Void Load() {
 					UID = "7ki7DAx8RGHufasKBLzlHnvFMUj",
 					Bronze = 70000,
 					Silver = 63000,
-					Gold = 58000,
-					Champion = 54000
+					Gold = 56000,
+					Champion = 51750
 				},
 				K_Map {
 					UID = "JTeY36K5VrDL7noJGzl4dqwPC5j",

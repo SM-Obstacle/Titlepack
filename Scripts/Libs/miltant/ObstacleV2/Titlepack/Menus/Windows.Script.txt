@@ -21,6 +21,10 @@ Text Build(K_Window _Menu) {
 	return ML_Text;
 }
 
+Text Current() {
+	return G_Current_Window;
+}
+
 Void CreateWindow(K_Window _Window) {
 	if (!G_Windows.existskey(_Window.Name)) {
 		G_Windows[_Window.Name] = _Window;
@@ -34,7 +38,9 @@ Void CreateWindow(K_Window _Window) {
 }
 
 K_Window GetWindow(Text _Name) {
-	return G_Windows[_Name];
+	if (G_Windows.existskey(_Name))
+		return G_Windows[_Name];
+	return K_Window{};
 }
 
 CMlPage GetPage(Text _Name) {
