@@ -3,6 +3,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Index.Script.txt"			as Play
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Home/Index.Script.txt"			as Home
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"				as Windows
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"				as Dialogs
 #Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"				as Layers
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"							as Styles
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/JoinServer/Index.Script.txt"	as ServerDialog
@@ -73,7 +74,7 @@ Text Build() {
 				}
 			}
 
-
+			declare LastEscapePress = False;
 			while(True) {
 				yield;
 
@@ -81,6 +82,15 @@ Text Build() {
 
 				foreach(Event in PendingEvents) {
 					{{{Styles::GetEventLoopActiveItem()}}}
+				}
+
+				if (IsKeyPressed(36)) {
+					if (!LastEscapePress)
+						SendCustomEvent("escape_pressed", []);
+
+					LastEscapePress = True;
+				} else {
+					LastEscapePress = False;
 				}
 			}
 		}
@@ -118,38 +128,50 @@ Void JoinServer() {
 
 Void Loop() {
 	foreach(Event in PendingEvents) {
-		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent && Event.CustomEventData.count > 0) {
-			switch (Event.CustomEventType) {
-				case "menu_item_click": {
-					switch (Event.CustomEventData[0]) {
-						case "home": {
-							Windows::Load(Home::GetName());
-						}
-		
-						case "editors": {
-							Windows::Load(Editors::GetName());
-						}
-		
-						case "profile": {
-							Menu_Profile();
-							yield;
-						}
-		
-						case "play": {
-							Windows::Load(Play::GetName());
-						}
-		
-						case "credits": {
-							Windows::Load(Credits::GetName());
-						}
-		
-						case "quit": {
-							Menu_Quit();
+		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent) {
+			if (Event.CustomEventData.count > 0) {
+				switch (Event.CustomEventType) {
+					case "menu_item_click": {
+						switch (Event.CustomEventData[0]) {
+							case "home": {
+								Windows::Load(Home::GetName());
+							}
+			
+							case "editors": {
+								Windows::Load(Editors::GetName());
+							}
+			
+							case "profile": {
+								Menu_Profile();
+								yield;
+							}
+			
+							case "play": {
+								Windows::Load(Play::GetName());
+							}
+			
+							case "credits": {
+								Windows::Load(Credits::GetName());
+							}
+			
+							case "quit": {
+								Menu_Quit();
+							}
 						}
 					}
+					case "join_server": {
+						G_ReqServerLogin = Event.CustomEventData[0];
+					}
 				}
-				case "join_server": {
-					G_ReqServerLogin = Event.CustomEventData[0];
+			} else if (Event.CustomEventType == "escape_pressed") {
+				declare CurrentWindow = Layers::Get(Windows::Current());
+
+				if (Dialogs::Current() == "") {
+					if (Windows::Current() == "L_Window_home" && !(CurrentWindow == Null || CurrentWindow.AnimInProgress)) {
+						Menu_Quit();
+					} else {
+						Windows::Load("home");
+					}
 				}
 			}
 		}

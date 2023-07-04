@@ -199,6 +199,17 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
 
     
     foreach (Player in Players) {
+        declare netread Net_RecordsUpdated for UIManager.GetUI(Player) = 0;
+        declare LastRecordUpdated for Player = 0;
+        if (Net_RecordsUpdated > LastRecordUpdated) {
+            LastRecordUpdated = Net_RecordsUpdated;
+            log(Player.Login^" updated (server)");
+
+            if (G_UpdateRecords == 0)
+                G_UpdateRecords = Now + 3000;
+
+            log(G_UpdateRecords);
+        }
         declare netread Net_PlayerBanned for UIManager.GetUI(Player) = Auth::Default_Ban();
         if (Net_PlayerBanned.is_current) {
             Player::setBanned(Player, Net_PlayerBanned);
