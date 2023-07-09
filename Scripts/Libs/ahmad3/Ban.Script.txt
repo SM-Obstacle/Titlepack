@@ -1,0 +1,87 @@
+/************************************************
+ *   Obstacle Library                            *
+ *   Author:     ahmad3                          *
+ *                                               *
+ *   Banishment types
+ ************************************************/
+
+#Include "MathLib" as MathLib
+#Include "TimeLib" as TimeLib
+
+#Struct K_Banishment {
+    Integer id;
+    Text date_ban;
+    Integer duration;
+    Text reason;
+    Integer player_id;
+    Integer banished_by;
+    Boolean was_reprieved;
+}
+
+#Struct K_BannedPlayerResponse {
+    Text message;
+    K_Banishment ban;
+}
+
+#Struct K_OptBanishment {
+    K_BannedPlayerResponse ban;
+    Boolean isPresent;
+}
+
+K_OptBanishment Empty() {
+    declare K_BannedPlayerResponse ban;
+    return K_OptBanishment {
+        ban = ban,
+        isPresent = False
+    };
+}
+
+K_OptBanishment Of(K_BannedPlayerResponse _Ban) {
+    return K_OptBanishment {
+        ban = _Ban,
+        isPresent = True
+    };
+}
+
+Text ML_Preproc() {
+    return """
+#Struct K_Banishment {
+    Integer id;
+    Text date_ban;
+    Integer duration;
+    Text reason;
+    Integer player_id;
+    Integer banished_by;
+    Boolean was_reprieved;
+}
+
+#Struct K_BannedPlayerResponse {
+    Text message;
+    K_Banishment ban;
+}
+
+#Struct K_OptBanishment {
+    K_BannedPlayerResponse ban;
+    Boolean isPresent;
+}
+    """;
+}
+
+Text ML_Content() {
+    return """
+K_OptBanishment Ban_Empty() {
+    declare K_BannedPlayerResponse ban;
+    return K_OptBanishment {
+        ban = ban,
+        isPresent = False
+    };
+}
+
+K_OptBanishment Ban_Of(K_BannedPlayerResponse _Ban) {
+    return K_OptBanishment {
+        ban = _Ban,
+        isPresent = True
+    };
+}
+    """;
+}

@@ -45,6 +45,7 @@
 #Include "Libs/smokegun/Score.Script.txt" as ObsScores
 
 #Include "Libs/ahmad3/MlAuth.Script.txt" as MlAuth
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 // ---------------------------------- //
 // Settings
@@ -362,6 +363,12 @@ foreach (Event in UIManager.PendingEvents) {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 Obstacle::JumpBack(Player);
             }
+            case "ban:update": {
+                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+                declare Ban::K_OptBanishment ban;
+                ban.fromjson(Event.CustomEventData[1]);
+                Player::setBanned(Player, ban);
+            }
         }
     }
 }
@@ -509,8 +516,8 @@ foreach (Cap in PendingCaptures) {
 foreach (Player in Players) {
     // TODO: force the player to leave in local
     // (may join with uri link?)
-    if (Player::isBanned(Player) && ServerAdmin != Null) {
-        ServerAdmin.Kick(Player.User, Player::banReason(Player));
+    if (Player::getBanStatus(Player).isPresent && ServerAdmin != Null) {
+        ServerAdmin.Kick(Player.User, Player::getBanStatus(Player).ban.ban.reason);
     }
 
     switch (Player.SpawnStatus) {
