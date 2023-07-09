@@ -15,11 +15,8 @@
 
 #Const C_MP_App_Id			"de1ce3ba8e"
 #Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
-//#Const C_MP_Redirect		"https://obstacle.titlepack.io/give_token"
-#Const C_MP_Redirect		"http://192.168.1.30:8000/give_token"
-//#Const C_MP_Redirect		"http://192.168.1.30:3001/player/give_token"
-// #Const C_MP_Redirect "https://api.obstacle.ovh/player/give_token"
-// #Const C_MP_Redirect "http://localhost:3000/player/give_token"
+#Const C_MP_Redirect		"https://obstacle.titlepack.io/give_token"
+//#Const C_MP_Redirect		"http://192.168.1.30:8000/give_token"
 
 #Struct K_UpdatePlayerBody {
 	Text login;

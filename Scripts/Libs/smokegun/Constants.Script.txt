@@ -29,12 +29,11 @@
     "Space\\Asteroide\\Asteroide#03_Pivot3.Item.gbx"
 ]
 
-//#Const C_WebsiteUrl "https://www.obstacle.ovh"
 //#Const C_WebsiteUrl "http://192.168.1.30:8000"
 #Const C_WebsiteUrl "https://obstacle.titlepack.io"
-#Const C_HostUrl "http://192.168.1.30:3001/"
-//#Const C_HostUrl "https://obstacle.titlepack.io/api/"
-//#Const C_HostUrl "https://api.obstacle.ovh/"
+//#Const C_HostUrl "http://192.168.1.30:3001/"
+#Const C_HostUrl "https://obstacle.titlepack.io/api/"
+
 #Const C_Request_ReplaceOrCreateMap 0
 #Const C_Request_ReplaceOrCreatePlayer 1
 #Const C_Request_PlayerFinished 2

@@ -29,12 +29,12 @@ Text GetLayer() {
 #Include "TimeLib" as TimeLib
 #Include "TextLib" as TL
 
-//#Const C_HostUrl "https://obstacle.titlepack.io/api/"
-#Const C_HostUrl "http://192.168.1.30:3001/"
+#Const C_HostUrl "https://obstacle.titlepack.io/api/"
+//#Const C_HostUrl "http://192.168.1.30:3001/"
 #Const C_MP_App_Id			"de1ce3ba8e"
 #Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
-//#Const C_MP_Redirect   "https://obstacle.titlepack.io/give_token"
-#Const C_MP_Redirect   "http://192.168.1.30:8000/give_token"
+#Const C_MP_Redirect   "https://obstacle.titlepack.io/give_token"
+//#Const C_MP_Redirect   "http://192.168.1.30:8000/give_token"
 
 #Struct K_GetTokenBody {
 	Text login;
@@ -247,8 +247,6 @@ main() {
     declare LastRun_Cache = _LastRun;
     declare RespawnCount_Cache = _RespawnCount;
 	
-	declare netwrite Net_RecordsUpdated for UI = False;
-
 	while (True) {
 		yield;
 
