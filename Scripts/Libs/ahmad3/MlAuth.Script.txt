@@ -246,6 +246,8 @@ main() {
     declare netread Integer[] _LastCPTimes for UI;
     declare LastRun_Cache = _LastRun;
     declare RespawnCount_Cache = _RespawnCount;
+	
+	declare netwrite Net_RecordsUpdated for UI = False;
 
 	while (True) {
 		yield;
