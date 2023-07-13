@@ -46,13 +46,6 @@
     K_UpdatePlayerBody author;
 }
 
-#Struct K_HasFinishedResponse {
-    Boolean has_improved;
-    Text login;
-    Integer old;
-    Integer new;
-}
-
 /*********************************************
   GLOBALES
 *********************************************/
@@ -143,7 +136,7 @@ Void ReplaceOrCreateMap(Integer _CpsNumber) {
 /////////////////////////////////////////////////////////////////
 
 // Process requests
-Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
+Void Loop()
 {
     declare Ident[] ToDelete = [];
 

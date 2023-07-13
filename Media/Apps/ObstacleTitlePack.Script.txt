@@ -13,11 +13,6 @@
 #Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
 #Include "Libs/smokegun/Constants.Script.Txt" as Constants
 
-#Const C_MP_App_Id			"de1ce3ba8e"
-#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
-#Const C_MP_Redirect		"https://obstacle.titlepack.io/give_token"
-//#Const C_MP_Redirect		"http://192.168.1.30:8000/give_token"
-
 #Struct K_UpdatePlayerBody {
 	Text login;
 	Text name;
@@ -54,21 +49,39 @@ Text Private_UpdateToken() {
 	declare body = K_GetTokenBody {
 		login = login,
 		state = state,
-		redirect_uri = C_MP_Redirect
+		redirect_uri = Constants::C_MP_Redirect
 	};
+
+	declare warningDialog = UI::NewDialog("Authentication",
+		UI::K_Message {
+			Label = """We need to refresh your personal tokens, so we will"""
+		}, [
+			UI::K_Button {
+				ControlId = "OK_Button",
+				Label = "OK",
+				Default = True
+			}
+		]
+	);
 	
+	declare moveOn = False;
+	while (!moveOn) {
+		declare state = UI::Prompt(warningDialog, True);
+		moveOn = state.Over && state.Success;
+		yield;
+	}
+
 	declare req = Http.CreatePost(
 		Constants::C_HostUrl ^ "player/get_token",
 		body.tojson(),
 		"Content-Type: application/json\nAccept: application/json");
 		
-	declare Link = C_MP_Link
-		^ "client_id=" ^ C_MP_App_Id
-		^ "&redirect_uri=" ^ C_MP_Redirect
+	declare Link = Constants::C_MP_Link
+		^ "client_id=" ^ Constants::C_MP_App_Id
+		^ "&redirect_uri=" ^ Constants::C_MP_Redirect
 		^ "&state=" ^ state
 		^ "&scope=basic";
 	OpenLink(Link, CManiaApp::ELinkType::ExternalBrowser);
-
 
 	declare PendingDialog = UI::NewDialog("Welcome to Obstacle!",
 		UI::K_Message {

@@ -336,7 +336,7 @@ if (Settings::GetForceInvisibleSkin()) {
 
 if (Settings::GetEnableRecords()) {
     Layers::Attach("Records");
-    API::Loop(S_BestNewRecordMsg, S_WorseNewRecordMsg);
+    API::Loop();
 } else if (G_EnableRecords) {
     Layers::Detach("Records");
 }
@@ -354,6 +354,27 @@ if ((EndTime - StartTime) > 60000 && Now > EndTime - 300500 && Now < EndTime - 2
 foreach (Event in UIManager.PendingEvents) {
     if (Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent) {
         switch(Event.CustomEventType) {
+            case "player:finished": {
+                declare isNewBest = Event.CustomEventData[1] == "True";
+                declare old = TL::ToInteger(Event.CustomEventData[2]);
+                declare new = TL::ToInteger(Event.CustomEventData[3]);
+
+                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+                declare PName = Player.User.Name;
+                declare NewTime = TL::TimeToText(new, True);
+                declare OldTime = TL::TimeToText(old, True);
+                declare DiffTime = TL::TimeToText(new - old, True);
+
+                if (isNewBest) {
+                    declare netwrite Integer Net_RecordsUpdated for Teams[0];
+                    Net_RecordsUpdated = Now;
+                    if (S_BestNewRecordMsg != "") {
+                        UIManager.UIAll.SendChat(TL::Compose(S_BestNewRecordMsg, PName, NewTime, OldTime, DiffTime));
+                    }
+                } else if (Player != Null && S_WorseNewRecordMsg != "") {
+                    UIManager.GetUI(Player).SendChat(TL::Compose(S_WorseNewRecordMsg, PName, NewTime, OldTime, DiffTime));
+                }
+            }
             case "jump_request": {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 declare CP = TL::ToInteger(Event.CustomEventData[1]);

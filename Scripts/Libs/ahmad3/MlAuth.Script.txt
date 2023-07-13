@@ -29,13 +29,6 @@ Text GetLayer() {
 #Include "TimeLib" as TimeLib
 #Include "TextLib" as TL
 
-#Const C_HostUrl "https://obstacle.titlepack.io/api/"
-//#Const C_HostUrl "http://192.168.1.30:3001/"
-#Const C_MP_App_Id			"de1ce3ba8e"
-#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
-#Const C_MP_Redirect   "https://obstacle.titlepack.io/give_token"
-//#Const C_MP_Redirect   "http://192.168.1.30:8000/give_token"
-
 #Struct K_GetTokenBody {
 	Text login;
 	Text state;
@@ -65,6 +58,13 @@ Text GetLayer() {
     Text map_uid;
     Integer flags;
     Integer[] cps;
+}
+
+#Struct K_HasFinishedresponse {
+	Boolean has_improved;
+	Text login;
+	Integer old;
+	Integer new;
 }
 
 {{{Ban::ML_Preproc()}}}
@@ -99,7 +99,7 @@ Void Private_UpdateToken() {
 	declare body = K_GetTokenBody {
 		login = login,
 		state = state,
-		redirect_uri = C_MP_Redirect
+		redirect_uri = {{{dump(Constants::C_MP_Redirect)}}}
 	};
 	
 	declare Req = MakePost("player/get_token", body.tojson());
@@ -111,9 +111,9 @@ Void Private_UpdateToken() {
 
 	declare req <=> Http.Requests[Req];
 
-	OpenLink(C_MP_Link
-		^ "client_id=" ^ C_MP_App_Id
-		^ "&redirect_uri=" ^ C_MP_Redirect
+	OpenLink({{{dump(Constants::C_MP_Link)}}}
+		^ "client_id=" ^ {{{dump(Constants::C_MP_App_Id)}}}
+		^ "&redirect_uri=" ^ {{{dump(Constants::C_MP_Redirect)}}}
 		^ "&state=" ^ state
 		^ "&scope=basic",
 		CMlScript::LinkType::ExternalBrowser);
@@ -197,9 +197,13 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
 		UI.SendChat(err.message);
 	} else {
-		declare netwrite Net_RecordsUpdated for UI = 0;
-		Net_RecordsUpdated = Now;
-		log("Records updated");
+		declare K_HasFinishedresponse res;
+		res.fromjson(req.Result);
+		log(res);
+		declare has_improved = TL::ToText(res.has_improved);
+		declare old = TL::ToText(res.old);
+		declare new = TL::ToText(res.new);
+		SendCustomEvent("player:finished", [res.login, has_improved, old, new]);
 	}
 
 	Http.Destroy(req);
