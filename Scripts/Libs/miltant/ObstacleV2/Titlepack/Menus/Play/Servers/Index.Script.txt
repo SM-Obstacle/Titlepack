@@ -35,8 +35,8 @@ Text Build() {
 
 
 <frame pos="-91.67 46.83">
-	<label id="Label_CommingSoon" pos="80 -4.67" valign="center2" halign="center" opacity="0" text="Comming soon!" textcolor="fff" textfont="regular"/>
-	<quad id="Quad_CommingSoon" data-target="Quad_CommingSoon Label_CommingSoon"
+	<label id="Label_ComingSoon" pos="80 -4.67" valign="center2" halign="center" opacity="0" text="Coming soon!" textcolor="fff" textfont="regular"/>
+	<quad id="Quad_ComingSoon" data-target="Quad_ComingSoon Label_ComingSoon"
 		data-default-anim="<quad opacity=&quot;0&quot;/><label opacity=&quot;0&quot;/>"
 		data-target-anim="<quad opacity=&quot;1&quot;/><label opacity=&quot;1&quot;/>"
 		scriptevents="1" bgcolor="0009" opacity="0" size="184 9.33"/>

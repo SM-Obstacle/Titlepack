@@ -199,7 +199,6 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 	} else {
 		declare K_HasFinishedresponse res;
 		res.fromjson(req.Result);
-		log(res);
 		declare has_improved = TL::ToText(res.has_improved);
 		declare old = TL::ToText(res.old);
 		declare new = TL::ToText(res.new);

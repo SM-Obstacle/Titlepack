@@ -54,7 +54,12 @@ Text Private_UpdateToken() {
 
 	declare warningDialog = UI::NewDialog("Authentication",
 		UI::K_Message {
-			Label = """We need to refresh your personal tokens, so we will"""
+			Label = """We are about to refresh your personal tokens.
+
+This procedure will open your browser to the
+ManiaPlanet official page. You will only have to
+authenticate with the same account as the
+one you use in game."""
 		}, [
 			UI::K_Button {
 				ControlId = "OK_Button",
