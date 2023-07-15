@@ -248,6 +248,8 @@ support team on Discord."""
 }
 
 main() {
+	log("Obstacle Titlepack loaded!");
+
 	Error::Init();
 	if (!DetectOffline())
 		Greet();

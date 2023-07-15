@@ -4,6 +4,9 @@
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
+#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
+
 /*********************************************
     CONSTANTS
 *********************************************/
@@ -56,6 +59,9 @@ Text GetLayer() {
 <script><!--
     #Include "TextLib" as TL
 
+    {{{Ban::ML_Preproc()}}}
+    {{{Error::ML_Preproc()}}}
+
     #Struct K_RankedRecord {
         Integer rank;
         Text login;
@@ -66,6 +72,9 @@ Text GetLayer() {
     #Struct K_Response {
         K_RankedRecord[] response;
     }
+
+    {{{Ban::ML_Content()}}}
+    {{{Error::ML_Content()}}}
 
     declare CHttpRequest G_Req;
 
@@ -108,6 +117,8 @@ Text GetLayer() {
                 log("RecordsWidget: Request completed");
                 log("RecordsWidget: Status code: " ^ G_Req.StatusCode);
                 if (G_Req.StatusCode != 200) {
+                    declare err = Error_Handle(G_Req.StatusCode, G_Req.Result);
+                    UI.SendChat(err.message);
                     Http.Destroy(G_Req);
                     G_Req = Null;
                     continue;
