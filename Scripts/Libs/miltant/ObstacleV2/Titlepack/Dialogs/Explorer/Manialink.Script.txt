@@ -31,6 +31,7 @@ Text Build(Text _FileType, Boolean _New) {
 			<label pos="23.17 -34" halign="center" valign="center2" textfont="light" textcolor="fff" textsize="1.5" size="44" id="Label_Author" hidden="1" textprefix="  "/>
 			<quad pos="0 -23.17" size="46.33 19.33" id="Quad_Banner" bgcolor="000b"/>
 		</frame>
+		<label id="Label_Warn" pos="43 -3.5" halign="center" valign="center2" textcolor="f99" textsize="3" text=""/>
 		<quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" keepratio="Clip"/>
 		<label pos="23.17 -12.83" halign="center" valign="center2" textcolor="fff" textsize="10" text=""/>
 	</framemodel>
@@ -154,6 +155,7 @@ Text Build(Text _FileType, Boolean _New) {
 		Text DisplayName;
 		Text Author;
 		Boolean IsFolder;
+		Boolean IsPlayable;
 	}
 
 	{{{Styles::GetDeclareGlobals()}}}
@@ -197,6 +199,8 @@ Text Build(Text _FileType, Boolean _New) {
 	}
 
 	Void BrowseRelative(Text _Path) {
+		declare Text[][Text] ObsStore_Requests for LocalUser;
+		ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [_Path];
 		BrowseAbsolute(G_CurrentFolder ^ _Path ^ "/");
 	}
 
@@ -252,7 +256,8 @@ Text Build(Text _FileType, Boolean _New) {
 					Name = {{{_FileType}}}.FileName,
 					DisplayName = {{{_FileType}}}.Name,
 					Author = {{{_FileType}}}.Author,
-					IsFolder = False
+					IsFolder = False,
+					IsPlayable = {{{_FileType}}}.IsPlayable
 				});
 			}
 
@@ -332,6 +337,7 @@ Text Build(Text _FileType, Boolean _New) {
 		declare PendingSearch = False;
 
 		G_CurrentFolder = "/";
+		ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [""];
 				
 		declare Skins_Loaded = False;""";
 
@@ -405,7 +411,7 @@ Text Build(Text _FileType, Boolean _New) {
 
 									if (RefreshDebouncer + 1000 < Now) {
 										RefreshDebouncer = Now;
-										ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [];
+										ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [G_CurrentFolder];
 
 										declare Label_Refresh = (Page.GetFirstChild("Label_Refresh") as CMlLabel);
 										Label_Refresh.RelativeRotation = 0.;
@@ -429,6 +435,7 @@ Text Build(Text _FileType, Boolean _New) {
 										for (I, 1, Parents.count - 2) {
 											NewPath ^= Parents[I] ^ "/";
 										}
+										ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [NewPath];
 										BrowseAbsolute(NewPath);
 									}
 								}
@@ -618,11 +625,13 @@ Text Build(Text _FileType, Boolean _New) {
 								Frame_Instance.DataAttributeSet("name", Tile.Name);
 
 								declare Quad_Trigger = (Frame_Instance.GetFirstChild("Quad_Trigger") as CMlQuad);
+								declare Label_Warn = (Frame_Instance.GetFirstChild("Label_Warn") as CMlLabel);
 								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
 								declare Label_Author = (Frame_Instance.GetFirstChild("Label_Author") as CMlLabel);
 								declare Frame_Banner = (Frame_Instance.GetFirstChild("Frame_Banner") as CMlFrame);
 
 								Quad_Trigger.ChangeImageUrl(Tile.Image);
+								Label_Warn.Visible = Tile.Author != "" && !Tile.IsPlayable;
 								Label_Name.SetText(ContrastString(Tile.DisplayName));
 								Label_Author.SetText(Tile.Author);
 
@@ -643,11 +652,13 @@ Text Build(Text _FileType, Boolean _New) {
 								Frame_Instance.DataAttributeSet("name", Tile.Name);
 	
 								declare Quad_Trigger = (Frame_Instance.GetFirstChild("Quad_Trigger") as CMlQuad);
+								declare Label_Warn = (Frame_Instance.GetFirstChild("Label_Warn") as CMlLabel);
 								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
 								declare Label_Author = (Frame_Instance.GetFirstChild("Label_Author") as CMlLabel);
 								declare Frame_Banner = (Frame_Instance.GetFirstChild("Frame_Banner") as CMlFrame);
 	
 								Quad_Trigger.ChangeImageUrl(Tile.Image);
+								Label_Warn.Visible = Tile.Author != "" && !Tile.IsPlayable;
 								Label_Name.SetText(ContrastString(Tile.DisplayName));
 								Label_Author.SetText(Tile.Author);
 

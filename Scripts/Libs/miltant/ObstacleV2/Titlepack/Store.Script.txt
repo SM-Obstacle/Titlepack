@@ -221,12 +221,14 @@ Void Loop_ServerInfo(Text[] _Servers) {
     }
 }
 
-Void Load_Maps() {
+Void Load_Maps(Text _Path) {
+    DataFileMgr.Map_RefreshFromDisk();
+
     G_MapsHasFetched = False;
     if (G_MapsTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_MapsTaskResult.Id);
     }
-	G_MapsTaskResult = DataFileMgr.Map_GetGameList("", True);
+	G_MapsTaskResult = DataFileMgr.Map_GetGameList(_Path, False);
 }
 
 Void Loop_Maps() {
@@ -271,17 +273,14 @@ Void Loop_Maps() {
 	}
 }
 
-Void RefreshMaps() {
-    DataFileMgr.Map_RefreshFromDisk();
-    Load_Maps();
-}
+Void Load_Replays(Text _Path) {
+    DataFileMgr.Replay_RefreshFromDisk();
 
-Void Load_Replays() {
     G_ReplaysHasFetched = False;
     if (G_ReplaysTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_ReplaysTaskResult.Id);
     }
-	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList("", True);
+	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList(_Path, False);
 }
 
 Void Loop_Replays() {
@@ -307,11 +306,6 @@ Void Loop_Replays() {
             G_Replays.add(Replay.FileName);
         }
 	}
-}
-
-Void RefreshReplays() {
-    DataFileMgr.Replay_RefreshFromDisk();
-    Load_Replays();
 }
 
 Void Load_Skins() {
@@ -346,8 +340,6 @@ Void Loop_Skins() {
 
 Void Load() {
     Load_Multiplayer();
-    Load_Maps();
-    Load_Replays();
     Load_Skins();
 }
 
@@ -400,10 +392,14 @@ Void Loop() {
                 }
             }
             case "ObsStore_RefreshMaps": {
-                RefreshMaps();
+                if (Args.count > 0) {
+                    Load_Maps(Args[0]);
+                }
             }
             case "ObsStore_RefreshReplays": {
-                RefreshReplays();
+                if (Args.count > 0) {
+                    Load_Replays(Args[0]);
+                }
             }
         }
     }
