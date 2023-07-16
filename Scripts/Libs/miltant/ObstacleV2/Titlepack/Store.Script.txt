@@ -386,11 +386,6 @@ Void Loop() {
                     ObsStore_Servers_SearchResult = Indexer::Search(Args[0], "Servers", 24);
                 }
             }
-            case "OpenExplorer": {
-                if (Args.count > 0) {
-                    OpenFileInExplorer(TL::Replace(Args[0], "/", "\\"));
-                }
-            }
             case "ObsStore_RefreshMaps": {
                 if (Args.count > 0) {
                     Load_Maps(Args[0]);
