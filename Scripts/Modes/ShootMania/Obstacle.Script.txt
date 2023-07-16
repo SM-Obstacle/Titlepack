@@ -259,6 +259,9 @@ if (Obstacle::IsSameWallJumpMap()) {
 
 SpawnInvulnerabilityDuration = Obstacle::InvulnerabilityDuration();
 
+
+G_EnableRecords = !Obstacle::IsRandomizerMap() && ServerModeName != "";
+
 if (Obstacle::IsRandomizerMap()) {
     declare Text Seed = "";
 
@@ -283,9 +286,8 @@ if (Obstacle::IsRandomizerMap()) {
         UIManager.UIAll.SendChat("""Map randomized with the seed $<$f80{{{Seed}}}$> (forced by script settings).""");
     }
 
-    G_EnableRecords = False;
     Layers::Detach("Records");
-} else if (Settings::GetEnableRecords() && G_EnableRecords) {
+} else if (Settings::GetEnableRecords()) {
     if (G_IsCampaign)
         Layers::Create("Records", MedalsWidget::GetLayer());
     else
@@ -334,10 +336,10 @@ if (Settings::GetForceInvisibleSkin()) {
     Obstacle::UpdatePlayersSkin(NullId);
 }
 
-if (Settings::GetEnableRecords()) {
+if (G_EnableRecords && Settings::GetEnableRecords()) {
     Layers::Attach("Records");
     API::Loop();
-} else if (G_EnableRecords) {
+} else if (G_EnableRecords || Settings::GetEnableRecords()){
     Layers::Detach("Records");
 }
 
@@ -711,7 +713,7 @@ Void CreateUI() {
 
     Layers::Create("Auth", MlAuth::GetLayer());
 
-    if (Settings::GetEnableRecords()) {
+    if (G_EnableRecords && Settings::GetEnableRecords()) {
         if (G_IsCampaign)
             Layers::Create("Records", MedalsWidget::GetLayer());
         else
@@ -803,9 +805,13 @@ Void UpdateSettings() {
         Settings::SetAllowJump(S_AllowJump);
     }
 
-    declare Boolean EnableRecords = S_EnableRecords && G_EnableRecords;
-    if (EnableRecords != Settings::GetEnableRecords()) {
-        Settings::SetEnableRecords(EnableRecords);
+    if (S_EnableRecords != Settings::GetEnableRecords()) {
+        Settings::SetEnableRecords(S_EnableRecords);
+        if (!S_EnableRecords) {
+            Layers::Detach("Records");
+        } else {
+            Layers::Attach("Records");
+        }
     }
 
     if (S_NextMapVotingRatio != Settings::GetNextMapVotingRatio()) {
