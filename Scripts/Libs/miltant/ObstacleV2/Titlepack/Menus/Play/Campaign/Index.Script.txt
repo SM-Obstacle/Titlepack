@@ -9,6 +9,7 @@
 	Text UID;
 	Text Name;
 	Text Author;
+	Text AuthorLogin;
 	Text Thumbnail;
 	Text Path;
 	Integer PersonalBest;
@@ -82,11 +83,11 @@ Text Build() {
 		</frame>
 
 		<frame pos="0 15.67">
-			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textprefix="   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
 			<quad size="53 11.83" bgcolor="0009"/>
 		</frame>
 		<frame pos="0 2">
-			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textprefix="   " textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
 			<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
 		</frame>
 		<frame pos="0 -25">
@@ -152,7 +153,7 @@ Text Build() {
 
 		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" textfont="regular" id="Label_EventLn1"/>
 		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" textfont="light" id="Label_EventLn2"/>
-		<label pos="181 -24.5" textsize="2" text="$fff$i$l[https://obstacle.titlepack.io/campaign/29/summer_23]Leaderboards..." textfont="light" halign="right"/>
+		<label pos="181 -24.5" textsize="2" text="Leaderboards..." textprefix="$fff$i$l[{{{Constants::C_WebsiteUrl}}}/campaign/29/summer_23]" textfont="light" halign="right"/>
 		<label pos="181 -29.5" textsize="1.7" text="Any feedback? Contact $iunmecrandomofficiel$i  on Discord" textfont="light" halign="right"/>
 		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
@@ -170,6 +171,7 @@ Text Build() {
 		Text UID;
 		Text Name;
 		Text Author;
+		Text AuthorLogin;
 		Text Thumbnail;
 		Text Path;
 		Integer PersonalBest;
@@ -204,9 +206,17 @@ Text Build() {
 
 		declare K_Campaign[Integer] MapsList for Page;
 
+		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/map/" ^ MapsList[SelectedCampaign].Maps[SelectedMap].UID ^ "]";
+		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ MapsList[SelectedCampaign].Maps[SelectedMap].AuthorLogin ^ "]";
+
+		declare MapName = TL::RegexReplace("$[lL](\\[[^\\]]*\\]?)?", MapsList[SelectedCampaign].Maps[SelectedMap].Name, "g", "");
+		declare AuthorName = TL::RegexReplace("$[lL](\\[[^\\]]*\\]?)?", MapsList[SelectedCampaign].Maps[SelectedMap].Author, "g", "");
+		MapName = TL::Replace(MapsList[SelectedCampaign].Maps[SelectedMap].Name, "$z", "$z" ^ MapLink);
+		AuthorName = TL::Replace(MapsList[SelectedCampaign].Maps[SelectedMap].Author, "$z", "$z" ^ AuthorLink);
+
 		Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
-		Label_Map.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Name);
-		Label_Mapper.SetText(MapsList[SelectedCampaign].Maps[SelectedMap].Author);
+		Label_Map.SetText(MapLink ^ "   " ^ MapName);
+		Label_Mapper.SetText(AuthorLink ^ "   " ^ AuthorName);
 
 		if (MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest < 1) {
 			Label_PB.TextColor = <1., 1., 1.>;
@@ -652,6 +662,7 @@ Void Loop() {
 							CampaignList[MXId].Maps[Map_I].Thumbnail = "file://Thumbnails/MapUid/" ^ Map.UID ^ "/";
 							CampaignList[MXId].Maps[Map_I].Name = File.Name;
 							CampaignList[MXId].Maps[Map_I].Author = File.AuthorNickName;
+							CampaignList[MXId].Maps[Map_I].AuthorLogin = File.AuthorLogin;
 
 							if (MXId != 29) {
 								CampaignList[MXId].Maps[Map_I].Bronze = File.TMObjective_BronzeTime;
