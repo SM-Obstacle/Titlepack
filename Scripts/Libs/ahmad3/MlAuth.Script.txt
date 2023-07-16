@@ -10,34 +10,15 @@
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/miltant/RunFlags.Script.txt" as RunFlags
 
+#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
+
 /*********************************************
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2023-07-02"
-#Const  ScriptName  "Auth.Script.txt"
-
-#Struct K_Banishment {
-	Integer id;
-	Text date_ban;
-	Integer duration;
-	Text reason;
-	Text banished_by;
-	Boolean was_reprieved;
-	Boolean is_current;
-}
-
-K_Banishment Default_Ban() {
-	return K_Banishment {
-		banished_by = "",
-		date_ban = "",
-		duration = -1,
-		id = -1,
-		is_current = False,
-		reason = "",
-		was_reprieved = False
-	};
-}
+#Const  Version     "2023-07-09"
+#Const  ScriptName  "MlAuth.Script.txt"
 
 Text GetLayer() {
 	return """
@@ -47,12 +28,6 @@ Text GetLayer() {
 #Include "MathLib" as MathLib
 #Include "TimeLib" as TimeLib
 #Include "TextLib" as TL
-
-#Const C_HostUrl "https://obstacle.titlepack.io/api/"
-#Const C_MP_App_Id			"de1ce3ba8e"
-#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
-#Const C_MP_Redirect   "https://obstacle.titlepack.io/give_token"
-#Const C_PostHeaders		"Content-Type: application/json\nAccept: application/json"
 
 #Struct K_GetTokenBody {
 	Text login;
@@ -85,50 +60,36 @@ Text GetLayer() {
     Integer[] cps;
 }
 
-#Struct K_Banishment {
-	Integer id;
-	Text date_ban;
-	Integer duration;
-	Text reason;
-	Text banished_by;
-	Boolean was_reprieved;
-	Boolean is_current;
+#Struct K_HasFinishedresponse {
+	Boolean has_improved;
+	Text login;
+	Integer old;
+	Integer new;
 }
 
-#Struct K_UpdatePlayerResponse {
-    Text login;
-    Boolean banned;
-    K_Banishment current_ban;
-}
+{{{Ban::ML_Preproc()}}}
+{{{Error::ML_Preproc()}}}
+{{{RunFlags::ML_Preproc()}}}
 
+{{{Ban::ML_Content()}}}
+{{{Error::ML_Content()}}}
 {{{RunFlags::ML_FlagSum()}}}
 
-
-K_Banishment Default_Ban() {
-	return K_Banishment {
-		banished_by = "",
-		date_ban = "",
-		duration = -1,
-		id = -1,
-		is_current = False,
-		reason = "",
-		was_reprieved = False
-	};
-}
+declare Boolean G_Errored;
 
 // Used to create a POST request
-Ident MakePost(Text _Url, Text _Data, Text _Headers) {
+Ident MakePost(Text _Url, Text _Data) {
     if (Http.SlotsAvailable > 0) {
         log(" Sending request to "^_Url);
         log(" Payload: "^_Data);
 		declare persistent ObsStore_UserToken for LocalUser = "";
-        declare request <=> Http.CreatePost({{{dump(Constants::C_HostUrl)}}}^_Url, _Data, _Headers ^ "\nPlayerLogin: " ^ InputPlayer.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
+        declare request <=> Http.CreatePost({{{dump(Constants::C_HostUrl)}}}^_Url, _Data, "Content-Type: application/json\nAccept: application_json\nPlayerLogin: " ^ InputPlayer.User.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
         return request.Id;
     }
     return NullId;
 }
 
-Void UpdateToken() {
+Void Private_UpdateToken() {
 	log("Updating token...");
 
 	declare persistent Text ObsStore_UserToken for LocalUser;
@@ -138,32 +99,38 @@ Void UpdateToken() {
 	declare body = K_GetTokenBody {
 		login = login,
 		state = state,
-		redirect_uri = C_MP_Redirect
+		redirect_uri = {{{dump(Constants::C_MP_Redirect)}}}
 	};
 	
-	declare req = Http.CreatePost(
-		C_HostUrl ^ "player/get_token",
-		body.tojson(),
-		"Content-Type: application/json\nAccept: application/json");
-	
-	OpenLink(C_MP_Link
-		^ "client_id=" ^ C_MP_App_Id
-		^ "&redirect_uri=" ^ C_MP_Redirect
+	declare Req = MakePost("player/get_token", body.tojson());
+	if (Req == NullId) {
+		log("Could not send request to server");
+		G_Errored = True;
+		return;
+	}
+
+	declare req <=> Http.Requests[Req];
+
+	OpenLink({{{dump(Constants::C_MP_Link)}}}
+		^ "client_id=" ^ {{{dump(Constants::C_MP_App_Id)}}}
+		^ "&redirect_uri=" ^ {{{dump(Constants::C_MP_Redirect)}}}
 		^ "&state=" ^ state
 		^ "&scope=basic",
 		CMlScript::LinkType::ExternalBrowser);
 	
 	wait(req.IsCompleted);
 	if (req.StatusCode != 200) {
-		log("Error: " ^ req.StatusCode ^ req.Result);
-		UI.SendChat("An error occurred (" ^ req.StatusCode ^ "). Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
-		SendCustomEvent("token_error", [login]);
+		declare err = Error_Handle(req.StatusCode, req.Result);
+		UI.SendChat(err.message);
+		G_Errored = True;
 		return;
 	}
 	
 	declare K_GetTokenResponse response;
 	response.fromjson(req.Result);
 	ObsStore_UserToken = response.token;
+	
+	log("Token updated!");
 }
 
 Boolean usedRSBug(CSmPlayer _Player) {
@@ -192,7 +159,7 @@ Boolean usedSpeedHack(CSmPlayer _Player) {
 }
 
 // Send records
-Void PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _LastCpTimes) {
+Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _LastCpTimes) {
     declare Flags = GetFlagsSum(
         usedRSBug(InputPlayer),
         usedAltGlitch(InputPlayer),
@@ -212,77 +179,83 @@ Void PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _LastCpTi
         cps = _LastCpTimes
     };
 
-    declare Req = MakePost("player/finished", body.tojson(), C_PostHeaders);
-
+    declare Req = MakePost("player/finished", body.tojson());
 	if (Req == NullId) {
 		log("Could not send request to server");
 		return;
 	}
 
-	wait (Http.Requests[Req].IsCompleted);
+	declare req <=> Http.Requests[Req];
 
-	if (Http.Requests[Req].StatusCode == 401) {
-		UpdateToken();
-	} else if (Http.Requests[Req].StatusCode == 200) {
-		declare netwrite Net_RecordsUpdated for UI = 0;
-		Net_RecordsUpdated = Now;
-		log("Records updated");
+	wait (req.IsCompleted);
+
+	if (req.StatusCode == C_HttpErr_Unauthorized && !G_Errored) {
+		Private_UpdateToken();
+		return Private_PlayerFinished(_LastRun, _RespawnCount, _LastCpTimes);
+	} else if (req.StatusCode != 200) {
+		declare err = Error_Handle(req.StatusCode, req.Result);
+		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
+		UI.SendChat(err.message);
 	} else {
-		log("Error: " ^ Http.Requests[Req].StatusCode ^ Http.Requests[Req].Result);
-		UI.SendChat("An error occurred (" ^ Http.Requests[Req].StatusCode ^ "). Please contact the developers (e.g. @ahmadbky or @MisterTicot).");
+		declare K_HasFinishedresponse res;
+		res.fromjson(req.Result);
+		declare has_improved = TL::ToText(res.has_improved);
+		declare old = TL::ToText(res.old);
+		declare new = TL::ToText(res.new);
+		SendCustomEvent("player:finished", [res.login, has_improved, old, new]);
 	}
 
-	Http.Destroy(Http.Requests[Req]);
+	Http.Destroy(req);
 }
 
 // Update player infos
-Void ReplaceOrCreatePlayer(CSmPlayer _Player) {
+Void Private_UpdatePlayer() {
     declare body = K_UpdatePlayerBody {
-        login = _Player.User.Login,
-        name = _Player.User.Name,
-        zone_path = _Player.User.ZonePath
+        login = InputPlayer.User.Login,
+        name = InputPlayer.User.Name,
+        zone_path = InputPlayer.User.ZonePath
     };
 
-    declare Req = MakePost("player/update", body.tojson(), C_PostHeaders);
+    declare Req = MakePost("player/update", body.tojson());
+	if (Req == NullId) {
+		log("Could not send request to server");
+		return;
+	}
+
+	declare req <=> Http.Requests[Req];
 	
-	wait (Http.Requests[Req].IsCompleted);
+	wait (req.IsCompleted);
 
-	switch (Http.Requests[Req].StatusCode) {
-		case 401: {
-			UpdateToken();
-		}
-		case 200: {
-			declare K_UpdatePlayerResponse response;
-			response.fromjson(Http.Requests[Req].Result);
-
-			declare netwrite K_Banishment Net_PlayerBanned for UI = Default_Ban();
-			Net_PlayerBanned = response.current_ban;
-		}
-		default: {
-			log("Error: " ^ Http.Requests[Req].StatusCode ^ Http.Requests[Req].Result);
-			UI.SendChat("An error occurred (" ^ Http.Requests[Req].StatusCode ^ "). Please contact the developers (e.g. @ahmadbky or @MisterTicot).");
-		}
+	if (req.StatusCode == C_HttpErr_Unauthorized && !G_Errored) {
+		Private_UpdateToken();
+		return Private_UpdatePlayer();
+	} else if (req.StatusCode != 200) {
+		declare err = Error_Handle(req.StatusCode, req.Result);
+		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
+		UI.SendChat(err.message);
 	}
 
 	Http.Destroy(Http.Requests[Req]);
 }
 
 main() {
+	Error_Init();
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
 
-	ReplaceOrCreatePlayer(InputPlayer);
+	Private_UpdatePlayer();
     declare netread _LastRun for UI = -1;
     declare netread _RespawnCount for UI = 0;
     declare netread Integer[] _LastCPTimes for UI;
     declare LastRun_Cache = _LastRun;
     declare RespawnCount_Cache = _RespawnCount;
-
+	
 	while (True) {
 		yield;
+
 		if (_LastRun != LastRun_Cache || _RespawnCount != RespawnCount_Cache) {
 			if (_LastRun > 0) {
-				PlayerFinished(_LastRun, _RespawnCount, _LastCPTimes);
+				Private_PlayerFinished(_LastRun, _RespawnCount, _LastCPTimes);
 			}
 			LastRun_Cache = _LastRun;
 			RespawnCount_Cache = _RespawnCount;

@@ -3,6 +3,9 @@
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "TextLib" as TL
 
+#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
+
 /*********************************************
     CONSTANTS
 *********************************************/
@@ -105,8 +108,13 @@ Text GetLayer() {
         K_RankedRecord[] response;
     }
 
+    {{{Ban::ML_Preproc()}}}
+    {{{Error::ML_Preproc()}}}
+
+    {{{Ban::ML_Content()}}}
+    {{{Error::ML_Content()}}}
+
     declare CHttpRequest G_Req;
-    declare Boolean G_ReqPending;
 
     Integer GetMedal(Integer Medal) {
         if (Summer23Medals.existskey(Map.MapInfo.MapUid)) {
@@ -130,7 +138,6 @@ Text GetLayer() {
         declare params = "?mapId="^Map.Id^"&playerId="^_Login;
         declare url = "{{{Constants::C_HostUrl}}}overview"^params;
         G_Req = Http.CreateGet(url, True, "Accept: application/json");
-        G_ReqPending = True;
     }
 
     main() {
@@ -145,11 +152,10 @@ Text GetLayer() {
         declare netread Net_Time1 for InputPlayer = 0;
         declare Integer CurrentPlayerRank for LocalUser = 0;
         declare netread Net_RecordsUpdated for Teams[0] = -1;
-        declare LastUpdate = -1;
+        declare LastUpdate = Net_RecordsUpdated;
         declare Running = False;
 
-        G_ReqPending = False;
-        declare LastPlayerLogin = "";
+        declare LastPlayerLogin = InputPlayer.User.Login;
         declare UpdateUI = False;
 
         declare Frame_Widget <=> (Page.GetFirstChild("Frame_Medals_Records") as CMlFrame);
@@ -170,14 +176,10 @@ Text GetLayer() {
                 Frame_Widget.Show();
             }
 
-            if (LocalPlayer.User.Login != LastPlayerLogin) {
-                LastUpdate = -1;
-                LastPlayerLogin = LocalPlayer.User.Login;
-            }
-
-            if (Net_RecordsUpdated != LastUpdate || (Net_CpProgress < 0 && Running) ) {
-                UpdateRecords(LocalPlayer.User.Login);
+            if (Net_RecordsUpdated != LastUpdate) {
+                log("Records updated " ^ LastUpdate ^ " -> " ^ Net_RecordsUpdated ^ " (running: " ^ Running ^ ")");
                 LastUpdate = Net_RecordsUpdated;
+                UpdateRecords(LocalPlayer.User.Login);
                 Running = False;
             }
 
@@ -185,12 +187,12 @@ Text GetLayer() {
                 Running = True;
             }
 
-            if (G_ReqPending && G_Req.IsCompleted) {
+            if (G_Req != Null && G_Req.IsCompleted) {
                 if (G_Req.StatusCode == 200)
                     UpdateUI = True;
                 else {
-                    log("Error: "^G_Req.StatusCode);
-                    log(G_Req.Result);
+                    declare err = Error_Handle(G_Req.StatusCode, G_Req.Result);
+                    UI.SendChat(err.message);
                     Http.Destroy(G_Req);
                     G_Req = Null;
                 }
@@ -199,12 +201,9 @@ Text GetLayer() {
             if (UpdateUI) {
                 UpdateUI = False;
                 declare K_Response response;
-
-                if (G_ReqPending && G_Req.IsCompleted) {
-                    response.fromjson(G_Req.Result);
-                    Http.Destroy(G_Req);
-                    G_ReqPending = False;
-                }
+                response.fromjson(G_Req.Result);
+                Http.Destroy(G_Req);
+                G_Req = Null;
 
                 declare PlayerRank = -1;
                 foreach (I => Record in response.response) {

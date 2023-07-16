@@ -4,6 +4,9 @@
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
+#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
+
 /*********************************************
     CONSTANTS
 *********************************************/
@@ -56,6 +59,9 @@ Text GetLayer() {
 <script><!--
     #Include "TextLib" as TL
 
+    {{{Ban::ML_Preproc()}}}
+    {{{Error::ML_Preproc()}}}
+
     #Struct K_RankedRecord {
         Integer rank;
         Text login;
@@ -66,6 +72,9 @@ Text GetLayer() {
     #Struct K_Response {
         K_RankedRecord[] response;
     }
+
+    {{{Ban::ML_Content()}}}
+    {{{Error::ML_Content()}}}
 
     declare CHttpRequest G_Req;
 
@@ -80,11 +89,11 @@ Text GetLayer() {
         wait(InputPlayer != Null && Page != Null);
 
         declare LastPlayerLogin = "";
-        declare LastUpdate = -1;
 
         declare Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
         declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
         declare netread Net_RecordsUpdated for Teams[0] = -1;
+        declare LastUpdate = Net_RecordsUpdated;
 
         while (True) {
             yield;
@@ -99,12 +108,17 @@ Text GetLayer() {
             }
 
             if (Net_RecordsUpdated != LastUpdate && Frame_Widget.Visible) {
+                log("RecordsWidget: Updating records");
                 UpdateRecords(LocalPlayer.User.Login);
                 LastUpdate = Net_RecordsUpdated;
             }
 
             if (G_Req != Null && G_Req.IsCompleted) {
+                log("RecordsWidget: Request completed");
+                log("RecordsWidget: Status code: " ^ G_Req.StatusCode);
                 if (G_Req.StatusCode != 200) {
+                    declare err = Error_Handle(G_Req.StatusCode, G_Req.Result);
+                    UI.SendChat(err.message);
                     Http.Destroy(G_Req);
                     G_Req = Null;
                     continue;

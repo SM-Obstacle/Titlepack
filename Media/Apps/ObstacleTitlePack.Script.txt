@@ -7,39 +7,16 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Store.Script.txt"   				as ObsStore
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt"   			as UI
 
+#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
+
 #Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
 #Include "Libs/smokegun/Constants.Script.Txt" as Constants
-
-#Const C_UnauthorizedStatusCode 401
-
-#Const C_MP_App_Id			"de1ce3ba8e"
-#Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
-#Const C_MP_Redirect		"https://obstacle.titlepack.io/give_token"
-//#Const C_MP_Redirect		"http://192.168.1.30:8000/give_token"
-//#Const C_MP_Redirect		"http://192.168.1.30:3001/player/give_token"
-// #Const C_MP_Redirect "https://api.obstacle.ovh/player/give_token"
-// #Const C_MP_Redirect "http://localhost:3000/player/give_token"
-
-#Struct K_Banishment {
-    Integer id;
-    Text date_ban;
-    Integer duration;
-    Text reason;
-    Text banished_by;
-    Boolean was_reprieved;
-    Boolean is_current;
-}
 
 #Struct K_UpdatePlayerBody {
 	Text login;
 	Text name;
 	Text zone_path;	
-}
-
-#Struct K_UpdatePlayerResponse {
-	Text login;
-    Boolean banned;
-    K_Banishment current_ban;
 }
 
 #Struct K_GetTokenBody {
@@ -53,8 +30,6 @@
 }
 
 declare Boolean G_Errored;
-
-declare K_Banishment G_CurrentBan;
 
 Void LogMessage(Text _Msg) {
 	log("[Obs Auth] " ^ _Msg);
@@ -74,21 +49,44 @@ Text Private_UpdateToken() {
 	declare body = K_GetTokenBody {
 		login = login,
 		state = state,
-		redirect_uri = C_MP_Redirect
+		redirect_uri = Constants::C_MP_Redirect
 	};
+
+	declare warningDialog = UI::NewDialog("Authentication",
+		UI::K_Message {
+			Label = """We are about to refresh your personal tokens.
+
+This procedure will open your browser to the
+ManiaPlanet official page. You will only have to
+authenticate with the same account as the
+one you use in game."""
+		}, [
+			UI::K_Button {
+				ControlId = "OK_Button",
+				Label = "OK",
+				Default = True
+			}
+		]
+	);
 	
+	declare moveOn = False;
+	while (!moveOn) {
+		declare state = UI::Prompt(warningDialog, True);
+		moveOn = state.Over && state.Success;
+		yield;
+	}
+
 	declare req = Http.CreatePost(
 		Constants::C_HostUrl ^ "player/get_token",
 		body.tojson(),
 		"Content-Type: application/json\nAccept: application/json");
 		
-	declare Link = C_MP_Link
-		^ "client_id=" ^ C_MP_App_Id
-		^ "&redirect_uri=" ^ C_MP_Redirect
+	declare Link = Constants::C_MP_Link
+		^ "client_id=" ^ Constants::C_MP_App_Id
+		^ "&redirect_uri=" ^ Constants::C_MP_Redirect
 		^ "&state=" ^ state
 		^ "&scope=basic";
 	OpenLink(Link, CManiaApp::ELinkType::ExternalBrowser);
-
 
 	declare PendingDialog = UI::NewDialog("Welcome to Obstacle!",
 		UI::K_Message {
@@ -109,17 +107,16 @@ Text Private_UpdateToken() {
 	}
 	UI::CloseDialog(PendingDialog);
 
-
 	if (req.StatusCode != 200) {
-		declare Status = "Error: ";
-		switch (req.StatusCode) {
-			case 401: Status ^= "Authentificaton failed";
-			case 403: Status ^= "Forbidden";
-			case 12002: Status ^= "Connection timed out";
-			default: Status ^= req.StatusCode;
-		}
-		UI::Notice_Async(Status, "An error occurred.\nIf it persists please contact the Obstacle developers\n(i.e. @ahmadbky or @MiLTanT on discord).");
-		// UI.SendChat("An error occurred. Please contact the developers (e.g. @ahmadbky or @MiLTanT on discord).");
+		declare _err = Error::Handle(req.StatusCode, req.Result);
+		UI::Notice_Async("API error",
+			"""An error occurred.
+To help the developers to debug, you can open the
+console with Ctrl+G, then take a screenshot,
+and send it to the $l[https://discord.gg/PfeBn98DyY]Obstacle Discord$z.
+If this problem persists, please contact the Obstacle
+developers (i.e. @ahmadbky or @miltant on discord)."""
+		);
 		G_Errored = True;
 		return ObsStore_UserToken;
 	}
@@ -133,14 +130,12 @@ Text Private_UpdateToken() {
 	return ObsStore_UserToken;
 }
 
-K_UpdatePlayerResponse Private_UpdatePlayer(Text _Secret) {
+Ban::K_OptBanishment Private_UpdatePlayer(Text _Secret) {
 	declare body = K_UpdatePlayerBody {
 		login = LocalUser.Login,
 		name = LocalUser.Name,
 		zone_path = LocalUser.ZonePath
 	};
-
-	log(Constants::C_HostUrl);
 
 	declare req = Http.CreatePost(
 		Constants::C_HostUrl ^ "player/update",
@@ -150,31 +145,14 @@ K_UpdatePlayerResponse Private_UpdatePlayer(Text _Secret) {
 	
 	wait (req.IsCompleted);
 
-	log("Update info: " ^ req.StatusCode ^ " " ^ req.Result);
-
-	if (req.StatusCode == C_UnauthorizedStatusCode && !G_Errored) {
+	if (req.StatusCode == Error::C_HttpErr_Unauthorized && !G_Errored) {
 		// updating token
 		return Private_UpdatePlayer(Private_UpdateToken());
 	} else if (req.StatusCode != 200) {
-		return K_UpdatePlayerResponse {
-			login = LocalUser.Login,
-			banned = False
-		};
+		return Error::Handle(req.StatusCode, req.Result).ban;
 	}
 
-	declare K_UpdatePlayerResponse res;
-	declare err = res.fromjson(req.Result);
-
-	log(req.Result);
-
-	if (err) {
-		log(res);
-		log("conversion not ok");
-		// return Null;
-	}
-
-	if (res.banned) G_CurrentBan = res.current_ban;
-	return res;
+	return Ban::Empty();
 }
 
 Boolean DetectOffline() {
@@ -205,13 +183,15 @@ Void Greet() {
 	if (ObsStore_UserToken == "") {
 		declare WelcomeDialog = UI::NewDialog("Welcome to Obstacle!",
 			UI::K_Message {
-				Label = "Before we race on, let's take a quick pit stop: We're\n"
-					^ "upgrading our system to include browser-based\n"
-					^ "authentication via Maniaplanet services.\n\n"
-					^ "This quick step ensures that only you can set\n"
-					^ "records under your name.\n\n"
-					^ "We appreciate your understanding and support.\n"
-					^ "Let's race on!"
+				Label = """Before we race on, let's take a quick pit stop: We're
+upgrading our system to include browser-based
+authentication via Maniaplanet services.
+
+This quick step ensures that only you can set
+records under your name.
+
+We appreciate your understanding and support.
+Let's race on!"""
 			}, [
 				UI::K_Button {
 					ControlId = "OK_Button",
@@ -231,18 +211,20 @@ Void Greet() {
 		}
 	}
 
-	declare CurrentAccount = Private_UpdatePlayer(ObsStore_UserToken);
+	declare ban = Private_UpdatePlayer(ObsStore_UserToken);
 
-	if (CurrentAccount.banned) {
+	if (ban.isPresent) {
 		declare BanDialog = UI::NewDialog("Account Banned",
 			UI::K_Message {
-				Label = "We're sorry, but it appears that your account\n"
-					^ "has been banned from Obstacle.\n\n"
-					^ "This may be due to violation of our community\n"
-					^ "standards, like cheating or offensive behavior.\n\n"
-					^ "If you believe this is a mistake or if you'd like\n"
-					^ "to appeal the decision, please contact our\n"
-					^ "support team on Discord.\n"
+				Label = """We're sorry, but it appears that your account
+has been banned from Obstacle.
+
+This may be due to violation of our community
+standards, like cheating or offensive behavior.
+
+If you believe this is a mistake or if you'd like
+to appeal the decision, please contact our
+support team on Discord."""
 			}, [
 				UI::K_Button {
 					ControlId = "OK_Button",
@@ -266,6 +248,9 @@ Void Greet() {
 }
 
 main() {
+	log("Obstacle Titlepack loaded!");
+
+	Error::Init();
 	if (!DetectOffline())
 		Greet();
 	

@@ -615,7 +615,7 @@ Void Loop() {
 
 	if (G_CampaignAPIPending != -1 && G_APIRequest.IsCompleted) {
 		declare K_CampaignResponse_Map[] ResponseMaps;
-		if (ResponseMaps.fromjson(G_APIRequest.Result)) {
+		if (G_APIRequest.StatusCode == 200 && ResponseMaps.fromjson(G_APIRequest.Result)) {
 			declare Integer[Text] Times;
 			foreach (Map in ResponseMaps) {
 				Times[Map.map_uid] = Map.time;

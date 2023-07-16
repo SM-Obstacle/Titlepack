@@ -117,13 +117,18 @@ Integer GetFlagsSum() {
 	return Private_GetFlagsSum(G_Flag_RSBug, G_Flag_ALTGlitch, G_Flag_PvPWeapons, G_Flag_PvPCollisions, G_Flag_SpeedHack);
 }
 
+Text ML_Preproc() {
+	return """
+#Const C_Flag_RSBug 1
+#Const C_Flag_ALTGlitch 4
+#Const C_Flag_PvPWeapons 16
+#Const C_Flag_PvPCollisions 64
+#Const C_Flag_SpeedHack 256
+	""";
+}
+
 Text ML_FlagSum() {
 	return """
-	#Const C_Flag_RSBug 1
-	#Const C_Flag_ALTGlitch 4
-	#Const C_Flag_PvPWeapons 16
-	#Const C_Flag_PvPCollisions 64
-	#Const C_Flag_SpeedHack 256
 	Integer Private_GetFlagsSum(Integer Flag_RSBug, Integer Flag_ALTGlitch, Integer Flag_PvPWeapons, Integer Flag_PvPCollisions, Integer Flag_SpeedHack) {
 		return Flag_RSBug * C_Flag_RSBug
 			 + Flag_ALTGlitch * C_Flag_ALTGlitch

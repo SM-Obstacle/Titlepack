@@ -12,6 +12,9 @@
 #Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
 #Include "Libs/miltant/Nadeo_Fork/ShootMania/SM3.Script.txt" as SM
 
+#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
+
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/smokegun/Player.Script.txt" as Player
 
@@ -20,7 +23,7 @@
 /*********************************************
  CONSTANTS
 *********************************************/
-#Const Version "2021-07-14"
+#Const Version "2023-07-09"
 #Const ScriptName "ObstacleRecords.Script.txt"
 
 #Struct SRequestData {
@@ -41,13 +44,6 @@
     Text map_uid;
     Integer cps_number;
     K_UpdatePlayerBody author;
-}
-
-#Struct K_HasFinishedResponse {
-    Boolean has_improved;
-    Text login;
-    Integer old;
-    Integer new;
 }
 
 /*********************************************
@@ -140,12 +136,12 @@ Void ReplaceOrCreateMap(Integer _CpsNumber) {
 /////////////////////////////////////////////////////////////////
 
 // Process requests
-Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
+Void Loop()
 {
     declare Ident[] ToDelete = [];
+    declare updateRecords = False;
 
     foreach (reqId => ReqData in G_WaitingToComplete) {
-
         if (!Http.Requests.existskey(reqId)) {
             ToDelete.add(reqId);
             continue;
@@ -158,16 +154,14 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
         Log::Log(LogPrefix()^" Response body: "^request.Result);
 
         if (request.StatusCode == 200) {
-
             switch (ReqData.Type) {
                 case Constants::C_Request_ReplaceOrCreateMap: {
-                    if (G_UpdateRecords == 0)
-                        G_UpdateRecords = Now;
+                    updateRecords = True;
                 }
             }
-        }
-        else {
-             UIManager.UIAll.SendChat(TL::Compose("OBSTACLE API ERROR(%1): Please contact the developers on Obstacle's discord.", ""^request.StatusCode));
+        } else {
+            declare err = Error::Handle(request.StatusCode, request.Result);
+            UIManager.UIAll.SendChat(err.message);
         }
 
         ToDelete.add(reqId);
@@ -197,29 +191,8 @@ Void Loop(Text _BestRecordMsg, Text _WorseRecordMsg)
         }
     }
 
-    
-    foreach (Player in Players) {
-        declare netread Net_RecordsUpdated for UIManager.GetUI(Player) = 0;
-        declare LastRecordUpdated for Player = 0;
-        if (Net_RecordsUpdated > LastRecordUpdated) {
-            LastRecordUpdated = Net_RecordsUpdated;
-            log(Player.Login^" updated (server)");
-
-            if (G_UpdateRecords == 0)
-                G_UpdateRecords = Now + 3000;
-
-            log(G_UpdateRecords);
-        }
-        declare netread Net_PlayerBanned for UIManager.GetUI(Player) = Auth::Default_Ban();
-        if (Net_PlayerBanned.is_current) {
-            Player::setBanned(Player, Net_PlayerBanned);
-        }
-    }
-
-    if (G_UpdateRecords != 0 && Now > G_UpdateRecords) {
-        log("Signal: Updating records");
-        declare netwrite Net_RecordsUpdated for Teams[0] = Now;
+    if (updateRecords) {
+        declare netwrite Integer Net_RecordsUpdated for Teams[0];
         Net_RecordsUpdated = Now;
-        G_UpdateRecords = 0;
     }
 }
