@@ -169,6 +169,8 @@ Text Build(Text _FileType, Boolean _New) {
 	declare Boolean G_NeedRerender;
 	declare Text G_Selected_Name;
 
+	declare Integer G_RefreshDebouncer;
+
 	{{{StringLib::ExportContrast()}}}
 
 	Void BrowseAbsolute(Text _Path) {
@@ -301,6 +303,26 @@ Text Build(Text _FileType, Boolean _New) {
 		}
 	}
 
+	Void Refresh() {
+		declare Text[][Text] ObsStore_Requests for LocalUser;
+
+		if (G_RefreshDebouncer + 1000 < Now) {
+			G_RefreshDebouncer = Now;
+			ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [];
+
+			declare Label_Refresh = (Page.GetFirstChild("Label_Refresh") as CMlLabel);
+			Label_Refresh.RelativeRotation = 0.;
+			AnimMgr.Add(
+				Label_Refresh, "<label rot=\"180\"/>",
+				1000, CAnimManager::EAnimManagerEasing::QuadOut
+			);
+			AnimMgr.AddChain(
+				Label_Refresh, "<label rot=\"0\"/>",
+				0, CAnimManager::EAnimManagerEasing::Linear
+			);
+		}
+	}
+
 	main () {
 		declare Window_Picker = (Page.GetFirstChild("Window_Picker") as CMlFrame);
 		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
@@ -325,7 +347,6 @@ Text Build(Text _FileType, Boolean _New) {
 		declare Text ObsStore_Selected{{{_FileType}}} for LocalUser;
 
 		declare Integer {{{_FileType}}}s_LastUpdate = 0;
-		declare Integer RefreshDebouncer = 0;
 		declare Integer LastClick = 0;
 		declare LastScrollOffset = 0.;
 		G_NeedRerender = True;
@@ -335,6 +356,7 @@ Text Build(Text _FileType, Boolean _New) {
 		declare PendingSearch = False;
 
 		G_CurrentFolder = "/";
+		Refresh();
 				
 		declare Skins_Loaded = False;""";
 
@@ -405,22 +427,7 @@ Text Build(Text _FileType, Boolean _New) {
 								}
 								case "Label_Refresh": {
 									SearchResults = False;
-
-									if (RefreshDebouncer + 1000 < Now) {
-										RefreshDebouncer = Now;
-										ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [];
-
-										declare Label_Refresh = (Page.GetFirstChild("Label_Refresh") as CMlLabel);
-										Label_Refresh.RelativeRotation = 0.;
-										AnimMgr.Add(
-											Label_Refresh, "<label rot=\"180\"/>",
-											1000, CAnimManager::EAnimManagerEasing::QuadOut
-										);
-										AnimMgr.AddChain(
-											Label_Refresh, "<label rot=\"0\"/>",
-											0, CAnimManager::EAnimManagerEasing::Linear
-										);
-									}
+									Refresh();
 								}
 								case "Label_Parent": {
 									if (SearchResults) {

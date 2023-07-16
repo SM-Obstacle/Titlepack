@@ -346,8 +346,6 @@ Void Loop_Skins() {
 
 Void Load() {
     Load_Multiplayer();
-    Load_Maps();
-    Load_Replays();
     Load_Skins();
 }
 
