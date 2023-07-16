@@ -44,7 +44,7 @@ Text Build(Text _FileType, Boolean _New) {
 		</frame>
 
 		<frame id="Frame_Body" pos="3.67 -17.66">
-			<quad pos="38.08 -23.49" size="83.5 46.97" id="Quad_Preview" halign="center" valign="center2" keepratio="Fit"/>
+			<quad pos="38.08 -23.49" size="83.5 47" id="Quad_Preview" halign="center" valign="center2" keepratio="Fit"/>
 			
 			<frame pos="0 -51" id="Frame_Deco">
 				<label pos="8.08 -4" size="8 8" text="" halign="center" valign="center2" id="Deco_Minus" scriptevents="1" hidden="1" focusareacolor1="0000" focusareacolor2="ccc5"/>

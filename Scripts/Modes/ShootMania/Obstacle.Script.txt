@@ -67,7 +67,7 @@
 #Setting S_PvPWeapons False as "Force PvP Weapons"
 #Setting S_PvPCollisions False as "Force PvP Collisions"
 
-#Setting S_ScriptEnvironment "development"
+#Setting S_ScriptEnvironment "production"
 
 #Command Command_BeginSurvival (Integer) as _("Begin survival cup (max lives)")
 #Command Command_EndSurvival (Integer) as _("End survival cup")

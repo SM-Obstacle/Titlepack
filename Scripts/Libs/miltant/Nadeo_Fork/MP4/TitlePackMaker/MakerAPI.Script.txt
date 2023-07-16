@@ -265,9 +265,8 @@ Void ManagePackaging(CPackCreatorTitleInfo _TitleInfo)
 	declare Text AbbrevTitleMusic		= SystemImport(TitleMusic);
 	_TitleInfo.Packaging_LogosFileName	= AbbrevStationLogos;
 	_TitleInfo.Packaging_ImageFileName	= AbbrevStationImage;
-	_TitleInfo.ForcedPlayerModel		= PlayerModel;
+	// _TitleInfo.ForcedPlayerModel		= PlayerModel;
 	_TitleInfo.Menus_MusicFileName		= AbbrevTitleMusic;
-	_TitleInfo.Station_ManialinkUrl = "";
 }
 
 Void GeneratePack(CPackCreator _PackCreator,
@@ -309,11 +308,6 @@ Void GeneratePack(CPackCreator _PackCreator,
 		if (!AddedOpenplanet)
 			_PackCreator.Build_AddFolder(PackIdent, "Openplanet/", True, False, False, False);
 	}
-
-	// _PackCreator.Build_AddFile(PackIdent, "Openplanet/JoinbugWorkaround.as.Script.txt", False, True, False);
-	// _PackCreator.Build_AddFile(PackIdent, "Openplanet/JoinbugWorkaround.as", False, True, False);
-	// _PackCreator.Build_AddFile(PackIdent, "Openplanet/JoinbugWorkaround.as.sig", False, True, False);
-
 
 	_PackCreator.Build_Generate(PackIdent, False);
 	wait(_PackCreator.Build_IsGenerated(PackIdent));

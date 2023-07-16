@@ -40,6 +40,7 @@
 // Settings
 // ---------------------------------- //
 #Setting S_TimeLimit 20 as _("Time limit (minutes)")
+#Setting S_ForceInvisibleSkin True as "Force invisible skin"
 #Setting S_RoundLimit 5 as _("Round limit")
 #Setting S_MinPlayer 2  as _("Number of players needed to start a map")
 #Setting S_PointDistribution False as _("Enable dynamic point distribution")
@@ -76,6 +77,8 @@ declare Integer         G_State;
 declare Boolean[Ident]  G_FinishedScores;
 declare Ident           G_InvisibleSkinId;
 
+declare Ident   G_InvisibleSkinId;
+declare Boolean G_ForceInvisibleSkin;
 declare Boolean G_LastUsePvPWeapons;
 declare Boolean G_LastUsePvPCollisions;
 
@@ -187,6 +190,7 @@ ItemList_End();
 ***Match_StartServer***
 ***
 Obstacle::SetMode(Constants::C_Mode_Sprint);
+UpdateSettings();
 ***
 
 ***Match_InitMap***
@@ -198,6 +202,7 @@ declare LastUpdate = -1;
 ***Match_StartMap***
 ***
 CreateUI();
+UpdateSettings();
 
 // map is invalid
 if (!Obstacle::PrepareMap(ModeInfo::GetName())) {
@@ -219,8 +224,6 @@ if (Obstacle::IsSameWallJumpMap()) {
 
 UIManager.UIAll.MarkersXML = Markers::GetXML();
 Layers::Update("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
-
-UpdateSettings();
 
 Items::Place();
 foreach (Player in AllPlayers) {
@@ -375,7 +378,11 @@ if (LastUpdate + C_SettingsUpdateInterval < Now) {
     UpdateSettings();
 }
 
-Obstacle::UpdatePlayersSkin(G_InvisibleSkinId);
+if (Settings::GetForceInvisibleSkin()) {
+    Obstacle::UpdatePlayersSkin(G_InvisibleSkinId);
+} else {
+    Obstacle::UpdatePlayersSkin(NullId);
+}
 
 if (G_State == C_State_Waiting)
 {
@@ -1039,6 +1046,17 @@ Void UpdateSettings() {
             EndTime = StartTime + (S_TimeLimit * 60 * 1000);
         } else if (!Net_IsWarmup) {
             EndTime = -1;
+        }
+    }
+
+    declare Boolean ForceInvisibleSkin = S_ForceInvisibleSkin && G_ForceInvisibleSkin;
+    if (ForceInvisibleSkin != Settings::GetForceInvisibleSkin()) {
+        Settings::SetForceInvisibleSkin(ForceInvisibleSkin);
+
+        if (Settings::GetForceInvisibleSkin()) {
+            Obstacle::UpdatePlayersSkin(G_InvisibleSkinId);
+        } else {
+            Obstacle::UpdatePlayersSkin(NullId);
         }
     }
 
