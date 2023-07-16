@@ -83,7 +83,7 @@ Text Build(Text _FileType, Boolean _New) {
 				selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
 			<label textcolor="fff" pos="153.17 -9.17" text="" valign="center2" halign="center" id="Label_Parent" scriptevents="1" size="8 8" focusareacolor1="0000" focusareacolor2="0000"/>
 			<label textcolor="fff" pos="160.17 -9.17" text="" valign="center2" halign="center" id="Label_Refresh" scriptevents="1" size="8 8" focusareacolor1="0000" focusareacolor2="0000"/>
-			<label textcolor="fff" pos="48.33 -9" text="$ff0" valign="center2" halign="center"/>
+			<label textcolor="fff" pos="48.33 -9" text="$ff0" valign="center2" halign="center" id="Label_Folder" scriptevents="1" size="8 8" focusareacolor1="0000" focusareacolor2="0000"/>
 			<quad pos="44.33 -5.17" size="120.17 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search"
 				scriptevents="1" modulatecolor="000" opacity="0.5"/>
 		</frame>
@@ -396,6 +396,9 @@ Text Build(Text _FileType, Boolean _New) {
 								case "Quad_Search": {
 									Entry_Search.StartEdition();
 									ObsStore_Requests["Index_{{{_FileType}}}s"] = [];
+								}
+								case "Label_Folder": {
+									ObsStore_Requests["OpenExplorer"] = ["{{{_FileType}}}s" ^ G_CurrentFolder];
 								}
 								case "Label_Refresh": {
 									SearchResults = False;
