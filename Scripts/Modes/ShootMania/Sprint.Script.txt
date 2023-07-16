@@ -75,7 +75,6 @@
 declare Ident           G_FirstPlayer;
 declare Integer         G_State;
 declare Boolean[Ident]  G_FinishedScores;
-declare Ident           G_InvisibleSkinId;
 
 declare Ident   G_InvisibleSkinId;
 declare Boolean G_ForceInvisibleSkin;
