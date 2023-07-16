@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<manialink version="3">
+<script><![CDATA[
+    main () {
+        Dialog_Message("Welcome to the Obstacle Title Pack!");
+        EnterStation();
+        Station.FocusLightColor = <1., 0., 0.>;
+        Station.NormalLightColor = <0., 1., 0.>;
+    }
+]]></script>
+</manialink>
