@@ -23,14 +23,13 @@ UIManager.UIAll.UISequence = CUIConfig::EUISequence::Podium;
 declare Text CampaignEvent for Teams[0];
 
 while (True) {
-    yield;
+    MB_Private_Yield();
 
     if (CampaignEvent != "") {
         switch (CampaignEvent) {
             case "improve": {
                 foreach (Player in Players) {
                     Obstacle::ObsRespawnPlayer(Player, True);
-                    Obstacle::NewPlayer(Player);
                 }
             }
             case "next_map": {

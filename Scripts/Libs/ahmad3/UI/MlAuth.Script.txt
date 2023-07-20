@@ -17,17 +17,83 @@
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2023-07-09"
+#Const  Version     "2023-07-21"
 #Const  ScriptName  "MlAuth.Script.txt"
+
+#Const C_AuthMessage """We are about to refresh your personal tokens.
+
+This procedure will open your browser to the ManiaPlanet's login page.
+You will only have to authenticate with the same account as the one
+you use in game."""
+
+#Const C_AuthMessage_UpdatePlayer """Hey there! To continue to enjoy Obstacle,
+we need you to authenticate with your ManiaPlanet account.
+"""
+
+#Const C_AuthMessage_PlayerFinished """Hey! Before you finish and save your record,
+we need you to authenticate with your ManiaPlanet account.
+Do not skip this step, or your run will be lost! Don't worry, it's fast!
+"""
+
+#Const C_Security_OpenplanetDevMsg """It looks like you have Openplanet with developer mode enabled.
+This may offer you a number of features that could be contrary to fair play.
+It is why we do not authorize it in our mode.
+
+Please disable the developer mode for the plugins signature.
+
+If you think this is an error, please mention the developers
+(i.e. @miltant or @ahmadbky) on Discord.
+
+Thank you.
+"""
 
 Text GetLayer() {
 	return """
 <manialink version="3" name="Obstacle:Auth">
+<frame id="Frame_AuthDialog" hidden="1">
+	<frame z-index="1000" pos="0 0">
+		<quad z-index="-1" size="100 75" style="Bgs1" substyle="BgButtonOff" halign="center" valign="center" />
+		<label pos="0 35" size="40 5" text="Authentication" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
+
+		<frame pos="-48 14">
+			<label id="AuthDialog_HeadMsg" size="96 4" halign="left" valign="center" textsize="1.4" />
+		</frame>
+
+		<frame pos="-48 0">
+			<label id="AuthDialog_Msg" size="96 4" halign="left" valign="center" textsize="1.4" text={{{dump(C_AuthMessage)}}} />
+		</frame>
+
+		<frame id="Frame_AuthDialog_Button" pos="0 -35">
+			<label pos="0 1" size="15 6" text="Fine!" valign="bottom" halign="center" textfont="regular" textsize="2.1" textcolor="fff" />
+			<quad
+			 	id="Frame_AuthDialog_Button_OK"
+				scriptevents="1"
+				valign="bottom"
+				halign="center"
+				size="15 6"
+				image="file://Media/Images/Obstacle/Dialogs/BDefault21.png"
+			/>
+		</frame>
+	</frame>
+</frame>
+<frame id="Frame_Security_OpenplanetDev" hidden="1">
+	<frame z-index="1000" pos="0 0">
+		<quad z-index="-1" size="100 75" style="Bgs1" substyle="BgButtonOff" halign="center" valign="center" />
+		<label pos="0 35" size="40 5" text="Warning" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
+
+		<frame pos="-48 14">
+			<label id="Security_Msg" size="96 4" halign="left" valign="center" textsize="1.4" text={{{dump(C_Security_OpenplanetDevMsg)}}} />
+		</frame>
+	</frame>
+</frame>
 <script><!--
 
 #Include "MathLib" as MathLib
 #Include "TimeLib" as TimeLib
 #Include "TextLib" as TL
+
+#Const C_AuthMessage_UpdatePlayer {{{dump(dump(dump(C_AuthMessage_UpdatePlayer)))}}}
+#Const C_AuthMessage_PlayerFinished {{{dump(dump(dump(C_AuthMessage_PlayerFinished)))}}}
 
 #Struct K_GetTokenBody {
 	Text login;
@@ -77,6 +143,12 @@ Text GetLayer() {
 
 declare Boolean G_Errored;
 
+declare CMlFrame	G_AuthDialog;
+declare CMlQuad		G_AuthDialog_Submit;
+declare CMlLabel	G_AuthDialog_HeadMsg;
+
+declare CMlFrame	G_SecurityFrame;
+
 // Used to create a POST request
 Ident MakePost(Text _Url, Text _Data) {
     if (Http.SlotsAvailable > 0) {
@@ -89,8 +161,42 @@ Ident MakePost(Text _Url, Text _Data) {
     return NullId;
 }
 
-Void Private_UpdateToken() {
+Void Private_UpdateToken(Text _HeadMsg) {
 	log("Updating token...");
+
+	ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+	G_AuthDialog_HeadMsg.SetText(_HeadMsg);
+	G_AuthDialog.Show();
+
+	declare hovering = False;
+
+	declare prompting = True;
+	while (prompting) {
+		yield;
+		foreach (Event in PendingEvents) {
+			switch (Event.Type) {
+				case CMlScriptEvent::Type::MouseClick: {
+					if (Event.Control == G_AuthDialog_Submit) {
+						prompting = False;
+						break;
+					}
+				}
+				case CMlScriptEvent::Type::MouseOver: {
+					if (hovering) continue;
+					hovering = True;
+					G_AuthDialog_Submit.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/BActive21.png");
+				}
+				case CMlScriptEvent::Type::MouseOut: {
+					if (!hovering) continue;
+					hovering = False;
+					G_AuthDialog_Submit.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/BDefault21.png");
+				}
+			}
+		}
+	}
+
+	G_AuthDialog.Hide();
+	ClientUI.UISequence = CUIConfig::EUISequence::None;
 
 	declare persistent Text ObsStore_UserToken for LocalUser;
 	
@@ -190,7 +296,7 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 	wait (req.IsCompleted);
 
 	if (req.StatusCode == C_HttpErr_Unauthorized && !G_Errored) {
-		Private_UpdateToken();
+		Private_UpdateToken(C_AuthMessage_PlayerFinished);
 		return Private_PlayerFinished(_LastRun, _RespawnCount, _LastCpTimes);
 	} else if (req.StatusCode != 200) {
 		declare err = Error_Handle(req.StatusCode, req.Result);
@@ -227,7 +333,7 @@ Void Private_UpdatePlayer() {
 	wait (req.IsCompleted);
 
 	if (req.StatusCode == C_HttpErr_Unauthorized && !G_Errored) {
-		Private_UpdateToken();
+		Private_UpdateToken(C_AuthMessage_UpdatePlayer);
 		return Private_UpdatePlayer();
 	} else if (req.StatusCode != 200) {
 		declare err = Error_Handle(req.StatusCode, req.Result);
@@ -238,10 +344,47 @@ Void Private_UpdatePlayer() {
 	Http.Destroy(Http.Requests[Req]);
 }
 
+// Returns true if the user has Openplanet installed
+Boolean HasOpenplanet() {
+	return TL::RegexFind("^Openplanet ", System.ExtraTool_Info, "").count == 1;
+}
+
+// Returns the signature mode currently used in Openplanet
+Text GetOpenplanetSignatureMode() {
+	declare Text[] SignatureMode = TL::RegexMatch(" \\[([A-Z]*)\\]$", System.ExtraTool_Info, "");
+	if (SignatureMode.count == 2) {
+		return SignatureMode[1];
+	}
+	return "REGULAR";
+}
+
+Boolean HasDevMode() {
+	return HasOpenplanet() && GetOpenplanetSignatureMode() == "DEVMODE";
+}
+
 main() {
 	Error_Init();
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
+
+	G_AuthDialog <=> (Page.GetFirstChild("Frame_AuthDialog") as CMlFrame);
+	G_AuthDialog_Submit <=> (Page.GetFirstChild("Frame_AuthDialog_Button_OK") as CMlQuad);
+	G_AuthDialog_HeadMsg <=> (Page.GetFirstChild("AuthDialog_HeadMsg") as CMlLabel);
+
+	G_SecurityFrame <=> (Page.GetFirstChild("Frame_Security_OpenplanetDev") as CMlFrame);
+
+	while (HasDevMode()) {
+		yield;
+		if (!G_SecurityFrame.Visible) {
+			ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+			G_SecurityFrame.Show();
+		}
+	}
+
+	if (G_SecurityFrame.Visible) {
+		G_SecurityFrame.Hide();
+		ClientUI.UISequence = CUIConfig::EUISequence::None;
+	}
 
 	Private_UpdatePlayer();
     declare netread _LastRun for UI = -1;
@@ -252,6 +395,17 @@ main() {
 	
 	while (True) {
 		yield;
+
+		if (HasDevMode()) {
+			if (!G_SecurityFrame.Visible) {
+				ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+				G_SecurityFrame.Show();
+			}
+			continue;
+		} else if (G_SecurityFrame.Visible) {
+			G_SecurityFrame.Hide();
+			ClientUI.UISequence = CUIConfig::EUISequence::None;
+		}
 
 		if (_LastRun != LastRun_Cache || _RespawnCount != RespawnCount_Cache) {
 			if (_LastRun > 0) {

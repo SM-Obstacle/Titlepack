@@ -1,0 +1,183 @@
+#Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
+
+#Include "TextLib" as TL
+#Include "MathLib" as ML
+
+#Const  Version     "2023-07-15"
+#Const  ScriptName  "SpecList.Script.txt"
+
+#Const C_MaxPerPage 5
+#Const C_LineHeight 4
+
+Void Yield() {
+    declare Text[][Text] SpeccedPlayers = [];
+
+    foreach (Player in Spectators) {
+        declare UI <=> UIManager.GetUI(Player);
+        if (UI == Null) continue;
+
+        declare netread Net_SpeccedTargetLogin for UI = "";
+        if (Net_SpeccedTargetLogin == "") continue;
+
+        if (!SpeccedPlayers.existskey(Net_SpeccedTargetLogin)) {
+            SpeccedPlayers[Net_SpeccedTargetLogin] = [Player.User.Name];
+        } else {
+            SpeccedPlayers[Net_SpeccedTargetLogin].add(Player.User.Name);
+        }
+    }
+
+    foreach (Player in Players) {
+        declare UI <=> UIManager.GetUI(Player);
+        if (UI == Null) continue;
+
+        declare netwrite Text[] __Net_ListSpectating for Player = [];
+        if (SpeccedPlayers.existskey(Player.User.Login)) {
+            __Net_ListSpectating = SpeccedPlayers[Player.User.Login];
+        } else if (__Net_ListSpectating.count > 0) {
+            __Net_ListSpectating.clear();
+        }
+    }
+}
+
+Text Private_ML_PlayerList() {
+    declare output = "";
+    declare template = """
+<frameinstance modelid="player_li" pos="0 %2" id="player%1" hidden="1" />""";
+    for (i, 0, C_MaxPerPage - 1) {
+        output ^= TL::Replace(TL::Replace(template, "%1", TL::ToText(i)), "%2", TL::ToText(-C_LineHeight * i));
+    }
+    return output;
+}
+
+Text GetLayer() {
+    declare playerListHeight = ML::ToReal(C_LineHeight) * (ML::ToReal(C_MaxPerPage) + 0.5);
+    declare marginTopBottom = playerListHeight / 2 + 2.8;
+    declare totalHeight = playerListHeight + 10.6;
+    declare posY = -90 + totalHeight / 2;
+
+    CustomUI::Add("Frame_SpecList", <100., posY>, <37., totalHeight>, True);
+
+    return """
+<manialink version="3" name="Obstacle:SpecList">
+<frame id="Frame_SpecList" class="LibCustomUI_Module">
+    <frame z-index="1" pos="100 {{{posY}}}">
+        <frame id="Frame_Header" pos="0 {{{marginTopBottom}}}">
+            <quad z-index="-1" size="37 5" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center" />
+            <quad pos="7 0" valign="center" halign="center" size="5 5" style="UIConstruction_Buttons" substyle="Camera" />
+            <label pos="-2 0" valign="center" halign="center" size="12 3" style="TextTitle3Header" textsize="2" text="Spectating" textfont="OswaldMono"/>
+        </frame>
+        <frame id="Frame_PlayerList">
+            <quad z-index="-1" size="37 {{{playerListHeight}}}" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center" />
+            <frame id="Frame_PlayerList_Inner">
+                {{{Private_ML_PlayerList()}}}
+            </frame>
+        </frame>
+        <frame id="Frame_Pagination" pos="0 -{{{marginTopBottom}}}">
+            <quad z-index="-1" size="37 5" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center" />
+            <quad id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowPrev" scriptevents="1" />
+            <quad id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" substyle="ArrowNext" scriptevents="1" />
+        </frame>
+    </frame>
+    <framemodel id="player_li">
+        <label id="name" pos="-16.5 {{{C_LineHeight * 2.0 + 0.5}}}" size="33 4" halign="left" valign="center" textsize="1" text="mon super pseudo" textfont="Oswald"/>
+    </framemodel>
+</frame>
+<script><!--
+
+#Include "TextLib" as TL
+#Include "MathLib" as ML
+
+#Const C_MaxPerPage {{{C_MaxPerPage}}}
+
+declare Integer G_CurrentPage;
+declare Integer G_LastPage;
+
+Void __AvoidsSyntaxError() {}
+
+main() {
+    {{{CustomUI::InjectMLInit()}}}
+    wait(InputPlayer != Null && Page != Null);
+
+    declare Frame_Widget <=> (Page.GetFirstChild("Frame_SpecList") as CMlFrame);
+    declare Frame_PlayerList <=> (Page.GetFirstChild("Frame_PlayerList_Inner") as CMlFrame);
+    declare Quad_PreviousPage <=> (Page.GetFirstChild("Quad_PreviousPage") as CMlQuad);
+    declare Quad_NextPage <=> (Page.GetFirstChild("Quad_NextPage") as CMlQuad);
+
+    G_CurrentPage = 1;
+
+    while (True) {
+        yield;
+
+        // only display on ALT
+        if (IsKeyPressed(67)) {
+            if (!Frame_Widget.Visible)
+                Frame_Widget.Show();
+        } else if (Frame_Widget.Visible) {
+            Frame_Widget.Hide();
+        }
+
+        declare LocalPlayer <=> InputPlayer;
+        if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
+        if (LocalPlayer == Null) continue;
+
+        declare netread Text[] __Net_ListSpectating for LocalPlayer = [];
+
+        // declare netread Text[] __Net_ListSpectating for LocalPlayer = [];
+
+//      if (__Net_ListSpectating.count == 0 && Frame_Widget.Visible) {
+//          Frame_Widget.Hide();
+//      }
+
+        declare previousPageDisabled = Quad_PreviousPage.Substyle == "ArrowDisabled";
+        if (G_CurrentPage == 1 && !previousPageDisabled) {
+            Quad_PreviousPage.Substyle = "ArrowDisabled";
+        } else if (G_CurrentPage > 1) {
+            Quad_PreviousPage.Substyle = "ArrowPrev";
+        }
+
+        G_LastPage =  ML::Max(0, __Net_ListSpectating.count - 1) / C_MaxPerPage + 1;
+
+        declare nextPageDisabled = Quad_NextPage.Substyle == "ArrowDisabled";
+        if (G_CurrentPage == G_LastPage && !nextPageDisabled) {
+            Quad_NextPage.Substyle = "ArrowDisabled";
+        } else if (G_CurrentPage < G_LastPage) {
+            Quad_NextPage.Substyle = "ArrowNext";
+        }
+
+        // show all of current page
+        declare i = 0;
+        foreach (name in __Net_ListSpectating.slice(C_MaxPerPage*(G_CurrentPage-1), C_MaxPerPage)) {
+            declare frame <=> (Frame_PlayerList.GetFirstChild(TL::Replace("player%1", "%1", TL::ToText(i))) as CMlFrame);
+            if (frame == Null) continue;
+            declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
+            nameLabel.SetText(name);
+            frame.Show();
+            i += 1;
+        }
+
+        // hide the remaining (for last page)
+        for (j, i, C_MaxPerPage-1) {
+            declare frame <=> (Frame_PlayerList.GetFirstChild(TL::Replace("player%1", "%1", TL::ToText(j))) as CMlFrame);
+            if (frame == Null) continue;
+            frame.Hide();
+        }
+
+        foreach (Event in PendingEvents) {
+            switch (Event.Type) {
+                case CMlScriptEvent::Type::MouseClick: {
+                    if (Event.Control == Quad_PreviousPage && G_CurrentPage > 1) {
+                        G_CurrentPage -= 1;
+                    } else if (Event.Control == Quad_NextPage && G_CurrentPage < G_LastPage) {
+                        G_CurrentPage += 1;
+                    }
+                }
+            }
+        }
+
+        {{{CustomUI::InjectMLLoop()}}}
+    }
+}
+
+--></script>
+</manialink>""";
+}

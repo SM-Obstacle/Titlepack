@@ -57,7 +57,7 @@ Text Private_UpdateToken() {
 			Label = """We are about to refresh your personal tokens.
 
 This procedure will open your browser to the
-ManiaPlanet official page. You will only have to
+ManiaPlanet's login page. You will only have to
 authenticate with the same account as the
 one you use in game."""
 		}, [

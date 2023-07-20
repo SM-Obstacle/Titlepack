@@ -25,6 +25,7 @@
 #Include "Libs/smokegun/UI/Chrono.Script.txt" as Chrono
 #Include "Libs/smokegun/UI/CpProgress.Script.txt" as CpProgress
 #Include "Libs/smokegun/UI/SpectatorCount.Script.txt" as SpectatorCount
+#Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
 #Include "Libs/smokegun/UI/SpecKeys.Script.txt" as SpecKeys
 #Include "Libs/smokegun/UI/Duo.Script.txt" as Duo
 
@@ -368,6 +369,7 @@ LastPlayersCount = Players.count;
 ***Match_Yield***
 ***
 SpectatorCount::Yield();
+SpecList::Yield();
 ***
 
 ***Match_PlayLoop***
@@ -979,6 +981,7 @@ Void CreateUI() {
     Layers::Create("CpProgress", CpProgress::GetLayer());
     Layers::Create("CPTimes", CPTimes::GetLayer());
     Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
+    Layers::Create("SpecList", SpecList::GetLayer());
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
     Layers::Create("Duo", Duo::GetLayer());
 
@@ -993,6 +996,7 @@ Void CreateUI() {
     Layers::Attach("Markers");
     Layers::Attach("Items");
     Layers::Attach("SpectatorCount");
+    Layers::Attach("SpecList");
     Layers::Attach("SpecKeys");
     Layers::Attach("Duo");
 }
@@ -1005,6 +1009,7 @@ Void DestroyUI() {
     Layers::Detach("Markers");
     Layers::Detach("Items");
     Layers::Detach("SpectatorCount");
+    Layers::Detach("SpecList");
     Layers::Detach("SpecKeys");
     Layers::Detach("Duo");
 

@@ -18,7 +18,7 @@
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/smokegun/Player.Script.txt" as Player
 
-#Include "Libs/ahmad3/MlAuth.Script.txt" as Auth
+#Include "Libs/ahmad3/UI/MlAuth.Script.txt" as Auth
 
 /*********************************************
  CONSTANTS

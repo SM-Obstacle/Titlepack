@@ -27,6 +27,7 @@
 #Include "Libs/miltant/UI/JumpBack.Script.txt" as JumpBack
 #Include "Libs/smokegun/UI/CpProgress.Script.txt" as CpProgress
 #Include "Libs/smokegun/UI/SpectatorCount.Script.txt" as SpectatorCount
+#Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
 #Include "Libs/smokegun/UI/NextMapVote.Script.txt" as NextMapVote
 #Include "Libs/smokegun/UI/RespawnBehavior.Script.txt" as RespawnBehavior
 #Include "Libs/smokegun/UI/SpecKeys.Script.txt" as SpecKeys
@@ -44,7 +45,7 @@
 
 #Include "Libs/smokegun/Score.Script.txt" as ObsScores
 
-#Include "Libs/ahmad3/MlAuth.Script.txt" as MlAuth
+#Include "Libs/ahmad3/UI/MlAuth.Script.txt" as MlAuth
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 // ---------------------------------- //
@@ -318,40 +319,8 @@ if (S_TimeLimit > 0) {
 ***Match_Yield***
 ***
 SpectatorCount::Yield();
+SpecList::Yield();
 NextMapVote::Yield(S_NextMapVotingRatio);
-***
-
-***Match_PlayLoop***
-***
-//Replay_SaveInterface();
-
-if (LastUpdate + C_SettingsUpdateInterval < Now) {
-    LastUpdate = Now;
-    UpdateSettings();
-}
-
-if (Settings::GetForceInvisibleSkin()) {
-    Obstacle::UpdatePlayersSkin(G_InvisibleSkinId);
-} else {
-    Obstacle::UpdatePlayersSkin(NullId);
-}
-
-if (G_EnableRecords && Settings::GetEnableRecords()) {
-    Layers::Attach("Records");
-    API::Loop();
-} else if (G_EnableRecords || Settings::GetEnableRecords()){
-    Layers::Detach("Records");
-}
-
-if (EndTime > 0 && Now > EndTime) {
-    Message::SendBigMessage(_("Time limit reached"),    2000, 3, CUIConfig::EUISound::Silence, 0);
-    MB_Private_StopMatch();
-}
-
-if ((EndTime - StartTime) > 60000 && Now > EndTime - 300500 && Now < EndTime - 290000 && Now > NextLowTimeMessage) {
-    UIManager.UIAll.SendChat("Warning: the map ends in $<$f805$> minutes!");
-    NextLowTimeMessage = Now + 305000;
-}
 
 foreach (Event in UIManager.PendingEvents) {
     if (Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent) {
@@ -387,6 +356,7 @@ foreach (Event in UIManager.PendingEvents) {
                 Obstacle::JumpBack(Player);
             }
             case "ban:update": {
+                // Not necessarily a ban, it's a "ban status"
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 declare Ban::K_OptBanishment ban;
                 ban.fromjson(Event.CustomEventData[1]);
@@ -395,7 +365,39 @@ foreach (Event in UIManager.PendingEvents) {
         }
     }
 }
+***
 
+***Match_PlayLoop***
+***
+//Replay_SaveInterface();
+
+if (LastUpdate + C_SettingsUpdateInterval < Now) {
+    LastUpdate = Now;
+    UpdateSettings();
+}
+
+if (Settings::GetForceInvisibleSkin()) {
+    Obstacle::UpdatePlayersSkin(G_InvisibleSkinId);
+} else {
+    Obstacle::UpdatePlayersSkin(NullId);
+}
+
+if (G_EnableRecords && Settings::GetEnableRecords()) {
+    Layers::Attach("Records");
+    API::Loop();
+} else if (G_EnableRecords || Settings::GetEnableRecords()){
+    Layers::Detach("Records");
+}
+
+if (EndTime > 0 && Now > EndTime) {
+    Message::SendBigMessage(_("Time limit reached"),    2000, 3, CUIConfig::EUISound::Silence, 0);
+    MB_Private_StopMatch();
+}
+
+if ((EndTime - StartTime) > 60000 && Now > EndTime - 300500 && Now < EndTime - 290000 && Now > NextLowTimeMessage) {
+    UIManager.UIAll.SendChat("Warning: the map ends in $<$f805$> minutes!");
+    NextLowTimeMessage = Now + 305000;
+}
 declare CSmModeEvent[] PendingRespawns;
 declare CSmModeEvent[] PendingCaptures;
 
@@ -739,10 +741,12 @@ Void CreateUI() {
     if (!G_IsCampaign) {
         Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
         Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
+        Layers::Create("SpecList", SpecList::GetLayer());
         Layers::Create("Glitches", Glitches::GetLayer());
         
         Layers::Attach("SurvivalRanking");
         Layers::Attach("SpectatorCount");
+        Layers::Attach("SpecList");
         Layers::Attach("Glitches");
     }
 
@@ -763,6 +767,7 @@ Void DestroyUI(Boolean _Hard) {
     Layers::Detach("Records");
 
     Layers::Detach("SpectatorCount");
+    Layers::Detach("SpecList");
     Layers::Detach("NextMapVote");
     Layers::Detach("RespawnBehavior");
     Layers::Detach("SpecKeys");
