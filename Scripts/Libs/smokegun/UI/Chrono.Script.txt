@@ -12,9 +12,11 @@ Text GetLayer() {
     return """
 <manialink version="3" name="Obstacle:Chrono">
     <frame id="Frame_Chrono" class="LibCustomUI_Module">
-        <frame pos="0 -70" id="Frame_Chrono_Inner">
-            <label id="Label_Chrono" pos="0 -0.5" size="40 10" halign="center" valign="center2" text="00:00:00" textfont="OswaldMono" textsize="7"/>
-            <quad pos="0 0" size="40 10" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center"/>
+        <frame z-index="-2" id="Frame_Chrono_Main">
+            <frame pos="0 -70" id="Frame_Chrono_Inner">
+                <label id="Label_Chrono" pos="0 -0.5" size="40 10" halign="center" valign="center2" text="00:00:00" textfont="OswaldMono" textsize="7"/>
+                <quad pos="0 0" size="40 10" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center"/>
+            </frame>
         </frame>
     </frame>
 <script><!--
@@ -31,7 +33,7 @@ Text GetLayer() {
         {{{CustomUI::InjectMLInit()}}}
         wait(InputPlayer != Null && Page != Null);
 
-        declare Frame_Chrono        <=> (Page.GetFirstChild("Frame_Chrono") as CMlFrame);
+        declare Frame_Chrono        <=> (Page.GetFirstChild("Frame_Chrono_Main") as CMlFrame);
         declare Frame_Chrono_Inner  <=> (Frame_Chrono.GetFirstChild("Frame_Chrono_Inner") as CMlFrame);
         declare Label_Chrono        <=> (Frame_Chrono.GetFirstChild("Label_Chrono") as CMlLabel);
         Frame_Chrono.Visible = True;

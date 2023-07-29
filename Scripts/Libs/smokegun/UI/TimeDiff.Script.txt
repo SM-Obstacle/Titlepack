@@ -22,7 +22,7 @@ Text GetLayer() {
     return """
 <manialink version="3" name="Obstacle:TimeDiff">
     <frame id="Frame_TimeDiff" class="LibCustomUI_Module">
-        <frame pos="0 65">
+        <frame pos="0 65" id="Frame_TimeDiff_Inner">
             <label id="Label_Rank" pos="0 6" halign="center" valign="center2" textemboss="1" textfont="OswaldMono"/>
             <label id="Label_Time" pos="0 0" scale="1.5" halign="center" valign="center2" textfont="OswaldMono"/>
             <label id="Label_Diff" pos="10 0" scale="1.1" valign="center2" textcolor="3f3" textfont="OswaldMono" halign="left"/>
@@ -57,7 +57,7 @@ Text GetLayer() {
             {{{CustomUI::InjectMLInit()}}}
             wait(InputPlayer != Null && Page != Null);
 
-            declare Frame_TimeDiff <=> (Page.GetFirstChild("Frame_TimeDiff") as CMlFrame);
+            declare Frame_TimeDiff <=> (Page.GetFirstChild("Frame_TimeDiff_Inner") as CMlFrame);
             declare Label_Time <=> (Frame_TimeDiff.GetFirstChild("Label_Time") as CMlLabel);
             declare Label_Diff <=> (Frame_TimeDiff.GetFirstChild("Label_Diff") as CMlLabel);
             declare Label_Rank <=> (Frame_TimeDiff.GetFirstChild("Label_Rank") as CMlLabel);

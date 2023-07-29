@@ -55,12 +55,13 @@ Text GetLayer() {
     declare totalHeight = playerListHeight + 10.6;
     declare posY = -90 + totalHeight / 2;
 
-    CustomUI::Add("Frame_SpecList", <100., posY>, <37., totalHeight>);
+    // Frame is named `Frame_SpecList2` to override the old `Frame_SpecList` client settings
+    CustomUI::Add("Frame_SpecList2", <100., posY>, <37., totalHeight>);
 
     return """
 <manialink version="3" name="Obstacle:SpecList">
-<frame id="Frame_SpecList" class="LibCustomUI_Module">
-    <frame pos="100 {{{posY}}}">
+<frame id="Frame_SpecList2" class="LibCustomUI_Module">
+    <frame pos="100 {{{posY}}}" id="Frame_SpecList_Inner">
         <frame id="Frame_Header" pos="0 {{{marginTopBottom}}}">
             <quad z-index="-1" size="37 5" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center" />
             <quad pos="7 0" valign="center" halign="center" size="5 5" style="UIConstruction_Buttons" substyle="Camera" />
@@ -98,7 +99,7 @@ main() {
     {{{CustomUI::InjectMLInit()}}}
     wait(InputPlayer != Null && Page != Null);
 
-    declare Frame_Widget <=> (Page.GetFirstChild("Frame_SpecList") as CMlFrame);
+    declare Frame_SpecList <=> (Page.GetFirstChild("Frame_SpecList_Inner") as CMlFrame);
     declare Frame_PlayerList <=> (Page.GetFirstChild("Frame_PlayerList_Inner") as CMlFrame);
     declare Quad_PreviousPage <=> (Page.GetFirstChild("Quad_PreviousPage") as CMlQuad);
     declare Quad_NextPage <=> (Page.GetFirstChild("Quad_NextPage") as CMlQuad);
@@ -112,8 +113,12 @@ main() {
 
         // only display on ALT or TAB
         PrevCondition = IsKeyPressed(67) || IsKeyPressed(124);
-        if (Frame_Widget.Visible != PrevCondition) {
-            Frame_Widget.Visible = PrevCondition;
+        if (Frame_SpecList.Visible != PrevCondition) {
+            Frame_SpecList.Visible = PrevCondition;
+        }
+
+        if (LibCustomUI_IsVisible && !Frame_SpecList.Visible) {
+            Frame_SpecList.Show();
         }
 
         declare LocalPlayer <=> InputPlayer;
@@ -122,8 +127,8 @@ main() {
 
         declare netread Text[] Net_ListSpectating for LocalPlayer = [];
 
-        if (Net_ListSpectating.count == 0 && Frame_Widget.Visible) {
-            Frame_Widget.Hide();
+        if (Net_ListSpectating.count == 0 && Frame_SpecList.Visible) {
+            Frame_SpecList.Hide();
             continue;
         }
 

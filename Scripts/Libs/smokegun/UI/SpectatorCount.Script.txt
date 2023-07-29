@@ -39,7 +39,7 @@ Text GetLayer() {
     return """
 <manialink version="3" name="Obstacle:SpectatorCount">
     <frame id="Frame_SpectateCount" pos="" class="LibCustomUI_Module">
-        <frame pos="159 -63">
+        <frame pos="159 -63" id="Frame_SpectateCount_Inner">
             <quad size="8 8" style="BgRaceScore2" substyle="Tv" halign="right" valign="center2"/>
             <label id="Label_SpectateCount" pos="-9 0" size="15 8" style="TextTitle1" textsize="3" text="0" halign="right" valign="center2" textfont="OswaldMono"/>
         </frame>
@@ -51,7 +51,7 @@ Text GetLayer() {
         {{{CustomUI::InjectMLInit()}}}
         wait(InputPlayer != Null && Page != Null);
 
-        declare Frame_SpectateCount <=> (Page.GetFirstChild("Frame_SpectateCount") as CMlFrame);
+        declare Frame_SpectateCount <=> (Page.GetFirstChild("Frame_SpectateCount_Inner") as CMlFrame);
         declare Label_SpectateCount <=> (Frame_SpectateCount.GetFirstChild("Label_SpectateCount") as CMlLabel);
 
         declare LastNbSpectating = 0;
