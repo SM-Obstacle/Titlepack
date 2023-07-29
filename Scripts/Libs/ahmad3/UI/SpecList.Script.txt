@@ -55,12 +55,12 @@ Text GetLayer() {
     declare totalHeight = playerListHeight + 10.6;
     declare posY = -90 + totalHeight / 2;
 
-    CustomUI::Add("Frame_SpecList", <100., posY>, <37., totalHeight>, True);
+    CustomUI::Add("Frame_SpecList", <100., posY>, <37., totalHeight>);
 
     return """
 <manialink version="3" name="Obstacle:SpecList">
 <frame id="Frame_SpecList" class="LibCustomUI_Module">
-    <frame z-index="1" pos="100 {{{posY}}}">
+    <frame pos="100 {{{posY}}}">
         <frame id="Frame_Header" pos="0 {{{marginTopBottom}}}">
             <quad z-index="-1" size="37 5" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="center" />
             <quad pos="7 0" valign="center" halign="center" size="5 5" style="UIConstruction_Buttons" substyle="Camera" />
@@ -103,20 +103,17 @@ main() {
     declare Quad_PreviousPage <=> (Page.GetFirstChild("Quad_PreviousPage") as CMlQuad);
     declare Quad_NextPage <=> (Page.GetFirstChild("Quad_NextPage") as CMlQuad);
 
+    declare PrevCondition = False;
+
     G_CurrentPage = 1;
 
     while (True) {
         yield;
 
-        // only display on ALT
-        if (IsKeyPressed(67)) {
-            if (!Frame_Widget.Visible)
-                Frame_Widget.Show();
-        } else {
-            if (Frame_Widget.Visible) {
-                Frame_Widget.Hide();
-            }
-            continue;
+        // only display on ALT or TAB
+        PrevCondition = IsKeyPressed(67) || IsKeyPressed(124);
+        if (Frame_Widget.Visible != PrevCondition) {
+            Frame_Widget.Visible = PrevCondition;
         }
 
         declare LocalPlayer <=> InputPlayer;

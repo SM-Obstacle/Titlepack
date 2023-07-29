@@ -44,6 +44,7 @@
     Text map_uid;
     Integer cps_number;
     K_UpdatePlayerBody author;
+    Boolean reversed;
 }
 
 /*********************************************
@@ -116,7 +117,7 @@ Void Init() {
 /////////////////////////////////////////////////////////////////
 
 // Send map infos
-Void ReplaceOrCreateMap(Integer _CpsNumber) {
+Void ReplaceOrCreateMap(Integer _CpsNumber, Boolean _Reversed) {
     declare body = K_UpdateMapBody {
         name = Map.MapName,
         map_uid = ""^Map.Id,
@@ -125,7 +126,8 @@ Void ReplaceOrCreateMap(Integer _CpsNumber) {
             login = Map.AuthorLogin,
             name = Map.AuthorNickName,
             zone_path = Map.AuthorZonePath
-        }
+        },
+        reversed = _Reversed
     };
 
     SendPost("map/insert", body.tojson(), Constants::C_Request_ReplaceOrCreateMap, G_PostHeaders);

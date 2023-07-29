@@ -86,6 +86,7 @@ Text GetLayer() {
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
+        Error_Init();
         wait(InputPlayer != Null && Page != Null);
 
         declare LastPlayerLogin = "";

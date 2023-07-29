@@ -288,7 +288,7 @@ if (Obstacle::IsRandomizerMap()) {
     }
 
     Layers::Detach("Records");
-} else if (Settings::GetEnableRecords()) {
+} else if (Obstacle::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
     if (G_IsCampaign)
         Layers::Create("Records", MedalsWidget::GetLayer());
     else
@@ -382,10 +382,10 @@ if (Settings::GetForceInvisibleSkin()) {
     Obstacle::UpdatePlayersSkin(NullId);
 }
 
-if (G_EnableRecords && Settings::GetEnableRecords()) {
+if (Obstacle::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
     Layers::Attach("Records");
     API::Loop();
-} else if (G_EnableRecords || Settings::GetEnableRecords()){
+} else if (Obstacle::IsLeaderboardEnabled() || G_EnableRecords || Settings::GetEnableRecords()){
     Layers::Detach("Records");
 }
 
@@ -715,7 +715,7 @@ Void CreateUI() {
 
     Layers::Create("Auth", MlAuth::GetLayer());
 
-    if (G_EnableRecords && Settings::GetEnableRecords()) {
+    if (Obstacle::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
         if (G_IsCampaign)
             Layers::Create("Records", MedalsWidget::GetLayer());
         else
@@ -812,9 +812,9 @@ Void UpdateSettings() {
 
     if (S_EnableRecords != Settings::GetEnableRecords()) {
         Settings::SetEnableRecords(S_EnableRecords);
-        if (!S_EnableRecords) {
+        if (!S_EnableRecords || !Obstacle::IsLeaderboardEnabled()) {
             Layers::Detach("Records");
-        } else {
+        } else if (Obstacle::IsLeaderboardEnabled()) {
             Layers::Attach("Records");
         }
     }

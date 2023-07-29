@@ -142,6 +142,7 @@ Text GetLayer() {
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
+        Error_Init();
         wait(InputPlayer != Null);
 
 		declare Integer[Text] CampaignRecords for LocalUser;

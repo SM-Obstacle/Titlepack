@@ -48,6 +48,7 @@
 }
 
 #Struct K_Error {
+    Integer type;
     Text message;
     Ban::K_OptBanishment ban;
 }
@@ -84,7 +85,11 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
     if (!res.fromjson(_ReqResult)) {
         declare Ban::K_BannedPlayerResponse ban;
         if (_StatusCode == C_HttpErr_Forbidden && ban.fromjson(_ReqResult)) {
-            return K_Error { message = ban.message, ban = Ban::Of(ban) };
+            return K_Error {
+                type = C_Err_BannedPlayer,
+                message = ban.message,
+                ban = Ban::Of(ban)
+            };
         }
 
         res = K_ErrorResponse {
@@ -105,7 +110,11 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
 
     log(message);
 
-    return K_Error { message = message, ban = Ban::Empty() };
+    return K_Error {
+        type = res.type,
+        message = message,
+        ban = Ban::Empty()
+    };
 }
 
 Text ML_Preproc() {
@@ -141,6 +150,7 @@ Text ML_Preproc() {
 }
 
 #Struct K_Error {
+    Integer type;
     Text message;
     K_OptBanishment ban;
 }
@@ -181,7 +191,11 @@ K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
     if (!res.fromjson(_ReqResult)) {
         declare K_BannedPlayerResponse ban;
         if (_StatusCode == C_HttpErr_Forbidden && ban.fromjson(_ReqResult)) {
-            return K_Error { message = ban.message, ban = Ban_Of(ban) };
+            return K_Error {
+                type = C_Err_BannedPlayer,
+                message = ban.message,
+                ban = Ban_Of(ban)
+            };
         }
 
         res = K_ErrorResponse {
@@ -202,7 +216,11 @@ K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
 
     log(message);
 
-    return K_Error { message = message, ban = Ban_Empty() };
+    return K_Error {
+        type = res.type,
+        message = message,
+        ban = Ban_Empty()
+    };
 }
     """;
 }
