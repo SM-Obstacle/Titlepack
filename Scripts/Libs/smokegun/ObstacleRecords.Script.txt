@@ -47,6 +47,14 @@
     Boolean reversed;
 }
 
+#Struct K_HasFinishedResponse {
+	Boolean has_improved;
+	Text login;
+	Integer old;
+	Integer new;
+	Integer current_rank;
+}
+
 /*********************************************
   GLOBALES
 *********************************************/

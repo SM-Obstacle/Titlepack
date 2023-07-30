@@ -70,6 +70,16 @@ Integer GetMode() {
     return G_Mode;
 }
 
+Text OrdinalSuffix(Integer _Rank) {
+    declare Text[Integer] Suffixes = [1 => "st", 2 => "nd", 3 => "rd"];
+    declare Suff = "th";
+    // Avoids 11, 12 and 13 to be taken into account
+    if (20 < _Rank % 100 || _Rank % 100 < 10) {
+        Suff = Suffixes.get(_Rank % 10, "th");
+    }
+    return TL::ToText(_Rank) ^ Suff;
+}
+
 Boolean IsLeaderboardEnabled() {
     if (Map == Null) return False;
     declare metadata Meta_LB_Enabled for Map = True;

@@ -61,8 +61,8 @@
 #Setting S_NextMapVotingRatio 0.7 as "<hidden>"
 #Setting S_FullAmmoSpawn True as "<hidden>"
 #Setting S_LegacyRespawn False as "<hidden>"
-#Setting S_BestNewRecordMsg "%1$z made a new record ! (%2)" as "<hidden>"
-#Setting S_WorseNewRecordMsg "$zToo late by %4 (previous was %3)!" as "<hidden>"
+#Setting S_BestNewRecordMsg "%1$z made a new record! (%2, got %3)" as "<hidden>"
+#Setting S_WorseNewRecordMsg "$zToo late by %5 (previous was %4)!" as "<hidden>"
 #Setting S_CheckpointMarkersCount 1 as "Count of different checkpoint markers"
 
 #Setting S_ForceRNGSeed "" as "Seed to use for randomizer maps (Integer)"
@@ -326,24 +326,24 @@ foreach (Event in UIManager.PendingEvents) {
     if (Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent) {
         switch(Event.CustomEventType) {
             case "player:finished": {
-                declare isNewBest = Event.CustomEventData[1] == "True";
-                declare old = TL::ToInteger(Event.CustomEventData[2]);
-                declare new = TL::ToInteger(Event.CustomEventData[3]);
+                declare API::K_HasFinishedResponse Res;
+                Res.fromjson(Event.CustomEventData[0]);
 
-                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+                declare Player = SM::GetPlayer(Res.login);
                 declare PName = Player.User.Name;
-                declare NewTime = TL::TimeToText(new, True);
-                declare OldTime = TL::TimeToText(old, True);
-                declare DiffTime = TL::TimeToText(new - old, True);
+                declare NewTime = TL::TimeToText(Res.new, True);
+                declare OldTime = TL::TimeToText(Res.old, True);
+                declare DiffTime = TL::TimeToText(Res.new - Res.old, True);
+                declare CurrentRank = Obstacle::OrdinalSuffix(Res.current_rank);
 
-                if (isNewBest) {
+                if (Res.has_improved) {
                     declare netwrite Integer Net_RecordsUpdated for Teams[0];
                     Net_RecordsUpdated = Now;
                     if (S_BestNewRecordMsg != "") {
-                        UIManager.UIAll.SendChat(TL::Compose(S_BestNewRecordMsg, PName, NewTime, OldTime, DiffTime));
+                        UIManager.UIAll.SendChat(TL::Compose(S_BestNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime));
                     }
                 } else if (Player != Null && S_WorseNewRecordMsg != "") {
-                    UIManager.GetUI(Player).SendChat(TL::Compose(S_WorseNewRecordMsg, PName, NewTime, OldTime, DiffTime));
+                    UIManager.GetUI(Player).SendChat(TL::Compose(S_WorseNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime));
                 }
             }
             case "jump_request": {

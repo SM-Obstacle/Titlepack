@@ -126,13 +126,6 @@ Text GetLayer() {
     Integer[] cps;
 }
 
-#Struct K_HasFinishedresponse {
-	Boolean has_improved;
-	Text login;
-	Integer old;
-	Integer new;
-}
-
 {{{Ban::ML_Preproc()}}}
 {{{Error::ML_Preproc()}}}
 {{{RunFlags::ML_Preproc()}}}
@@ -303,12 +296,7 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
 		UI.SendChat(err.message);
 	} else {
-		declare K_HasFinishedresponse res;
-		res.fromjson(req.Result);
-		declare has_improved = TL::ToText(res.has_improved);
-		declare old = TL::ToText(res.old);
-		declare new = TL::ToText(res.new);
-		SendCustomEvent("player:finished", [res.login, has_improved, old, new]);
+		SendCustomEvent("player:finished", [req.Result]);
 	}
 
 	Http.Destroy(req);
