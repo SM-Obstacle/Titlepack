@@ -47,6 +47,12 @@ If you think this is an error, please mention the developers
 Thank you.
 """
 
+#Const C_ErrMessage """An API error occurred. This may be due to many reasons,
+but to help the developers to find out a solution, please open the
+console window with Ctrl+G. You can also try to quit and join a server
+or play any local map.
+"""
+
 Text GetLayer() {
 	return """
 <manialink version="3" name="Obstacle:Auth">
@@ -83,6 +89,26 @@ Text GetLayer() {
 
 		<frame pos="-48 14">
 			<label id="Security_Msg" size="96 4" halign="left" valign="center" textsize="1.4" text={{{dump(C_Security_OpenplanetDevMsg)}}} />
+		</frame>
+	</frame>
+</frame>
+<frame id="Frame_ErrDialog" hidden="1">
+	<frame z-index="1000" pos="0 0">
+		<quad z-index="-1" size="100 75" style="Bgs1" substyle="BgButtonOff" halign="center" valign="center" />
+		<label pos="0 35" size="40 5" text="API error" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
+
+		<label id="ErrDialog_HeadMsg" size="96 5" halign="left" valign="center" pos="-48 4" textsize="1.4" text={{{dump(C_ErrMessage)}}} />
+
+		<frame id="Frame_ErrDialog_Button" pos="0 -35">
+			<label pos="0 1" size="15 6" text="OK :(" valign="bottom" halign="center" textfont="regular" textsize="2.1" textcolor="fff" />
+			<quad
+			 	id="Frame_ErrDialog_Button_OK"
+				scriptevents="1"
+				valign="bottom"
+				halign="center"
+				size="15 6"
+				image="file://Media/Images/Obstacle/Dialogs/BDefault21.png"
+			/>
 		</frame>
 	</frame>
 </frame>
@@ -142,6 +168,9 @@ declare CMlLabel	G_AuthDialog_HeadMsg;
 
 declare CMlFrame	G_SecurityFrame;
 
+declare CMlFrame	G_ErrDialog;
+declare CMlQuad		G_ErrDialog_Submit;
+
 // Used to create a POST request
 Ident MakePost(Text _Url, Text _Data) {
     if (Http.SlotsAvailable > 0) {
@@ -152,6 +181,41 @@ Ident MakePost(Text _Url, Text _Data) {
         return request.Id;
     }
     return NullId;
+}
+
+Void OnError() {
+	ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+	G_ErrDialog.Show();	
+
+	declare hovering = False;
+
+	declare prompting = True;
+	while (prompting) {
+		yield;
+		foreach (Event in PendingEvents) {
+			switch (Event.Type) {
+				case CMlScriptEvent::Type::MouseClick: {
+					if (Event.Control == G_ErrDialog_Submit) {
+						prompting = False;
+						break;
+					}
+				}
+				case CMlScriptEvent::Type::MouseOver: {
+					if (hovering) continue;
+					hovering = True;
+					G_ErrDialog_Submit.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/BActive21.png");
+				}
+				case CMlScriptEvent::Type::MouseOut: {
+					if (!hovering) continue;
+					hovering = False;
+					G_ErrDialog_Submit.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/BDefault21.png");
+				}
+			}
+		}
+	}
+
+	G_ErrDialog.Hide();
+	ClientUI.UISequence = CUIConfig::EUISequence::None;
 }
 
 Void Private_UpdateToken(Text _HeadMsg) {
@@ -221,6 +285,7 @@ Void Private_UpdateToken(Text _HeadMsg) {
 	if (req.StatusCode != 200) {
 		declare err = Error_Handle(req.StatusCode, req.Result);
 		UI.SendChat(err.message);
+		OnError();
 		G_Errored = True;
 		return;
 	}
@@ -295,6 +360,7 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 		declare err = Error_Handle(req.StatusCode, req.Result);
 		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
 		UI.SendChat(err.message);
+		OnError();
 	} else {
 		SendCustomEvent("player:finished", [req.Result]);
 	}
@@ -361,13 +427,15 @@ main() {
 
 	G_SecurityFrame <=> (Page.GetFirstChild("Frame_Security_OpenplanetDev") as CMlFrame);
 
-	while (HasDevMode()) {
-		yield;
-		if (!G_SecurityFrame.Visible) {
-			ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
-			G_SecurityFrame.Show();
-		}
+	G_ErrDialog <=> (Page.GetFirstChild("Frame_ErrDialog") as CMlFrame);
+	G_ErrDialog_Submit <=> (Page.GetFirstChild("Frame_ErrDialog_Button_OK") as CMlQuad);
+
+	if(HasDevMode()) {
+		ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+		G_SecurityFrame.Show();
 	}
+
+	wait(!HasDevMode());
 
 	if (G_SecurityFrame.Visible) {
 		G_SecurityFrame.Hide();
