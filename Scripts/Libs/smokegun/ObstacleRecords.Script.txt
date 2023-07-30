@@ -53,6 +53,7 @@
 	Integer old;
 	Integer new;
 	Integer current_rank;
+    Boolean reversed;
 }
 
 /*********************************************

@@ -780,8 +780,8 @@ Void Private_HandleFinish(CSmPlayer _Player, Ident _GoalId) {
     declare netwrite Net_NewGoal for _Player = 0;
     Net_NewGoal = Now;
 
-    // Check if last run is  if last run is better
-    if (Time < BestRun || BestRun < 0) {
+    // Check if last run is better
+    if (Time < BestRun && !IsLeaderboardReversed() || Time > BestRun && IsLeaderboardReversed() || BestRun < 0) {
         Player::setBestRun(_Player, Time);
         Player::setBestCPTimes(_Player, Player::getLastCPTimes(_Player));
 
