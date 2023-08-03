@@ -27,7 +27,6 @@
 #Include "Libs/miltant/UI/JumpBack.Script.txt" as JumpBack
 #Include "Libs/smokegun/UI/CpProgress.Script.txt" as CpProgress
 #Include "Libs/smokegun/UI/SpectatorCount.Script.txt" as SpectatorCount
-#Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
 #Include "Libs/smokegun/UI/NextMapVote.Script.txt" as NextMapVote
 #Include "Libs/smokegun/UI/RespawnBehavior.Script.txt" as RespawnBehavior
 #Include "Libs/smokegun/UI/SpecKeys.Script.txt" as SpecKeys
@@ -46,6 +45,7 @@
 #Include "Libs/smokegun/Score.Script.txt" as ObsScores
 
 #Include "Libs/ahmad3/UI/MlAuth.Script.txt" as MlAuth
+#Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 // ---------------------------------- //
@@ -247,22 +247,14 @@ if (!Obstacle::PrepareMap(ModeInfo::GetName()) && Editor_WayPointSpawn_Flag == 0
     MB_Private_StopMap();
 }
 
-if (Obstacle::IsLeaderboardReversed()) {
+{
     declare netwrite Boolean Net_ReversedMapLB for Teams[0];
-    Net_ReversedMapLB = True;
-}
-if (Obstacle::IsPvPWeaponsMap()) {
-    UsePvPWeapons = True;
-}
-if (Obstacle::IsPvPCollisionsMap()) {
-    UsePvPCollisions = True;
-}
-if (Obstacle::IsSameWallJumpMap()) {
-    UseSameWallJump = True;
-} else {
-    UseSameWallJump = False;
+    Net_ReversedMapLB = Obstacle::IsLeaderboardReversed();
 }
 
+UsePvPWeapons = Obstacle::IsPvPWeaponsMap();
+UsePvPCollisions = Obstacle::IsPvPCollisionsMap();
+UseSameWallJump = Obstacle::IsSameWallJumpMap();
 SpawnInvulnerabilityDuration = Obstacle::InvulnerabilityDuration();
 
 
@@ -372,6 +364,42 @@ foreach (Event in UIManager.PendingEvents) {
                 declare Ban::K_OptBanishment ban;
                 ban.fromjson(Event.CustomEventData[1]);
                 Player::setBanned(Player, ban);
+            }
+            case "cptimes:init": {
+                declare API::K_PbResponse Res;
+                Res.fromjson(Event.CustomEventData[1]);
+                // Avoid setting best run if player hasn't saved any record yet
+                if (Res.cps_times.count == 0) continue;
+
+                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+                declare Integer[Ident] CpTimes;
+                declare Time = 0;
+                
+                foreach (PbCpTime in Res.cps_times) {
+                    Time += PbCpTime.time;
+                    foreach (Landmark in MapLandmarks) {
+                        if (Tools::IsCheckpoint(Landmark) && RNG::GetOrder(Landmark) == PbCpTime.cp_num + 1) {
+                            CpTimes[Landmark.Id] = Time;
+                            break;
+                        }
+                    }
+                }
+
+                Player::setRespawnCount(Player, Res.rs_count);
+                Obstacle::UpdatePlayerRsCounterColumn(Player);
+                Player::setRespawnCount(Player, 0);
+                Player::setBestRun(Player, Time);
+                Player::setBestCPTimes(Player, CpTimes);
+                CPTimes::UpdateLayer(Player);
+                Obstacle::UpdatePlayerBestTimeColumn(Player);
+            }
+            case "cpstimes:reset": {
+                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+                Obstacle::UpdatePlayerRsCounterColumn(Player);
+                Player::setBestRun(Player, -1);
+                Player::setBestCPTimes(Player, []);
+                Obstacle::UpdatePlayerBestTimeColumn(Player);
+                CPTimes::ResetLayer(Player, Obstacle::GetCheckpointsTotal());
             }
         }
     }

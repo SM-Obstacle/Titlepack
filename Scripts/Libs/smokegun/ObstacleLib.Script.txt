@@ -368,7 +368,7 @@ Void Private_SendFinishedRun(CSmPlayer _Player, Integer _Run, Ident _GoalId) {
  *
  * Arguments: CSmPlayer _Player player to update
  */
-Void Private_UpdatePlayerBestTime(CSmPlayer _Player) {
+Void UpdatePlayerBestTimeColumn(CSmPlayer _Player) {
     if (Hud == Null || Hud.ScoresTable == Null) return;
 
     declare cpProgress = Player::getCpProgress(_Player);
@@ -394,7 +394,7 @@ Void Private_UpdatePlayerBestTime(CSmPlayer _Player) {
  *
  * Arguments: CSmPlayer _Player player to update
  */
-Void Private_UpdatePlayerRsCounter(CSmPlayer _Player) {
+Void UpdatePlayerRsCounterColumn(CSmPlayer _Player) {
     if (Hud == Null || Hud.ScoresTable == Null) return;
     Hud.ScoresTable.SetColumnValue (_Player.Score, "RS", Player::getRespawnCount(_Player));
 }
@@ -572,10 +572,10 @@ Void ObsRespawnPlayer(CSmPlayer _Player, Boolean _forceRestart) {
     }
 
 
-    Private_UpdatePlayerBestTime(_Player); // update rs count
+    UpdatePlayerBestTimeColumn(_Player); // update rs count
 
     if (Player::getBestRun(_Player) < 0) {
-        Private_UpdatePlayerRsCounter(_Player);
+        UpdatePlayerRsCounterColumn(_Player);
     }
 
     Player::clearBuffTimes(_Player);
@@ -785,7 +785,7 @@ Void Private_HandleFinish(CSmPlayer _Player, Ident _GoalId) {
         Player::setBestRun(_Player, Time);
         Player::setBestCPTimes(_Player, Player::getLastCPTimes(_Player));
 
-        Private_UpdatePlayerRsCounter(_Player);
+        UpdatePlayerRsCounterColumn(_Player);
 
         CPTimes::UpdateLayer(_Player);
     }
@@ -867,7 +867,7 @@ Void Private_HandleCheckpoint(CSmPlayer _Player, Ident _CheckpointId) {
     XmlRpc.SendCallback("Obstacle_OnCheckpoint", Player::ToJSON(_Player));
 
     // UPDATE UI
-    Private_UpdatePlayerBestTime(_Player);
+    UpdatePlayerBestTimeColumn(_Player);
 
     declare UI <=> UIManager.GetUI(_Player);
     if (_Player.Score == Null) return;

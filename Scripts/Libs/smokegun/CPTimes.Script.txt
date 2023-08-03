@@ -34,6 +34,10 @@ Text Private_GetWidget() {
 			<quad id="Quad_Selector" pos="-82.5 44.5" z-index="0" size="14 6" bgcolor="FFFFFF33" halign="center" valign="center"/>
 			<quad pos="-90 48" z-index="0" size="30 7" bgcolor="000000AA"/>
 		</frame>
+        <frame id="Frame_CPTimes_Reset" pos="72 45">
+            <label pos="0 0" size="30 7" text="Reset my times" textcolor="FFFFFFFF" maxline="1" halign="center" textfont="Oswald" textsize="3" style="TextTitle3" textemboss="1" valign="center" />
+			<quad id="Label_CPTimes_Reset" halign="center" valign="center" z-index="0" size="30 7" style="BgRaceScore2" substyle="BgCardPlayer" scriptevents="1" />
+        </frame>
 		<label pos="0 39" size="100 10" text="Checkpoints Times" textcolor="FFFFFFFF" maxline="1" halign="center" valign="bottom" textfont="Oswald" textsize="9" style="TextTitle3" textemboss="1"/>
 		<quad pos="0 40" z-index="-1" size="220 0.5" bgcolor="000000AA" halign="center"/>
 	</frame>
@@ -261,6 +265,9 @@ Text GetLayer() {
                                 case "prev_button": {
                                     ChangePage(-1);
                                 }
+                                case "Label_CPTimes_Reset": {
+                                    SendCustomEvent("cpstimes:reset", [LocalUser.Login]);
+                                }
                             }
                         }
                     }
@@ -294,6 +301,38 @@ Text GetLayer() {
     --></script>
 </manialink>
     """;
+}
+
+Void ResetLayer(CSmPlayer _Player, Integer _CpsNumber) {
+    declare netwrite SCPTotalTime[][] Net_CPTotalTimes for Teams[0];
+    declare netwrite SCPDeltaTime[][] Net_CPDeltaTimes for Teams[0];
+
+    for (I, 0, _CpsNumber) {
+        // Remove line from total times
+        declare ToRemove = -1;
+        foreach (iCPTime => CPTime in Net_CPTotalTimes[I]) {
+            if (CPTime.Login == _Player.User.Login) {
+                ToRemove = iCPTime;
+            }
+        }
+        if (ToRemove >= 0) {
+            declare Removed = Net_CPTotalTimes[I].removekey(ToRemove);
+        }
+
+        // Remove line from delta times
+        ToRemove = -1;
+        foreach (iCPTime => CPTime in Net_CPDeltaTimes[I]) {
+            if (CPTime.Login == _Player.User.Login) {
+                ToRemove = iCPTime;
+            }
+        }
+        if (ToRemove >= 0) {
+            declare Removed = Net_CPDeltaTimes[I].removekey(ToRemove);
+        }
+    }
+
+    declare netwrite Integer Net_CPTimesUpdated for Teams[0] = 0;
+    Net_CPTimesUpdated = Now;
 }
 
 Void UpdateLayer(CSmPlayer _Player) {

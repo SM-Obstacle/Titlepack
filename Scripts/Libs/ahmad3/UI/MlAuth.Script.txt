@@ -17,7 +17,7 @@
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2023-07-21"
+#Const  Version     "2023-08-02"
 #Const  ScriptName  "MlAuth.Script.txt"
 
 #Const C_AuthMessage """We are about to refresh your personal tokens.
@@ -371,7 +371,6 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 // Update player infos
 Void Private_UpdatePlayer() {
     declare body = K_UpdatePlayerBody {
-        login = InputPlayer.User.Login,
         name = InputPlayer.User.Name,
         zone_path = InputPlayer.User.ZonePath
     };
@@ -393,9 +392,31 @@ Void Private_UpdatePlayer() {
 		declare err = Error_Handle(req.StatusCode, req.Result);
 		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
 		UI.SendChat(err.message);
+		OnError();
 	}
 
 	Http.Destroy(Http.Requests[Req]);
+}
+
+Void InitPbCpsTimes() {
+	declare persistent ObsStore_UserToken for LocalUser = "";
+	
+	declare Url = "{{{Constants::C_HostUrl}}}player/pb?map_uid="^Map.Id;
+	declare Req = Http.CreateGet(Url, True, "Accept: application/json\nPlayerLogin: " ^ InputPlayer.User.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
+
+	ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+	wait(Req.IsCompleted);
+	ClientUI.UISequence = CUIConfig::EUISequence::None;
+
+	if (Req.StatusCode != 200) {
+		declare Err = Error_Handle(Req.StatusCode, Req.Result);
+		UI.SendChat(Err.message);
+		OnError();
+	} else {
+		SendCustomEvent("cptimes:init", [InputPlayer.User.Login, Req.Result]);
+	}
+
+	Http.Destroy(Req);
 }
 
 // Returns true if the user has Openplanet installed
@@ -448,6 +469,8 @@ main() {
     declare netread Integer[] _LastCPTimes for UI;
     declare LastRun_Cache = _LastRun;
     declare RespawnCount_Cache = _RespawnCount;
+
+	InitPbCpsTimes();
 	
 	while (True) {
 		yield;

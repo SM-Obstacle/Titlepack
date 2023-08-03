@@ -56,6 +56,16 @@
     Boolean reversed;
 }
 
+#Struct K_PbCpTimesResponseItem {
+    Integer cp_num;
+    Integer time;
+}
+
+#Struct K_PbResponse {
+    Integer rs_count;
+    K_PbCpTimesResponseItem[] cps_times;
+}
+
 /*********************************************
   GLOBALES
 *********************************************/

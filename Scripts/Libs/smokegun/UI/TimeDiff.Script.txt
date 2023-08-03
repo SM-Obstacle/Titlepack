@@ -70,6 +70,8 @@ Text GetLayer() {
             declare Text CPTimes = "";
             declare InitialDifference = 0;
 
+            declare netread Net_ReversedMapLB for Teams[0] = False;
+
             while (True) {
                 yield;
 
@@ -123,8 +125,6 @@ Text GetLayer() {
                 declare netread Net_Time1 for LocalPlayer = 0;
                 declare netread Net_Time2 for LocalPlayer = 0;
                 declare netread Net_CheckpointRank for LocalPlayer = 0;
-
-                declare netread Net_ReversedMapLB for Teams[0] = False;
 
                 if (!PageIsVisible) continue;
 
