@@ -1,0 +1,363 @@
+/************************************************
+ *   For dynamic objects                         *
+ *   Author:     crAsh                           *
+ *                                               *
+ *   Interaction with dynamic objects            *
+ ************************************************/
+
+
+/*********************************************
+Dynamics Implementation:
+	
+Add the code in Match_StartMap:
+	Dynamics::UseDynamics();
+
+Add the code in Match_PlayLoop:
+	Dynamics::Compute();
+
+Add the code to coresponding events:
+
+CSmModeEvent::EType::OnPlayerTouchesObject: {
+						declare Boolean PerformEliminate = Dynamics::CheckEliminatingObject(Event.Object, "touch", Event.Player);
+							
+						if(PerformEliminate) {
+							if(Player::getLastCheckpoint(Victim) == NullId && (!G_EnableRecords || G_IsCampaign)) {
+								Dynamics::ForceResetAll();
+							}
+							Obstacle::ObsRespawnPlayer(Event.Player);
+						}
+						
+						if(Dynamics::IsDynamic(Event.Object)) {
+								Events::Invalid(Event);
+								continue;
+						}
+	
+CSmModeEvent::EType::OnHit CODE:
+	Dynamics::OnHit(Event.Victim, Event.VictimEntity);
+	
+Add also extra code in foreach (RS in PendingRespawns) Loop
+
+***********************************************/
+
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const  Version     "2023-09-07"
+#Const  ScriptName  "Dynamics.Script.txt"
+
+#Include "TextLib" as TL
+#Include "MathLib" as ML
+
+/*********************************************
+  STRUCTURE
+ *********************************************/
+ 
+#Struct DynObject {
+	 Text ActivationType; //0 - auto / 1 - touch / 2 - hit
+	 Integer RespawnTime; //Used for Delay
+	 Integer RemoveFromDynamicsTime; 
+	 Integer ReturnTime; //Total time of movement
+	 Integer MiddleTime; //Used when SharpReturn == Smooth
+	 Integer SharpReturn; //1 - sharp / 0 - smooth
+   CSmObject Object;
+   Vec3 OriginalPos;
+	 Vec3 NextPos;
+	 Vec3 Velocity;
+	 Boolean Enabled;
+	 Boolean Eliminate;
+	
+	 Integer LandmarkRespawnTime; //Used for Delay
+	 Integer LandmarkReturnTime; //Total time of movement
+ }
+
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+declare DynObject[] Dynamics;
+declare CSmObject[] AutoObjects;
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+//Function to prepare object for being disabled
+Void Remove(DynObject Object) {
+	declare Integer I;
+	for(I, 0, Dynamics.count-1) {
+		if(Dynamics[I].Object.Id == Object.Object.Id) {
+			Dynamics[I].RemoveFromDynamicsTime = Now + 50;
+			Dynamics[I].Object.SetUnspawned();
+			Dynamics[I].Enabled = False;
+			break;
+		}
+	}
+}
+
+//Function for disabling object's movement
+Void RemoveFromDynamics() {
+	for(I, 0, Dynamics.count-1)
+	{
+		if(!Dynamics[I].Enabled && Dynamics[I].RemoveFromDynamicsTime < Now && Dynamics[I].RemoveFromDynamicsTime != 0) {
+			Dynamics[I].Object.SetPositionAndVel(Dynamics[I].OriginalPos, <0.,0.,0.>);
+			
+			if(Dynamics[I].ActivationType == "auto") { //ReActivate the object if it's automatic type of object
+				Dynamics[I].Enabled = True;
+				Dynamics[I].RemoveFromDynamicsTime = 0;
+				Dynamics[I].ReturnTime = Dynamics[I].LandmarkReturnTime + Now;
+				Dynamics[I].RespawnTime = Dynamics[I].LandmarkRespawnTime + Now;
+				Dynamics[I].MiddleTime = (Dynamics[I].LandmarkReturnTime - Dynamics[I].LandmarkRespawnTime)/2 + Now 
+				+ Dynamics[I].LandmarkRespawnTime;
+				Dynamics[I].Object.SetUnspawned();
+			} 
+			else 
+			{
+				Dynamics[I].RemoveFromDynamicsTime = 0;
+			}
+			
+		}
+	}
+}
+
+//Force reset all objects on map
+Void ForceResetAll() {
+	for(I, 0, Dynamics.count-1) {
+		Remove(Dynamics[I]);
+	}
+}	
+
+//Core function - object transformations 
+Void PerformDynamics() {
+	for(I, 0, Dynamics.count-1)
+		{
+				if(Dynamics[I].Enabled && Now > Dynamics[I].RespawnTime && Dynamics[I].LandmarkReturnTime != 0)
+				{
+					declare Vec3 LastPosition = Dynamics[I].Object.Position;
+					
+					if(Dynamics[I].Object.Status == CSmObject::EStatus::Unspawned && Now < Dynamics[I].MiddleTime - 50) {
+						Dynamics[I].Object.SetPositionAndVel(Dynamics[I].OriginalPos+Dynamics[I].NextPos, Dynamics[I].Velocity);
+					}
+					
+					if(Dynamics[I].SharpReturn == 0) { //Smooth return
+					
+						if(Now > Dynamics[I].MiddleTime - 50 && Now < Dynamics[I].MiddleTime 
+						&& Dynamics[I].Object.Status == CSmObject::EStatus::InWorld) {
+						
+							LastPosition = Dynamics[I].Object.Position;
+							Dynamics[I].Object.SetUnspawned();
+						}
+						if(Now > Dynamics[I].MiddleTime && Now < Dynamics[I].ReturnTime - 50) {
+							Dynamics[I].Object.SetPositionAndVel(LastPosition, -1 * Dynamics[I].Velocity);
+						}
+				
+						if(Now > Dynamics[I].ReturnTime - 50 && Now < Dynamics[I].ReturnTime) {
+							Remove(Dynamics[I]);
+						}
+					}
+					else //Sharp return
+					{
+						if(Now > Dynamics[I].ReturnTime - 50 && Now < Dynamics[I].ReturnTime)
+						{
+							Remove(Dynamics[I]);
+						}
+					}
+				}
+		}
+}
+
+/*
+Add Object to Dynamics Array. Read metadata from landmark.
+	
+This function returns Boolean.
+- True when it's Auto
+- False when it's Touch / Hit
+Auto object must be first despawned - it's handled in UseDynamics() function
+*/
+
+Boolean SaveDynamic(CSmObject Object, CSmMapLandmark Landmark) {
+	  declare metadata Meta_InteractionType for Landmark = 0;
+		declare metadata Meta_MoveType for Landmark = 0;
+		declare metadata Meta_Pos for Landmark = <0.,0.,0.>;
+		declare metadata Meta_Vel for Landmark = <0.,0.,0.>;
+		declare metadata Meta_TotalTime for Landmark = 4;
+		declare metadata Meta_ReturnTime for Landmark = 0;
+		declare metadata Meta_Behavior for Landmark = 0;
+		
+		declare Text ActivationTypeText = "touch";
+		
+		switch (Meta_InteractionType) {
+			case 0: ActivationTypeText = "auto";
+			case 1: ActivationTypeText = "hit";
+			case 2: ActivationTypeText = "touch";
+		}
+		
+		declare Integer IgnoreTime;
+
+		//Calculate time needed for given distance
+		if (Meta_TotalTime < 0) { //negative value means user typed distance
+			declare X = Meta_Vel.X*Meta_Vel.X;
+			declare Y = Meta_Vel.Y*Meta_Vel.Y;
+			declare Z = Meta_Vel.Z*Meta_Vel.Z;
+			declare V = ML::Sqrt(X+Y+Z);
+			if(Meta_MoveType == 1 && Meta_TotalTime < 0)
+			{
+				V = 2*V; //If it's sharp return, then distance should be the same as smooth return
+			}
+			if(V == 0) {
+				IgnoreTime = 4000;
+			} //Don't divide by 0! (all X, Y, Z are set to 0 case)
+			else
+			{
+				IgnoreTime = ML::NearestInteger(ML::Abs(Meta_TotalTime*4220) / V );//Calculated duration
+			} 
+		}
+		else { //positive value means user typed time
+			IgnoreTime = Meta_TotalTime*1000; //Duration of the movement
+		}
+
+		declare DynObject DynamicObject;
+	
+		if(Meta_Behavior == 0) {
+			DynamicObject.Eliminate = False;
+		} else {
+			DynamicObject.Eliminate = True;
+		}
+		
+		DynamicObject.Object = Object;
+		DynamicObject.OriginalPos = Landmark.Position;
+		DynamicObject.ActivationType = ActivationTypeText;
+		
+		DynamicObject.LandmarkRespawnTime = Meta_ReturnTime*1000;
+		DynamicObject.LandmarkReturnTime = IgnoreTime - 100 + DynamicObject.LandmarkRespawnTime;
+		if(Meta_TotalTime == 0) {
+			DynamicObject.LandmarkReturnTime = 0;
+		}
+		DynamicObject.RemoveFromDynamicsTime = 0;
+	
+		DynamicObject.NextPos.X = Meta_Pos.X;
+		DynamicObject.NextPos.Y = Meta_Pos.Y;
+		DynamicObject.NextPos.Z = Meta_Pos.Z;
+						
+		DynamicObject.Velocity.X = Meta_Vel.X;
+		DynamicObject.Velocity.Y = Meta_Vel.Y;
+		DynamicObject.Velocity.Z = Meta_Vel.Z;
+		
+		DynamicObject.SharpReturn = Meta_MoveType;
+		DynamicObject.RespawnTime = Now + DynamicObject.LandmarkRespawnTime;
+	
+		DynamicObject.ReturnTime =  Now + DynamicObject.LandmarkReturnTime;
+		DynamicObject.MiddleTime = (DynamicObject.LandmarkReturnTime - DynamicObject.LandmarkRespawnTime)/2 + Now 
+		+ DynamicObject.LandmarkRespawnTime;
+		
+		Object.SetUnspawned();
+		
+		if(ActivationTypeText == "auto") {
+			DynamicObject.Enabled = True;
+			Dynamics.add(DynamicObject);
+			return True;
+		} else {
+			DynamicObject.Enabled = False;
+			Dynamics.add(DynamicObject);
+			return False;
+		}
+		return False;
+		
+		
+		
+}
+
+
+//Activate the object's movement if it's allowed to do so
+Void MakeChanges(CSmObject Object, Text ActivationType) {
+	for(I, 0, Dynamics.count-1) 
+	{
+		if(Dynamics[I].Object.Id == Object.Id && !Dynamics[I].Enabled && Dynamics[I].ActivationType == ActivationType && Dynamics[I].LandmarkReturnTime != 0 && Dynamics[I].RemoveFromDynamicsTime == 0) 
+		{ 
+			Dynamics[I].Enabled = True;
+			Dynamics[I].ReturnTime = Dynamics[I].LandmarkReturnTime + Now;
+			Dynamics[I].RespawnTime = Dynamics[I].LandmarkRespawnTime + Now;
+			Dynamics[I].MiddleTime = (Dynamics[I].LandmarkReturnTime - Dynamics[I].LandmarkRespawnTime)/2 + Now 
+			+ Dynamics[I].LandmarkRespawnTime;
+			
+			Object.SetUnspawned();
+			
+			break;
+			
+		}
+	}
+}	
+
+//Check if object should eliminate (return True) + Perform object's movement if the object has Touch activation
+Boolean CheckEliminatingObject(CSmObject Object, Text ActivationType, CSmPlayer EventPlayer) {
+	foreach(Dynamic in Dynamics) {
+		if(Dynamic.Object.Id == Object.Id) {
+			if(Dynamic.LandmarkReturnTime != 0) {
+				MakeChanges(Object, ActivationType);
+			}
+			if(Dynamic.Eliminate && EventPlayer.SpawnStatus == CSmPlayer::ESpawnStatus::Spawned) 
+			{
+				return True;
+			}
+			return False;
+		}
+	}
+	return False;
+}
+
+//Activate the object on hit 
+Void OnHit(CEntity EventVictim, CEntity VictimEntity) {
+	declare CSmObject Victim;
+	if(EventVictim == Null) {
+		switchtype (VictimEntity) {
+			case CSmObject: {
+				Victim = (VictimEntity as CSmObject);
+				MakeChanges(Victim, "hit");
+			}
+		}
+	}
+}
+
+Boolean IsDynamic(CSmObject Object) {
+	for(I, 0, Dynamics.count-1) 
+	{
+		if(Object.Id == Dynamics[I].Object.Id)
+			return True;
+	}
+	return False;
+}
+
+//Used in Match_PlayLoop
+Void Compute() {
+	PerformDynamics();
+	RemoveFromDynamics();
+}
+
+//Place dynamic objects on a map, indicate using dynamics
+Void UseDynamics() {
+	for(I,0,MapLandmarks_ObjectAnchor.count - 1) {
+			if(TL::SubText(MapLandmarks_ObjectAnchor[I].Tag, 0, 2) == "Dy") {
+				declare CSmObject OnMapObject;
+				OnMapObject = ObjectCreate(MapLandmarks_ObjectAnchor[I].ObjectAnchor.ItemModelId);
+				OnMapObject.SetAnchor(MapLandmarks_ObjectAnchor[I].ObjectAnchor);
+				
+				if (SaveDynamic(OnMapObject, MapLandmarks_ObjectAnchor[I])) {
+					OnMapObject.SetUnspawned();
+				} 
+				else
+				{
+					OnMapObject.SetPosition(MapLandmarks_ObjectAnchor[I].Position);
+				}
+			}
+	}
+}
+
+//For debugging
+Void Info() {
+log("----------------");
+foreach (Object in Dynamics) {
+		log(Object);
+	}
+}

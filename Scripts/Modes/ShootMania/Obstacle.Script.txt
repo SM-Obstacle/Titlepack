@@ -2,12 +2,14 @@
 
 #Const CompatibleMapTypes "ObstacleArena,ObstacleTitleArena,ObstacleTitleArenaOld,TimeAttackArena,ObstacleBetaArena,Randomizer"
 #Const Version           "2.2"
-#Const ScriptName        "Modes/ShootMania/Obstacle.Script.txt"
+#Const ScriptName        "Modes/ShootMania/ObstacleEdit.Script.txt"
 
 
 // ---------------------------------- //
 // Libraries
 // ---------------------------------- //
+#Include "Libs/crAsh/Dynamics.Script.txt" as Dynamics
+
 #Include "TextLib" as TL
 #Include "MathLib" as ML
 
@@ -226,7 +228,7 @@ declare NextLowTimeMessage = 0;
 ***
 // This needs to be called before PrepareMap to have the right settings
 UpdateSettings();
-
+Dynamics::UseDynamics();
 
 declare Editor_WayPointSpawn_Flag for This = 0;
 
@@ -409,6 +411,7 @@ foreach (Event in UIManager.PendingEvents) {
 ***Match_PlayLoop***
 ***
 //Replay_SaveInterface();
+Dynamics::Compute();
 
 if (LastUpdate + C_SettingsUpdateInterval < Now) {
     LastUpdate = Now;
@@ -442,6 +445,10 @@ declare CSmModeEvent[] PendingCaptures;
 
 foreach (Event in PendingEvents) {
     switch (Event.Type) {
+				case CSmModeEvent::EType::OnShoot: {
+					//Dynamics::Info();
+					
+				}
         case CSmModeEvent::EType::OnArmorEmpty: {
             // Discard the defaut behaviour (e.g Player is eliminated)
             Events::Invalid(Event);
@@ -462,7 +469,7 @@ foreach (Event in PendingEvents) {
                 declare ItemBuffs = Player::getBuffTimes(Victim);
                 if (ItemBuffs.existskey(Constants::C_ItemOffzone) && ItemBuffs[Constants::C_ItemOffzone] >= Now) {
                     continue;
-                }
+                } 
             }
 
             Obstacle::ObsRespawnPlayer(Victim);
@@ -470,6 +477,7 @@ foreach (Event in PendingEvents) {
 
         case CSmModeEvent::EType::OnHit: {
             // Disable the loose of armor when hit
+						 Dynamics::OnHit(Event.Victim, Event.VictimEntity);
             Events::Invalid(Event);
         }
 
@@ -478,7 +486,22 @@ foreach (Event in PendingEvents) {
         }
 
         case CSmModeEvent::EType::OnPlayerTouchesObject: {
-            if (Event.Object != Null && Event.Player != Null && Items::PickupItems(Event)) {
+						declare Boolean PerformEliminate = Dynamics::CheckEliminatingObject(Event.Object, "touch", Event.Player);
+							
+						if(PerformEliminate) {
+							if(Player::getLastCheckpoint(Event.Player) == NullId && (!G_EnableRecords || G_IsCampaign)) {
+								Dynamics::ForceResetAll();
+							}
+							Obstacle::ObsRespawnPlayer(Event.Player);
+						}
+						
+						if(Dynamics::IsDynamic(Event.Object)) {
+								Events::Invalid(Event);
+								continue;
+						}
+					
+           if (Event.Object != Null && Event.Player != Null && Items::PickupItems(Event)) {
+								
                 Events::Valid(Event);
             }
             else {
@@ -536,11 +559,23 @@ foreach (RS in PendingRespawns) {
 
     if (CaptureToPerform == Null) {
         Obstacle::ObsRespawnPlayer(RS.Player, RS.GiveUp);
+
+///////////////////////////////////////////////DYNAMICS EXTRA CODE
+				if(Player::getLastCheckpoint(RS.Player) == NullId && (!G_EnableRecords || G_IsCampaign) ) {
+					Dynamics::ForceResetAll();
+				}
+///////////////////////////////////////////////
+				
         
     } else if(Tools::IsGoal(RS.Player.CapturedLandmark)) {
         declare TookGoal = Obstacle::HandleCapture(RS.Player);
 
         if (TookGoal) {
+///////////////////////////////////////////////DYNAMICS EXTRA CODE
+						if(!G_EnableRecords || G_IsCampaign) {
+							Dynamics::ForceResetAll();
+						}
+///////////////////////////////////////////////
             Events::Valid(CaptureToPerform);
             if (G_IsCampaign) {
                 +++Campaign_EndRound+++

@@ -889,8 +889,6 @@ Void EditGoal(CAnchorData _Goal)
     </manialink>
     """;
 }
-
-
 Void SaveGoalSettings()
 {
     if (!AnchorData.existskey(G_LastAnchorId))
@@ -1488,7 +1486,6 @@ Void EditAmmoItem(CAnchorData _Item)
     """;
 }
 
-
 Void SaveAmmoItemSettings()
 {
     if (!AnchorData.existskey(G_LastAnchorId))
@@ -1511,6 +1508,207 @@ Void SaveAmmoItemSettings()
     Meta_GrantAmmoCooldown = Cooldown;
 }
 
+///////////////////////////////////////////////////////////////abc
+Void EditDynamic(CAnchorData _Item) {
+
+    declare Integer InteractionType for ManialinkPage;
+		declare Integer MoveType for ManialinkPage;
+		declare Integer Behavior for ManialinkPage; 
+		declare Vec3 Pos for ManialinkPage;
+		declare Vec3 Vel for ManialinkPage;
+		declare Integer TotalTime for ManialinkPage;
+		declare Integer ReturnTime for ManialinkPage;
+		
+    declare metadata Meta_InteractionType for _Item = 1;
+		declare metadata Meta_MoveType for _Item = 0;
+		declare metadata Meta_Behavior for _Item = 0;
+		declare metadata Meta_Pos for _Item = <0.,0.,0.>;
+		declare metadata Meta_Vel for _Item = <0.,0.,0.>;
+		declare metadata Meta_TotalTime for _Item = 4;
+		declare metadata Meta_ReturnTime for _Item = 0;
+
+    InteractionType = Meta_InteractionType;
+		MoveType = Meta_MoveType;
+		Behavior = Meta_Behavior;
+		Pos = Meta_Pos;
+		Vel = Meta_Vel;
+		TotalTime = Meta_TotalTime;
+		ReturnTime = Meta_ReturnTime;
+   
+
+    /// --- Manialink
+    declare Properties = """
+        <frame id="Basic" pos="0 25">
+            {{{Property("0 -2.5", "Move Type", Select3("0 -4", "Auto", "Hit", "Touch", "Type_Selector"))}}}
+            {{{Property("0 -2.5", "", Select2("0 -12", "Smooth", "Sharp", "Type_Selector1"))}}}
+            {{{Property("0 -2.5", "", Select2("0 -20", "Passive", "Eliminate", "Type_Selector2"))}}}
+        </frame>
+				<frame id="Basic" pos="0 -10">
+            {{{Property("-24 -2.5", "Position X", Entry("0 -6", "PPosX"))}}}
+            {{{Property("0 -2.5", "Position Y", Entry("0 -6", "PPosY"))}}}
+            {{{Property("24 -2.5", "Position Z", Entry("0 -6", "PPosZ"))}}}
+        </frame>
+				<frame id="Basic" pos="0 -24">
+            {{{Property("-24 -2.5", "Velocity X", Entry("0 -6", "PVelX"))}}}
+            {{{Property("-0 -2.5", "Velocity Y", Entry("0 -6", "PVelY"))}}}
+            {{{Property("24 -2.5", "Velocity Z", Entry("0 -6", "PVelZ"))}}}
+        </frame>
+				<frame id="Basic" pos="0 -38">
+					 {{{Property("0 -2.5", "Time / Distance", Entry("0 -6", "PTotalTime"))}}}
+				</frame>
+				<frame id="Basic" pos="0 -52">
+					 {{{Property("0 -2.5", "Delay", Entry("0 -6", "PReturnTime"))}}}
+				</frame>
+    """;
+
+    SetWindow(MakeWindowWithoutEnabled("Edit Item", Properties));
+
+    ManialinkText = """
+    <manialink version="3" name="Obstacle:EditItem">
+    {{{GetML()}}}
+    <script><!--
+    #Include "TextLib" as TL
+
+    Void UpdateView() {
+				
+				
+        declare Integer InteractionType for Page;
+				declare Integer MoveType for Page;
+				declare Integer Behavior for Page;
+				declare Vec3 Pos for Page;
+				declare Vec3 Vel for Page;
+				declare Integer TotalTime for Page;
+				declare Integer ReturnTime for Page;
+
+        declare Frame_Properties <=> (Page.GetFirstChild("properties") as CMlFrame);
+				declare Quad_Type_Selector <=> (Frame_Properties.GetFirstChild("Type_Selector") as CMlQuad);
+				declare Quad_Type_Selector1 <=> (Frame_Properties.GetFirstChild("Type_Selector1") as CMlQuad);
+				declare Quad_Type_Selector2 <=> (Frame_Properties.GetFirstChild("Type_Selector2") as CMlQuad);
+				declare Entry_PosX <=> (Page.GetFirstChild("PPosX") as CMlEntry);	
+				declare Entry_PosY <=> (Page.GetFirstChild("PPosY") as CMlEntry);
+				declare Entry_PosZ <=> (Page.GetFirstChild("PPosZ") as CMlEntry);
+				declare Entry_VelX <=> (Page.GetFirstChild("PVelX") as CMlEntry);
+				declare Entry_VelY <=> (Page.GetFirstChild("PVelY") as CMlEntry);
+				declare Entry_VelZ <=> (Page.GetFirstChild("PVelZ") as CMlEntry);
+				declare Entry_TotalTime <=> (Page.GetFirstChild("PTotalTime") as CMlEntry);
+				declare Entry_ReturnTime <=> (Page.GetFirstChild("PReturnTime") as CMlEntry);
+				
+				Entry_PosX.SetText(TL::ToText(Pos.X), False);
+				Entry_PosY.SetText(TL::ToText(Pos.Y), False);
+				Entry_PosZ.SetText(TL::ToText(Pos.Z), False);
+				Entry_VelX.SetText(TL::ToText(Vel.X), False);
+				Entry_VelY.SetText(TL::ToText(Vel.Y), False);
+				Entry_VelZ.SetText(TL::ToText(Vel.Z), False);
+				Entry_TotalTime.SetText(TL::ToText(TotalTime), False);
+				Entry_ReturnTime.SetText(TL::ToText(ReturnTime), False);
+		
+        //Activation type
+        Quad_Type_Selector.RelativePosition_V3.X = -30 + InteractionType*20.;
+  
+				//Movement type
+        Quad_Type_Selector1.RelativePosition_V3.X = -20 + MoveType*20.;
+				
+				//Behavior
+				Quad_Type_Selector2.RelativePosition_V3.X = -20 + Behavior*20.;
+
+				SendCustomEvent("Event_Save_ItemProperties", Text[]);
+
+    }
+
+    main() {
+        declare Integer InteractionType for Page;
+				declare Integer MoveType for Page;
+				declare Integer Behavior for Page;
+				declare Vec3 Pos for Page;
+				declare Vec3 Vel for Page;
+				declare Integer TotalTime for Page;
+				declare Integer ReturnTime for Page;
+
+        declare NeedUpdate = False;
+        UpdateView();
+
+        while (True) {
+            
+
+            if (NeedUpdate) {
+                UpdateView();
+                NeedUpdate = False;
+            }
+
+            foreach (Event in PendingEvents) {
+                switch (Event.Type) {
+                    case CMlScriptEvent::Type::MouseClick: {
+                        switch (Event.ControlId) {
+                            case "Window_Background": SendCustomEvent("Event_Property_Window_Clicked", Text[]);
+                            case "Auto" : {InteractionType = 0; NeedUpdate = True;}
+                            case "Hit"  : {InteractionType = 1; NeedUpdate = True;}
+                            case "Touch"    : {InteractionType = 2; NeedUpdate = True;}
+														case "Smooth" : {MoveType = 0; NeedUpdate = True;}
+														case "Sharp"	: {MoveType = 1; NeedUpdate = True;}
+														case "Passive" : {Behavior = 0; NeedUpdate = True;}
+														case "Eliminate" : {Behavior = 1; NeedUpdate = True;}
+                        }
+                        
+                    }
+                    case CMlScriptEvent::Type::EntrySubmit: {
+                        declare Entry <=> (Event.Control as CMlEntry);
+
+                        switch(Entry.ControlId) {
+                            case "PPosX": Pos.X = TL::ToReal(Entry.Value);
+                            case "PPosY": Pos.Y = TL::ToReal(Entry.Value);
+                            case "PPosZ": Pos.Z = TL::ToReal(Entry.Value);
+                            case "PVelX": Vel.X = TL::ToReal(Entry.Value);
+                            case "PVelY": Vel.Y = TL::ToReal(Entry.Value);
+														case "PVelZ": Vel.Z = TL::ToReal(Entry.Value);
+														case "PTotalTime": TotalTime = TL::ToInteger(Entry.Value);
+														case "PReturnTime": ReturnTime = TL::ToInteger(Entry.Value);
+                        }
+                        NeedUpdate = True;
+                    }
+                }
+            }
+						yield;
+        }
+    }
+    --></script>
+    </manialink>
+    """;
+}
+
+Void SaveItemProperties() {
+		if (!AnchorData.existskey(G_LastAnchorId))
+        return;
+
+    declare Anchor <=> AnchorData[G_LastAnchorId];
+		if(TL::SubText(Anchor.Tag, 0, 2) != "Dy")
+        return;
+		
+	  declare Integer InteractionType for ManialinkPage;
+		declare Integer MoveType for ManialinkPage;
+		declare Integer Behavior for ManialinkPage; 
+		declare Vec3 Pos for ManialinkPage;
+		declare Vec3 Vel for ManialinkPage;
+		declare Integer TotalTime for ManialinkPage;
+		declare Integer ReturnTime for ManialinkPage;
+
+    declare metadata Meta_InteractionType for Anchor = 1;
+		declare metadata Meta_MoveType for Anchor = 0;
+		declare metadata Meta_Behavior for Anchor = 0;
+		declare metadata Meta_Pos for Anchor = <0.,0.,0.>;
+		declare metadata Meta_Vel for Anchor = <0.,0.,0.>;
+		declare metadata Meta_TotalTime for Anchor = 4;
+		declare metadata Meta_ReturnTime for Anchor = 0;
+
+		
+    Meta_InteractionType = InteractionType;
+		Meta_MoveType = MoveType;
+		Meta_Behavior = Behavior;
+		Meta_Pos = Pos;
+		Meta_Vel = Vel;
+		Meta_TotalTime = TotalTime;
+		Meta_ReturnTime = ReturnTime;
+}
+/////////////////////////////////////////////////////////////////////
 
 Void EditOffzoneShieldItem(CAnchorData _Item)
 {
@@ -1916,6 +2114,14 @@ Void Loop()
 
                 declare Anchor <=> AnchorData[Event.EditedAnchorDataId];
                 G_LastAnchorId = Anchor.Id;
+								////////////////////
+								if(TL::SubText(Anchor.Tag, 0, 2) == "Dy")	
+								{
+									HighlightAnchor(Anchor);
+									EditDynamic(Anchor);
+								}
+								////////////////////
+
                 switch (Anchor.DefaultTag)
                 {
                     case "Goal": {
@@ -2053,6 +2259,9 @@ Void Loop()
                     case "Event_Save_OffzoneShieldItem": {
                         SaveOffzoneShieldItemSettings();
                     }
+										case "Event_Save_ItemProperties": {
+												SaveItemProperties();
+										}
                 }
 
                 UpdateValidability();
