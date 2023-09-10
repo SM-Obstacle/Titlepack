@@ -489,7 +489,7 @@ foreach (Event in PendingEvents) {
 						declare Boolean PerformEliminate = Dynamics::CheckEliminatingObject(Event.Object, "touch", Event.Player);
 							
 						if(PerformEliminate) {
-							if(Player::getLastCheckpoint(Event.Player) == NullId && (!G_EnableRecords || G_IsCampaign)) {
+							if(Player::getLastCheckpoint(Event.Player) == NullId && (ServerModeName == "" || ServerLogin == "")) {
 								Dynamics::ForceResetAll();
 							}
 							Obstacle::ObsRespawnPlayer(Event.Player);
@@ -560,22 +560,18 @@ foreach (RS in PendingRespawns) {
     if (CaptureToPerform == Null) {
         Obstacle::ObsRespawnPlayer(RS.Player, RS.GiveUp);
 
-///////////////////////////////////////////////DYNAMICS EXTRA CODE
-				if(Player::getLastCheckpoint(RS.Player) == NullId && (!G_EnableRecords || G_IsCampaign) ) {
-					Dynamics::ForceResetAll();
-				}
-///////////////////////////////////////////////
-				
-        
+        if(Player::getLastCheckpoint(RS.Player) == NullId && (ServerModeName == "" || ServerLogin == "") ) {
+            Dynamics::ForceResetAll();
+        }
+
     } else if(Tools::IsGoal(RS.Player.CapturedLandmark)) {
         declare TookGoal = Obstacle::HandleCapture(RS.Player);
 
         if (TookGoal) {
-///////////////////////////////////////////////DYNAMICS EXTRA CODE
-						if(!G_EnableRecords || G_IsCampaign) {
-							Dynamics::ForceResetAll();
-						}
-///////////////////////////////////////////////
+            if(ServerModeName == "" || ServerLogin == "") {
+                Dynamics::ForceResetAll();
+            }
+                        
             Events::Valid(CaptureToPerform);
             if (G_IsCampaign) {
                 +++Campaign_EndRound+++

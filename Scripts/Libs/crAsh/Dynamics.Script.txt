@@ -21,7 +21,7 @@ CSmModeEvent::EType::OnPlayerTouchesObject: {
 						declare Boolean PerformEliminate = Dynamics::CheckEliminatingObject(Event.Object, "touch", Event.Player);
 							
 						if(PerformEliminate) {
-							if(Player::getLastCheckpoint(Victim) == NullId && (!G_EnableRecords || G_IsCampaign)) {
+							if(Player::getLastCheckpoint(Victim) == NullId && (ServerModeName == "" || ServerLogin == "")) {
 								Dynamics::ForceResetAll();
 							}
 							Obstacle::ObsRespawnPlayer(Event.Player);
