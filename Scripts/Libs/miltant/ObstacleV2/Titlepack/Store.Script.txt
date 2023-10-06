@@ -240,16 +240,7 @@ Void Loop_Maps() {
         ObsStore_Maps_LastUpdate = Now;
         
         foreach (I => Map in G_MapsTaskResult.MapInfos) {
-            if ( Map.CollectionName != "Storm" ||
-                !(
-                    TL::EndsWith("ObstacleTitleArena", Map.MapType) ||
-                    TL::EndsWith("ObstacleArena", Map.MapType) ||
-                    TL::EndsWith("ObstacleTitleArenaOld", Map.MapType) ||
-                    TL::EndsWith("TimeAttackArena", Map.MapType) ||
-                    TL::EndsWith("ObstacleBetaArena", Map.MapType) ||
-                    TL::EndsWith("Randomizer", Map.MapType)
-                )
-            ) continue;
+            if (Map.CollectionName != "Storm") continue;
 
             if (!ObsStore_Maps.existskey(Map.Path)) {
                 ObsStore_Maps[Map.Path] = [];
