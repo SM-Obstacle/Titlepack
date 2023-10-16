@@ -346,7 +346,7 @@ foreach (Event in UIManager.PendingEvents) {
                     if (Res.reversed && S_ReversedWorseNewRecordMsg != "") {
                         Txt = TL::Compose(S_ReversedWorseNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime);
                     } else if (S_WorseNewRecordMsg != "") {
-                        Txt = TL::Compose(S_ReversedWorseNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime);
+                        Txt = TL::Compose(S_WorseNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime);
                     }
                     UIManager.GetUI(Player).SendChat(Txt);
                 }
