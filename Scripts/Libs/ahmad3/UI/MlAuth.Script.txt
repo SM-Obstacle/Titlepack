@@ -343,7 +343,8 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
         cps = _LastCpTimes
     };
 
-    declare Req = MakePost("player/finished", body.tojson());
+	declare netread Text Net_EventRoutePrefix for Teams[0];
+    declare Req = MakePost(Net_EventRoutePrefix ^ "player/finished", body.tojson());
 	if (Req == NullId) {
 		log("Could not send request to server");
 		return;
@@ -399,12 +400,20 @@ Void Private_UpdatePlayer() {
 }
 
 Void InitPbCpsTimes() {
+	ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+
+	declare netread Net_RecordsUpdated for Teams[0] = -1;
+	declare LastRecordsUpdate = Net_RecordsUpdated;
+
+	// Wait for the /map/insert request response
+	wait(Net_RecordsUpdated != LastRecordsUpdate);
+
 	declare persistent ObsStore_UserToken for LocalUser = "";
 	
-	declare Url = "{{{Constants::C_HostUrl}}}player/pb?map_uid="^Map.Id;
+	declare netread Text Net_EventRoutePrefix for Teams[0];
+	declare Url = "{{{Constants::C_HostUrl}}}" ^ Net_EventRoutePrefix ^ "player/pb?map_uid="^Map.Id;
 	declare Req = Http.CreateGet(Url, True, "Accept: application/json\nPlayerLogin: " ^ InputPlayer.User.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
 
-	ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
 	wait(Req.IsCompleted);
 	ClientUI.UISequence = CUIConfig::EUISequence::None;
 

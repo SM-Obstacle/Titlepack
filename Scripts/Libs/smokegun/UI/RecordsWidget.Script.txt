@@ -80,7 +80,8 @@ Text GetLayer() {
 
     Void UpdateRecords(Text _Login) {
         declare params = "?mapId="^Map.Id^"&playerId="^_Login;
-        declare url = "{{{Constants::C_HostUrl}}}overview"^params;
+        declare netread Text Net_EventRoutePrefix for Teams[0];
+        declare url = "{{{Constants::C_HostUrl}}}" ^ Net_EventRoutePrefix ^ "overview"^params;
         G_Req = Http.CreateGet(url, True, "Accept: application/json");
     }
 
