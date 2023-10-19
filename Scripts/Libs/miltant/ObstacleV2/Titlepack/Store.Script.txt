@@ -242,13 +242,20 @@ Void Loop_Maps() {
         foreach (I => Map in G_MapsTaskResult.MapInfos) {
             if (Map.CollectionName != "Storm") continue;
 
+            declare IsObsMap = TL::EndsWith("ObstacleTitleArena", Map.MapType) ||
+                     TL::EndsWith("ObstacleArena", Map.MapType) ||
+                     TL::EndsWith("ObstacleTitleArenaOld", Map.MapType) ||
+                     TL::EndsWith("TimeAttackArena", Map.MapType) ||
+                     TL::EndsWith("ObstacleBetaArena", Map.MapType) ||
+                     TL::EndsWith("Randomizer", Map.MapType);
+
             if (!ObsStore_Maps.existskey(Map.Path)) {
                 ObsStore_Maps[Map.Path] = [];
             }
             ObsStore_Maps[Map.Path][Map.Name] = K_MapInfo {
                 MapUid =  Map.MapUid,
                 Author = Map.AuthorLogin,
-                IsPlayable = Map.IsPlayable,
+                IsPlayable = Map.IsPlayable && IsObsMap,
                 TMObjective_AuthorTime = Map.TMObjective_AuthorTime,
                 TMObjective_GoldTime = Map.TMObjective_GoldTime,
                 TMObjective_SilverTime = Map.TMObjective_SilverTime,
