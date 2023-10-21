@@ -236,7 +236,11 @@ declare NextLowTimeMessage = 0;
 declare netwrite Text Net_EventRoutePrefix for Teams[0];
 if (S_EventHandle != "" && S_EventEdition != "") {
     Net_EventRoutePrefix = "event/" ^ S_EventHandle ^ "/" ^ S_EventEdition ^ "/";
+} else if (Net_EventRoutePrefix != "") {
+    Net_EventRoutePrefix = "";
 }
+
+declare netwrite Net_MapStartTime for Teams[0] = Now;
 
 // This needs to be called before PrepareMap to have the right settings
 UpdateSettings();
@@ -261,10 +265,8 @@ if (!Obstacle::PrepareMap(ModeInfo::GetName()) && Editor_WayPointSpawn_Flag == 0
     MB_Private_StopMap();
 }
 
-{
-    declare netwrite Boolean Net_ReversedMapLB for Teams[0];
-    Net_ReversedMapLB = Obstacle::IsLeaderboardReversed();
-}
+declare netwrite Boolean Net_ReversedMapLB for Teams[0];
+Net_ReversedMapLB = Obstacle::IsLeaderboardReversed();
 
 UsePvPWeapons = Obstacle::IsPvPWeaponsMap();
 UsePvPCollisions = Obstacle::IsPvPCollisionsMap();
