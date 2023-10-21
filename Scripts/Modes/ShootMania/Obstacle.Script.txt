@@ -1,7 +1,7 @@
 #Extends "Modes/ShootMania/Base/ModeShootMania.Script.txt"
 
 #Const CompatibleMapTypes "ObstacleArena,ObstacleTitleArena,ObstacleTitleArenaOld,TimeAttackArena,ObstacleBetaArena,Randomizer"
-#Const Version           "2.2"
+#Const Version           "2.5.4"
 #Const ScriptName        "Modes/ShootMania/ObstacleEdit.Script.txt"
 
 
@@ -193,6 +193,9 @@ SpawnScreen::CreateScores("Score.Points");
 
 ***Match_InitServer***
 ***
+log("""@@@@@@@@@@@@@@@@@@@@@@
+@@@ OBSTACLE START @@@
+@@@@@@@@@@@@@@@@@@@@@@""");
 ItemList_Begin();
 // G_InvisibleSkinId = ItemList_Add("StadiumCar");
 G_InvisibleSkinId = ItemList_AddWithSkin("DefaultPlayerModel", Constants::C_InvisibleSkin);
@@ -309,11 +312,6 @@ Layers::Update("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
 
 Items::Place();
 
-foreach (Player in AllPlayers) {
-    Player::setInitialized(Player, False);
-    Obstacle::NewPlayer(Player);
-}
-
 ---Ladder_OpenMatch_All---
 
 StartTime = Now;
@@ -376,7 +374,7 @@ foreach (Event in UIManager.PendingEvents) {
                 ban.fromjson(Event.CustomEventData[1]);
                 Player::setBanned(Player, ban);
             }
-            case "cptimes:init": {
+            case "cpstimes:init": {
                 declare API::K_PbResponse Res;
                 Res.fromjson(Event.CustomEventData[1]);
                 // Avoid setting best run if player hasn't saved any record yet
@@ -396,6 +394,7 @@ foreach (Event in UIManager.PendingEvents) {
                     }
                 }
 
+                Player::InitPlayer(Player);
                 Player::setRespawnCount(Player, Res.rs_count);
                 Obstacle::UpdatePlayerRsCounterColumn(Player);
                 Player::setRespawnCount(Player, 0);
