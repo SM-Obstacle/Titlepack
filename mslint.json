@@ -1,0 +1,9 @@
+{
+    "linter": [
+      {
+        "rules": {
+            "type-declaration": "off"
+        }
+      }
+    ]
+  }
