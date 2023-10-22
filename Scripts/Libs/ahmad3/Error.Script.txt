@@ -7,6 +7,7 @@
 
 #Include "MathLib" as MathLib
 #Include "TimeLib" as TimeLib
+#Include "TextLib" as TL
 
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
@@ -16,6 +17,8 @@
 
 #Const  Version     "2023-07-08"
 #Const  ScriptName  "Error.Script.txt"
+
+#Const C_JsonRegex """\{.*\}|\[.*\]"""
 
 // HTTP errors
 #Const C_HttpErr_Unauthorized           401
@@ -80,9 +83,13 @@ Void Init() {
     ];
 }
 
+Boolean Private_IsJson(Text _Text) {
+    return TL::RegexFind(C_JsonRegex, _Text, "").count == 1;
+}
+
 K_Error Handle(Integer _StatusCode, Text _ReqResult) {
     declare K_ErrorResponse res;
-    if (!res.fromjson(_ReqResult)) {
+    if (Private_IsJson(_ReqResult) && !res.fromjson(_ReqResult)) {
         declare Ban::K_BannedPlayerResponse ban;
         if (_StatusCode == C_HttpErr_Forbidden && ban.fromjson(_ReqResult)) {
             return K_Error {
@@ -94,7 +101,12 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
 
         res = K_ErrorResponse {
             type = C_Err_Unknown,
-            message = "Unknown error (JSON object not respecting error structure)"
+            message = "Unknown error (JSON object not respecting error structure):\n" ^ _ReqResult
+        };
+    } else {
+        res = K_ErrorResponse {
+            type = C_Err_Unknown,
+            message = "Unknown error (Got a non-JSON request result):\n" ^ _ReqResult
         };
     }
 
@@ -119,6 +131,8 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
 
 Text ML_Preproc() {
     return """
+#Const C_JsonRegex {{{dump(dump(dump(C_JsonRegex)))}}}
+
 // HTTP errors
 #Const C_HttpErr_Unauthorized           401
 #Const C_HttpErr_Forbidden              403
@@ -186,9 +200,13 @@ Void Error_Init() {
     ];
 }
 
+Boolean Error_IsJson(Text _Text) {
+    return TL::RegexFind(C_JsonRegex, _Text, "").count == 1;
+}
+
 K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
     declare K_ErrorResponse res;
-    if (!res.fromjson(_ReqResult)) {
+    if (Error_IsJson(_ReqResult) && !res.fromjson(_ReqResult)) {
         declare K_BannedPlayerResponse ban;
         if (_StatusCode == C_HttpErr_Forbidden && ban.fromjson(_ReqResult)) {
             return K_Error {
@@ -200,7 +218,12 @@ K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
 
         res = K_ErrorResponse {
             type = C_Err_Unknown,
-            message = "Unknown error (JSON object not respecting error structure)"
+            message = "Unknown error (JSON object not respecting error structure):\n" ^ _ReqResult
+        };
+    } else {
+        res = K_ErrorResponse {
+            type = C_Err_Unknown,
+            message = "Unknown error (Got a non-JSON request result):\n" ^ _ReqResult
         };
     }
 

@@ -469,7 +469,7 @@ main() {
 		ClientUI.UISequence = CUIConfig::EUISequence::None;
 	}
 
-	declare netread Net_MapStartTime for Teams[0];
+	declare netread Text Net_MapStartTime for Teams[0];
 	declare LastMapStartTime = Net_MapStartTime;
 	wait(LastMapStartTime != Net_MapStartTime);
 

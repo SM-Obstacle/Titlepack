@@ -10,6 +10,7 @@
 // ---------------------------------- //
 #Include "Libs/crAsh/Dynamics.Script.txt" as Dynamics
 
+#Include "TimeLib" as TimeLib
 #Include "TextLib" as TL
 #Include "MathLib" as ML
 
@@ -240,8 +241,6 @@ if (S_EventHandle != "" && S_EventEdition != "") {
     Net_EventRoutePrefix = "";
 }
 
-declare netwrite Net_MapStartTime for Teams[0] = Now;
-
 // This needs to be called before PrepareMap to have the right settings
 UpdateSettings();
 Dynamics::UseDynamics();
@@ -314,6 +313,11 @@ Layers::Update("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
 
 Items::Place();
 
+foreach (Player in AllPlayers) {
+    Player::setInitialized(Player, False);
+    Obstacle::NewPlayer(Player);
+}
+
 ---Ladder_OpenMatch_All---
 
 StartTime = Now;
@@ -322,6 +326,9 @@ if (S_TimeLimit > 0) {
 } else {
     EndTime = -1;
 }
+
+declare netwrite Text Net_MapStartTime for Teams[0];
+Net_MapStartTime = TimeLib::GetCurrent();
 ***
 
 ***Match_Yield***
