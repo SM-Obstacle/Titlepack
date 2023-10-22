@@ -50,6 +50,7 @@
 #Include "Libs/ahmad3/UI/MlAuth.Script.txt" as MlAuth
 #Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
+#Include "Libs/ahmad3/MapAttributes.Script.txt" as MapAttr
 
 // ---------------------------------- //
 // Settings
@@ -265,7 +266,7 @@ if (!Obstacle::PrepareMap(ModeInfo::GetName()) && Editor_WayPointSpawn_Flag == 0
 }
 
 declare netwrite Boolean Net_ReversedMapLB for Teams[0];
-Net_ReversedMapLB = Obstacle::IsLeaderboardReversed();
+Net_ReversedMapLB = MapAttr::IsLeaderboardReversed();
 
 UsePvPWeapons = Obstacle::IsPvPWeaponsMap();
 UsePvPCollisions = Obstacle::IsPvPCollisionsMap();
@@ -300,7 +301,7 @@ if (Obstacle::IsRandomizerMap()) {
     }
 
     Layers::Detach("Records");
-} else if (Obstacle::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
+} else if (MapAttr::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
     if (G_IsCampaign)
         Layers::Create("Records", MedalsWidget::GetLayer());
     else
@@ -441,10 +442,10 @@ if (Settings::GetForceInvisibleSkin()) {
     Obstacle::UpdatePlayersSkin(NullId);
 }
 
-if (Obstacle::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
+if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
     Layers::Attach("Records");
     API::Loop();
-} else if (Obstacle::IsLeaderboardEnabled() || G_EnableRecords || Settings::GetEnableRecords()){
+} else if (MapAttr::IsLeaderboardEnabled() || G_EnableRecords || Settings::GetEnableRecords()){
     Layers::Detach("Records");
 }
 
@@ -802,7 +803,7 @@ Void CreateUI() {
 
     Layers::Create("Auth", MlAuth::GetLayer());
 
-    if (Obstacle::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
+    if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
         if (G_IsCampaign)
             Layers::Create("Records", MedalsWidget::GetLayer());
         else
@@ -899,9 +900,9 @@ Void UpdateSettings() {
 
     if (S_EnableRecords != Settings::GetEnableRecords()) {
         Settings::SetEnableRecords(S_EnableRecords);
-        if (!S_EnableRecords || !Obstacle::IsLeaderboardEnabled()) {
+        if (!S_EnableRecords || !MapAttr::IsLeaderboardEnabled()) {
             Layers::Detach("Records");
-        } else if (Obstacle::IsLeaderboardEnabled()) {
+        } else if (MapAttr::IsLeaderboardEnabled()) {
             Layers::Attach("Records");
         }
     }

@@ -29,6 +29,7 @@
 #Include "Libs/smokegun/Settings.Script.txt" as Settings
 #Include "Libs/smokegun/Score.Script.txt" as ObsScores
 
+#Include "Libs/ahmad3/MapAttributes.Script.txt" as MapAttr
 
 /*********************************************
   CONSTANTS
@@ -80,15 +81,6 @@ Text OrdinalSuffix(Integer _Rank) {
     return TL::ToText(_Rank) ^ Suff;
 }
 
-Boolean IsLeaderboardEnabled() {
-    if (Map == Null) return False;
-    declare metadata Meta_LB_Enabled for Map = True;
-    return Meta_LB_Enabled;
-}
-Boolean IsLeaderboardReversed() {
-    declare metadata Meta_LB_Reversed for Map = False;
-    return Meta_LB_Reversed;
-}
 Boolean IsPvPWeaponsMap() {
     declare metadata Meta_PvP_Weapons for Map = False;
     return Meta_PvP_Weapons;
@@ -295,8 +287,8 @@ Boolean PrepareMap(Text ModeName) {
         UIManager.UIAll.SendChat("$f00WARNING: This is an old map, please disable fast respawn in the settings if some cps are made with poles!");
     }
 
-    if (IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
-        API::ReplaceOrCreateMap(G_CheckpointsTotal, IsLeaderboardReversed());
+    if (MapAttr::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
+        API::ReplaceOrCreateMap(G_CheckpointsTotal, MapAttr::IsLeaderboardReversed());
     }
 
     return True;
@@ -342,7 +334,7 @@ Void Private_SendXmlRpcCallback(Text _CallbackName, CSmPlayer _Player, Integer _
  */
 Void Private_SendFinishedRun(CSmPlayer _Player, Integer _Run, Ident _GoalId) {
     Private_SendXmlRpcCallback("OnFinish", _Player, _Run, _GoalId);
-    if (IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
+    if (MapAttr::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
         declare netwrite _LastRun for UIManager.GetUI(_Player) = -1;
         declare netwrite _RespawnCount for UIManager.GetUI(_Player) = 0;
         declare netwrite Integer[] _LastCPTimes for UIManager.GetUI(_Player);
@@ -781,7 +773,7 @@ Void Private_HandleFinish(CSmPlayer _Player, Ident _GoalId) {
     Net_NewGoal = Now;
 
     // Check if last run is better
-    if (Time < BestRun && !IsLeaderboardReversed() || Time > BestRun && IsLeaderboardReversed() || BestRun < 0) {
+    if (Time < BestRun && !MapAttr::IsLeaderboardReversed() || Time > BestRun && MapAttr::IsLeaderboardReversed() || BestRun < 0) {
         Player::setBestRun(_Player, Time);
         Player::setBestCPTimes(_Player, Player::getLastCPTimes(_Player));
 
