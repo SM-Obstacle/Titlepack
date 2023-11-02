@@ -214,7 +214,6 @@ G_ForceInvisibleSkin = !(ServerModeName == "" || ServerLogin == "");
 UpdateSettings();
 
 SM::SetupDefaultVisibility();
-CreateUI();
 
 if (Settings::GetEnableRecords()) {
     API::Init();
@@ -232,6 +231,8 @@ declare NextLowTimeMessage = 0;
 
 ***Match_StartMap***
 ***
+
+CreateUI();
 
 declare netwrite Text Net_EventRoutePrefix for Teams[0];
 if (S_EventHandle != "" && S_EventEdition != "") {
@@ -790,16 +791,16 @@ Void CreateUI() {
     Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
     Layers::Create("Items", Items::CreateLayerItems());
 
-
-    Layers::Create("Auth", MlAuth::GetLayer());
-
     if (Obstacle::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
         if (G_IsCampaign)
             Layers::Create("Records", MedalsWidget::GetLayer());
         else
             Layers::Create("Records", RecordsWidget::GetLayer());
         Layers::Attach("Records");
+        Layers::Create("Auth", MlAuth::GetLayer());
+        Layers::Attach("Auth");
     }
+
     Layers::Attach("Chrono");
     Layers::Attach("JumpBack");
     Layers::Attach("TimeDiff");
@@ -809,7 +810,6 @@ Void CreateUI() {
     Layers::Attach("Items");
     Layers::Attach("Markers");
     Layers::Attach("SpecKeys");
-    Layers::Attach("Auth");
     
     Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(G_IsCampaign));
     Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));

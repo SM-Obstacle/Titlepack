@@ -27,6 +27,7 @@
 #Const C_Err_Redis                      103
 #Const C_Err_ExternalRequest            104
 #Const C_Err_Unknown                    105
+#Const C_Err_Maintenance                106
 
 // Authentication errors
 #Const C_Err_Unauthorized               201
@@ -105,14 +106,16 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
 
     declare Text type = G_ErrorList.get(res.type, "Unknown error (type not yet registered in TP)");
 
+    declare rawMessage = """[{{{_StatusCode}}}]: "{{{res.message}}}" ({{{type}}}, {{{title}}})""";
+    
     declare Text message = """API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):
-[{{{_StatusCode}}}]: "{{{res.message}}}" ({{{type}}}, {{{title}}})""";
+{{{rawMessage}}}""";
 
     log(message);
 
     return K_Error {
         type = res.type,
-        message = message,
+        message = rawMessage,
         ban = Ban::Empty()
     };
 }
@@ -129,6 +132,7 @@ Text ML_Preproc() {
 #Const C_Err_Redis                      103
 #Const C_Err_ExternalRequest            104
 #Const C_Err_Unknown                    105
+#Const C_Err_Maintenance                106
 
 // Authentication errors
 #Const C_Err_Unauthorized               201
@@ -211,14 +215,16 @@ K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
 
     declare Text type = G_ErrorList.get(res.type, "Unknown error (type not yet registered in TP)");
 
-    declare Text message = "API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):"
-        ^ "\n[" ^ _StatusCode ^ "]: \"" ^ res.message ^ "\" ("^ type ^", "^ title ^")";
+    declare rawMessage = "[" ^ _StatusCode ^ "]: \"" ^ res.message ^ "\" ("^ type ^", "^ title ^")";
+    
+    declare Text message = "API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):\n"
+        ^ rawMessage;
 
     log(message);
 
     return K_Error {
         type = res.type,
-        message = message,
+        message = rawMessage,
         ban = Ban_Empty()
     };
 }
