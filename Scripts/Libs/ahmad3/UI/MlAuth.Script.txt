@@ -57,7 +57,7 @@ or play any local map.
 If you make a record on this map, your run will not be saved
 immediately.
 
-Your time will certainly be saved later, after the maintenance,
+If everything goes right, your time will appear after the maintenance,
 but to be sure, ping @ahmadbky on the Obstacle discord with
 a screenshot of your run.
 
