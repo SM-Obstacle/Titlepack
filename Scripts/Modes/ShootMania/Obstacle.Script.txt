@@ -791,14 +791,17 @@ Void CreateUI() {
     Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
     Layers::Create("Items", Items::CreateLayerItems());
 
-    if (Obstacle::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
-        if (G_IsCampaign)
-            Layers::Create("Records", MedalsWidget::GetLayer());
-        else
-            Layers::Create("Records", RecordsWidget::GetLayer());
-        Layers::Attach("Records");
+    if (Obstacle::IsLeaderboardEnabled() && G_EnableRecords) {
         Layers::Create("Auth", MlAuth::GetLayer());
         Layers::Attach("Auth");
+
+        if (Settings::GetEnableRecords()) {
+            if (G_IsCampaign)
+                Layers::Create("Records", MedalsWidget::GetLayer());
+            else
+                Layers::Create("Records", RecordsWidget::GetLayer());
+            Layers::Attach("Records");
+        }
     }
 
     Layers::Attach("Chrono");

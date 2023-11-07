@@ -182,7 +182,7 @@ Void Loop()
             }
         } else {
             declare err = Error::Handle(request.StatusCode, request.Result);
-            UIManager.UIAll.SendChat(err.message);
+            UIManager.UIAll.SendChat(err.err.message);
         }
 
         ToDelete.add(reqId);

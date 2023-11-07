@@ -185,6 +185,7 @@ Text GetLayer() {
 
 #Struct K_ReportErrorBody {
 	Text on_route;
+	Text request_id;
 	Text map_uid;
 	Integer err_type;
 	Text err_msg;
@@ -268,7 +269,7 @@ Void OnPopup(CMlFrame _Frame, CMlQuad _SubmitButton) {
 }
 
 Void OnError(K_Error _Error, Text _OnRoute) {
-	if (_Error.type == C_Err_Maintenance) {
+	if (_Error.err.type == C_Err_Maintenance) {
 		OnPopup(G_MaintenanceDialog, G_MaintenanceDialog_Submit);
 		if (_OnRoute != "/player/finished") return;
 	} else {
@@ -280,9 +281,10 @@ Void OnError(K_Error _Error, Text _OnRoute) {
 
 	declare Body = K_ReportErrorBody {
 		on_route = _OnRoute,
+		request_id = _Error.err.request_id,
 		map_uid = "" ^ Map.Id,
-		err_type = _Error.type,
-		err_msg = _Error.message,
+		err_type = _Error.err.type,
+		err_msg = _Error.err.message,
 		time = _LastRun,
 		respawn_count = _RespawnCount
 	};
@@ -356,7 +358,7 @@ Void Private_UpdateToken(Text _HeadMsg) {
 	wait(req.IsCompleted);
 	if (req.StatusCode != 200) {
 		declare err = Error_Handle(req.StatusCode, req.Result);
-		UI.SendChat(err.message);
+		UI.SendChat(err.err.message);
 		OnError(err, "/player/get_token");
 		G_Errored = True;
 		return;
@@ -432,7 +434,7 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 	} else if (req.StatusCode != 200) {
 		declare err = Error_Handle(req.StatusCode, req.Result);
 		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
-		UI.SendChat(err.message);
+		UI.SendChat(err.err.message);
 		OnError(err, "/player/finished");
 	} else {
 		SendCustomEvent("player:finished", [req.Result]);
@@ -487,10 +489,10 @@ Void InitPbCpsTimes() {
 
 	if (Req.StatusCode != 200) {
 		declare Err = Error_Handle(Req.StatusCode, Req.Result);
-		UI.SendChat(Err.message);
+		UI.SendChat(Err.err.message);
 		// If the API is in maintenance, the Private_UpdatePlayer
 		// function should already have handled it (to avoid the frame to pop twice).
-		if (Err.type != C_Err_Maintenance) {
+		if (Err.err.type != C_Err_Maintenance) {
 			OnError(Err, "/player/pb");
 		}
 	} else {

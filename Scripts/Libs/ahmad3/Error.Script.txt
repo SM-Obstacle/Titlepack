@@ -44,13 +44,13 @@
 #Const C_Err_MapNotFound                304
 
 #Struct K_ErrorResponse {
+    Text request_id;
     Integer type;
     Text message;
 }
 
 #Struct K_Error {
-    Integer type;
-    Text message;
+    K_ErrorResponse err;
     Ban::K_OptBanishment ban;
 }
 
@@ -87,13 +87,17 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
         declare Ban::K_BannedPlayerResponse ban;
         if (_StatusCode == C_HttpErr_Forbidden && ban.fromjson(_ReqResult)) {
             return K_Error {
-                type = C_Err_BannedPlayer,
-                message = ban.message,
+                err = K_ErrorResponse {
+                    request_id = "Unknown",
+                    type = C_Err_BannedPlayer,
+                    message = ban.message
+                },
                 ban = Ban::Of(ban)
             };
         }
 
         res = K_ErrorResponse {
+            request_id = "Unknown",
             type = C_Err_Unknown,
             message = "Unknown error (JSON object not respecting error structure)"
         };
@@ -106,7 +110,7 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
 
     declare Text type = G_ErrorList.get(res.type, "Unknown error (type not yet registered in TP)");
 
-    declare rawMessage = """[{{{_StatusCode}}}]: "{{{res.message}}}" ({{{type}}}, {{{title}}})""";
+    declare rawMessage = """[{{{_StatusCode}}}]: "{{{res.message}}}" ({{{type}}}, {{{title}}}, request ID: {{{res.request_id}}})""";
     
     declare Text message = """API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):
 {{{rawMessage}}}""";
@@ -114,8 +118,7 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
     log(message);
 
     return K_Error {
-        type = res.type,
-        message = rawMessage,
+        err = res,
         ban = Ban::Empty()
     };
 }
@@ -149,13 +152,13 @@ Text ML_Preproc() {
 #Const C_Err_MapNotFound                304
 
 #Struct K_ErrorResponse {
+    Text request_id;
     Integer type;
     Text message;
 }
 
 #Struct K_Error {
-    Integer type;
-    Text message;
+    K_ErrorResponse err;
     K_OptBanishment ban;
 }
     """;
@@ -196,13 +199,16 @@ K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
         declare K_BannedPlayerResponse ban;
         if (_StatusCode == C_HttpErr_Forbidden && ban.fromjson(_ReqResult)) {
             return K_Error {
-                type = C_Err_BannedPlayer,
-                message = ban.message,
+                err = K_ErrorResponse {
+                    type = C_Err_BannedPlayer,
+                    message = ban.message
+                },
                 ban = Ban_Of(ban)
             };
         }
 
         res = K_ErrorResponse {
+            request_id = "Unknown",
             type = C_Err_Unknown,
             message = "Unknown error (JSON object not respecting error structure)"
         };
@@ -215,7 +221,7 @@ K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
 
     declare Text type = G_ErrorList.get(res.type, "Unknown error (type not yet registered in TP)");
 
-    declare rawMessage = "[" ^ _StatusCode ^ "]: \"" ^ res.message ^ "\" ("^ type ^", "^ title ^")";
+    declare rawMessage = "[" ^ _StatusCode ^ "]: \"" ^ res.message ^ "\" ("^ type ^", "^ title ^", request ID: \"res.request_id\")";
     
     declare Text message = "API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):\n"
         ^ rawMessage;
@@ -223,8 +229,7 @@ K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
     log(message);
 
     return K_Error {
-        type = res.type,
-        message = rawMessage,
+        err = res,
         ban = Ban_Empty()
     };
 }
