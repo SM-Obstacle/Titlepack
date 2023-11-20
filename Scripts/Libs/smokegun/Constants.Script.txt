@@ -45,6 +45,11 @@
 #Const C_Request_ReplaceOrCreateMap 0
 #Const C_Request_ReplaceOrCreatePlayer 1
 #Const C_Request_PlayerFinished 2
+#Const C_Request_CampaignMaps 3
+#Const C_Request_PlayerTimes 4
+#Const C_Request_Event 5
+#Const C_Request_EventHandle 6
+#Const C_Request_EventHandleEdition 7
 
 #Const C_UnauthorizedStatusCode 401
 

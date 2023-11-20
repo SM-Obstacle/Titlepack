@@ -1,0 +1,220 @@
+#Include "TextLib" as TL
+
+#Include "Libs/smokegun/Constants.Script.txt" as C
+
+#Struct K_EventResponse {
+    Text handle;
+    Integer last_edition_id;
+}
+
+#Struct K_EventEdition {
+    Integer id;
+    Text name;
+    Text start_date;
+}
+
+#Struct K_EventEditionContentMapAuthor {
+    Text login;
+    Text name;
+    Text zone_path;
+}
+
+#Struct K_EventEditionContentMap {
+    Integer mx_id;
+    K_EventEditionContentMapAuthor main_author;
+    Text name;
+    Text map_uid;
+    Text map_thumbnail;
+    Integer bronze_time;
+    Integer silver_time;
+    Integer gold_time;
+    Integer champion_time;
+    Integer personal_best;
+}
+
+#Struct K_EventEditionContentCategory {
+    Text handle;
+    Text name;
+    Text banner_img_url;
+    K_EventEditionContentMap[] maps;
+}
+
+#Struct K_EventEditionDetails {
+    Integer id;
+    Text name;
+    Text start_date;
+    Text banner_img_url;
+    Integer mx_id;
+    K_EventEditionContentCategory[] categories;
+}
+
+#Struct K_Event {
+    // .handle: Text ; .last_edition_id: Integer
+    K_EventResponse Event;
+    // for each edition
+    //     .id: Integer, .start_date: Text
+    K_EventEdition[Integer] Editions;
+    // for each edition details
+    //     see K_EventEditionDetails
+    K_EventEditionDetails[Integer] EditionsDetails;
+}
+
+#Struct K_RequestAttr {
+    Integer Type;
+    Text Route;
+}
+
+declare K_RequestAttr[Ident] G_PendingRequests;
+declare K_Event[Text] G_Events;
+
+Text ML_Preproc() {
+    return """
+#Struct K_EventResponse {
+    Text handle;
+    Integer last_edition_id;
+}
+
+#Struct K_EventEdition {
+    Integer id;
+    Text name;
+    Text start_date;
+}
+
+#Struct K_EventEditionContentMapAuthor {
+    Text login;
+    Text name;
+    Text zone_path;
+}
+
+#Struct K_EventEditionContentMap {
+    Integer mx_id;
+    K_EventEditionContentMapAuthor main_author;
+    Text name;
+    Text map_uid;
+    Text map_thumbnail;
+    Integer bronze_time;
+    Integer silver_time;
+    Integer gold_time;
+    Integer champion_time;
+    Integer personal_best;
+}
+
+#Struct K_EventEditionContentCategory {
+    Text handle;
+    Text name;
+    Text banner_img_url;
+    K_EventEditionContentMap[] maps;
+}
+
+#Struct K_EventEditionDetails {
+    Integer id;
+    Text name;
+    Text start_date;
+    Text banner_img_url;
+    Integer mx_id;
+    K_EventEditionContentCategory[] categories;
+}
+
+#Struct K_Event {
+    K_EventResponse Event;
+    K_EventEdition[Integer] Editions;
+    K_EventEditionDetails[Integer] EditionsDetails;
+}
+""";
+}
+
+Boolean EventHasContent(Text _EventHandle) {
+    if (!G_Events.existskey(_EventHandle)) return False;
+    declare K_Event Event = G_Events[_EventHandle];
+    return Event.EditionsDetails.count > 0;
+}
+
+K_Event GetEvent(Text _EventHandle) {
+    return G_Events[_EventHandle];
+}
+
+Boolean Private_CheckErr(Text _Route, CHttpRequest _Req) {
+    if (_Req.StatusCode == 200) return False;
+    log("error on route: " ^ _Route);
+    log(_Req.Result);
+    return True;
+}
+
+Void Private_InitRequest(Text _Route, Integer _Type) {
+    declare persistent Text ObsStore_UserToken for LocalUser = "";
+    declare CHttpRequest Req = Http.CreateGet(C::C_HostUrl ^ _Route, False, "Content-Type: application/json\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
+    G_PendingRequests[Req.Id] = K_RequestAttr {
+        Type = _Type,
+        Route = _Route
+    };
+}
+
+Void Private_InitEventEditions(K_EventResponse[] _Events) {
+    foreach (Event in _Events) {
+        Private_InitRequest("event/" ^ Event.handle, C::C_Request_EventHandle);
+        if (Event.last_edition_id > 0) {
+            Private_InitRequest("event/" ^ Event.handle ^ "/" ^ Event.last_edition_id, C::C_Request_EventHandleEdition);
+        }
+        G_Events[Event.handle] = K_Event {
+            Event = Event,
+            Editions = [],
+            EditionsDetails = []
+        };
+    }
+}
+
+Void Load() {
+    Private_InitRequest("event", C::C_Request_Event);
+}
+
+Void Loop() {
+    declare Ident[] ReqToDelete;
+
+    foreach (ReqId => ReqAttr in G_PendingRequests) {
+        declare CHttpRequest Request <=> Http.Requests[ReqId];
+
+        if (!Request.IsCompleted || Private_CheckErr(ReqAttr.Route, Request)) {
+            continue;
+        }
+
+        switch (ReqAttr.Type) {
+            // The /event request
+            case C::C_Request_Event: {
+                declare K_EventResponse[] Events;
+                Events.fromjson(Request.Result);
+                Private_InitEventEditions(Events);
+            }
+
+            // The /event/<handle> request
+            case C::C_Request_EventHandle: {
+                declare K_EventEdition[] EventEditions;
+                EventEditions.fromjson(Request.Result);
+                
+                declare Text Handle = TL::Split("/", ReqAttr.Route)[1];
+                foreach (Edition in EventEditions) {
+                    G_Events[Handle].Editions[Edition.id] = Edition;
+                }
+            }
+
+            // The /event/<handle>/<edition> request
+            case C::C_Request_EventHandleEdition: {
+                declare K_EventEditionDetails EventEditionDetails;
+                EventEditionDetails.fromjson(Request.Result);
+
+                declare Text[] Splits = TL::Split("/", ReqAttr.Route);
+                declare Text Handle = Splits[1];
+                declare Integer EditionId = TL::ToInteger(Splits[2]);
+                G_Events[Handle].EditionsDetails[EditionId] = EventEditionDetails;
+            }
+        }
+
+        ReqToDelete.add(ReqId);
+    }
+
+    foreach (ReqId in ReqToDelete) {
+        if (!Http.Requests.existskey(ReqId)) continue;
+        declare CHttpRequest Request <=> Http.Requests[ReqId];
+        G_PendingRequests.removekey(ReqId);
+        Http.Destroy(Request);
+    }
+}

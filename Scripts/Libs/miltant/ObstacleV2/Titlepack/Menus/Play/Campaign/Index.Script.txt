@@ -1,46 +1,14 @@
+#Include "Libs/ahmad3/EventAPI.Script.txt"										as EventAPI
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/smokegun/Constants.Script.txt"									as Constants
 
 #Include "TextLib" as TL
+#Include "MathLib" as ML
 
-#Struct K_Map {
-	Integer MXId;
-	Text UID;
-	Text Name;
-	Text Author;
-	Text AuthorLogin;
-	Text Thumbnail;
-	Text Path;
-	Integer PersonalBest;
-	Integer Bronze;
-	Integer Silver;
-	Integer Gold;
-	Integer Champion;
-}
-
-
-#Struct K_Campaign {
-	Text Name;
-	Text NameLn1;
-	Text NameLn2;
-	Integer MXId;
-	Integer Type;
-	Text Banner;
-	K_Map[] Maps;
-
-	Boolean FullOnline;
-	Boolean PartialOnline;
-}
-
-#Struct K_CampaignRequestBody {
-	Text login;
-	Text[] maps_uids;
-}
-
-#Struct K_CampaignResponse_Map {
-	Text map_uid;
-	Integer time;
+#Struct K_LocalMapInfo {
+	Text MapUid;
+	Text FileName;
 }
 
 
@@ -48,12 +16,12 @@ Text GetName() {
 	return "campaign";
 }
 
-
-declare Ident FileList;
-declare K_Campaign[Integer] CampaignList;
-declare Boolean NeedRefresh;
-declare CHttpRequest G_APIRequest;
-declare Integer G_CampaignAPIPending;
+declare Ident G_FileList;
+declare Boolean G_CampaignContentLoading;
+declare EventAPI::K_Event G_CampaignEvent;
+declare K_LocalMapInfo[][Integer] G_CampaignLocalMapsUids;
+declare Text[][] G_PendingPlayingMaps;
+declare Integer G_PendingPlayingMapsUpdate;
 
 Text Build() {
 	return """
@@ -71,6 +39,17 @@ Text Build() {
 				data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
 	</framemodel>
 
+	<framemodel id="CategoryModel">
+		<quad pos="16.75 2" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
+		<quad id="Category" pos="-.83" size="31.17 3.67" />
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -8.67" id="Card_1"/>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -20.33" id="Card_2"/>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -32" id="Card_3"/>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -43.67" id="Card_4"/>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -55.33" id="Card_5"/>
+		<quad pos="16.75 -66.5" id="Quad_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
+	</framemodel>
+
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
 		<frame pos="0 53.67" clip="1" clipsizen="52.67 35.83" clipposn="26.63 -17.83">
 			<label text="" textcolor="fff" pos="26.5 -17.83" halign="center" valign="center2" textsize="10" id="Label_IconPlay" opacity="0.4"/>
@@ -79,7 +58,7 @@ Text Build() {
 				data-target="Label_IconPlay Quad_Thumbnail" data-anim-length="70"
 				data-default-anim="<label scale=&quot;1&quot; opacity=&quot;0.4&quot;/> <quad scale=&quot;1&quot;/>"
 				data-target-anim="<label scale=&quot;1.2&quot; opacity=&quot;0.8&quot;/> <quad scale=&quot;1.06&quot;/>"/>
-			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Thumbnail" keepratio="Clip"/>
+			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Thumbnail" keepratio="Clip" />
 		</frame>
 
 		<frame pos="0 15.67">
@@ -99,46 +78,13 @@ Text Build() {
 
 	<frame pos="-96.17 53.5">
 		<frame pos="8 -46.67">
-			<frame>
-				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/White.png"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_1"/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_2"/>
-				<frameinstance modelid="MapCard" pos="0 -32" id="Card_3"/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_4"/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_5"/>
-			</frame>
-			<frame pos="34.5">
-				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/Green.png"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_6"/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_7"/>
-				<frameinstance modelid="MapCard" pos="0 -32" id="Card_8"/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_9"/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_10"/>
-			</frame>
-			<frame pos="69">
-				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/Blue.png"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_11"/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_12"/>
-				<frameinstance modelid="MapCard" pos="0 -32" id="Card_13"/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_14"/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_15"/>
-			</frame>
-			<frame pos="103.5">
-				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/Orange.png"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_16"/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_17"/>
-				<frameinstance modelid="MapCard" pos="0 -32" id="Card_18"/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_19"/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_20"/>
-			</frame>
-			<frame pos="138">
-				<quad pos="-.83" size="31.17 3.67" image="file://Media/Images/Obstacle/Campaign/Difficulties/Red.png"/>
-				<frameinstance modelid="MapCard" pos="0 -8.67" id="Card_21"/>
-				<frameinstance modelid="MapCard" pos="0 -20.33" id="Card_22"/>
-				<frameinstance modelid="MapCard" pos="0 -32" id="Card_23"/>
-				<frameinstance modelid="MapCard" pos="0 -43.67" id="Card_24"/>
-				<frameinstance modelid="MapCard" pos="0 -55.33" id="Card_25"/>
-			</frame>
+			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
+			<frameinstance modelid="CategoryModel" id="F_Category_1" hidden="1" />
+			<frameinstance modelid="CategoryModel" id="F_Category_2" hidden="1" pos="34.5" />
+			<frameinstance modelid="CategoryModel" id="F_Category_3" hidden="1" pos="69" />
+			<frameinstance modelid="CategoryModel" id="F_Category_4" hidden="1" pos="103.5" />
+			<frameinstance modelid="CategoryModel" id="F_Category_5" hidden="1" pos="138" />
+			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
 		</frame>
 
 		<frame pos="188.33">
@@ -165,123 +111,229 @@ Text Build() {
 	#Include "MathLib" as ML
 	#Include "TextLib" as TL
 	#Include "ColorLib" as CL
-	
-	#Struct K_Map {
-		Integer MXId;
-		Text UID;
-		Text Name;
-		Text Author;
-		Text AuthorLogin;
-		Text Thumbnail;
-		Text Path;
-		Integer PersonalBest;
-		Integer Bronze;
-		Integer Silver;
-		Integer Gold;
-		Integer Champion;
+
+	{{{EventAPI::ML_Preproc()}}}
+
+	#Struct K_CategoryPageState {
+		Integer CurrentPage;
+		Integer LastPage;
 	}
-	
-	
-	#Struct K_Campaign {
-		Text Name;
-		Text NameLn1;
-		Text NameLn2;
-		Integer MXId;
-		Integer Type;
-		Text Banner;
-		K_Map[] Maps;
-	
-		Boolean FullOnline;
-		Boolean PartialOnline;
-	}
+
+	#Const C_MaxCategoriesPerPage 5
+	#Const C_MaxMapsPerCategoryPage 5
 
 	{{{Styles::GetDeclareGlobals()}}}
 
-	Void UpdateMaps(Integer SelectedCampaign, Integer SelectedMap) {
+	declare Integer G_CurrentPage_Categories;
+	declare Integer G_LastPage_Categories;
+	declare K_CategoryPageState[] G_CategoriesPages;
+
+	Void UpdatePageButtons() {
+		declare Quad_PreviousPage_Categories <=> (Page.GetFirstChild("Quad_PreviousPage") as CMlQuad);
+		declare Quad_NextPage_Categories <=> (Page.GetFirstChild("Quad_NextPage") as CMlQuad);
+
+		declare previousPageDisabled = Quad_PreviousPage_Categories.Substyle == "ArrowDisabled";
+		if (G_CurrentPage_Categories == 1 && !previousPageDisabled) {
+			Quad_PreviousPage_Categories.Substyle = "ArrowDisabled";
+		} else if (G_CurrentPage_Categories > 1) {
+			Quad_PreviousPage_Categories.Substyle = "ArrowPrev";
+		}
+
+		declare nextPageDisabled = Quad_NextPage_Categories.Substyle == "ArrowDisabled";
+		if (G_CurrentPage_Categories == G_LastPage_Categories && !nextPageDisabled) {
+			Quad_NextPage_Categories.Substyle = "ArrowDisabled";
+		} else if (G_CurrentPage_Categories < G_LastPage_Categories) {
+			Quad_NextPage_Categories.Substyle = "ArrowNext";
+		}
+
+		foreach (I => PageState in G_CategoriesPages.slice(C_MaxCategoriesPerPage * (G_CurrentPage_Categories-1), C_MaxCategoriesPerPage)) {
+			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ (I+1)) as CMlFrame);
+
+			declare CMlQuad Quad_PreviousPage <=> (Frame_Category.GetFirstChild("Quad_PreviousPage") as CMlQuad);
+			declare CMlQuad Quad_NextPage <=> (Frame_Category.GetFirstChild("Quad_NextPage") as CMlQuad);
+
+			declare previousPageDisabled = Quad_PreviousPage.Substyle == "ArrowDisabled";
+			if (PageState.CurrentPage == 1 && !previousPageDisabled) {
+				Quad_PreviousPage.Substyle = "ArrowDisabled";
+			} else if (PageState.CurrentPage > 1) {
+				Quad_PreviousPage.Substyle = "ArrowUp";
+			}
+
+			declare nextPageDisabled = Quad_NextPage.Substyle == "ArrowDisabled";
+			if (PageState.CurrentPage == PageState.LastPage && !nextPageDisabled) {
+				Quad_NextPage.Substyle = "ArrowDisabled";
+			} else if (PageState.CurrentPage < PageState.LastPage) {
+				Quad_NextPage.Substyle = "ArrowDown";
+			}
+		}
+	}
+
+	Integer NumberOfDigits(Integer _X) {
+		declare Integer N = _X;
+		declare Integer Num = 0;
+		if (N == 0) return 1;
+		while (N != 0) {
+			N /= 10;
+			Num += 1;
+		}
+
+		return Num;
+	}
+
+	Void UpdateMaps(Integer SelectedCampaign, Integer SelectedMapI, Integer SelectedMapJ) {
 		declare Frame_Infos = (Page.GetFirstChild("Frame_Infos") as CMlFrame);
 		declare Quad_Thumbnail = (Page.GetFirstChild("Quad_Thumbnail") as CMlQuad);
 		declare Label_Map = (Page.GetFirstChild("Label_Map") as CMlLabel);
 		declare Label_Mapper = (Page.GetFirstChild("Label_Mapper") as CMlLabel);
 		declare Label_PB = (Page.GetFirstChild("Label_PB") as CMlLabel);
 
-		declare K_Campaign[Integer] MapsList for Page;
+		declare K_Event P_CampaignEvent for Page;
 
-		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/map/" ^ MapsList[SelectedCampaign].Maps[SelectedMap].UID ^ "]";
-		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ MapsList[SelectedCampaign].Maps[SelectedMap].AuthorLogin ^ "]";
+		declare K_EventEditionContentMap SelectedMap = P_CampaignEvent.EditionsDetails[SelectedCampaign].categories[SelectedMapI].maps[SelectedMapJ];
 
-		declare MapName = TL::RegexReplace("$[lL](\\[[^\\]]*\\]?)?", MapsList[SelectedCampaign].Maps[SelectedMap].Name, "g", "");
-		declare AuthorName = TL::RegexReplace("$[lL](\\[[^\\]]*\\]?)?", MapsList[SelectedCampaign].Maps[SelectedMap].Author, "g", "");
-		MapName = TL::Replace(MapsList[SelectedCampaign].Maps[SelectedMap].Name, "$z", "$z" ^ MapLink);
-		AuthorName = TL::Replace(MapsList[SelectedCampaign].Maps[SelectedMap].Author, "$z", "$z" ^ AuthorLink);
+		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/map/" ^ SelectedMap.map_uid ^ "]";
+		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.main_author.login ^ "]";
 
-		Quad_Thumbnail.ChangeImageUrl(MapsList[SelectedCampaign].Maps[SelectedMap].Thumbnail);
+		declare MapName = TL::RegexReplace("\\$[lL](\\[.*\\])?", SelectedMap.name, "g", "");
+		declare AuthorName = TL::RegexReplace("\\$[lL](\\[.*\\])?", SelectedMap.main_author.name, "g", "");
+		MapName = TL::Replace(MapName, "$z", "$z" ^ MapLink);
+		AuthorName = TL::Replace(AuthorName, "$z", "$z" ^ AuthorLink);
+
+		declare Text[Text] P_MapsWithThumbnails for Page;
+		declare Text ThumbnailPath;
+		if (P_MapsWithThumbnails.existskey(SelectedMap.map_uid)) {
+			ThumbnailPath = P_MapsWithThumbnails[SelectedMap.map_uid];
+		} else {
+			ThumbnailPath = "https://sm.mania.exchange/maps/thumbnail/" ^ SelectedMap.mx_id ^ "?.jpg";
+		}
+		Quad_Thumbnail.ChangeImageUrl(ThumbnailPath);
 		Label_Map.SetText(MapLink ^ "   " ^ MapName);
 		Label_Mapper.SetText(AuthorLink ^ "   " ^ AuthorName);
 
-		if (MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest < 1) {
+		if (SelectedMap.personal_best < 0) {
 			Label_PB.TextColor = <1., 1., 1.>;
 			Label_PB.SetText("-- : -- : --");
 		} else {
 			// #E6D189
 			Label_PB.TextColor = <.901, .82, .537>;
-			Label_PB.SetText(TL::TimeToText(MapsList[SelectedCampaign].Maps[SelectedMap].PersonalBest, True));
+			Label_PB.SetText(TL::TimeToText(SelectedMap.personal_best, True));
 		}
 		Frame_Infos.Show();
 
-		foreach (I => Map in MapsList[SelectedCampaign].Maps) {
-			declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
-			declare Button_Map = (Frame_Card.GetFirstChild("Button_Map") as CMlQuad);
-			declare Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
-			declare Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
-			declare Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
-			declare Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
-			declare Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
+		UpdatePageButtons();
 
-			if (I < 9)
-				Label_Num.SetText("0" ^ (I + 1));
-			else
-				Label_Num.SetText("" ^ (I + 1));
-			
-			if (SelectedMap == I)
-				// #7D7E82
-				Button_Map.ModulateColor = <.294, .333, .404>;
-			else
-				// #C2AE47
-				Button_Map.ModulateColor = <1., 1., 1.>;
+		// Show all of current page
+		declare K_EventEditionContentCategory[] Categories = P_CampaignEvent.EditionsDetails[SelectedCampaign].categories
+			.slice(C_MaxCategoriesPerPage * (G_CurrentPage_Categories-1), C_MaxCategoriesPerPage);
+		foreach (I => Category in Categories) {
+			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ (I+1)) as CMlFrame);
+			Frame_Category.Show();
 
-			Quad_MedalB.Hide();
-			Quad_MedalS.Hide();
-			Quad_MedalG.Hide();
-			Quad_MedalC.Hide();
+			declare CMlQuad Quad_Category = (Frame_Category.GetFirstChild("Category") as CMlQuad);
+			Quad_Category.ChangeImageUrl(Category.banner_img_url);
 
-			if (Map.PersonalBest > 0) {
-				Label_Num.TextColor = <.761, .682, .278>;
+			declare Integer MapsSliceStart = C_MaxMapsPerCategoryPage * (G_CategoriesPages[I].CurrentPage - 1);
 
-				if (Map.PersonalBest <= Map.Champion) {
-					Quad_MedalC.Show();
+			declare K_EventEditionContentMap[] Maps = Category.maps
+				.slice(MapsSliceStart, C_MaxMapsPerCategoryPage);
 
-				} else {
-					if (Map.PersonalBest <= Map.Gold)
-						Quad_MedalG.Show();
-					if (Map.PersonalBest <= Map.Silver)
-						Quad_MedalS.Show();
-					if (Map.PersonalBest <= Map.Bronze)
-						Quad_MedalB.Show();
+			// Used to put 0 left padding in the map indexes
+			declare Integer DigitNum = NumberOfDigits(Category.maps.count);
+
+			foreach (MapI => Map in Category.maps) {
+				if (MapI < MapsSliceStart || MapI >= MapsSliceStart + C_MaxMapsPerCategoryPage) continue;
+
+				// 0 to C_MaxMapsPerCategoryPage index, to retrieve the frame from the manialink
+				declare Integer CardI = MapI - MapsSliceStart;
+
+				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ (CardI+1)) as CMlFrame);
+				Frame_Card.Show();
+
+				declare CMlQuad Button_Map = (Frame_Card.GetFirstChild("Button_Map") as CMlQuad);
+				declare CMlLabel Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
+				declare CMlQuad Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
+				declare CMlQuad Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
+				declare CMlQuad Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
+				declare CMlQuad Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
+
+				// Put left padding with 0
+				declare Text Label_Num_Text = "";
+				for (I, 0, DigitNum - NumberOfDigits(MapI+1) - 1) {
+					Label_Num_Text ^= "0";
 				}
-			} else {
-				if (SelectedMap == I) {
+				Label_Num.SetText(Label_Num_Text ^ (MapI+1));
+
+				// #7D7E82
+				if (SelectedMapJ == MapI && SelectedMapI == I) Button_Map.ModulateColor = <.294, .333, .404>;
+				// #C2AE47
+				else Button_Map.ModulateColor = <1., 1., 1.>;
+
+				Quad_MedalB.Hide();
+				Quad_MedalS.Hide();
+				Quad_MedalG.Hide();
+				Quad_MedalC.Hide();
+
+				if (Map.personal_best >= 0) {
+					Label_Num.TextColor = <.761, .682, .278>;
+
+					if (Map.personal_best <= Map.champion_time) {
+						Quad_MedalC.Show();
+					}
+					if (Map.personal_best <= Map.gold_time) {
+						Quad_MedalG.Show();
+					}
+					if (Map.personal_best <= Map.silver_time) {
+						Quad_MedalS.Show();
+					}
+					if (Map.personal_best <= Map.bronze_time) {
+						Quad_MedalB.Show();
+					}
+				} else if (SelectedMapJ == MapI && SelectedMapI == I) {
 					Label_Num.TextColor = <.18, .18, .18>;
 				} else {
 					Label_Num.TextColor = <.373, .373, .392>;
 				}
 			}
 
-			Frame_Card.Show();
+			for (J, Maps.count, C_MaxMapsPerCategoryPage - 1) {
+				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ (J+1)) as CMlFrame);
+				Frame_Card.Hide();
+			}
 		}
 
-		for (I, MapsList[SelectedCampaign].Maps.count, 24) {
-			declare Frame_Card = (Page.GetFirstChild("Card_" ^ (I+1)) as CMlFrame);
-			Frame_Card.Hide();
+		// Hide the remaining categories
+		for (J, Categories.count, C_MaxCategoriesPerPage - 1) {
+			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ (J+1)) as CMlFrame);
+			Frame_Category.Hide();
+
+			declare CMlQuad Quad_Category = (Frame_Category.GetFirstChild("Category") as CMlQuad);
+
+			for (MapI, 0, C_MaxMapsPerCategoryPage - 1) {
+				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ (MapI+1)) as CMlFrame);
+				Frame_Card.Hide();
+			}
+		}
+	}
+
+	Void InitPages() {
+		G_CurrentPage_Categories = 1;
+		G_LastPage_Categories = 1;
+		for (I, 0, C_MaxMapsPerCategoryPage) {
+			G_CategoriesPages.add(K_CategoryPageState {
+				CurrentPage = 1,
+				LastPage = 1
+			});
+		}
+	}
+
+	Void InitLastPages() {
+		declare K_Event P_CampaignEvent for Page;
+		declare Integer P_SelectedEdition for Page;
+
+		declare K_EventEditionContentCategory[] Categories = P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
+		G_LastPage_Categories = ML::Max(0, Categories.count - 1) / C_MaxCategoriesPerPage + 1;
+		foreach (I => Category in Categories) {
+			G_CategoriesPages[I].LastPage = ML::Max(0, Category.maps.count - 1) / C_MaxMapsPerCategoryPage + 1;
 		}
 	}
 		
@@ -295,35 +347,44 @@ Text Build() {
 		declare Integer[Text] CampaignRecords for LocalUser;
 		declare Boolean CampaignRecordsUpdated for LocalUser = False;
 
-		declare K_Campaign[Integer] MapsList for Page;
+		declare K_Event P_CampaignEvent for Page;
+		declare Integer P_SelectedEdition for Page = -1;
+		declare Integer P_SelectedMapI for Page = -1;
+		declare Integer P_SelectedMapJ for Page = -1;
 		declare Integer SelectedCampaign as ControllerSelectedCampaign for Page = -1;
 		declare Boolean TimesReloaded for Page = False;
 
 		declare Integer SelectedCampaign = -1;
-		declare Integer SelectedMap = 1;
+		declare Integer SelectedMapI = -1;
+		declare Integer SelectedMapJ = -1;
 		declare Boolean MapsNeedRefresh = False;
 		declare Integer TimestampLastSelection = -1;
 
-		wait(MapsList.existskey(ControllerSelectedCampaign));
+		InitPages();
+
+		wait(P_SelectedEdition != -1);
 
 		while (True) {
-			if (SelectedCampaign != ControllerSelectedCampaign) {
-				SelectedCampaign = ControllerSelectedCampaign;
+			if (SelectedCampaign != P_SelectedEdition) {
+				InitLastPages();
+				SelectedCampaign = P_SelectedEdition;
 
-				Quad_Banner.ChangeImageUrl(MapsList[SelectedCampaign].Banner);
-				Label_EventLn1.SetText(MapsList[SelectedCampaign].NameLn1);
-				Label_EventLn2.SetText(MapsList[SelectedCampaign].NameLn2);
+				Quad_Banner.ChangeImageUrl(P_CampaignEvent.EditionsDetails[SelectedCampaign].banner_img_url);
+				declare Text[] EditionName = TL::Split("\t", P_CampaignEvent.EditionsDetails[SelectedCampaign].name);
+				Label_EventLn1.SetText(EditionName[0]);
+				Label_EventLn2.SetText(EditionName[1]);
 
 				Frame_Infos.Hide();
-				SelectedMap = 0;
-				foreach (I => Map in MapsList[SelectedCampaign].Maps) {
-					if (Map.PersonalBest > 0)
-						SelectedMap += 1;
-					else break;
-				}
-				SelectedMap = SelectedMap % MapsList[SelectedCampaign].Maps.count;
 				MapsNeedRefresh = True;
 			}
+
+			if (SelectedMapI != P_SelectedMapI || SelectedMapJ != P_SelectedMapJ) {
+				SelectedMapI = P_SelectedMapI;
+				SelectedMapJ = P_SelectedMapJ;
+				MapsNeedRefresh = True;
+			}
+
+			/*
 			if (CampaignRecordsUpdated) {
 				if (MapsList.existskey(SelectedCampaign)) {
 					foreach (I => Map in MapsList[SelectedCampaign].Maps) {
@@ -336,9 +397,9 @@ Text Build() {
 				}
 				CampaignRecordsUpdated = False;
 				TimesReloaded = True;
-			}
+			}*/
 			if (MapsNeedRefresh || TimesReloaded) {
-				UpdateMaps(SelectedCampaign, SelectedMap);
+				UpdateMaps(SelectedCampaign, SelectedMapI, SelectedMapJ);
 				MapsNeedRefresh = False;
 				TimesReloaded = False;
 			}
@@ -349,17 +410,19 @@ Text Build() {
 					case CMlScriptEvent::Type::MouseClick: {
 						switch (Event.ControlId) {
 							case "Button_Map": {
-								declare ClickedCard = (Event.Control.Parent as CMlFrame);
+								declare CMlFrame ClickedCard = Event.Control.Parent;
 
 								if (TL::StartsWith("Card_", ClickedCard.ControlId)) {
-									declare MapIndex = TL::ToInteger(TL::SubString(ClickedCard.ControlId, 5, TL::Length(ClickedCard.ControlId) - 4)) - 1;
+									declare CMlFrame Category_Frame = ClickedCard.Parent;
 
-									if (MapIndex != SelectedMap) {
-										MapsNeedRefresh = True;
-										SelectedMap = MapIndex;
+									declare Integer CategoryIndex = TL::ToInteger(TL::SubString(Category_Frame.ControlId, 11, 1)) - 1 + (G_CurrentPage_Categories - 1) * C_MaxCategoriesPerPage;
+									declare Integer MapIndex = TL::ToInteger(TL::SubString(ClickedCard.ControlId, 5, 1)) - 1 + (G_CategoriesPages[CategoryIndex].CurrentPage - 1) * C_MaxMapsPerCategoryPage;
+
+									if (MapIndex != SelectedMapJ || CategoryIndex != SelectedMapI) {
+										SendCustomEvent("update_map_selection", [TL::ToText(CategoryIndex), TL::ToText(MapIndex)]);
 										TimestampLastSelection = Now;
 									} else if (TimestampLastSelection != -1 && Now - TimestampLastSelection < 500) {
-										SendCustomEvent("play_campaign", [""^SelectedCampaign, ""^SelectedMap]);
+										SendCustomEvent("play_campaign", []);
 										TimestampLastSelection = -1;
 									} else {
 										TimestampLastSelection = Now;
@@ -367,7 +430,33 @@ Text Build() {
 								}
 							}
 							case "Quad_Play": {
-								SendCustomEvent("play_campaign", [""^SelectedCampaign, ""^SelectedMap]);
+								SendCustomEvent("play_campaign", [""^SelectedCampaign, ""^SelectedMapI, ""^SelectedMapJ]);
+							}
+							case "Quad_PreviousPage": {
+								if (G_CurrentPage_Categories > 1) {
+									G_CurrentPage_Categories -= 1;
+									MapsNeedRefresh = True;
+								}
+							}
+							case "Quad_NextPage": {
+								if (G_CurrentPage_Categories < G_LastPage_Categories) {
+									G_CurrentPage_Categories += 1;
+									MapsNeedRefresh = True;
+								}
+							}
+						}
+
+						// Manages the click event of the categories pagination buttons
+						if (Event.ControlId == "Quad_PreviousPage" || Event.ControlId == "Quad_NextPage") {
+							declare CMlFrame Category_Frame = Event.Control.Parent;
+							declare Integer CategoryIndex = TL::ToInteger(TL::SubString(Category_Frame.ControlId, 11, 1)) - 1 + (G_CurrentPage_Categories - 1) * C_MaxCategoriesPerPage;
+
+							if (Event.ControlId == "Quad_PreviousPage" && G_CategoriesPages[CategoryIndex].CurrentPage > 1) {
+								G_CategoriesPages[CategoryIndex].CurrentPage -= 1;
+								MapsNeedRefresh = True;
+							} else if (Event.ControlId == "Quad_NextPage" && G_CategoriesPages[CategoryIndex].CurrentPage < G_CategoriesPages[CategoryIndex].LastPage) {
+								G_CategoriesPages[CategoryIndex].CurrentPage += 1;
+								MapsNeedRefresh = True;
 							}
 						}
 					}
@@ -382,240 +471,97 @@ Text Build() {
 }
 
 Void Load() {
+	EventAPI::Load();
+
+	G_CampaignContentLoading = True;
+
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
 	Window.Manialink = Build();
 	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
-
-	declare persistent ObsStore_UserToken for LocalUser = "";
-
-	// fatten, sort by date asc
-	FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\29\\", True, False, True).Id;
-
-	// TODO get from the API and move to the loop
-	CampaignList = [
-		29 => K_Campaign {
-			Name = "Summer 2023",
-			NameLn1 = "Summer",
-			NameLn2 = "2023",
-			MXId = 26,
-			Type = 1,
-			Banner = "file://Media/Images/Obstacle/Campaign/SpringBanner01.png",
-			Maps = [
-				K_Map {
-					UID = "qpKzvXQaaJGvSsXPTNk_iVWmRTg",
-					Bronze = 57000,
-					Silver = 52000,
-					Gold = 41000,
-					Champion = 37000
-				},
-				K_Map {
-					UID = "Fcgbnv1RwTIdgRySDLwtyzzMj9j",
-					Bronze = 29000,
-					Silver = 24000,
-					Gold = 19500,
-					Champion = 18500
-				},
-				K_Map {
-					UID = "TEDQRUPTU1VkGrzBKLhIOY9cYV1",
-					Bronze = 48000,
-					Silver = 40000,
-					Gold = 35000,
-					Champion = 33000
-				},
-				K_Map {
-					UID = "GBEPgbo_hFst5xII2zoz7sP8xBe",
-					Bronze = 47000,
-					Silver = 40000,
-					Gold = 36000,
-					Champion = 35000
-				},
-				K_Map {
-					UID = "90qdC1x5f2s4C4oFveHhimcwLzj",
-					Bronze = 43000,
-					Silver = 38000,
-					Gold = 34000,
-					Champion = 32500
-				},
-				K_Map {
-					UID = "eKbgGOAuuwUP6ByvWlP8G728fuc",
-					Bronze = 50000,
-					Silver = 45000,
-					Gold = 40000,
-					Champion = 38000
-				},
-				K_Map {
-					UID = "hzlKEVfxuGyriKXlTm__LoiVRAj",
-					Bronze = 46000,
-					Silver = 40000,
-					Gold = 35000,
-					Champion = 32750
-				},
-				K_Map {
-					UID = "VSn_Cz45JUGLH_LJaRBUKaRIQsh",
-					Bronze = 52000,
-					Silver = 45000,
-					Gold = 41000,
-					Champion = 38500
-				},
-				K_Map {
-					UID = "H5yHFPEOVcdmJv7DabEGYqhUSDc",
-					Bronze = 45000,
-					Silver = 40000,
-					Gold = 36000,
-					Champion = 35000
-				},
-				K_Map {
-					UID = "0u6aaVnLw1cbwUIi7I1hyP1EHT0",
-					Bronze = 48000,
-					Silver = 44000,
-					Gold = 40000,
-					Champion = 37000
-				},
-				K_Map {
-					UID = "7ki7DAx8RGHufasKBLzlHnvFMUj",
-					Bronze = 70000,
-					Silver = 63000,
-					Gold = 56000,
-					Champion = 51750
-				},
-				K_Map {
-					UID = "JTeY36K5VrDL7noJGzl4dqwPC5j",
-					Bronze = 60000,
-					Silver = 54000,
-					Gold = 50000,
-					Champion = 47000
-				},
-				K_Map {
-					UID = "9rs_79lkU09Edy3FCyjXNTPNj_j",
-					Bronze = 75000,
-					Silver = 68000,
-					Gold = 63000,
-					Champion = 59000
-				},
-				K_Map {
-					UID = "uHN22ZmWSNesgZqOVcjgWYv7cPc",
-					Bronze = 70000,
-					Silver = 64000,
-					Gold = 57000,
-					Champion = 53000
-				},
-				K_Map {
-					UID = "TcwGFWuciPoKzccgWa6wRVM7yvd",
-					Bronze = 67000,
-					Silver = 60000,
-					Gold = 55000,
-					Champion = 53000
-				},
-				K_Map {
-					UID = "18FInhM7gAcqAgvwPwllYEDE6rk",
-					Bronze = 53000,
-					Silver = 48000,
-					Gold = 44000,
-					Champion = 41900
-				},
-				K_Map {
-					UID = "pAv3QI4f8y6fbSU2qoMj4cFRQTi",
-					Bronze = 52000,
-					Silver = 46000,
-					Gold = 43000,
-					Champion = 41000
-				},
-				K_Map {
-					UID = "G5Dm8fjoFSqS8nui1mP1wKZ4z_3",
-					Bronze = 80000,
-					Silver = 71000,
-					Gold = 65000,
-					Champion = 62000
-				},
-				K_Map {
-					UID = "tSd082VQJ51_71EXvCobORPlhZl",
-					Bronze = 80000,
-					Silver = 71000,
-					Gold = 66000,
-					Champion = 64000
-				},
-				K_Map {
-					UID = "KkqC5yQSQ18XyhEfpqMLER3vAjc",
-					Bronze = 58000,
-					Silver = 50000,
-					Gold = 46000,
-					Champion = 43500
-				},
-				K_Map {
-					UID = "uHYccBmFsS1kSLc45zLhlOya1eb",
-					Bronze = 96000,
-					Silver = 88000,
-					Gold = 77000,
-					Champion = 72000
-				},
-				K_Map {
-					UID = "F1bDc8HpEr3VjgXwuZh5m_2sb6e",
-					Bronze = 80000,
-					Silver = 70000,
-					Gold = 64000,
-					Champion = 61000
-				},
-				K_Map {
-					UID = "exsvJlTM1oQq1VJ8d9u2qSgFyla",
-					Bronze = 78000,
-					Silver = 71000,
-					Gold = 66000,
-					Champion = 64000
-				},
-				K_Map {
-					UID = "Okx2W7jKXCue7s58kpcStl9vRF3",
-					Bronze = 88000,
-					Silver = 81000,
-					Gold = 76000,
-					Champion = 74000
-				},
-				K_Map {
-					UID = "GwjMPymVycUB9NkGvk00juY4E55",
-					Bronze = 80000,
-					Silver = 72000,
-					Gold = 64000,
-					Champion = 61000
-				}
-			]
-		}
-	];
-	NeedRefresh = False;
-
-
-	if (ObsStore_UserToken != "") {
-		declare Body = K_CampaignRequestBody {
-			login = LocalUser.Login,
-			maps_uids = []
-		};
-
-		foreach (Map in CampaignList[29].Maps) {
-			Body.maps_uids.add(Map.UID);
-		}
-		
-		G_CampaignAPIPending = 29;
-		G_APIRequest = Http.CreatePost(Constants::C_HostUrl ^ "player/times", Body.tojson(), "Content-Type: application/json\nAccept: application/json\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);	
-	} else {
-		G_CampaignAPIPending = -1;
-	}
+	
+	G_PendingPlayingMapsUpdate = -1;
 }
 
 Void Loop() {
+	EventAPI::Loop();
+
+	declare Integer PendingPlayingMapsUpdate for LocalUser = -1;
+	if (PendingPlayingMapsUpdate != G_PendingPlayingMapsUpdate) {
+		G_PendingPlayingMapsUpdate = PendingPlayingMapsUpdate;
+
+		declare Integer P_SelectedMapI for Windows::GetPage(GetName()) = -1;
+		declare Integer P_SelectedMapJ for Windows::GetPage(GetName()) = -1;
+
+		declare Text MapPath = G_PendingPlayingMaps[0][0];
+		G_PendingPlayingMaps[0].removekey(0);
+		P_SelectedMapJ += 1;
+		if (G_PendingPlayingMaps[0].count == 0) {
+			P_SelectedMapI += 1;
+			P_SelectedMapJ = 0;
+		}
+
+		wait(TitleControl.IsReady);
+		TitleControl.PlayMap(MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
+		G_PendingPlayingMaps.removekey(0);
+	}
+
+	if (G_CampaignContentLoading && EventAPI::EventHasContent("campaign")) {
+		G_CampaignEvent = EventAPI::GetEvent("campaign");
+		declare EventAPI::K_Event P_CampaignEvent for Windows::GetPage(GetName());
+		P_CampaignEvent = G_CampaignEvent;
+		// Get the maximum event edition
+		declare Integer SelectedEdition = -1;
+		declare Integer P_SelectedEdition for Windows::GetPage(GetName()) = -1;
+		foreach (EditionId => _NotUsed in G_CampaignEvent.Editions) {
+			if (EditionId > SelectedEdition) SelectedEdition = EditionId;
+		}
+		P_SelectedEdition = SelectedEdition;
+
+		declare Integer P_SelectedMapI for Windows::GetPage(GetName()) = -1;
+		declare Integer P_SelectedMapJ for Windows::GetPage(GetName()) = -1;
+		declare Integer SelectedMapI = -1;
+		declare Integer SelectedMapJ = -1;
+		foreach (I => Category in P_CampaignEvent.EditionsDetails[SelectedEdition].categories) {
+			SelectedMapI += 1;
+			SelectedMapJ = -1;
+			declare Boolean Break = False;
+			foreach (J => Map in Category.maps) {
+				if (Map.personal_best >= 0) {
+					SelectedMapJ += 1;
+				} else {
+					Break = True;
+					break;
+				}
+			}
+			if (Break) break;
+		}
+		P_SelectedMapI = ML::Max(SelectedMapI, 0);
+		P_SelectedMapJ = ML::Max(SelectedMapJ, 0);
+
+		// Fetches the downloaded maps for the current edition
+		// flatten, sort by date asc
+		G_FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\" ^ G_CampaignEvent.EditionsDetails[SelectedEdition].mx_id ^ "\\", True, False, True).Id;
+
+		G_CampaignContentLoading = False;
+	}
+
 	// associate Maps to their parent folder and update the manialink
 	declare CMapInfo[][Integer] CampaignFiles;
 
-	if (DataFileMgr.TaskResults.existskey(FileList) && DataFileMgr.TaskResults[FileList].HasSucceeded) {
-		declare MapsList = (DataFileMgr.TaskResults[FileList] as CTaskResult_MapList);
+	declare Boolean NeedRefresh = False;
+
+	if (DataFileMgr.TaskResults.existskey(G_FileList) && DataFileMgr.TaskResults[G_FileList].HasSucceeded) {
+		declare CTaskResult_MapList MapsList = (DataFileMgr.TaskResults[G_FileList] as CTaskResult_MapList);
 		
 		foreach (File in MapsList.MapInfos) {
-			declare Folder = TL::RegexMatch("""^MEDIABROWSER_HiddenResources\\([0-9]+)\\$""", File.Path, "i")[1];
+			declare Text Folder = TL::RegexMatch("""^MEDIABROWSER_HiddenResources\\([0-9]+)\\$""", File.Path, "i")[1];
 			if (Folder != "") {
-				declare MXId = TL::ToInteger(Folder);
+				declare Integer MXId = TL::ToInteger(Folder);
 
-				if (!CampaignFiles.existskey(MXId))
-					CampaignFiles[MXId] = [];
+				if (!CampaignFiles.existskey(MXId))	CampaignFiles[MXId] = [];
 				CampaignFiles[MXId].add(File);
 			}
 		}
@@ -623,106 +569,85 @@ Void Loop() {
 		NeedRefresh = True;
 	}
 
-	if (G_CampaignAPIPending != -1 && G_APIRequest.IsCompleted) {
-		declare K_CampaignResponse_Map[] ResponseMaps;
-		if (G_APIRequest.StatusCode == 200 && ResponseMaps.fromjson(G_APIRequest.Result)) {
-			declare Integer[Text] Times;
-			foreach (Map in ResponseMaps) {
-				Times[Map.map_uid] = Map.time;
-			}
-			foreach (I => Map in CampaignList[G_CampaignAPIPending].Maps) {
-				if (Times.existskey(Map.UID))
-					CampaignList[G_CampaignAPIPending].Maps[I].PersonalBest = Times[Map.UID];
-			}
-		}
+	if (NeedRefresh) {
+		declare Text[Text] P_MapsWithThumbnails for Windows::GetPage(GetName()) = [];
 
-		G_CampaignAPIPending = -1;
-		Http.Destroy(G_APIRequest);
-
-		declare K_Campaign[Integer] MapsList for Windows::GetPage(GetName());
-		declare Boolean TimesReloaded for Windows::GetPage(GetName());
-		MapsList = CampaignList;
-		TimesReloaded = True;
-	}
-
-	if (NeedRefresh && CampaignList.count > 0) {
-		NeedRefresh = False;
-
-		// compute the intersection between the CampaignFiles (folders) and the API CampaignList
-		foreach (MXId => Campaign in CampaignList) {
-			if (CampaignFiles.existskey(MXId)) {
-				declare FullOnline = True;
-				declare PartialOnline = False;
-
-				foreach (Map_I => Map in Campaign.Maps) {
-					declare Boolean Online = True;
-					foreach (File_I => File in CampaignFiles[MXId]) {
-						if (File.MapUid == Map.UID) {
-							CampaignList[MXId].Maps[Map_I].Path = File.FileName;
-							CampaignList[MXId].Maps[Map_I].Thumbnail = "file://Thumbnails/MapUid/" ^ Map.UID ^ "/";
-							CampaignList[MXId].Maps[Map_I].Name = File.Name;
-							CampaignList[MXId].Maps[Map_I].Author = File.AuthorNickName;
-							CampaignList[MXId].Maps[Map_I].AuthorLogin = File.AuthorLogin;
-
-							if (MXId != 29) {
-								CampaignList[MXId].Maps[Map_I].Bronze = File.TMObjective_BronzeTime;
-								CampaignList[MXId].Maps[Map_I].Silver = File.TMObjective_SilverTime;
-								CampaignList[MXId].Maps[Map_I].Gold = File.TMObjective_GoldTime;
-								CampaignList[MXId].Maps[Map_I].Champion = File.TMObjective_AuthorTime;
-							}
-
-							Online = False;
-							FullOnline = False;
-							break;
-						}
-					}
-					if (Online) {
-						// CampaignList[MXId].Maps[Map_I].Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.UID;
-						CampaignList[MXId].Maps[Map_I].Thumbnail = "https://sm.mania-exchange.com/maps/screenshot/normal/" ^ Map.UID;
-
-						PartialOnline = True;
-					}
-				}
-
-				CampaignList[MXId].FullOnline = FullOnline;
-				if (FullOnline) {
-					CampaignList[MXId].PartialOnline = False;
-				} else {
-					CampaignList[MXId].FullOnline = PartialOnline;
-				}
+		foreach (MxId => Maps in CampaignFiles) {
+			if (!G_CampaignLocalMapsUids.existskey(MxId)) G_CampaignLocalMapsUids[MxId] = [];
+			foreach (MapInfo in Maps) {
+				G_CampaignLocalMapsUids[MxId].add(K_LocalMapInfo {
+					MapUid = MapInfo.MapUid,
+					FileName = MapInfo.FileName
+				});
+				P_MapsWithThumbnails[MapInfo.MapUid] = "file://Thumbnails/MapUid/" ^ MapInfo.MapUid;
 			}
 		}
-		
 
-		declare K_Campaign[Integer] MapsList for Windows::GetPage(GetName());
-		declare Integer SelectedCampaign for Windows::GetPage(GetName());
-		MapsList = CampaignList;
-		foreach (ID => uwu in CampaignList) {
-			SelectedCampaign = ID;
-			break;
-		}
-
-		DataFileMgr.TaskResult_Release(FileList);
+		DataFileMgr.TaskResult_Release(G_FileList);
 	}
 
 	foreach (Event in PendingEvents) {
-		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent && Event.CustomEventType == "play_campaign") {
-			if (Event.CustomEventData.count == 2) {
-				declare Campaign = TL::ToInteger(Event.CustomEventData[0]);
-				declare Current_Map = TL::ToInteger(Event.CustomEventData[1]);
-				declare Text[] MapList;
-				declare MapListCount = CampaignList[Campaign].Maps.count;
+		if (Event.Type != CManiaAppEvent::EType::LayerCustomEvent) continue;
+		switch (Event.CustomEventType) {
+			case "play_campaign": {
+				if (Event.CustomEventData.count == 3) {
+					declare Integer SelectedCampaign = TL::ToInteger(Event.CustomEventData[0]);
+					declare Integer SelectedMapI = TL::ToInteger(Event.CustomEventData[1]);
+					declare Integer SelectedMapJ = TL::ToInteger(Event.CustomEventData[2]);
+					declare EventAPI::K_EventEditionContentCategory[] CampaignCategories = G_CampaignEvent.EditionsDetails[SelectedCampaign].categories;
+					declare Integer MxId = G_CampaignEvent.EditionsDetails[SelectedCampaign].mx_id;
 
-				for (I, 0, MapListCount - 1) {
-					MapList.add(
-						CampaignList[Campaign]
-							.Maps[(Current_Map + I) % MapListCount]
-							.Path
-					);
+					// Initialize with the current category maps
+					declare Text[][] MapList = [[]];
+
+					foreach (Map in CampaignCategories[SelectedMapI].maps.slice(SelectedMapJ, CampaignCategories[SelectedMapI].maps.count)) {
+						declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
+
+						if (G_CampaignLocalMapsUids.existskey(MxId)) {
+							foreach (FileMap in G_CampaignLocalMapsUids[MxId]) {
+								if (FileMap.MapUid == Map.map_uid) {
+									Path = FileMap.FileName;
+									break;
+								}
+							}
+						}
+
+						MapList[0].add(Path);
+					}
+
+					foreach (Category in CampaignCategories.slice(SelectedMapI + 1, CampaignCategories.count)) {
+						declare Text[] CategoryMaps;
+
+						foreach (Map in Category.maps) {
+							declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
+
+							if (G_CampaignLocalMapsUids.existskey(MxId)) {
+								foreach (FileMap in G_CampaignLocalMapsUids[MxId]) {
+									if (FileMap.MapUid == Map.map_uid) {
+										Path = FileMap.FileName;
+										break;
+									}
+								}
+							}
+
+							CategoryMaps.add(Path);
+						}
+
+						MapList.add(CategoryMaps);
+					}
+
+					declare Integer PendingPlayingMapsUpdate for LocalUser;
+					G_PendingPlayingMaps = MapList;
+					PendingPlayingMapsUpdate = Now;
 				}
+			}
+			case "update_map_selection": {
+				declare CMlPage Page <=> Windows::GetPage(GetName());
+				declare Integer P_SelectedMapI for Page;
+				declare Integer P_SelectedMapJ for Page;
 
-				wait(TitleControl.IsReady);
-				TitleControl.PlayMapList(MapList, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", "");
+				P_SelectedMapI = TL::ToInteger(Event.CustomEventData[0]);
+				P_SelectedMapJ = TL::ToInteger(Event.CustomEventData[1]);
 			}
 		}
 	}

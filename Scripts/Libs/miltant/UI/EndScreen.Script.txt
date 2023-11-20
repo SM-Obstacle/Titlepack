@@ -217,6 +217,11 @@ Text GetLayer() {
 						if (Name == "quit") {
 							Playground.QuitServer(True);
 						} else {
+							// We notify the TP that we're about to unload the map
+							if (Name == "next_map") {
+								declare Integer PendingPlayingMapsUpdate for LocalUser;
+								PendingPlayingMapsUpdate = Now;
+							}
 							CampaignEvent = Name;
 						}
 					}
