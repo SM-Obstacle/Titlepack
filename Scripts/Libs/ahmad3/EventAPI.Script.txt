@@ -64,6 +64,7 @@
     Text Route;
 }
 
+declare Text[] G_PendingEvents;
 declare K_RequestAttr[Ident] G_PendingRequests;
 declare K_Event[Text] G_Events;
 
@@ -124,8 +125,9 @@ Text ML_Preproc() {
 }
 
 Boolean EventHasContent(Text _EventHandle) {
-    if (!G_Events.existskey(_EventHandle)) return False;
+    if (!G_Events.existskey(_EventHandle) || G_PendingEvents.exists(_EventHandle)) return False;
     declare K_Event Event = G_Events[_EventHandle];
+    // If this event is not pending, at least count its editions details amount to be sure it's fully loaded
     return Event.EditionsDetails.count > 0;
 }
 
@@ -149,11 +151,29 @@ Void Private_InitRequest(Text _Route, Integer _Type) {
     };
 }
 
+Void Private_InitRequest(Text _Route, Integer _Type, Text _EventHandle) {
+    Private_InitRequest(_Route, _Type);
+    if (!G_PendingEvents.exists(_EventHandle)) G_PendingEvents.add(_EventHandle);
+}
+
+Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
+    if (!G_Events[_EventHandle].Editions.existskey(_EventEdition)) {
+        log("ERROR: called EventAPI::LoadEdition(_EventHandle, _EventEdition) when _EventEdition doesn't exist for _EventHandle");
+        log("_EventHandle: " ^ _EventHandle ^ "; _EventEdition: " ^ _EventEdition);
+        return;
+    }
+
+    // We already loaded the edition for this event, so it doesn't require to refetch the API
+    if (G_Events[_EventHandle].EditionsDetails.existskey(_EventEdition)) return;
+
+    Private_InitRequest("event/" ^ _EventHandle ^ "/" ^ _EventEdition, C::C_Request_EventHandleEdition, _EventHandle);
+}
+
 Void Private_InitEventEditions(K_EventResponse[] _Events) {
     foreach (Event in _Events) {
-        Private_InitRequest("event/" ^ Event.handle, C::C_Request_EventHandle);
+        Private_InitRequest("event/" ^ Event.handle, C::C_Request_EventHandle, Event.handle);
         if (Event.last_edition_id > 0) {
-            Private_InitRequest("event/" ^ Event.handle ^ "/" ^ Event.last_edition_id, C::C_Request_EventHandleEdition);
+            Private_InitRequest("event/" ^ Event.handle ^ "/" ^ Event.last_edition_id, C::C_Request_EventHandleEdition, Event.handle);
         }
         G_Events[Event.handle] = K_Event {
             Event = Event,
@@ -169,6 +189,7 @@ Void Load() {
 
 Void Loop() {
     declare Ident[] ReqToDelete;
+    declare Text[] PendingEventsToDelete;
 
     foreach (ReqId => ReqAttr in G_PendingRequests) {
         declare CHttpRequest Request <=> Http.Requests[ReqId];
@@ -194,6 +215,7 @@ Void Loop() {
                 foreach (Edition in EventEditions) {
                     G_Events[Handle].Editions[Edition.id] = Edition;
                 }
+                PendingEventsToDelete.add(Handle);
             }
 
             // The /event/<handle>/<edition> request
@@ -205,6 +227,7 @@ Void Loop() {
                 declare Text Handle = Splits[1];
                 declare Integer EditionId = TL::ToInteger(Splits[2]);
                 G_Events[Handle].EditionsDetails[EditionId] = EventEditionDetails;
+                PendingEventsToDelete.add(Handle);
             }
         }
 
@@ -216,5 +239,9 @@ Void Loop() {
         declare CHttpRequest Request <=> Http.Requests[ReqId];
         G_PendingRequests.removekey(ReqId);
         Http.Destroy(Request);
+    }
+
+    foreach (PendingEventToDel in PendingEventsToDelete) {
+        G_PendingEvents.remove(PendingEventToDel);
     }
 }
