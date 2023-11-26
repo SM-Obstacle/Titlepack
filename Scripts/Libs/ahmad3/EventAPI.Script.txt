@@ -127,8 +127,8 @@ Text ML_Preproc() {
 Boolean EventHasContent(Text _EventHandle) {
     if (!G_Events.existskey(_EventHandle) || G_PendingEvents.exists(_EventHandle)) return False;
     declare K_Event Event = G_Events[_EventHandle];
-    // If this event is not pending, at least count its editions details amount to be sure it's fully loaded
-    return Event.EditionsDetails.count > 0;
+    // If this event is not pending, at least count its editions amount to be sure it's fully loaded
+    return Event.Editions.count > 0 && Event.EditionsDetails.count > 0;
 }
 
 K_Event GetEvent(Text _EventHandle) {
@@ -156,17 +156,19 @@ Void Private_InitRequest(Text _Route, Integer _Type, Text _EventHandle) {
     if (!G_PendingEvents.exists(_EventHandle)) G_PendingEvents.add(_EventHandle);
 }
 
-Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
-    if (!G_Events[_EventHandle].Editions.existskey(_EventEdition)) {
-        log("ERROR: called EventAPI::LoadEdition(_EventHandle, _EventEdition) when _EventEdition doesn't exist for _EventHandle");
-        log("_EventHandle: " ^ _EventHandle ^ "; _EventEdition: " ^ _EventEdition);
+Void LoadEdition(Text _EventHandle, Integer _EventEdition, Boolean _Lazy) {
+    if (!G_Events[_EventHandle].Editions.existskey(_EventEdition)
+        // We already loaded the edition for this event, so it doesn't require to refetch the API
+        || _Lazy && G_Events[_EventHandle].EditionsDetails.existskey(_EventEdition))
+    {
         return;
     }
 
-    // We already loaded the edition for this event, so it doesn't require to refetch the API
-    if (G_Events[_EventHandle].EditionsDetails.existskey(_EventEdition)) return;
-
     Private_InitRequest("event/" ^ _EventHandle ^ "/" ^ _EventEdition, C::C_Request_EventHandleEdition, _EventHandle);
+}
+
+Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
+    LoadEdition(_EventHandle, _EventEdition, True);
 }
 
 Void Private_InitEventEditions(K_EventResponse[] _Events) {

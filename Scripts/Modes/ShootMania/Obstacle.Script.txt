@@ -618,8 +618,6 @@ foreach (Cap in PendingCaptures) {
 }
 
 foreach (Player in Players) {
-    // TODO: force the player to leave in local
-    // (may join with uri link?)
     if (Player::getBanStatus(Player).isPresent && ServerAdmin != Null) {
         ServerAdmin.Kick(Player.User, Player::getBanStatus(Player).ban.ban.reason);
     }
