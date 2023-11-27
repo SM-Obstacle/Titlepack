@@ -49,6 +49,7 @@
 #Include "Libs/ahmad3/UI/MlAuth.Script.txt" as MlAuth
 #Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
+#Include "Libs/ahmad3/InGameEventAPI.Script.txt" as EventAPI
 
 // ---------------------------------- //
 // Settings
@@ -98,6 +99,9 @@ declare Boolean G_LastUsePvPWeapons;
 declare Boolean G_LastUsePvPCollisions;
 
 declare Boolean G_IsCampaign;
+
+declare Text G_EventHandle;
+declare Integer G_EventEdition;
 
 ***Match_LogVersions***
 ***
@@ -219,6 +223,8 @@ if (Settings::GetEnableRecords()) {
     API::Init();
 }
 
+EventAPI::Load();
+
 Obstacle::LoadActions();
 ***
 
@@ -227,17 +233,26 @@ Obstacle::LoadActions();
 declare PrevTimeLimit = -1;
 declare LastUpdate = -1;
 declare NextLowTimeMessage = 0;
+
+declare netwrite Text Net_EventRoutePrefix for Teams[0];
+if (S_EventHandle != "" && S_EventEdition != "") {
+    Net_EventRoutePrefix = "event/" ^ S_EventHandle ^ "/" ^ S_EventEdition ^ "/";
+
+    G_EventHandle = S_EventHandle;
+    G_EventEdition = TL::ToInteger(S_EventEdition);
+}
+
+// By calling this short after called EventAPI::Load(), it won't fetch the last edition
+// of the event but only this one (`G_EventEdition`)
+EventAPI::LoadEdition(G_EventHandle, G_EventEdition);
+MedalsWidget::Init();
+
 ***
 
 ***Match_StartMap***
 ***
 
 CreateUI();
-
-declare netwrite Text Net_EventRoutePrefix for Teams[0];
-if (S_EventHandle != "" && S_EventEdition != "") {
-    Net_EventRoutePrefix = "event/" ^ S_EventHandle ^ "/" ^ S_EventEdition ^ "/";
-}
 
 // This needs to be called before PrepareMap to have the right settings
 UpdateSettings();
@@ -421,6 +436,8 @@ foreach (Event in UIManager.PendingEvents) {
 ***
 //Replay_SaveInterface();
 Dynamics::Compute();
+EventAPI::Loop();
+MedalsWidget::Loop(G_EventHandle, G_EventEdition);
 
 if (LastUpdate + C_SettingsUpdateInterval < Now) {
     LastUpdate = Now;

@@ -1,4 +1,5 @@
 #Include "Libs/ahmad3/EventAPI.Script.txt"										as EventAPI
+#Include "Libs/ahmad3/EventAPITypes.Script.txt"									as EventAPITypes
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/smokegun/Constants.Script.txt"									as Constants
@@ -18,7 +19,7 @@ Text GetName() {
 
 declare Ident G_FileList;
 declare Boolean G_CampaignContentLoading;
-declare EventAPI::K_Event G_CampaignEvent;
+declare EventAPITypes::K_Event G_CampaignEvent;
 declare K_LocalMapInfo[][Integer] G_CampaignLocalMapsUids;
 declare Text[][] G_PendingPlayingMaps;
 declare Integer G_PendingPlayingMapsUpdate;
@@ -124,7 +125,7 @@ Text Build() {
 	#Include "TextLib" as TL
 	#Include "ColorLib" as CL
 
-	{{{EventAPI::ML_Preproc()}}}
+	{{{EventAPITypes::ML_Preproc()}}}
 
 	#Struct K_CategoryPageState {
 		Integer CurrentPage;
@@ -571,7 +572,11 @@ Void Loop() {
 		P_SelectedMapJ += 1;
 		if (G_PendingPlayingMaps[0].count == 0) {
 			P_SelectedMapI += 1;
+			if (P_SelectedMapI == G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories.count) {
+				P_SelectedMapI = 0;
+			}
 			P_SelectedMapJ = 0;
+			G_PendingPlayingMaps.removekey(0);
 		}
 
 		wait(TitleControl.IsReady);
@@ -581,13 +586,12 @@ Void Loop() {
 			<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="text" />
 		</mode_script_settings>
 		""");
-		G_PendingPlayingMaps.removekey(0);
 	}
 
 	// Check when the campaign edition loading has finished
 	if (G_CampaignContentLoading && EventAPI::EventHasContent("campaign")) {
 		G_CampaignEvent = EventAPI::GetEvent("campaign");
-		declare EventAPI::K_Event P_CampaignEvent for P;
+		declare EventAPITypes::K_Event P_CampaignEvent for P;
 		P_CampaignEvent = G_CampaignEvent;
 
 		declare Integer SelectedEdition = -1;
@@ -681,7 +685,7 @@ Void Loop() {
 				declare Integer P_SelectedMapI for P;
 				declare Integer P_SelectedMapJ for P;
 				declare Integer P_SelectedEdition for P;
-				declare EventAPI::K_EventEditionContentCategory[] CampaignCategories = G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
+				declare EventAPITypes::K_EventEditionContentCategory[] CampaignCategories = G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
 				declare Integer MxId = G_CampaignEvent.EditionsDetails[P_SelectedEdition].mx_id;
 
 				// Initialize with the current category maps

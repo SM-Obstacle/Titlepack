@@ -67,37 +67,11 @@ Text GetLayer() {
 	#Include "TextLib" as TL
 	#Include "ColorLib" as CL
 
-	#Const Summer23Medals [
-        "qpKzvXQaaJGvSsXPTNk_iVWmRTg" => [57000, 52000, 41000, 37000],
-        "Fcgbnv1RwTIdgRySDLwtyzzMj9j" => [29000, 24000, 19500, 18500],
-        "TEDQRUPTU1VkGrzBKLhIOY9cYV1" => [48000, 40000, 35000, 33000],
-        "GBEPgbo_hFst5xII2zoz7sP8xBe" => [47000, 40000, 36000, 35000],
-        "90qdC1x5f2s4C4oFveHhimcwLzj" => [43000, 38000, 34000, 32500],
-        "eKbgGOAuuwUP6ByvWlP8G728fuc" => [50000, 45000, 40000, 38000],
-        "hzlKEVfxuGyriKXlTm__LoiVRAj" => [46000, 40000, 35000, 32750],
-        "VSn_Cz45JUGLH_LJaRBUKaRIQsh" => [52000, 45000, 41000, 38500],
-        "H5yHFPEOVcdmJv7DabEGYqhUSDc" => [45000, 40000, 36000, 35000],
-        "0u6aaVnLw1cbwUIi7I1hyP1EHT0" => [48000, 44000, 40000, 37000],
-        "7ki7DAx8RGHufasKBLzlHnvFMUj" => [70000, 63000, 56000, 51750],
-        "JTeY36K5VrDL7noJGzl4dqwPC5j" => [60000, 54000, 50000, 47000],
-        "9rs_79lkU09Edy3FCyjXNTPNj_j" => [75000, 68000, 63000, 59000],
-        "uHN22ZmWSNesgZqOVcjgWYv7cPc" => [70000, 64000, 57000, 53000],
-        "TcwGFWuciPoKzccgWa6wRVM7yvd" => [67000, 60000, 55000, 53000],
-        "18FInhM7gAcqAgvwPwllYEDE6rk" => [53000, 48000, 44000, 41900],
-        "pAv3QI4f8y6fbSU2qoMj4cFRQTi" => [52000, 46000, 43000, 41000],
-        "G5Dm8fjoFSqS8nui1mP1wKZ4z_3" => [80000, 71000, 65000, 62000],
-        "tSd082VQJ51_71EXvCobORPlhZl" => [80000, 71000, 66000, 64000],
-        "KkqC5yQSQ18XyhEfpqMLER3vAjc" => [58000, 50000, 46000, 43500],
-        "uHYccBmFsS1kSLc45zLhlOya1eb" => [96000, 88000, 77000, 72000],
-        "F1bDc8HpEr3VjgXwuZh5m_2sb6e" => [80000, 70000, 64000, 61000],
-        "exsvJlTM1oQq1VJ8d9u2qSgFyla" => [78000, 71000, 66000, 64000],
-        "Okx2W7jKXCue7s58kpcStl9vRF3" => [88000, 81000, 76000, 74000],
-        "GwjMPymVycUB9NkGvk00juY4E55" => [80000, 72000, 64000, 61000]
-    ]
+	declare Integer[][Text] G_MedalsTimesPerMap;
 
     Integer GetMedal(Integer Medal) {
-        if (Summer23Medals.existskey(Map.MapInfo.MapUid)) {
-            return Summer23Medals[Map.MapInfo.MapUid][Medal];
+        if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
+            return G_MedalsTimesPerMap[Map.MapInfo.MapUid][Medal];
         }
         switch (Medal) {
             case 0: {
@@ -120,6 +94,10 @@ Text GetLayer() {
 	main() {
 		{{{Styles::GetInitFrameMenus()}}}
         wait(InputPlayer != Null && Page != Null);
+
+        declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
+        declare netread Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
+        declare Integer MedalsTimesPerMapUpdated = -1;
 
 		declare Label_Map = (Page.GetFirstChild("Label_Map") as CMlLabel);
 		declare Label_Author = (Page.GetFirstChild("Label_Author") as CMlLabel);
@@ -148,6 +126,11 @@ Text GetLayer() {
 			if (!CampaignRecords.existskey(Map.MapInfo.MapUid)) {
 				continue;
 			}
+
+            if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
+                G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
+                MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
+            }
 
 			declare RerenderUI = False;
 			if (LastRank != CurrentPlayerRank) {

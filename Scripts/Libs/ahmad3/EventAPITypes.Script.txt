@@ -1,0 +1,112 @@
+#Struct K_EventResponse {
+    Text handle;
+    Integer last_edition_id;
+}
+
+#Struct K_EventEdition {
+    Integer id;
+    Text name;
+    Text start_date;
+}
+
+#Struct K_EventEditionContentMapAuthor {
+    Text login;
+    Text name;
+    Text zone_path;
+}
+
+#Struct K_EventEditionContentMap {
+    Integer mx_id;
+    K_EventEditionContentMapAuthor main_author;
+    Text name;
+    Text map_uid;
+    Text map_thumbnail;
+    Integer bronze_time;
+    Integer silver_time;
+    Integer gold_time;
+    Integer champion_time;
+    Integer personal_best;
+}
+
+#Struct K_EventEditionContentCategory {
+    Text handle;
+    Text name;
+    Text banner_img_url;
+    K_EventEditionContentMap[] maps;
+}
+
+#Struct K_EventEditionDetails {
+    Integer id;
+    Text name;
+    Text start_date;
+    Text banner_img_url;
+    Integer mx_id;
+    K_EventEditionContentCategory[] categories;
+}
+
+#Struct K_Event {
+    // .handle: Text ; .last_edition_id: Integer
+    K_EventResponse Event;
+    // for each edition
+    //     .id: Integer, .start_date: Text
+    K_EventEdition[Integer] Editions;
+    // for each edition details
+    //     see K_EventEditionDetails
+    K_EventEditionDetails[Integer] EditionsDetails;
+}
+
+Text ML_Preproc() {
+    return """
+#Struct K_EventResponse {
+    Text handle;
+    Integer last_edition_id;
+}
+
+#Struct K_EventEdition {
+    Integer id;
+    Text name;
+    Text start_date;
+}
+
+#Struct K_EventEditionContentMapAuthor {
+    Text login;
+    Text name;
+    Text zone_path;
+}
+
+#Struct K_EventEditionContentMap {
+    Integer mx_id;
+    K_EventEditionContentMapAuthor main_author;
+    Text name;
+    Text map_uid;
+    Text map_thumbnail;
+    Integer bronze_time;
+    Integer silver_time;
+    Integer gold_time;
+    Integer champion_time;
+    Integer personal_best;
+}
+
+#Struct K_EventEditionContentCategory {
+    Text handle;
+    Text name;
+    Text banner_img_url;
+    K_EventEditionContentMap[] maps;
+}
+
+#Struct K_EventEditionDetails {
+    Integer id;
+    Text name;
+    Text start_date;
+    Text banner_img_url;
+    Integer mx_id;
+    K_EventEditionContentCategory[] categories;
+}
+
+#Struct K_Event {
+    K_EventResponse Event;
+    K_EventEdition[Integer] Editions;
+    K_EventEditionDetails[Integer] EditionsDetails;
+}
+""";
+}
