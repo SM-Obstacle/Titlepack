@@ -3,7 +3,23 @@
 #Const  Version     "2023-29-06"
 #Const  ScriptName  "EndScreen.Script.txt"
 
-Text GetLayer() {
+Text GetLayer(Boolean _WithNextMapButton) {
+	declare Text NextMapButton = "";
+	// Avoids the gap between the Improve and the Quit buttons
+	declare Text QuitButtonPos = "0 -11";
+	if (_WithNextMapButton) {
+		NextMapButton = """
+		<frame pos="0 -11" data-name="next_map">
+			<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7" id="Label"/>
+			<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
+				scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
+				data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
+				data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
+		</frame>
+		""";
+		QuitButtonPos = "0 -22";
+	}
+	
     return """
 <manialink version="3" name="Obstacle:EndScreen">
 <frame pos="-48.5 62">
@@ -42,14 +58,8 @@ Text GetLayer() {
 					data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
 					data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
 			</frame>
-			<frame pos="0 -11" data-name="next_map">
-				<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7" id="Label"/>
-				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
-					scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
-					data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
-					data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
-			</frame>
-			<frame pos="0 -22" data-name="quit">
+			{{{NextMapButton}}}
+			<frame pos="{{{QuitButtonPos}}}" data-name="quit">
 				<label halign="center" valign="center2" size="28.67 8" text="Quit" textsize="2.7" id="Label"/>
 				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
 					scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
@@ -205,7 +215,7 @@ Text GetLayer() {
 								declare Integer PendingPlayingMapsUpdate for LocalUser;
 								PendingPlayingMapsUpdate = Now;
 							}
-							CampaignEvent = Name;
+							SendCustomEvent("campaign:" ^ Name, [LocalUser.Login]);
 						}
 					}
 				}

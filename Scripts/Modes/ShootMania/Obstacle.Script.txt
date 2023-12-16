@@ -74,7 +74,7 @@
 #Setting S_PvPCollisions False as "Force PvP Collisions"
 
 #Setting S_EventHandle "" as "Event handle"
-#Setting S_EventEdition "" as "Event edition (Integer)"
+#Setting S_EventEdition -1 as "Event edition (Integer)"
 
 #Setting S_ScriptEnvironment "production"
 
@@ -99,9 +99,6 @@ declare Boolean G_LastUsePvPWeapons;
 declare Boolean G_LastUsePvPCollisions;
 
 declare Boolean G_IsCampaign;
-
-declare Text G_EventHandle;
-declare Integer G_EventEdition;
 
 ***Match_LogVersions***
 ***
@@ -235,16 +232,13 @@ declare LastUpdate = -1;
 declare NextLowTimeMessage = 0;
 
 declare netwrite Text Net_EventRoutePrefix for Teams[0];
-if (S_EventHandle != "" && S_EventEdition != "") {
+if (S_EventHandle != "" && S_EventEdition != -1) {
     Net_EventRoutePrefix = "event/" ^ S_EventHandle ^ "/" ^ S_EventEdition ^ "/";
-
-    G_EventHandle = S_EventHandle;
-    G_EventEdition = TL::ToInteger(S_EventEdition);
 }
 
 // By calling this short after called EventAPI::Load(), it won't fetch the last edition
 // of the event but only this one (`G_EventEdition`)
-EventAPI::LoadEdition(G_EventHandle, G_EventEdition);
+EventAPI::LoadEdition(S_EventHandle, S_EventEdition);
 MedalsWidget::Init();
 
 ***
@@ -346,6 +340,7 @@ NextMapVote::Yield(S_NextMapVotingRatio);
 
 foreach (Event in UIManager.PendingEvents) {
     if (Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent) {
+        --- Campaign_Match_Yield ---
         switch(Event.CustomEventType) {
             case "player:finished": {
                 declare API::K_HasFinishedResponse Res;
@@ -437,7 +432,7 @@ foreach (Event in UIManager.PendingEvents) {
 //Replay_SaveInterface();
 Dynamics::Compute();
 EventAPI::Loop();
-MedalsWidget::Loop(G_EventHandle, G_EventEdition);
+MedalsWidget::Loop(S_EventHandle, S_EventEdition);
 
 if (LastUpdate + C_SettingsUpdateInterval < Now) {
     LastUpdate = Now;
@@ -573,10 +568,11 @@ G_PendingRS.clear();
 
 
 foreach (RS in PendingRespawns) {
+    declare Player = RS.Player;
     declare CSmModeEvent CaptureToPerform = Null;
 
     foreach (Cap in PendingCaptures) {
-        if (Cap.Player == RS.Player) {
+        if (Cap.Player == Player) {
             CaptureToPerform <=> Cap;
             PendingCaptures.remove(Cap);
             break;
@@ -584,14 +580,14 @@ foreach (RS in PendingRespawns) {
     }
 
     if (CaptureToPerform == Null) {
-        Obstacle::ObsRespawnPlayer(RS.Player, RS.GiveUp);
+        Obstacle::ObsRespawnPlayer(Player, RS.GiveUp);
 
-        if(Player::getLastCheckpoint(RS.Player) == NullId && (ServerModeName == "" || ServerLogin == "") ) {
+        if(Player::getLastCheckpoint(Player) == NullId && (ServerModeName == "" || ServerLogin == "") ) {
             Dynamics::ForceResetAll();
         }
 
-    } else if(Tools::IsGoal(RS.Player.CapturedLandmark)) {
-        declare TookGoal = Obstacle::HandleCapture(RS.Player);
+    } else if(Tools::IsGoal(Player.CapturedLandmark)) {
+        declare TookGoal = Obstacle::HandleCapture(Player);
 
         if (TookGoal) {
             if(ServerModeName == "" || ServerLogin == "") {
@@ -602,17 +598,17 @@ foreach (RS in PendingRespawns) {
             if (G_IsCampaign) {
                 +++Campaign_EndRound+++
             } else {
-                Obstacle::ObsRespawnPlayer(RS.Player, RS.GiveUp);
+                Obstacle::ObsRespawnPlayer(Player, RS.GiveUp);
             }
         }
-    } else if (Player::allowRSBug(RS.Player)) {
-        Obstacle::ObsRespawnPlayer(RS.Player, RS.GiveUp);
+    } else if (Player::allowRSBug(Player)) {
+        Obstacle::ObsRespawnPlayer(Player, RS.GiveUp);
 
         Obstacle::HandleCapture(CaptureToPerform.Player);
         Events::Valid(CaptureToPerform);
         Player::setUsedRSBug(CaptureToPerform.Player, True);
     } else {
-        G_PendingRS[RS.Player.Id] = RS.GiveUp; // to be performed next tick
+        G_PendingRS[Player.Id] = RS.GiveUp; // to be performed next tick
 
         Obstacle::HandleCapture(CaptureToPerform.Player);
         Events::Valid(CaptureToPerform);
@@ -622,6 +618,7 @@ foreach (RS in PendingRespawns) {
 }
 
 foreach (Cap in PendingCaptures) {
+    declare Player = Cap.Player;
     declare TookGoal = Obstacle::HandleCapture(Cap.Player);
 
     if (TookGoal) {
@@ -629,7 +626,7 @@ foreach (Cap in PendingCaptures) {
         if (G_IsCampaign) {
             +++Campaign_EndRound+++
         } else {
-            Obstacle::ObsRespawnPlayer(Cap.Player, True);
+            Obstacle::ObsRespawnPlayer(Player, True);
         }
     }
 }
@@ -801,6 +798,8 @@ Void CreateUI() {
     Layers::Create("CPTimes", CPTimes::GetLayer());
     //Layers::Create("KeysSettings", KeysSettings::GetLayer());
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
+
+    --- Campaign_CreateUI ---
 
     Layers::Create("Markers");
     Layers::SetType("Markers", CUILayer::EUILayerType::Markers);

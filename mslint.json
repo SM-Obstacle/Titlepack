@@ -1,0 +1,12 @@
+{
+  "linter": [
+    {
+      "files": ["Libs/**/*.Script.txt"],
+      "msApiPath": "~/Downloads/doc.h",
+      "rules": {
+        "no-empty": "error",
+        "no-lonely-if": "error"
+      }
+    }
+  ]
+}

@@ -583,7 +583,7 @@ Void Loop() {
 		TitleControl.PlayMap(MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
 		<mode_script_settings>
 			<setting name="S_EventHandle" value="campaign" type="text" />
-			<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="text" />
+			<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />
 		</mode_script_settings>
 		""");
 	}
