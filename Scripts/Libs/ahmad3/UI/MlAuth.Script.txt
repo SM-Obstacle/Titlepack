@@ -53,6 +53,17 @@ console window with Ctrl+G. You can also try to quit and join a server
 or play any local map.
 """
 
+#Const C_MaintenanceMessage """The Obstacle API is currently in Maintenance mode.
+If you make a record on this map, your run will not be saved
+immediately.
+
+If everything goes right, your time will appear after the maintenance,
+but to be sure, ping @ahmadbky on the Obstacle discord with
+a screenshot of your run.
+
+Sorry for the inconvenience.
+"""
+
 Text GetLayer() {
 	return """
 <manialink version="3" name="Obstacle:Auth">
@@ -112,6 +123,26 @@ Text GetLayer() {
 		</frame>
 	</frame>
 </frame>
+<frame id="Frame_MaintenanceDialog" hidden="1">
+	<frame z-index="1000" pos="0 0">
+		<quad z-index="-1" size="100 75" style="Bgs1" substyle="BgButtonOff" halign="center" valign="center" />
+		<label pos="0 35" size="40 5" text="API maintenance" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
+
+		<label id="MaintenanceDialog_HeadMsg" size="96 5" halign="left" valign="center" pos="-48 12.5" textsize="1.4" text={{{dump(C_MaintenanceMessage)}}} />
+
+		<frame id="Frame_MaintenanceDialog_Button" pos="0 -35">
+			<label pos="0 1" size="20 6" text="Play anyway" valign="bottom" halign="center" textfont="regular" textsize="2.1" textcolor="fff" />
+			<quad
+			 	id="Frame_MaintenanceDialog_Button_OK"
+				scriptevents="1"
+				valign="bottom"
+				halign="center"
+				size="21 6"
+				image="file://Media/Images/Obstacle/Dialogs/BDefault21.png"
+			/>
+		</frame>
+	</frame>
+</frame>
 <script><!--
 
 #Include "MathLib" as MathLib
@@ -152,6 +183,16 @@ Text GetLayer() {
     Integer[] cps;
 }
 
+#Struct K_ReportErrorBody {
+	Text on_route;
+	Text request_id;
+	Text map_uid;
+	Integer err_type;
+	Text err_msg;
+	Integer time;
+	Integer respawn_count;
+}
+
 {{{Ban::ML_Preproc()}}}
 {{{Error::ML_Preproc()}}}
 {{{RunFlags::ML_Preproc()}}}
@@ -168,8 +209,13 @@ declare CMlLabel	G_AuthDialog_HeadMsg;
 
 declare CMlFrame	G_SecurityFrame;
 
+// Error frames
 declare CMlFrame	G_ErrDialog;
 declare CMlQuad		G_ErrDialog_Submit;
+
+// Maintenance frames
+declare CMlFrame	G_MaintenanceDialog;
+declare CMlQuad		G_MaintenanceDialog_Submit;
 
 // Used to create a POST request
 Ident MakePost(Text _Url, Text _Data) {
@@ -183,9 +229,13 @@ Ident MakePost(Text _Url, Text _Data) {
     return NullId;
 }
 
-Void OnError() {
+Void OnPopup(CMlFrame _Frame, CMlQuad _SubmitButton) {
+	// The popup is already shown for another reason
+	if (_Frame.Visible) {
+		return;
+	}
 	ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
-	G_ErrDialog.Show();	
+	_Frame.Show();	
 
 	declare hovering = False;
 
@@ -195,7 +245,7 @@ Void OnError() {
 		foreach (Event in PendingEvents) {
 			switch (Event.Type) {
 				case CMlScriptEvent::Type::MouseClick: {
-					if (Event.Control == G_ErrDialog_Submit) {
+					if (Event.Control == _SubmitButton) {
 						prompting = False;
 						break;
 					}
@@ -203,19 +253,43 @@ Void OnError() {
 				case CMlScriptEvent::Type::MouseOver: {
 					if (hovering) continue;
 					hovering = True;
-					G_ErrDialog_Submit.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/BActive21.png");
+					_SubmitButton.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/BActive21.png");
 				}
 				case CMlScriptEvent::Type::MouseOut: {
 					if (!hovering) continue;
 					hovering = False;
-					G_ErrDialog_Submit.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/BDefault21.png");
+					_SubmitButton.ChangeImageUrl("file://Media/Images/Obstacle/Dialogs/BDefault21.png");
 				}
 			}
 		}
 	}
 
-	G_ErrDialog.Hide();
+	_Frame.Hide();
 	ClientUI.UISequence = CUIConfig::EUISequence::None;
+}
+
+Void OnError(K_Error _Error, Text _OnRoute) {
+	if (_Error.err.type == C_Err_Maintenance) {
+		OnPopup(G_MaintenanceDialog, G_MaintenanceDialog_Submit);
+		if (_OnRoute != "/player/finished") return;
+	} else {
+		OnPopup(G_ErrDialog, G_ErrDialog_Submit);
+	}
+
+    declare netread _LastRun for UI = -1;
+    declare netread _RespawnCount for UI = 0;
+
+	declare Body = K_ReportErrorBody {
+		on_route = _OnRoute,
+		request_id = _Error.err.request_id,
+		map_uid = "" ^ Map.Id,
+		err_type = _Error.err.type,
+		err_msg = _Error.err.message,
+		time = _LastRun,
+		respawn_count = _RespawnCount
+	};
+	
+	MakePost("player/report_error", Body.tojson());
 }
 
 Void Private_UpdateToken(Text _HeadMsg) {
@@ -284,8 +358,8 @@ Void Private_UpdateToken(Text _HeadMsg) {
 	wait(req.IsCompleted);
 	if (req.StatusCode != 200) {
 		declare err = Error_Handle(req.StatusCode, req.Result);
-		UI.SendChat(err.message);
-		OnError();
+		UI.SendChat(err.err.message);
+		OnError(err, "/player/get_token");
 		G_Errored = True;
 		return;
 	}
@@ -360,8 +434,8 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 	} else if (req.StatusCode != 200) {
 		declare err = Error_Handle(req.StatusCode, req.Result);
 		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
-		UI.SendChat(err.message);
-		OnError();
+		UI.SendChat(err.err.message);
+		OnError(err, "/player/finished");
 	} else {
 		SendCustomEvent("player:finished", [req.Result]);
 	}
@@ -392,8 +466,7 @@ Void Private_UpdatePlayer() {
 	} else if (req.StatusCode != 200) {
 		declare err = Error_Handle(req.StatusCode, req.Result);
 		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
-		UI.SendChat(err.message);
-		OnError();
+		OnError(err, "/player/update");
 	}
 
 	Http.Destroy(Http.Requests[Req]);
@@ -416,8 +489,12 @@ Void InitPbCpsTimes() {
 
 	if (Req.StatusCode != 200) {
 		declare Err = Error_Handle(Req.StatusCode, Req.Result);
-		UI.SendChat(Err.message);
-		OnError();
+		UI.SendChat(Err.err.message);
+		// If the API is in maintenance, the Private_UpdatePlayer
+		// function should already have handled it (to avoid the frame to pop twice).
+		if (Err.err.type != C_Err_Maintenance) {
+			OnError(Err, "/player/pb");
+		}
 	} else {
 		SendCustomEvent("cpstimes:init", [InputPlayer.User.Login, Req.Result]);
 	}
@@ -454,8 +531,13 @@ main() {
 
 	G_SecurityFrame <=> (Page.GetFirstChild("Frame_Security_OpenplanetDev") as CMlFrame);
 
+	// Error frames
 	G_ErrDialog <=> (Page.GetFirstChild("Frame_ErrDialog") as CMlFrame);
 	G_ErrDialog_Submit <=> (Page.GetFirstChild("Frame_ErrDialog_Button_OK") as CMlQuad);
+
+	// Maintenance frames
+	G_MaintenanceDialog <=> (Page.GetFirstChild("Frame_MaintenanceDialog") as CMlFrame);
+	G_MaintenanceDialog_Submit <=> (Page.GetFirstChild("Frame_MaintenanceDialog_Button_OK") as CMlQuad);
 
 	if(HasDevMode()) {
 		ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;

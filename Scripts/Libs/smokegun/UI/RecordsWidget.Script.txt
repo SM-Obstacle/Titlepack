@@ -120,7 +120,7 @@ Text GetLayer() {
                 log("RecordsWidget: Status code: " ^ G_Req.StatusCode);
                 if (G_Req.StatusCode != 200) {
                     declare err = Error_Handle(G_Req.StatusCode, G_Req.Result);
-                    UI.SendChat(err.message);
+                    UI.SendChat(err.err.message);
                     Http.Destroy(G_Req);
                     G_Req = Null;
                     continue;
