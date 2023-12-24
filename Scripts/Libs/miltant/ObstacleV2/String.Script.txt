@@ -24,23 +24,12 @@ Vec3 NudgeDark(Vec3 _Color) {
     return <R, G, B>;
 }
 
-Text ContrastString(Text _Input) { // todo: better handle short color codes
+Text ContrastString(Text _Input) {
     declare Text _Output = _Input;
     declare ColorCodes = TL::RegexFind("\\$([0-9A-Fa-f]{1,3})", _Input, "g");
     
     foreach(Code in ColorCodes) {
-        declare Text Hex;
-        switch (TL::Length(Code)) {
-            case 2: {
-                Hex = TL::SubText(Code, 1, 1) ^ "00";
-            }
-            case 3: {
-                Hex = TL::SubText(Code, 1, 2) ^ "0";
-            }
-            case 4: {
-                Hex = TL::SubText(Code, 1, 3);
-            }
-        }
+        declare Hex            = TL::SubText(Code ^ "00", 1, 3);
         declare OriginalColor  = CL::HexToRgb(Hex);
         declare NewHex         = CL::RgbToHex(NudgeDark(OriginalColor));
 
@@ -74,25 +63,13 @@ Vec3 NudgeDark(Vec3 _Color) {
     return <R, G, B>;
 }
 
-Text ContrastString(Text _Input) { // todo: better handle short color codes
+Text ContrastString(Text _Input) {
     declare Text _Output = _Input;
     declare ColorCodes = TL::RegexFind("\\$([0-9A-Fa-f]{1,3})", _Input, "g");
     
     foreach(Code in ColorCodes) {
-        declare Text Hex;
-        switch (TL::Length(Code)) {
-            case 2: {
-                Hex = TL::SubText(Code, 1, 1) ^ "00";
-            }
-            case 3: {
-                Hex = TL::SubText(Code, 1, 2) ^ "0";
-            }
-            case 4: {
-                Hex = TL::SubText(Code, 1, 3);
-            }
-        }
+        declare Hex            = TL::SubText(Code ^ "00", 1, 3);
         declare OriginalColor  = CL::HexToRgb(Hex);
-        
         declare NewHex         = CL::RgbToHex(NudgeDark(OriginalColor));
 
         _Output = TL::Replace(_Output, Code, "$" ^ NewHex);
