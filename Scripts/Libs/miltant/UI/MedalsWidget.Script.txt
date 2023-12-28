@@ -154,7 +154,7 @@ Text GetLayer() {
         declare netread Net_Time1 for InputPlayer = 0;
         declare Integer CurrentPlayerRank for LocalUser = 0;
         declare netread Net_RecordsUpdated for Teams[0] = -1;
-        declare LastUpdate = Net_RecordsUpdated;
+        declare LastUpdate = -1;
         declare Running = False;
 
         declare LastPlayerLogin = InputPlayer.User.Login;
