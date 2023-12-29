@@ -8,6 +8,7 @@
     Text MapUid;
     Text Author;
     Boolean IsPlayable;
+    Text WhyNotPlayable;
     Integer TMObjective_AuthorTime;
     Integer TMObjective_GoldTime;
     Integer TMObjective_SilverTime;
@@ -28,6 +29,7 @@ Text ML_K_MapInfo() {
     Text MapUid;
     Text Author;
     Boolean IsPlayable;
+    Text WhyNotPlayable;
     Integer TMObjective_AuthorTime;
     Integer TMObjective_GoldTime;
     Integer TMObjective_SilverTime;
@@ -249,6 +251,13 @@ Void Loop_Maps() {
                      TL::EndsWith("ObstacleBetaArena", Map.MapType) ||
                      TL::EndsWith("Randomizer", Map.MapType);
 
+            declare Text WhyNotPlayable;
+            if (!IsObsMap) {
+                WhyNotPlayable = "Not an Obstacle map";
+            } else if (!Map.IsPlayable) {
+                WhyNotPlayable = "Map not playable";
+            }
+
             if (!ObsStore_Maps.existskey(Map.Path)) {
                 ObsStore_Maps[Map.Path] = [];
             }
@@ -256,6 +265,7 @@ Void Loop_Maps() {
                 MapUid =  Map.MapUid,
                 Author = Map.AuthorLogin,
                 IsPlayable = Map.IsPlayable && IsObsMap,
+                WhyNotPlayable = WhyNotPlayable,
                 TMObjective_AuthorTime = Map.TMObjective_AuthorTime,
                 TMObjective_GoldTime = Map.TMObjective_GoldTime,
                 TMObjective_SilverTime = Map.TMObjective_SilverTime,
