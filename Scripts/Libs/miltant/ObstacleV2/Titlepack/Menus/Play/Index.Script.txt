@@ -67,13 +67,38 @@ Void Loop() {
 				case "tutorials": {
 					wait(TitleControl.IsReady);
 
-					declare Path = "MEDIABROWSER_HiddenResources\\tuto\\English.Map.Gbx";
+					declare Language = "English";
+
+					declare Languages = [
+						// "cs" => "Czech",
+						// "da" => "Danish",
+						// "de" => "German",
+						// en, en_GB
+						// "es" => "Spanish",
+						// "fi" => "Finnish",
+						"fr" => "French",
+						// "hu" => "Hungarian",
+						// "it" => "Italian",
+						// "ja" => "Japanese",
+						// "ko" => "Korean",
+						// "nb" => "Norwegian",
+						// "nl" => "Dutch",
+						// "pl" => "Polish",
+						// "pt" => "Portuguese",
+						// "pt_BR" => "Portuguese",
+						// "ro" => "Romanian",
+						"ru" => "Russian"//,
+						// "sk" => "Slovak",
+						// "sv" => "Swedish",
+						// "tr" => "Turkish",
+						// "zh_CN" => "Chinese"
+					];
 					
-					switch (LocalUser.Language) {
-						case "ru": {
-							Path = "MEDIABROWSER_HiddenResources\\tuto\\Russian.Map.Gbx";
-						}
-					}
+					if (Languages.exists(LocalUser.Language))
+						Language = Languages[LocalUser.Language];
+					
+					declare Path = "MEDIABROWSER_HiddenResources\\tuto\\" ^ Language ^ ".Map.Gbx";
+
 					TitleControl.PlayMap(Path, "Shootmania/Obstacle.Script.txt", "<mode_script_settings><setting name='S_EnableRecords' value='False' type='boolean'/></mode_script_settings>");
 				}
 			}
