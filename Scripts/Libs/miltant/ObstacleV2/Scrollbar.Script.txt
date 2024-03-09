@@ -1,0 +1,113 @@
+#Include "TextLib" as TL
+
+Text GetScrollBarML(Vec2 _Position, Text _Name, Text _Dir) {
+    declare ML_Text = """
+        <frame class="Lib_ScrollBar__Frame" pos="{{{_Position.X}}} {{{_Position.Y}}}" data-for="{{{_Name}}}" data-dir="{{{_Dir}}}" size="5 5">
+            <quad size="5 5" bgcolor="F00" id="Lib_ScrollBar__Minus"/>
+            <quad size="5 5" bgcolor="00F" id="Lib_ScrollBar__Plus"/>
+            <quad size="5 5" bgcolor="0F0" id="Lib_ScrollBar__Handle"/>
+            <quad size="5 5" bgcolor="FFF" id="Lib_ScrollBar__Hitbox"/>
+        </frame>
+    """;
+    return ML_Text;
+}
+
+Text GetInitFrames() {
+    declare ML_Text = """//!
+        declare CMlFrame[] Lib_ScrollBar__Frames;
+        declare CMlFrame[] Lib_ScrollBar__ParentFrames;
+        declare Text[] Lib_ScrollBar__Dir;
+        declare Text[] Lib_ScrollBar__ParentDir;
+
+        Page.GetClassChildren("Lib_ScrollBar__Frame", Page.MainFrame, True);
+        foreach (Frame in Page.GetClassChildren_Result) {
+            declare Lib_ScrollBar__MDown for Frame = <0., 99.>;
+            Lib_ScrollBar__Frames.add((Frame as CMlFrame));
+            Lib_ScrollBar__ParentFrames.add((Page.GetFirstChild(Frame.DataAttributeGet("for")) as CMlFrame));
+            Lib_ScrollBar__Dir.add(Frame.DataAttributeGet("dir"));
+        }
+    """;
+    return ML_Text;
+}
+
+Text GetLoop() {
+    // events are unreliable because there might be stuff above the scrollbar elements
+    // so out of security, we check every frame if the mouse is down and if it is, we check if it's above one of the elements we manage
+    return """//!
+    for (I, 0, Lib_ScrollBar__Frames.count - 1) {
+        declare Frame = Lib_ScrollBar__Frames[I];
+        declare Vec2 Lib_ScrollBar__MDown for Frame;
+
+        declare Minus = Frame.GetFirstChild("Lib_ScrollBar__Minus");
+        declare Plus = Frame.GetFirstChild("Lib_ScrollBar__Plus");
+        declare Handle = Frame.GetFirstChild("Lib_ScrollBar__Handle");
+        declare Hitbox = Frame.GetFirstChild("Lib_ScrollBar__Hitbox");
+
+        if (Input.MouseLeftButton) {
+            // New click and dragging was not initiated yet
+            if (Lib_ScrollBar__MDown.Y == 99.) {
+                // Check if mouse is on Handle
+                if (Input.MousePos.X >= Handle.AbsolutePosition_V3.X && Input.MousePos.X <= Handle.AbsolutePosition_V3.X + Handle.Size.X && Input.MousePos.Y <= Handle.AbsolutePosition_V3.Y && Input.MousePos.Y >= Handle.AbsolutePosition_V3.Y - Handle.Size.Y) {
+                    Lib_ScrollBar__MDown = Input.MousePos;
+                } // Check if mouse is on the gutter (Hitbox)
+                  else if (Input.MousePos.X >= Hitbox.AbsolutePosition_V3.X && Input.MousePos.X <= Hitbox.AbsolutePosition_V3.X + Hitbox.Size.X && Input.MousePos.Y <= Hitbox.AbsolutePosition_V3.Y && Input.MousePos.Y >= Hitbox.AbsolutePosition_V3.Y - Hitbox.Size.Y) {
+                    // Move handle to mouse pos
+                    if (Lib_ScrollBar__Dir[I] == "x") {
+                        Handle.RelativePosition_V3.X = Input.MousePos.X - Frame.AbsolutePosition_V3.X - Handle.Size.X / 2.;
+                        Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = (Handle.RelativePosition_V3.X - Minus.Size.X) / ML::Max(1., Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+                    } else {
+                        Handle.RelativePosition_V3.Y = Input.MousePos.Y - Frame.AbsolutePosition_V3.Y + Handle.Size.Y / 2.;
+                        Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = (-Handle.RelativePosition_V3.Y - Minus.Size.Y) / ML::Max(1., Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+                    }
+                } // Check if mouse is on Minus
+                  else if (Input.MousePos.X >= Minus.AbsolutePosition_V3.X && Input.MousePos.X <= Minus.AbsolutePosition_V3.X + Minus.Size.X && Input.MousePos.Y <= Minus.AbsolutePosition_V3.Y && Input.MousePos.Y >= Minus.AbsolutePosition_V3.Y - Minus.Size.Y) {
+                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y -= Lib_ScrollBar__ParentFrames[I].ScrollMax.Y / 10.;
+                    Lib_ScrollBar__MDown = Input.MousePos;
+                } // Check if mouse is on Plus
+                  else if (Input.MousePos.X >= Plus.AbsolutePosition_V3.X && Input.MousePos.X <= Plus.AbsolutePosition_V3.X + Plus.Size.X && Input.MousePos.Y <= Plus.AbsolutePosition_V3.Y && Input.MousePos.Y >= Plus.AbsolutePosition_V3.Y - Plus.Size.Y) {
+                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y += Lib_ScrollBar__ParentFrames[I].ScrollMax.Y / 10.;
+                    Lib_ScrollBar__MDown = Input.MousePos;
+                }
+            } else { // Dragging was already initiated
+                if (Lib_ScrollBar__Dir[I] == "x") {
+                    Handle.RelativePosition_V3.X += Input.MousePos.X - Lib_ScrollBar__MDown.X;
+                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = (Handle.RelativePosition_V3.X - Minus.Size.X) / ML::Max(1., Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+                } else {
+                    Handle.RelativePosition_V3.Y += Input.MousePos.Y - Lib_ScrollBar__MDown.Y;
+                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = (-Handle.RelativePosition_V3.Y - Minus.Size.Y) / ML::Max(1., Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+                }
+                Lib_ScrollBar__MDown = Input.MousePos;
+            }
+        } else {
+            Lib_ScrollBar__MDown.Y = 99.;
+        }
+
+        if (Lib_ScrollBar__ParentFrames[I].ScrollMax.Y > 0.) {
+            Frame.Show();
+
+            if (Lib_ScrollBar__Dir[I] == "x") {
+                Frame.Size.X = Lib_ScrollBar__ParentFrames[I].Size.X;
+
+                Plus.RelativePosition_V3.X = Frame.Size.X - Plus.Size.X;
+
+                Hitbox.RelativePosition_V3.X = Minus.Size.X;
+                Hitbox.Size.X = Frame.Size.X - Minus.Size.X - Plus.Size.X;
+
+                Handle.RelativePosition_V3.X = Minus.Size.X + (Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollAnimOffset.Y / Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+                Handle.Size.X = Hitbox.Size.X * Lib_ScrollBar__ParentFrames[I].Size.Y / (Lib_ScrollBar__ParentFrames[I].Size.Y + Lib_ScrollBar__ParentFrames[I].ScrollMax.Y);
+            } else {
+                Frame.Size.Y = Lib_ScrollBar__ParentFrames[I].Size.Y;
+
+                Plus.RelativePosition_V3.Y = -Frame.Size.Y + Plus.Size.Y;
+
+                Hitbox.RelativePosition_V3.Y = -Minus.Size.Y;
+                Hitbox.Size.Y = Frame.Size.Y - Minus.Size.Y - Plus.Size.Y;
+
+                Handle.RelativePosition_V3.Y = -Minus.Size.Y - (Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollAnimOffset.Y / ML::Max(1., Lib_ScrollBar__ParentFrames[I].ScrollMax.Y);
+                Handle.Size.Y = Hitbox.Size.Y * Lib_ScrollBar__ParentFrames[I].Size.Y / (Lib_ScrollBar__ParentFrames[I].ScrollMax.Y + Lib_ScrollBar__ParentFrames[I].Size.Y);
+            }
+        } else {
+            Frame.Hide();
+        }
+    }""";
+}

@@ -1,6 +1,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"									as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"												as Styles
 #Include "Libs/miltant/ObstacleV2/String.Script.txt"													as StringLib
+#Include "Libs/miltant/ObstacleV2/ScrollBar.Script.txt"	 		       								as Scroll
 
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
@@ -93,6 +94,7 @@ Text Build() {
 	</frame>
 	<quad size="190 100" pos="0 10" scriptevents="1" id="Quad_ScrollTrigger"/>
 </frame>
+{{{Scroll::GetScrollBarML(<94., 36.>, "Server_List", "y")}}}
 
 <script><![CDATA[
 	#Include "MathLib" as ML
@@ -159,11 +161,14 @@ Text Build() {
 		declare Integer Context;
 		declare K_ServerInfo[Text] ServersCache;
 
+        {{{Scroll::GetInitFrames()}}}
 		
 		while(True) {
 			yield;
 
 			if (!PageIsVisible && PendingEvents.count == 0) continue;
+
+            {{{Scroll::GetLoop()}}}
 
 			if (Server_List.ScrollOffset != ScrollOffset) {
 				ScrollOffset = Server_List.ScrollOffset;

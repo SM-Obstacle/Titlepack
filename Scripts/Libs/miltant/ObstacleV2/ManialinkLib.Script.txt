@@ -66,7 +66,7 @@ Text GetDeclareGlobals() {
 }
 
 Text GetInitFrameMenus() {
-	return """
+	return """//!
 	declare Frame_Menus = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
 	foreach (MenuContainer in Frame_Menus.Controls) {
 		declare Frame_MenuItem = (MenuContainer as CMlFrame);
@@ -93,10 +93,9 @@ Text GetInitFrameMenus() {
 }
 
 Text GetEventLoopActiveItem(Text _EventName) {
-	declare ML = """
-	switch(Event.Type) {""";
+	declare ML = """switch(Event.Type) {""";
 	if (_EventName != "") {	
-		ML ^= """
+		ML ^= """//!
 		case CMlScriptEvent::Type::MouseClick: {
 			declare Text Id;
 			if (Event.Control.DataAttributeExists("name")) {
@@ -120,7 +119,7 @@ Text GetEventLoopActiveItem(Text _EventName) {
 """;
 	}
 	
-	ML ^=  """
+	ML ^=  """//!
 		case CMlScriptEvent::Type::MouseOver: {
 			HandleMouseEvent(Event);
 		}
@@ -138,7 +137,7 @@ Text GetEventLoopActiveItem() {
 }
 
 Text GetLoopActiveItem() {
-	return """
+	return """//!
 	foreach(Event in PendingEvents) {
 		{{{GetEventLoopActiveItem()}}}
 	}""";

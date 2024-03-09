@@ -3,8 +3,14 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Index.Script.txt"	as Campaign
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Servers/Index.Script.txt"	as Servers
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"		as ExplorerDialog
+#Include "Libs/miltant/ObstacleV2/Titlepack/Components/Index.Script.txt"			as Components
+#Include "Libs/miltant/ObstacleV2/Titlepack/Components/DropDown.Script.txt"			as DropDown
+#Include "Libs/miltant/ObstacleV2/Internationalization.Script.txt"					as Internationalization
+#Include "TextLib" as TL
+
 
 declare Boolean G_PendingStartLocalPlay;
+declare Text G_PreferredTutorialLanguage;
 
 Text GetName() {
 	return "play";
@@ -13,6 +19,30 @@ Text GetName() {
 Void StartLocalPlay() {
 	if (G_PendingStartLocalPlay)
 		G_PendingStartLocalPlay = !ExplorerDialog::StartLocalPlay();
+}
+
+Text[] BuildLanguageDropDown() {
+	declare Languages = Internationalization::GetLanguageList([
+		"en", "fr", "hr", "ru", "uk"
+	], True);
+
+	foreach (ISO => Lang in Languages) // I don't know how to access the last element xd
+		G_PreferredTutorialLanguage = ISO;
+
+	declare DropDown = DropDown::Build(
+		Languages,
+		G_PreferredTutorialLanguage,
+		Components::K_Options {
+			Name = "Tutorial__Language_DropDown",
+			X = 34.33,
+			Y = -60.,
+			Width = 68.67,
+			Height = 8.,
+			HAlign = "right"
+		}
+	);
+
+	return [DropDown.XML, DropDown.Init, DropDown.MainLoop];
 }
 
 Void Load() {
@@ -36,10 +66,14 @@ Void Load() {
 	Local.PreventDefault = True;
 	SubMenus.add(Local);
 
+	declare LanguageDropDown = BuildLanguageDropDown();
 	declare SubMenu::K_SubMenu Tutorials;
 	Tutorials.Name = "tutorials";
 	Tutorials.Image = "file://Media/Images/Obstacle/Moods/tutorials.png";
 	Tutorials.PreventDefault = True;
+	Tutorials.DangerouslySetControls = LanguageDropDown[0];
+	Tutorials.DangerouslySetControlsScriptInit = LanguageDropDown[1];
+	Tutorials.DangerouslySetControlsScriptLoop = LanguageDropDown[2];
 	SubMenus.add(Tutorials);
 
 
@@ -56,50 +90,30 @@ Void Loop() {
 	Servers::Loop();
 
 	foreach(Event in PendingEvents) {
-		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
-			 Event.CustomEventData.count > 0 &&
-			 Event.CustomEventType == "window_load") {
-			switch (Event.CustomEventData[0]) {
-				case "local": {
-					ExplorerDialog::Load("Map");
-					G_PendingStartLocalPlay = True;
+		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent) {
+			switch (Event.CustomEventType) {
+				case "window_load": {
+					if (Event.CustomEventData.count > 0) {
+						switch (Event.CustomEventData[0]) {
+							case "local": {
+								ExplorerDialog::Load("Map");
+								G_PendingStartLocalPlay = True;
+							}
+							case "tutorials": {
+								wait(TitleControl.IsReady);
+								declare Path = "MEDIABROWSER_HiddenResources\\tuto\\" ^ G_PreferredTutorialLanguage ^ ".Map.Gbx";
+								TitleControl.PlayMap(Path, "Shootmania/Obstacle.Script.txt", "<mode_script_settings><setting name='S_EnableRecords' value='False' type='boolean'/></mode_script_settings>");			
+							}
+						}
+					}
 				}
-				case "tutorials": {
-					wait(TitleControl.IsReady);
+				case "onChange__Tutorial__Language_DropDown": {
+					if (Event.CustomEventData.count < 1          || // language not provided
+						TL::Length(Event.CustomEventData[0]) < 2 || // too short
+						TL::Length(Event.CustomEventData[0]) > 3    // too long
+					) break;
 
-					declare Language = "English";
-
-					declare Languages = [
-						// "cs" => "Czech",
-						// "da" => "Danish",
-						// "de" => "German",
-						// en, en_GB
-						// "es" => "Spanish",
-						// "fi" => "Finnish",
-						"fr" => "French",
-						// "hu" => "Hungarian",
-						// "it" => "Italian",
-						// "ja" => "Japanese",
-						// "ko" => "Korean",
-						// "nb" => "Norwegian",
-						// "nl" => "Dutch",
-						// "pl" => "Polish",
-						// "pt" => "Portuguese",
-						// "pt_BR" => "Portuguese",
-						// "ro" => "Romanian",
-						"ru" => "Russian"//,
-						// "sk" => "Slovak",
-						// "sv" => "Swedish",
-						// "tr" => "Turkish",
-						// "zh_CN" => "Chinese"
-					];
-					
-					if (Languages.exists(LocalUser.Language))
-						Language = Languages[LocalUser.Language];
-					
-					declare Path = "MEDIABROWSER_HiddenResources\\tuto\\" ^ Language ^ ".Map.Gbx";
-
-					TitleControl.PlayMap(Path, "Shootmania/Obstacle.Script.txt", "<mode_script_settings><setting name='S_EnableRecords' value='False' type='boolean'/></mode_script_settings>");
+					G_PreferredTutorialLanguage = Event.CustomEventData[0];
 				}
 			}
 		}
