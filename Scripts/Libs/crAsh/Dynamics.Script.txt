@@ -15,22 +15,24 @@ Add the code in Match_StartMap:
 Add the code in Match_PlayLoop:
 	Dynamics::Compute();
 
-Add the code to coresponding events:
+Add the code in Match_EndMap:
+	Dynamics::Clear();
 
+Add the code to coresponding events:
 CSmModeEvent::EType::OnPlayerTouchesObject: {
-						declare Boolean PerformEliminate = Dynamics::CheckEliminatingObject(Event.Object, "touch", Event.Player);
-							
-						if(PerformEliminate) {
-							if(Player::getLastCheckpoint(Victim) == NullId && (ServerModeName == "" || ServerLogin == "")) {
-								Dynamics::ForceResetAll();
-							}
-							Obstacle::ObsRespawnPlayer(Event.Player);
-						}
-						
-						if(Dynamics::IsDynamic(Event.Object)) {
-								Events::Invalid(Event);
-								continue;
-						}
+	declare Boolean PerformEliminate = Dynamics::CheckEliminatingObject(Event.Object, "touch", Event.Player);
+		
+	if(PerformEliminate) {
+		if(Player::getLastCheckpoint(Victim) == NullId && (ServerModeName == "" || ServerLogin == "")) {
+			Dynamics::ForceResetAll();
+		}
+		Obstacle::ObsRespawnPlayer(Event.Player);
+	}
+	
+	if(Dynamics::IsDynamic(Event.Object)) {
+			Events::Invalid(Event);
+			continue;
+	}
 	
 CSmModeEvent::EType::OnHit CODE:
 	Dynamics::OnHit(Event.Victim, Event.VictimEntity);
@@ -44,7 +46,7 @@ Add also extra code in foreach (RS in PendingRespawns) Loop
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2023-09-07"
+#Const  Version     "2024-03-12"
 #Const  ScriptName  "Dynamics.Script.txt"
 
 #Include "TextLib" as TL
@@ -119,6 +121,13 @@ Void RemoveFromDynamics() {
 			}
 			
 		}
+	}
+}
+
+//Clear objects from an array
+Void Clear() {
+	if(Dynamics.count > 0) {
+		Dynamics.clear();
 	}
 }
 
