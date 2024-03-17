@@ -35,14 +35,6 @@ Text Build() {
 </framemodel>
 
 
-<frame pos="-91.67 46.83">
-	<label id="Label_ComingSoon" pos="80 -4.67" valign="center2" halign="center" opacity="0" text="Coming soon!" textcolor="fff" textfont="regular"/>
-	<quad id="Quad_ComingSoon" data-target="Quad_ComingSoon Label_ComingSoon"
-		data-default-anim="<quad opacity=&quot;0&quot;/><label opacity=&quot;0&quot;/>"
-		data-target-anim="<quad opacity=&quot;1&quot;/><label opacity=&quot;1&quot;/>"
-		scriptevents="1" bgcolor="0009" opacity="0" size="184 9.33"/>
-</frame>
-
 <frame pos="-91.67 45.83" data-name="filter_all">
 	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
@@ -55,7 +47,6 @@ Text Build() {
 	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
 	<quad size="8.83 7.33" image="file://Media/Images/Obstacle/Servers/FActions.png" opacity="0.5"/>
 </frame>
-
 
 <label textcolor="fff" pos="66.2 42.17" text="" valign="center2" halign="center"/>
 <entry textcolor="fff" textfont="light" pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
@@ -76,6 +67,7 @@ Text Build() {
 		<quad size="29.83 18" image="file://Media/Images/Obstacle/Servers/Combo.png" halign="right" opacity="0.9"/>
 	</frame>
 </frame>
+
 
 <frame id="Server_List" pos="-91.67 36" size="190 95" scroll="1" scrollmax="0 100">
 	<frame id="Frame_Menus">
@@ -205,6 +197,24 @@ Text Build() {
 									}
 									LastClick = Now;
 								}
+							}
+							case "filter_all": {
+								Context = 0;
+							}
+							case "filter_history": {
+								Context = 16;
+							}
+							case "filter_favorites": {
+								Context = 32;
+							}
+							case "create": {
+								SendCustomEvent("create_server", []);
+							}
+							case "buy": {
+								SendCustomEvent("buy_server", []);
+							}
+							case "sort": {
+								// todo: add something to `Context` depending on the current sort
 							}
 						}
 					}

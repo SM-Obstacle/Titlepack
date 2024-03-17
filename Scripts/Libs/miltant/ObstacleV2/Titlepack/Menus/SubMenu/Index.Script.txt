@@ -53,14 +53,14 @@ Text Build(K_SubMenu[] _Menu) {
             <quad size="70 111.33" scriptevents="1" id="Quad_Trigger"
                     data-preventdefault="{{{Item.PreventDefault}}}"
                     data-target="Quad_Poster Label_Name Quad_Background Frame_Controls"
-                    data-default-anim="<quad scale=&quot;1.&quot; pos=&quot;0 0&quot;/> <label scale=&quot;1.&quot; textcolor=&quot;fff&quot; pos=&quot;0 -95.67&quot;/> <quad modulatecolor=&quot;000&quot; opacity=&quot;1&quot; scale=&quot;1&quot;/> <frame scale=&quot;1.&quot;/>"
-                    data-target-anim="<quad scale=&quot;1.06&quot; pos=&quot;0 4&quot;/> <label scale=&quot;1.12&quot; textcolor=&quot;000&quot; pos=&quot;0 -98.33&quot;/> <quad modulatecolor=&quot;fff&quot; opacity=&quot;0.9&quot; scale=&quot;1.06&quot;/> <frame scale=&quot;1.06&quot;/>"/>
+                    data-default-anim="<quad scale=&quot;1.&quot; pos=&quot;0 0&quot;/> <label scale=&quot;1.&quot; pos=&quot;0 -95.67&quot;/> <quad modulatecolor=&quot;fff&quot; opacity=&quot;1&quot; scale=&quot;1&quot;/> <frame scale=&quot;1.&quot;/>"
+                    data-target-anim="<quad scale=&quot;1.06&quot; pos=&quot;0 4&quot;/> <label scale=&quot;1.12&quot; pos=&quot;0 -98.33&quot;/> <quad modulatecolor=&quot;ccf&quot; opacity=&quot;0.9&quot; scale=&quot;1.06&quot;/> <frame scale=&quot;1.06&quot;/>"/>
 
             <frame id="Frame_Content" pos="35">
                 <quad size="70 80.67" halign="center" id="Quad_Poster" image="{{{Item.Image}}}"/>
 
-                <label class="lato" id="Label_Name" text="{{{Item.Name}}}" textprefix="$t" pos="0 -95.67" halign="center" valign="center2" textsize="5"/>
-                <quad size="70 110.67" pos="0 -55.33" image="file://Media/Images/Obstacle/Menu/FNavPlay.png" halign="center" valign="center" modulatecolor="000" id="Quad_Background"/>
+                <label class="lato" id="Label_Name" text="{{{Item.Name}}}" textprefix="$t" pos="0 -95.67" halign="center" valign="center2" textsize="5" textcolor="fff"/>
+                <quad size="70 110.67" pos="0 -55.33" image="file://Media/Images/Obstacle/Menu/FNav.png" halign="center" valign="center" modulatecolor="fff" id="Quad_Background"/>
             </frame>
         </frame>""";
     }

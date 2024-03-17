@@ -359,21 +359,8 @@ Text Build(Text _FileType, Boolean _New) {
 		G_CurrentFolder = "/";
 		Refresh();
 
-		declare Skins_Loaded = False;""";
-
-		/*if (_New) {
-			ML_Text ^=
-			"""if (ObsStore_Previews.count < Decos.count) {
-				foreach (Deco in Decos) {
-					foreach (Mood in Moods) {
-						declare V = Video.CreateVideo("file://Media/Images/Previews/" ^ Deco ^ Mood ^ ".webm", True, True);
-						ObsStore_Previews[Deco ^ Mood] = V;
-					}
-				}
-			}""";
-		}*/
-
-		ML_Text ^= """
+		declare Skins_Loaded = False;
+		
 		G_SelectedMood = 1;
 		{{{Update_NewMap}}}
 		{{{Scroll::GetInitFrames()}}}
@@ -553,12 +540,11 @@ Text Build(Text _FileType, Boolean _New) {
 						}
 					}
 					case CMlEvent::Type::MouseOver: {
-						declare Frame_Banner = (Event.Control.Parent.GetFirstChild("Frame_Banner") as CMlFrame);
-						if (Frame_Banner == Null) {
-
-						} else {
-							declare Label_Name = (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
-							declare Label_Author = (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
+						declare Frame_Thumbnail = (Event.Control.Parent as CMlFrame);
+						declare Frame_Banner = (Frame_Thumbnail.GetFirstChild("Frame_Banner") as CMlFrame);
+						if (Frame_Banner != Null && Frame_Thumbnail.ControlId != "Frame_Content") {
+							declare Label_Name <=> (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
+							declare Label_Author <=> (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
 
 							AnimMgr.Add(
 								Frame_Banner, "<frame pos=\"0 8\"/>",
@@ -577,12 +563,11 @@ Text Build(Text _FileType, Boolean _New) {
 						}
 					}
 					case CMlEvent::Type::MouseOut: {
-						declare Frame_Banner = (Event.Control.Parent.GetFirstChild("Frame_Banner") as CMlFrame);
-						if (Frame_Banner == Null) {
-
-						} else {
-							declare Label_Author = (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
-							declare Label_Name = (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
+						declare Frame_Thumbnail = (Event.Control.Parent as CMlFrame);
+						declare Frame_Banner <=> (Frame_Thumbnail.GetFirstChild("Frame_Banner") as CMlFrame);
+						if (Frame_Banner != Null && Frame_Thumbnail.ControlId != "Frame_Content") {
+							declare Label_Author <=> (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
+							declare Label_Name <=> (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
 
 							if (G_Selected_Name != Frame_Banner.Parent.DataAttributeGet("name")) {
 								AnimMgr.Add(

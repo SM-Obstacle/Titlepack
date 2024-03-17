@@ -6,9 +6,11 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"				as Dialogs
 #Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"				as Layers
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"							as Styles
-#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/JoinServer/Index.Script.txt"	as ServerDialog
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/JoinServer/Index.Script.txt"	as JoinDialog
+// #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/CreateServer/Index.Script.txt"	as CreateDialog
 
 declare Text G_ReqServerLogin;
+declare Boolean G_ReqCreateServer;
 
 Text Build() {
 	declare ML_Text =  """
@@ -27,7 +29,7 @@ Text Build() {
 	</framemodel>
 	
 	<frame pos="-160 90">
-		<label text="" class="lato" pos="75.5 -8.9" halign="center" valign="center2"
+		<label text="" class="lato" pos="69.58 -8.33" halign="center" valign="center2"
 			textsize="5" id="Label_Home" data-name="home" scriptevents="1"
 			data-target="Label_Home"
 			data-default-anim="<label scale=&quot;1.&quot;/>" data-target-anim="<label scale=&quot;1.066&quot;/>"/>
@@ -43,8 +45,8 @@ Text Build() {
 		<label text="" class="lato" pos="241.67 -5.6" textsize="5" hidden="1"/>
 		<label text="1000" pos="249.33 -6.33" textsize="3" class="lato" hidden="1"/>
 
-		<quad pos="3.33 -3.83" size="11.17 8.83" image="file://Media/Images/Obstacle/Menu/LogoWeb.png"/>
-		<quad size="320 16.67" bgcolor="0009"/>
+		<quad pos="47.17 -3.67" size="11.17 8.83" image="file://Media/Images/Obstacle/Menu/Logo.png"/>
+		<quad pos="30" size="260 18.83" image="file://Media/Images/Obstacle/Menu/FHeader.png" scriptevents="1" keepratio="Fit"/>
 	</frame>
 
 	<script><![CDATA[
@@ -115,13 +117,20 @@ Void Load() {
 	Home::Load();
 	Windows::Load(Home::GetName());
 
-    ServerDialog::Load();
+    JoinDialog::Load();
+	G_ReqCreateServer = False;
 }
 
 Void JoinServer() {
-	if (G_ReqServerLogin != "" && ServerDialog::Join(G_ReqServerLogin)) {
+	if (G_ReqServerLogin != "" && JoinDialog::Join(G_ReqServerLogin)) {
 		G_ReqServerLogin = "";
 	}
+}
+
+Void CreateServer() {
+	// if (G_ReqCreateServer && CreateDialog::Create()) {
+	// 	G_ReqCreateServer = False;
+	// }
 }
 
 
@@ -162,6 +171,9 @@ Void Loop() {
 					case "join_server": {
 						G_ReqServerLogin = Event.CustomEventData[0];
 					}
+					case "create_server": {
+						G_ReqCreateServer = True;
+					}
 				}
 			} else if (Event.CustomEventType == "escape_pressed") {
 				declare CurrentWindow = Layers::Get(Windows::Current());
@@ -183,4 +195,5 @@ Void Loop() {
 	Play::Loop();
 	Windows::Loop();
 	JoinServer();
+	CreateServer();
 }
