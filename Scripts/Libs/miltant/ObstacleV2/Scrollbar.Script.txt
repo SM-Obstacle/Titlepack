@@ -3,10 +3,12 @@
 Text GetScrollBarML(Vec2 _Position, Text _Name, Text _Dir) {
     declare ML_Text = """
         <frame class="Lib_ScrollBar__Frame" pos="{{{_Position.X}}} {{{_Position.Y}}}" data-for="{{{_Name}}}" data-dir="{{{_Dir}}}" size="5 5">
-            <quad size="5 5" bgcolor="F00" id="Lib_ScrollBar__Minus"/>
-            <quad size="5 5" bgcolor="00F" id="Lib_ScrollBar__Plus"/>
-            <quad size="5 5" bgcolor="0F0" id="Lib_ScrollBar__Handle"/>
-            <quad size="5 5" bgcolor="FFF" id="Lib_ScrollBar__Hitbox"/>
+            <frame size="5 5" id="Lib_ScrollBar__Handle">
+                <quad pos="1.67 -1.67" size="1.67 0.83" id="Lib_ScrollBar__Tip1" image="file://Media/Images/Obstacle/ScrollBar/FTip.png"/>
+                <quad pos="1.67 -1.67" size="1.67 0.33" id="Lib_ScrollBar__Solid" image="file://Media/Images/Obstacle/ScrollBar/FSolid.png"/>
+                <quad pos="1.67 -1.67" size="1.67 0.83" id="Lib_ScrollBar__Tip2" image="file://Media/Images/Obstacle/ScrollBar/FTip.png"/>
+            </frame>
+            <quad size="5 5" id="Lib_ScrollBar__Hitbox"/>
         </frame>
     """;
     return ML_Text;
@@ -37,75 +39,126 @@ Text GetLoop() {
     for (I, 0, Lib_ScrollBar__Frames.count - 1) {
         declare Frame = Lib_ScrollBar__Frames[I];
         declare Vec2 Lib_ScrollBar__MDown for Frame;
+        declare Lib_ScrollBar__IsMouseDown for Frame = False;
+        declare LastActive for Frame = 0;
 
-        declare Minus = Frame.GetFirstChild("Lib_ScrollBar__Minus");
-        declare Plus = Frame.GetFirstChild("Lib_ScrollBar__Plus");
-        declare Handle = Frame.GetFirstChild("Lib_ScrollBar__Handle");
+        declare Handle = (Frame.GetFirstChild("Lib_ScrollBar__Handle") as CMlFrame);
         declare Hitbox = Frame.GetFirstChild("Lib_ScrollBar__Hitbox");
 
-        if (Input.MouseLeftButton) {
-            // New click and dragging was not initiated yet
-            if (Lib_ScrollBar__MDown.Y == 99.) {
-                // Check if mouse is on Handle
-                if (Input.MousePos.X >= Handle.AbsolutePosition_V3.X && Input.MousePos.X <= Handle.AbsolutePosition_V3.X + Handle.Size.X && Input.MousePos.Y <= Handle.AbsolutePosition_V3.Y && Input.MousePos.Y >= Handle.AbsolutePosition_V3.Y - Handle.Size.Y) {
-                    Lib_ScrollBar__MDown = Input.MousePos;
-                } // Check if mouse is on the gutter (Hitbox)
-                  else if (Input.MousePos.X >= Hitbox.AbsolutePosition_V3.X && Input.MousePos.X <= Hitbox.AbsolutePosition_V3.X + Hitbox.Size.X && Input.MousePos.Y <= Hitbox.AbsolutePosition_V3.Y && Input.MousePos.Y >= Hitbox.AbsolutePosition_V3.Y - Hitbox.Size.Y) {
-                    // Move handle to mouse pos
-                    if (Lib_ScrollBar__Dir[I] == "x") {
-                        Handle.RelativePosition_V3.X = Input.MousePos.X - Frame.AbsolutePosition_V3.X - Handle.Size.X / 2.;
-                        Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = (Handle.RelativePosition_V3.X - Minus.Size.X) / ML::Max(1., Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
-                    } else {
-                        Handle.RelativePosition_V3.Y = Input.MousePos.Y - Frame.AbsolutePosition_V3.Y + Handle.Size.Y / 2.;
-                        Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = (-Handle.RelativePosition_V3.Y - Minus.Size.Y) / ML::Max(1., Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+        declare Tip1 = (Handle.GetFirstChild("Lib_ScrollBar__Tip1") as CMlQuad);
+        declare Solid = (Handle.GetFirstChild("Lib_ScrollBar__Solid") as CMlQuad);
+        declare Tip2 = (Handle.GetFirstChild("Lib_ScrollBar__Tip2") as CMlQuad);
+
+        // Check if mouse is on the gutter (Hitbox)
+        if (Input.MousePos.X >= Hitbox.AbsolutePosition_V3.X && Input.MousePos.X <= Hitbox.AbsolutePosition_V3.X + Hitbox.Size.X && Input.MousePos.Y <= Hitbox.AbsolutePosition_V3.Y && Input.MousePos.Y >= Hitbox.AbsolutePosition_V3.Y - Hitbox.Size.Y) {
+            if (Input.MouseLeftButton) {
+                if (Lib_ScrollBar__MDown.Y == 99.) {
+                    // New click
+                    if (!Lib_ScrollBar__IsMouseDown) {
+                        // Initiate dragging
+                        Lib_ScrollBar__MDown = Input.MousePos;
+                        // Move handle to mouse pos (if mouse is not on the handle)
+                        if (Lib_ScrollBar__Dir[I] == "x") {
+                            if (Input.MousePos.X < Handle.AbsolutePosition_V3.X || Input.MousePos.X > Handle.AbsolutePosition_V3.X + Handle.Size.X) {
+                                Handle.RelativePosition_V3.X = Input.MousePos.X - Frame.AbsolutePosition_V3.X - Handle.Size.X / 2.;
+                                Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = Handle.RelativePosition_V3.X / ML::Max(1., Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;    
+                            }
+                        } else {
+                            if (Input.MousePos.Y > Handle.AbsolutePosition_V3.Y || Input.MousePos.Y < Handle.AbsolutePosition_V3.Y - Handle.Size.Y) {
+                                Handle.RelativePosition_V3.Y = Input.MousePos.Y - Frame.AbsolutePosition_V3.Y + Handle.Size.Y / 2.;
+                                Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = -Handle.RelativePosition_V3.Y / ML::Max(1., Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+                            }
+                        }
                     }
-                } // Check if mouse is on Minus
-                  else if (Input.MousePos.X >= Minus.AbsolutePosition_V3.X && Input.MousePos.X <= Minus.AbsolutePosition_V3.X + Minus.Size.X && Input.MousePos.Y <= Minus.AbsolutePosition_V3.Y && Input.MousePos.Y >= Minus.AbsolutePosition_V3.Y - Minus.Size.Y) {
-                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y -= Lib_ScrollBar__ParentFrames[I].ScrollMax.Y / 10.;
-                    Lib_ScrollBar__MDown = Input.MousePos;
-                } // Check if mouse is on Plus
-                  else if (Input.MousePos.X >= Plus.AbsolutePosition_V3.X && Input.MousePos.X <= Plus.AbsolutePosition_V3.X + Plus.Size.X && Input.MousePos.Y <= Plus.AbsolutePosition_V3.Y && Input.MousePos.Y >= Plus.AbsolutePosition_V3.Y - Plus.Size.Y) {
-                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y += Lib_ScrollBar__ParentFrames[I].ScrollMax.Y / 10.;
-                    Lib_ScrollBar__MDown = Input.MousePos;
                 }
-            } else { // Dragging was already initiated
+            }
+
+            Tip1.ModulateColor = <1., 1., 1.>;
+            Solid.ModulateColor = <1., 1., 1.>;
+            Tip2.ModulateColor = <1., 1., 1.>;
+        } else {
+            Tip1.ModulateColor = <0.5, 0.5, 0.5>;
+            Solid.ModulateColor = <0.5, 0.5, 0.5>;
+            Tip2.ModulateColor = <0.5, 0.5, 0.5>;
+        }
+
+        if (Input.MouseLeftButton) {
+            if (Lib_ScrollBar__MDown.Y != 99.) { // Dragging was already initiated
                 if (Lib_ScrollBar__Dir[I] == "x") {
                     Handle.RelativePosition_V3.X += Input.MousePos.X - Lib_ScrollBar__MDown.X;
-                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = (Handle.RelativePosition_V3.X - Minus.Size.X) / ML::Max(1., Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = Handle.RelativePosition_V3.X / ML::Max(1., Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
                 } else {
                     Handle.RelativePosition_V3.Y += Input.MousePos.Y - Lib_ScrollBar__MDown.Y;
-                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = (-Handle.RelativePosition_V3.Y - Minus.Size.Y) / ML::Max(1., Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+                    Lib_ScrollBar__ParentFrames[I].ScrollOffset.Y = -Handle.RelativePosition_V3.Y / ML::Max(1., Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
                 }
+
+                Tip1.ModulateColor = <1., 1., 1.>;
+                Solid.ModulateColor = <1., 1., 1.>;
+                Tip2.ModulateColor = <1., 1., 1.>;
                 Lib_ScrollBar__MDown = Input.MousePos;
             }
+
+            Lib_ScrollBar__IsMouseDown = True;
         } else {
             Lib_ScrollBar__MDown.Y = 99.;
+            Lib_ScrollBar__IsMouseDown = False;
         }
 
         if (Lib_ScrollBar__ParentFrames[I].ScrollMax.Y > 0.) {
-            Frame.Show();
-
             if (Lib_ScrollBar__Dir[I] == "x") {
+                declare LastSize = Handle.Size.X;
+                declare LastPos = Handle.RelativePosition_V3.X;
+
                 Frame.Size.X = Lib_ScrollBar__ParentFrames[I].Size.X;
+                Hitbox.Size.X = Frame.Size.X;
 
-                Plus.RelativePosition_V3.X = Frame.Size.X - Plus.Size.X;
-
-                Hitbox.RelativePosition_V3.X = Minus.Size.X;
-                Hitbox.Size.X = Frame.Size.X - Minus.Size.X - Plus.Size.X;
-
-                Handle.RelativePosition_V3.X = Minus.Size.X + (Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollAnimOffset.Y / Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
                 Handle.Size.X = Hitbox.Size.X * Lib_ScrollBar__ParentFrames[I].Size.Y / (Lib_ScrollBar__ParentFrames[I].Size.Y + Lib_ScrollBar__ParentFrames[I].ScrollMax.Y);
+                Handle.RelativePosition_V3.X = (Hitbox.Size.X - Handle.Size.X) * Lib_ScrollBar__ParentFrames[I].ScrollAnimOffset.Y / Lib_ScrollBar__ParentFrames[I].ScrollMax.Y;
+
+                if (LastSize != Handle.Size.X || LastPos != Handle.RelativePosition_V3.X) {
+                    LastActive = Now;
+
+                    Tip1.RelativePosition_V3.Y = -Tip1.Size.X - 1.67;
+                    Tip1.RelativePosition_V3.X = 0.;
+                    Tip1.RelativeRotation = -90.;
+
+                    Solid.RelativeRotation = -90.;
+                    Solid.RelativePosition_V3.Y = -Solid.Size.X - 1.67;
+                    Solid.RelativePosition_V3.X = Tip1.Size.Y;
+                    Solid.Size.Y = Handle.Size.X - Tip1.Size.Y - Tip2.Size.Y;
+
+                    Tip2.RelativePosition_V3.X = Handle.Size.X;
+                    Tip2.RelativeRotation = 90.;
+                }
             } else {
+                declare LastSize = Handle.Size.Y;
+                declare LastPos = Handle.RelativePosition_V3.Y;
+
                 Frame.Size.Y = Lib_ScrollBar__ParentFrames[I].Size.Y;
+                Hitbox.Size.Y = Frame.Size.Y;
 
-                Plus.RelativePosition_V3.Y = -Frame.Size.Y + Plus.Size.Y;
+                Handle.Size.Y = Hitbox.Size.Y * Lib_ScrollBar__ParentFrames[I].Size.Y / (Lib_ScrollBar__ParentFrames[I].Size.Y + Lib_ScrollBar__ParentFrames[I].ScrollMax.Y);
+                Handle.RelativePosition_V3.Y = ML::Min(-0.01, -(Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollAnimOffset.Y / Lib_ScrollBar__ParentFrames[I].ScrollMax.Y);
 
-                Hitbox.RelativePosition_V3.Y = -Minus.Size.Y;
-                Hitbox.Size.Y = Frame.Size.Y - Minus.Size.Y - Plus.Size.Y;
+                if (LastSize != Handle.Size.Y || LastPos != Handle.RelativePosition_V3.Y) {
+                    LastActive = Now;
 
-                Handle.RelativePosition_V3.Y = -Minus.Size.Y - (Hitbox.Size.Y - Handle.Size.Y) * Lib_ScrollBar__ParentFrames[I].ScrollAnimOffset.Y / ML::Max(1., Lib_ScrollBar__ParentFrames[I].ScrollMax.Y);
-                Handle.Size.Y = Hitbox.Size.Y * Lib_ScrollBar__ParentFrames[I].Size.Y / (Lib_ScrollBar__ParentFrames[I].ScrollMax.Y + Lib_ScrollBar__ParentFrames[I].Size.Y);
+                    Tip1.RelativePosition_V3.Y = 0.;
+                    Solid.RelativePosition_V3.Y = -Tip1.Size.Y;
+                    Solid.Size.Y = Handle.Size.Y - Tip1.Size.Y - Tip2.Size.Y;
+                    Tip2.RelativePosition_V3.Y = -Handle.Size.Y;
+                    Tip2.RelativeRotation = 180.;
+                    Tip2.RelativePosition_V3.X = Tip2.Size.X * 0.5 + Frame.Size.X / 2.;
+                }
             }
+
+            if (Now - LastActive < 190) {
+                Tip1.ModulateColor = <1., 1., 1.>;
+                Solid.ModulateColor = <1., 1., 1.>;
+                Tip2.ModulateColor = <1., 1., 1.>;
+            }
+
+            Frame.Show();
         } else {
             Frame.Hide();
         }
