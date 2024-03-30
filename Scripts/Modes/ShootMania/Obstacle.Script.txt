@@ -729,6 +729,7 @@ G_LastUsePvPWeapons = UsePvPWeapons;
 ***
 EndTime = -1;
 
+Dynamics::Clear();
 Items::Destroy();
 UIManager.UIAll.MarkersXML = "";
 SM::UnspawnAllPlayers();
