@@ -1,9 +1,24 @@
+#Include "TextLib" as TL
+
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
+#Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
 
 #Const  Version     "2023-29-06"
 #Const  ScriptName  "EndScreen.Script.txt"
 
-Text GetLayer(Boolean _WithNextMapButton) {
+Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
+	declare Text CampaignTitle;
+	declare Text CampaignSubtitle;
+	declare Text BannerImgUrl;
+
+	if (!ObsEvents::HasFailed() && ObsEvents::Current().EditionsDetails.existskey(_SelectedEdition)) {
+		declare CurrentEvent = ObsEvents::Current().EditionsDetails[_SelectedEdition];
+		declare Text[] EditionName = TL::Split("\t", CurrentEvent.name);
+		CampaignTitle = EditionName[0];
+		CampaignSubtitle = EditionName[1];
+		BannerImgUrl = CurrentEvent.banner_img_url;
+	}
+
 	declare Text NextMapButton = "";
 	// Avoids the gap between the Improve and the Quit buttons
 	declare Text QuitButtonPos = "0 -11";
@@ -24,9 +39,9 @@ Text GetLayer(Boolean _WithNextMapButton) {
 <manialink version="3" name="Obstacle:EndScreen">
 <frame pos="-48.5 62">
 	<frame>
-		<label pos="4.33 -7.5" size="85.8 8.91" text="summer" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
-		<label pos="5.17 -16.67" size="47.4 4.77" text="2023" textprefix="$t" textfont="lato" textsize="5" textcolor="fff"/>
-		<quad size="96.67 35" image="file://Media/Images/Obstacle/Campaign/SpringBanner01-Mini.png"/>
+		<label pos="4.33 -7.5" size="85.8 8.91" text="{{{CampaignTitle}}}" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
+		<label pos="5.17 -16.67" size="47.4 4.77" text="{{{CampaignSubtitle}}}" textprefix="$t" textfont="lato" textsize="5" textcolor="fff"/>
+		<quad size="96.67 35" bgcolor="00000099" image="{{{BannerImgUrl}}}"/>
 	</frame>
 	
 	<frame pos="0 -40">

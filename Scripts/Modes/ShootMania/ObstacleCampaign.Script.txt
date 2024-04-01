@@ -37,7 +37,7 @@ UIManager.GetUI(Player).UISequence = CUIConfig::EUISequence::Podium;
 
 ***Campaign_CreateUI***
 ***
-Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null));
+Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null, S_EventEdition));
 ***
 
 ***MB_Private_EnableLadder***

@@ -49,7 +49,7 @@
 #Include "Libs/ahmad3/UI/MlAuth.Script.txt" as MlAuth
 #Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
-#Include "Libs/ahmad3/Events.Script.txt" as Events
+#Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
 
 // ---------------------------------- //
 // Settings
@@ -233,7 +233,7 @@ declare netwrite Text Net_EventRoutePrefix for Teams[0];
 if (S_EventHandle != "" && S_EventEdition >= 1) {
     Net_EventRoutePrefix = "event/" ^ S_EventHandle ^ "/" ^ S_EventEdition ^ "/";
 
-    Events::LoadEdition(S_EventHandle, S_EventEdition);
+    ObsEvents::LoadEdition(S_EventHandle, S_EventEdition);
     MedalsWidget::Init(S_EventEdition);
 }
 
