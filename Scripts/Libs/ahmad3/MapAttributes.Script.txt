@@ -1,0 +1,17 @@
+/************************************************
+ *   Obstacle Library                            *
+ *   Author:     ahmad3                          *
+ *                                               *
+ *   Util functions for map's attributes
+ ************************************************/
+
+Boolean IsLeaderboardEnabled() {
+    if (Map == Null) return False;
+    declare metadata Meta_LB_Enabled for Map = True;
+    return Meta_LB_Enabled;
+}
+
+Boolean IsLeaderboardReversed() {
+    declare metadata Meta_LB_Reversed for Map = False;
+    return Meta_LB_Reversed;
+}

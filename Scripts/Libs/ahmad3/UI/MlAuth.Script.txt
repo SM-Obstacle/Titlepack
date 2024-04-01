@@ -547,6 +547,11 @@ main() {
 		ClientUI.UISequence = CUIConfig::EUISequence::None;
 	}
 
+	// Waits for the map to be initialized before we start executing the script
+	declare netread Text Net_MapStartTime for Teams[0];
+	declare LastMapStartTime = Net_MapStartTime;
+	wait(InputPlayer.StartTime != -1 || LastMapStartTime != Net_MapStartTime);
+
 	Private_UpdatePlayer();
     declare netread _LastRun for UI = -1;
     declare netread _RespawnCount for UI = 0;
