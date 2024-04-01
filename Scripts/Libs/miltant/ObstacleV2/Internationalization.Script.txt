@@ -23,7 +23,7 @@ Text[] RegionalGuesses() {
         UserCountries.add(Countries.keyof(ZonePath[2]));
     }
 
-    // more guesses: the timezone, the flag, or something
+    // more guesses? could include the timezone or the flag
 
     // infer a list of languages the person might speak from that
     declare Result = Text[];
@@ -46,7 +46,7 @@ Text[] RegionalGuesses() {
 
 
 /**
- * Returns the same list of languages, but ordered with
+ * Returns the given list of languages, but ordered with
  * the game language and/or user-spoken languages (guess) first.
  *
  * @param {Text[]} _ISOSubset - The list of ISO codes to include
@@ -91,7 +91,7 @@ Text[Text] GetLanguageList(Text[] _ISOSubset, Boolean _Reverse) {
 }
 
 /**
- * Returns the same list of languages, but ordered with
+ * Returns the given list of languages, but ordered with
  * the game language and/or user-spoken languages (guess) first.
  *
  * @param {Text[]} _ISOSubset - The list of ISO codes to include

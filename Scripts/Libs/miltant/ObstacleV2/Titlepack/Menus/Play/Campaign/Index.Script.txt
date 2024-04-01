@@ -391,7 +391,7 @@ Void Load() {
 
 	declare persistent ObsStore_UserToken for LocalUser = "";
 
-	// fatten, sort by date asc
+	// flatten, sort by date asc
 	FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\29\\", True, False, True).Id;
 
 	// TODO get from the API and move to the loop
