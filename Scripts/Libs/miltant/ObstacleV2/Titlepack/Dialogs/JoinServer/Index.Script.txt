@@ -49,7 +49,7 @@ Text Build() {
 			<label pos="0 -1" textprefix="  " text="Description" textfont="light" textcolor="fff" textsize="1.7"/>
 			<frame size="134 30.5" pos="0 -7" scroll="1" scrollmax="0 500">
 				<label pos="67 -.5" size="134" autonewline="1" halign="center" textsize="2" textcolor="fff" id="Label_Description"/>
-				<quad  scriptevents="1" size="134 700" pos="0 100"/>
+				<quad scriptevents="1" size="134 700" pos="0 100"/>
 			</frame>
 			<quad pos="0 -6.33" size="134 31.83" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/FComment.png"/>
 			<frameinstance pos="0 -43.67" modelid="Model_News" hidden="1"/>

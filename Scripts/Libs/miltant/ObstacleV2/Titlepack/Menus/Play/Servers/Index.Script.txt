@@ -153,14 +153,14 @@ Text Build() {
 		declare Integer Context;
 		declare K_ServerInfo[Text] ServersCache;
 
-        {{{Scroll::GetInitFrames()}}}
+		{{{Scroll::GetInitFrames()}}}
 		
 		while(True) {
 			yield;
 
 			if (!PageIsVisible && PendingEvents.count == 0) continue;
 
-            {{{Scroll::GetLoop()}}}
+			{{{Scroll::GetLoop()}}}
 
 			if (Server_List.ScrollOffset != ScrollOffset) {
 				ScrollOffset = Server_List.ScrollOffset;
