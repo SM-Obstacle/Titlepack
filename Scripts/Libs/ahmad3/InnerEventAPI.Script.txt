@@ -12,14 +12,23 @@ declare Text[] G_PendingEvents;
 declare Integer[Text] G_PendingLoadingEditions;
 declare K_RequestAttr[Ident] G_PendingRequests;
 declare Types::K_Event[Text] G_Events;
+declare Boolean G_HasFailed;
 
 declare Text G_AuthHeaders;
+
+Boolean HasFailed() {
+    return G_HasFailed;
+}
 
 Boolean EventHasContent(Text _EventHandle) {
     if (!G_Events.existskey(_EventHandle) || G_PendingEvents.exists(_EventHandle)) return False;
     declare Types::K_Event Event = G_Events[_EventHandle];
     // If this event is not pending, at least count its editions amount to be sure it's fully loaded
-    return Event.Editions.count > 0 && Event.EditionsDetails.count > 0;
+    return !G_HasFailed && Event.EditionsDetails.count > 0;
+}
+
+Types::K_Event[Text] Private_EventAPI_GetEvents() {
+    return G_Events;
 }
 
 Types::K_Event GetEvent(Text _EventHandle) {
@@ -28,8 +37,10 @@ Types::K_Event GetEvent(Text _EventHandle) {
 
 Boolean Private_CheckErr(Text _Route, CHttpRequest _Req) {
     if (_Req.StatusCode == 200) return False;
+    if (G_HasFailed) return True;
     log("error on route: " ^ _Route);
     log(_Req.Result);
+    G_HasFailed = True;
     return True;
 }
 
@@ -91,12 +102,17 @@ Void SetAuthHeaders(Text _AuthHeaders) {
 }
 
 Void Init() {
+    G_HasFailed = False;
     Private_InitRequest("event", C::C_Request_Event);
 }
 
-Void Loop() {
+/**
+ * Returns True if a new event edition was loaded with its details, False otherwise.
+ */
+Boolean Loop() {
     declare Ident[] ReqToDelete;
     declare Text[] PendingEventsToDelete;
+    declare Boolean EventEditionLoaded = False;
 
     foreach (ReqId => ReqAttr in G_PendingRequests) {
         declare CHttpRequest Request <=> Http.Requests[ReqId];
@@ -135,6 +151,8 @@ Void Loop() {
                 declare Integer EditionId = TL::ToInteger(Splits[2]);
                 G_Events[Handle].EditionsDetails[EditionId] = EventEditionDetails;
                 PendingEventsToDelete.add(Handle);
+
+                EventEditionLoaded = True;
             }
         }
 
@@ -151,4 +169,6 @@ Void Loop() {
     foreach (PendingEventToDel in PendingEventsToDelete) {
         G_PendingEvents.remove(PendingEventToDel);
     }
+
+    return EventEditionLoaded;
 }

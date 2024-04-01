@@ -48,7 +48,7 @@
     // .handle: Text ; .last_edition_id: Integer
     K_EventResponse Event;
     // for each edition
-    //     .id: Integer, .start_date: Text
+    //     .id: Integer ; .start_date: Text
     K_EventEdition[Integer] Editions;
     // for each edition details
     //     see K_EventEditionDetails

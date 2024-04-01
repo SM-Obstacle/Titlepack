@@ -19,6 +19,7 @@ Text GetName() {
 
 declare Ident G_FileList;
 declare Boolean G_CampaignContentLoading;
+declare Boolean G_UpdateCampaignContent;
 declare EventAPITypes::K_Event G_CampaignEvent;
 declare K_LocalMapInfo[][Integer] G_CampaignLocalMapsUids;
 declare Text[][] G_PendingPlayingMaps;
@@ -234,9 +235,10 @@ Text Build() {
 
 		// Keeps the page cleared
 		if (P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories.count == 0) return;
-		declare K_EventEditionContentMap SelectedMap = P_CampaignEvent.EditionsDetails[P_SelectedEdition]
-			.categories[P_SelectedMapI]
-			.maps[P_SelectedMapJ];
+		declare SelectedCategory = P_CampaignEvent.EditionsDetails[P_SelectedEdition]
+			.categories[P_SelectedMapI];
+		declare K_EventEditionContentMap SelectedMap = SelectedCategory
+			.maps[ML::Min(P_SelectedMapJ, SelectedCategory.maps.count - 1)];
 
 		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/map/" ^ SelectedMap.map_uid ^ "]";
 		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.main_author.login ^ "]";
@@ -541,6 +543,14 @@ Void Load() {
 	
 	G_PendingPlayingMapsUpdate = -1;
 	G_LoadedEdition = -1;
+
+	declare Integer PendingPlayingMapsUpdate for LocalUser = -1;
+	PendingPlayingMapsUpdate = -1;
+
+	if (EventAPI::HasCachedEvent("campaign")) {
+		G_CampaignEvent = EventAPI::GetCachedEvent("campaign");
+		G_UpdateCampaignContent = True;
+	}
 }
 
 Void Loop() {
@@ -591,6 +601,15 @@ Void Loop() {
 	// Check when the campaign edition loading has finished
 	if (G_CampaignContentLoading && EventAPI::EventHasContent("campaign")) {
 		G_CampaignEvent = EventAPI::GetEvent("campaign");
+		G_UpdateCampaignContent = True;
+		G_CampaignContentLoading = False;
+	}
+
+	// Is set to True either in the above condition or in the Load() function or when the
+	// player selects a cached edition
+	if (G_UpdateCampaignContent) {
+		G_UpdateCampaignContent = False;
+		
 		declare EventAPITypes::K_Event P_CampaignEvent for P;
 		P_CampaignEvent = G_CampaignEvent;
 
@@ -635,39 +654,29 @@ Void Loop() {
 
 		// Fetches the downloaded maps for the current edition
 		// flatten, sort by date asc
-		G_FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\" ^ G_CampaignEvent.EditionsDetails[SelectedEdition].mx_id ^ "\\", True, False, True).Id;
-
-		G_CampaignContentLoading = False;
+		G_FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\campaign\\", True, False, True).Id;
 	}
 
 	// associate Maps to their parent folder and update the manialink
 	declare CMapInfo[][Integer] CampaignFiles;
 
-	declare Boolean NeedRefresh = False;
-
 	if (DataFileMgr.TaskResults.existskey(G_FileList) && DataFileMgr.TaskResults[G_FileList].HasSucceeded) {
 		declare CTaskResult_MapList MapsList = (DataFileMgr.TaskResults[G_FileList] as CTaskResult_MapList);
 		
 		foreach (File in MapsList.MapInfos) {
-			declare Text Folder = TL::RegexMatch("""^MEDIABROWSER_HiddenResources\\([0-9]+)\\$""", File.Path, "i")[1];
-			if (Folder != "") {
-				declare Integer MXId = TL::ToInteger(Folder);
-
-				if (!CampaignFiles.existskey(MXId))	CampaignFiles[MXId] = [];
-				CampaignFiles[MXId].add(File);
-			}
+			declare Text Folder = TL::RegexMatch("""^MEDIABROWSER_HiddenResources\\campaign\\([0-9]+)\\""", File.Path, "i")[1];
+			if (Folder == "") continue;
+			declare Integer CampaignEdition = TL::ToInteger(Folder);
+			if (!CampaignFiles.existskey(CampaignEdition))	CampaignFiles[CampaignEdition] = [];
+			CampaignFiles[CampaignEdition].add(File);
 		}
 
-		NeedRefresh = True;
-	}
-
-	if (NeedRefresh) {
 		declare Text[Text] P_MapsWithThumbnails for P = [];
 
-		foreach (MxId => Maps in CampaignFiles) {
-			if (!G_CampaignLocalMapsUids.existskey(MxId)) G_CampaignLocalMapsUids[MxId] = [];
+		foreach (EditionId => Maps in CampaignFiles) {
+			if (!G_CampaignLocalMapsUids.existskey(EditionId)) G_CampaignLocalMapsUids[EditionId] = [];
 			foreach (MapInfo in Maps) {
-				G_CampaignLocalMapsUids[MxId].add(K_LocalMapInfo {
+				G_CampaignLocalMapsUids[EditionId].add(K_LocalMapInfo {
 					MapUid = MapInfo.MapUid,
 					FileName = MapInfo.FileName
 				});
@@ -686,7 +695,6 @@ Void Loop() {
 				declare Integer P_SelectedMapJ for P;
 				declare Integer P_SelectedEdition for P;
 				declare EventAPITypes::K_EventEditionContentCategory[] CampaignCategories = G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
-				declare Integer MxId = G_CampaignEvent.EditionsDetails[P_SelectedEdition].mx_id;
 
 				// Initialize with the current category maps
 				declare Text[][] MapList = [[]];
@@ -694,8 +702,8 @@ Void Loop() {
 				foreach (Map in CampaignCategories[P_SelectedMapI].maps.slice(P_SelectedMapJ, CampaignCategories[P_SelectedMapI].maps.count)) {
 					declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
 
-					if (G_CampaignLocalMapsUids.existskey(MxId)) {
-						foreach (FileMap in G_CampaignLocalMapsUids[MxId]) {
+					if (G_CampaignLocalMapsUids.existskey(P_SelectedEdition)) {
+						foreach (FileMap in G_CampaignLocalMapsUids[P_SelectedEdition]) {
 							if (FileMap.MapUid == Map.map_uid) {
 								Path = FileMap.FileName;
 								break;
@@ -712,14 +720,16 @@ Void Loop() {
 					foreach (Map in Category.maps) {
 						declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
 
-						if (G_CampaignLocalMapsUids.existskey(MxId)) {
-							foreach (FileMap in G_CampaignLocalMapsUids[MxId]) {
+						if (G_CampaignLocalMapsUids.existskey(P_SelectedEdition)) {
+							foreach (FileMap in G_CampaignLocalMapsUids[P_SelectedEdition]) {
 								if (FileMap.MapUid == Map.map_uid) {
 									Path = FileMap.FileName;
 									break;
 								}
 							}
 						}
+
+						log("Pending map " ^ Path);
 
 						CategoryMaps.add(Path);
 					}
@@ -742,6 +752,10 @@ Void Loop() {
 				G_LoadedEdition = TL::ToInteger(Event.CustomEventData[0]);
 				EventAPI::LoadEdition("campaign", G_LoadedEdition);
 				G_CampaignContentLoading = True;
+				// If we already cached this edition, we update the UI for it
+				if (EventAPI::GetCachedEvent("campaign").EditionsDetails.existskey(G_LoadedEdition)) {
+					G_UpdateCampaignContent = True;
+				}
 			}
 		}
 	}

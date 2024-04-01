@@ -113,7 +113,8 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
     declare rawMessage = """[{{{_StatusCode}}}]: "{{{res.message}}}" ({{{type}}}, {{{title}}}, request ID: {{{res.request_id}}})""";
     
     declare Text message = """API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):
-{{{rawMessage}}}""";
+{{{rawMessage}}}
+Response body: {{{_ReqResult}}}""";
 
     log(message);
 
@@ -221,10 +222,10 @@ K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
 
     declare Text type = G_ErrorList.get(res.type, "Unknown error (type not yet registered in TP)");
 
-    declare rawMessage = "[" ^ _StatusCode ^ "]: \"" ^ res.message ^ "\" ("^ type ^", "^ title ^", request ID: \"res.request_id\")";
+    declare rawMessage = "[" ^ _StatusCode ^ "]: \"" ^ res.message ^ "\" ("^ type ^", "^ title ^", request ID: \"" ^ res.request_id ^ "\")";
     
     declare Text message = "API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):\n"
-        ^ rawMessage;
+        ^ rawMessage ^ "\nResponse body: " ^ _ReqResult;
 
     log(message);
 

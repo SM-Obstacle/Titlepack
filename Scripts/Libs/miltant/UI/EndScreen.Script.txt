@@ -127,15 +127,16 @@ Text GetLayer(Boolean _WithNextMapButton) {
 		declare netread Net_NewGoal for InputPlayer = 0;
 		declare NewGoal = 0;
 		
+		// Notify the MlAuth manialink that we're in the end screen
+		// so that it doesn't show any error popup.
+		declare Boolean __MlAuth_EndScreenVisible for LocalUser;
+		__MlAuth_EndScreenVisible = True;
+		
 		while (True) {
 			yield;
 
 			Label_Map.Value = Map.MapName;
 			Label_Author.Value = Map.AuthorNickName;
-			
-			if (!CampaignRecords.existskey(Map.MapInfo.MapUid)) {
-				continue;
-			}
 
             if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
                 G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
@@ -151,7 +152,28 @@ Text GetLayer(Boolean _WithNextMapButton) {
 				RerenderUI = True;
 			}
 
-			if (RerenderUI) {
+			foreach (Event in PendingEvents) {
+				{{{Styles::GetEventLoopActiveItem("campaign_action")}}}
+
+				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
+					if (Event.ControlId == "Quad_Trigger") {
+						declare Name = Event.Control.Parent.DataAttributeGet("name");
+						
+						if (Name == "quit") {
+							Playground.QuitServer(True);
+						} else {
+							// We notify the TP that we're about to unload the map
+							if (Name == "next_map") {
+								declare Integer PendingPlayingMapsUpdate for LocalUser;
+								PendingPlayingMapsUpdate = Now;
+							}
+							SendCustomEvent("campaign:" ^ Name, [LocalUser.Login]);
+						}
+					}
+				}
+			}
+
+			if (RerenderUI && CampaignRecords.existskey(Map.MapInfo.MapUid)) {
 				NewGoal = Net_NewGoal;
 				declare Diff = "";
 
@@ -195,28 +217,6 @@ Text GetLayer(Boolean _WithNextMapButton) {
 					for (I, 0, 2) {
 						declare Quad_Medal = (Frame_Record.GetFirstChild("Quad_Medal_" ^ I) as CMlQuad);
 						Quad_Medal.Hide();
-					}
-				}
-			}
-
-
-			foreach (Event in PendingEvents) {
-				{{{Styles::GetEventLoopActiveItem("campaign_action")}}}
-
-				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
-					if (Event.ControlId == "Quad_Trigger") {
-						declare Name = Event.Control.Parent.DataAttributeGet("name");
-						
-						if (Name == "quit") {
-							Playground.QuitServer(True);
-						} else {
-							// We notify the TP that we're about to unload the map
-							if (Name == "next_map") {
-								declare Integer PendingPlayingMapsUpdate for LocalUser;
-								PendingPlayingMapsUpdate = Now;
-							}
-							SendCustomEvent("campaign:" ^ Name, [LocalUser.Login]);
-						}
 					}
 				}
 			}
