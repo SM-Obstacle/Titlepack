@@ -36,7 +36,7 @@ Text Build() {
 			<frameinstance pos="227.33 -7.66" data-name="quit" modelid="Model_MenuItem" data-preventdefault="True"/>
 		</frame>
 
-		<quad pos="160.67 2.33" size="0 5.67" style="Bgs1" substyle="BgTitle3_3" halign="center" id="Quad_Cursor"/>
+		<quad pos="160.67 3.66" size="0 5.5" style="Bgs1" substyle="BgTitlePage" halign="center" id="Quad_Cursor"/>
 		<quad pos="46.5 -3.67" size="12.5 10.17" image="file://Media/Images/Obstacle/Menu/Logo.png"/>
 		<quad pos="30" size="260 18.83" image="file://Media/Images/Obstacle/Menu/FHeader.png" keepratio="Fit"/>
 	</frame>
