@@ -49,7 +49,7 @@ Text BuildMainLoop(Text[Text] _Values, Lib::K_Options _Options) {
                     if (List.Visible) {
                         List.Hide();
                     } else {
-                        declare Component__DropDown_Trigger <=> List.GetFirstChild("Component__DropDown_Trigger");
+                        declare Component__DropDown_Trigger <=> Component.GetFirstChild("Component__DropDown_Trigger");
                         declare Component__DropDown_Background <=> List.GetFirstChild("Component__DropDown_Background");
                         
                         if (Component.AbsolutePosition_V3.Y > 0) {
