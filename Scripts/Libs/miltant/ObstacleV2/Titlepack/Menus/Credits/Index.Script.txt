@@ -30,94 +30,110 @@ Text GetName() {
 }
 
 /**
- * Returns the list of credits.
- * Order the groups in the order you want them to be displayed (left to right).
- * You might add empty groups to skip columns.
- * Order people by date of contribution (oldest first) then by name (alphabetical order).
+ * @brief Get the credits of the project: members of the community who have worked on the obstacle titlepack
+ * Instructions to contribute:
+ * - Order the groups in the order you want them to be displayed (left to right).
+ *   You might add empty groups to skip columns.
+ * - Group people by their role in the project (ascending alphabetical order of the first role (arbitrary, cosmetic), than descending roles count).
+ * - Order people by date of contribution when relevant (latest first) and then by name (alphabetical order).
  */
 K_Group[] GetCredits() {
 	return [
 		K_Group {
 			Title = "Brand Team",
 			People = [
-				K_Person { Name = "ZenyoX", Roles = [ K_Role { Names = ["Creative director"], Date = "2023 - Present" } ] },
-				K_Person { Name = "Coco", Roles = [ K_Role { Names = ["Cinematic Artist"], Date = "2023" } ] },
-				K_Person { Name = "HawKen", Roles = [ K_Role { Names = ["Cinematic Artist"], Date = "2024" } ] }
+				K_Person { Name = "HawKen", Roles = [ K_Role { Names = ["Cinematic Artist"], Date = "2024" } ] },
+				K_Person { Name = "ZenyoX", Roles = [ K_Role { Names = ["Creative director"], Date = "2023 - Present" } ] }
 			]
 		},
 		K_Group {
-			Title = "Mappers",
+			Title = "Mappers Winter 2024",
 			People = [
-				K_Person { Name = "Aurel", Roles = [ K_Role { Date = "Summer 2023, Winter 2024" } ] },
-				K_Person { Name = "HasCrashed", Roles = [ K_Role { Date = "Summer 2023, Winter 2024" } ] },
-				K_Person { Name = "Khass", Roles = [ K_Role { Date = "Summer 2023, Winter 2024" } ] },
-				K_Person { Name = "Pixou", Roles = [ K_Role { Date = "Summer 2023, Winter 2024" } ] },
-				K_Person { Name = "Batman", Roles = [ K_Role { Date = "Summer 2023" } ] },
-				K_Person { Name = "Buggz", Roles = [ K_Role { Date = "Summer 2023" } ] },
-				K_Person { Name = "Errorcat", Roles = [ K_Role { Date = "Summer 2023" } ] },
-				K_Person { Name = "InnerPeace", Roles = [ K_Role { Date = "Summer 2023" } ] },
-				K_Person { Name = "James", Roles = [ K_Role { Date = "Summer 2023" } ] },
-				K_Person { Name = "Kiwi", Roles = [ K_Role { Date = "Summer 2023" } ] },
-				K_Person { Name = "Blourk", Roles = [ K_Role { Date = "Winter 2024" } ] },
-				K_Person { Name = "Erkagon", Roles = [ K_Role { Date = "Winter 2024" } ] },
-				K_Person { Name = "Hawken", Roles = [ K_Role { Date = "Winter 2024" } ] },
-				K_Person { Name = "Lagaffe", Roles = [ K_Role { Date = "Winter 2024" } ] },
-				K_Person { Name = "Lyyras", Roles = [ K_Role { Date = "Winter 2024" } ] },
-				K_Person { Name = "Ouhou", Roles = [ K_Role { Date = "Winter 2024" } ] },
-				K_Person { Name = "Random", Roles = [ K_Role { Date = "Winter 2024" } ] },
-				K_Person { Name = "SBVille", Roles = [ K_Role { Date = "Winter 2024" } ] }
+				K_Person { Name = "Aurel" },
+				K_Person { Name = "Blourk" },
+				K_Person { Name = "Erkagon" },
+				K_Person { Name = "HasCrashed" },
+				K_Person { Name = "Hawken" },
+				K_Person { Name = "Khass" },
+				K_Person { Name = "Lagaffe" },
+				K_Person { Name = "Lyyras" },
+				K_Person { Name = "Ouhou" },
+				K_Person { Name = "Pixou" },
+				K_Person { Name = "UnMecRandom" },
+				K_Person { Name = "SBVille" }
 			]
 		},
 		K_Group {
-			Title = "Campaign Team",
+			Title = "Campaign Team $w-$z Winter 2024",
 			People = [
-				K_Person { Name = "Khass", Roles = [ K_Role { Names = ["Campaign Referent"], Date = "Summer 2023, Winter 2024" } ] },
-				K_Person { Name = "Hippe", Roles = [ K_Role { Names = ["Reference Times"], Date = "Summer 2023" } ] },
-				K_Person { Name = "Kiwi", Roles = [ K_Role { Names = ["Reference Times"], Date = "Summer 2023" } ] },
-				K_Person { Name = "UnMecRandom", Roles = [ K_Role { Names = ["Map testing"], Date = "Summer 2023" } ] },
-				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Campaign Referent", "Reference Times"], Date = "Winter 2024" } ] },
-				K_Person { Name = "Booby", Roles = [ K_Role { Names = ["Campaign Referent"], Date = "Winter 2024" } ] },
-				K_Person { Name = "Buggz", Roles = [ K_Role { Names = ["Campaign Referent"], Date = "Winter 2024" } ] },
-				K_Person { Name = "Elise", Roles = [ K_Role { Names = ["Champion Times"], Date = "Winter 2024" } ] },
-				K_Person { Name = "Kiwi", Roles = [ K_Role { Names = ["Champion Times"], Date = "Winter 2024" } ] },
-				K_Person { Name = "Pixou", Roles = [ K_Role { Names = ["Champion Times"], Date = "Winter 2024" } ] },
-				K_Person { Name = "UnMecRandom", Roles = [ K_Role { Names = ["Campaign Referent", "Reference Times"], Date = "Winter 2024" } ] },
-				K_Person { Name = "SBVille", Roles = [ K_Role { Names = ["Champion Times"], Date = "Winter 2024" } ] }
+				K_Person { Name = "Elise", Roles = [ K_Role { Names = ["Champion Times"] } ] },
+				K_Person { Name = "Kiwi", Roles = [ K_Role { Names = ["Champion Times"] } ] },
+				K_Person { Name = "Pixou", Roles = [ K_Role { Names = ["Champion Times"] } ] },
+				K_Person { Name = "SBVille", Roles = [ K_Role { Names = ["Champion Times"] } ] },
+				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Mappers Referent", "Reference Times"] } ] },
+				K_Person { Name = "UnMecRandom", Roles = [ K_Role { Names = ["Mappers Referent", "Reference Times"] } ] },
+				K_Person { Name = "Booby", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
+				K_Person { Name = "Buggz", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
+				K_Person { Name = "Khass", Roles = [ K_Role { Names = ["Mappers Referent"] } ] }
 			]
 		},
 		K_Group {
 			Title = "Development Team",
 			People = [
-				K_Person { Name = "Nadeo", Roles = [ K_Role { Names = ["Game Developer"] } ] },
-				K_Person { Name = "Steeffeen", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2013 - 2017" } ] },
-				K_Person { Name = "Gotagang", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2017" } ] },
-				K_Person { Name = "Smoke", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2017 - 2021" } ] },
-				K_Person { Name = "MiLTanT", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2021 - Present" } ] },
+				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Dynamic Items"], Date = "2023 - Present" } ] },
 				K_Person { Name = "Ahmad", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2023 - Present" } ] },
-				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Dynamic Items"], Date = "2023 - Present" } ] }
+				K_Person { Name = "MiLTanT", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2021 - Present" } ] },
+				K_Person { Name = "Smoke", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2017 - 2021" } ] },
+				K_Person { Name = "Gotagang", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2017" } ] },
+				K_Person { Name = "Steeffeen", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2013 - 2017" } ] },
+				K_Person { Name = "Nadeo", Roles = [ K_Role { Names = ["Game Developer"] } ] }
 			]
 		},
-		K_Group {},
-		K_Group {},
+		K_Group {
+			Title = "Mappers Summer 2023",
+			People = [
+				K_Person { Name = "Aurel" },
+				K_Person { Name = "Batman" },
+				K_Person { Name = "Buggz" },
+				K_Person { Name = "Errorcat" },
+				K_Person { Name = "HasCrashed" },
+				K_Person { Name = "InnerPeace" },
+				K_Person { Name = "James" },
+				K_Person { Name = "Khass" },
+				K_Person { Name = "Kiwi" },
+				K_Person { Name = "Pixou" }
+			]
+		},
+		K_Group {
+			Title = "Campaign Team $w-$z Summer 2023",
+			People = [
+				K_Person { Name = "Coco", Roles = [ K_Role { Names = ["Cinematic Artist"] } ] },
+				K_Person { Name = "Khass", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
+				K_Person { Name = "Hippe", Roles = [ K_Role { Names = ["Reference Times"] } ] },
+				K_Person { Name = "Kiwi", Roles = [ K_Role { Names = ["Reference Times"] } ] },
+				K_Person { Name = "UnMecRandom", Roles = [ K_Role { Names = ["Map testing"] } ] }
+			]
+		},
 		K_Group {
 			Title = "Assets Creators",
 			People = [
-				K_Person { Name = "Titishu", Roles = [ K_Role { Names = ["BlocksKit", "MetalKit"], Date = "2013" } ] },
-				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Items Creator"], Date = "2013 - Present" } ] },
-				K_Person { Name = "Elvestad", Roles = [ K_Role { Names = ["Titlepack image Artist"], Date = "2017" } ] },
-				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Textured Items", "NeonObjPack"], Date = "2017" } ] },
-				K_Person { Name = "InnerPeace", Roles = [ K_Role { Names = ["Items Creator"], Date = "2019 - 2023" } ] },
+				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Dynamic Items"], Date = "2023" } ] },
+				K_Person { Name = "Aurel & InnerPeace", Roles = [ K_Role { Names = ["ColorPalette", "Missing Materials"], Date = "2023" } ] },
 				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Invisible Skin"], Date = "2022" } ] },
-				K_Person { Name = "Aurel InnerPeace", Roles = [ K_Role { Names = ["ColorPalette", "Missing Materials"], Date = "2023" } ] }
+				K_Person { Name = "InnerPeace", Roles = [ K_Role { Names = ["Items Creator"], Date = "2019 - 2023" } ] },
+				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Textured Items", "NeonObjPack"], Date = "2017" } ] },
+				K_Person { Name = "Elvestad", Roles = [ K_Role { Names = ["Titlepack image Artist"], Date = "2017" } ] },
+				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Items Creator"], Date = "2013 - Present" } ] },
+				K_Person { Name = "Titishu", Roles = [ K_Role { Names = ["BlocksKit", "MetalKit"], Date = "2013" } ] }
 			]
 		},
 		K_Group {
 			Title = "Tutorials",
 			People = [
-				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Mapper", "Lead of translations", "English, French texts"], Date = "2022" } ] },
-				K_Person { Name = "Bert", Roles = [ K_Role { Names = ["Russian texts"], Date = "2023" } ] },
+				K_Person { Name = "Faker", Roles = [ K_Role { Names = ["Ukrainian texts"], Date = "2023" } ] },
 				K_Person { Name = "Monk", Roles = [ K_Role { Names = ["Croatian texts"], Date = "2023" } ] },
-				K_Person { Name = "Faker", Roles = [ K_Role { Names = ["Ukrainian texts"], Date = "2023" } ] }
+				K_Person { Name = "Bert", Roles = [ K_Role { Names = ["Russian texts"], Date = "2023" } ] },
+				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Mapper", "Lead of translations", "English, French texts"], Date = "2022 - Present" } ] }
 			]
 		}
 	];
@@ -205,15 +221,16 @@ Text Build() {
 		}
 
 	declare DisclaimerHeight = 33.;
-	ML_Text ^= """
-		<label text="This page aims to list members of the community whose content is embeded in the obstacle titlepack $w-$z feel like we forgot you? Let us know on Discord!"
-			pos="{{{ColumnOffsets[MinColumnIndex] + 103.33/2.}}} {{{-MinColumnHeight - DisclaimerHeight/2. + 1}}}" size="101.33 {{{DisclaimerHeight - 2}}}"
-			autonewline="1" class="lato" halign="center" valign="center" textsize="4"/>
-		<quad size="103.33 {{{DisclaimerHeight}}}" pos="{{{ColumnOffsets[MinColumnIndex]}}} {{{-MinColumnHeight + 1}}}" style="Bgs1InRace" substyle="BgProgressBar" opacity="0.5"/>
-	""";
 
 	if (MinColumnHeight + DisclaimerHeight > MaxColumnHeight)
 		MaxColumnHeight = MinColumnHeight + DisclaimerHeight;
+
+	ML_Text ^= """
+		<label text="This page aims to list members of the community who have worked on the obstacle titlepack $w-$z feel like we forgot you? Let us know on Discord!"
+			pos="{{{ColumnOffsets[MinColumnIndex] + 103.33/2.}}} {{{-MaxColumnHeight + DisclaimerHeight/2.}}}" size="99.33 {{{DisclaimerHeight - 2}}}"
+			autonewline="1" class="lato" halign="center" valign="center" textsize="4"/>
+		<quad size="103.33 {{{DisclaimerHeight}}}" pos="{{{ColumnOffsets[MinColumnIndex]}}} {{{-MaxColumnHeight + DisclaimerHeight}}}" style="Bgs1InRace" substyle="BgProgressBar" opacity="0.5"/>
+	""";
 
 	declare ScrollMax = ML::Max(0., MaxColumnHeight - C_Height + Groups.count / 3.);
 	return """
