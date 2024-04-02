@@ -92,8 +92,9 @@ K_Group[] GetCredits() {
 				K_Person { Name = "Steeffeen", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2013 - 2017" } ] },
 				K_Person { Name = "Gotagang", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2017" } ] },
 				K_Person { Name = "Smoke", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2017 - 2021" } ] },
+				K_Person { Name = "MiLTanT", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2021 - Present" } ] },
 				K_Person { Name = "Ahmad", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2023 - Present" } ] },
-				K_Person { Name = "MiLTanT", Roles = [ K_Role { Names = ["Obstacle Developer"], Date = "2021 - Present" } ] }
+				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Dynamic Items"], Date = "2023 - Present" } ] }
 			]
 		},
 		K_Group {},
