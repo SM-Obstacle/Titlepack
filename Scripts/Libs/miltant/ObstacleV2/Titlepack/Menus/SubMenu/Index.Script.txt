@@ -46,7 +46,7 @@ Text Build(K_SubMenu[] _Menu) {
 
         MenusML ^=
      """<frame pos="{{{6.67 + (70. + 6.67) * I}}} -86" data-name="{{{Item.Name}}}">
-            <frame id="Frame_Controls" pos="35 -55.66" halign="center" valign="center">
+            <frame id="Frame_Controls" pos="35 -55.66">
                 {{{Item.DangerouslySetControls}}}
             </frame>
 
