@@ -44,6 +44,10 @@ Text Build(K_SubMenu[] _Menu) {
                 ConcatItemsScriptsLoop ^= Item.DangerouslySetControlsScriptLoop;
         }
 
+        declare Parity = (I % 2 * 2 - 1);
+        declare DefaultRot = (I * 36 + 40) % 9 * Parity / 2.;
+        declare TargetRot = -DefaultRot * 4 % 7 / 2;
+
         MenusML ^=
      """<frame pos="{{{6.67 + (70. + 6.67) * I}}} -86" data-name="{{{Item.Name}}}">
             <frame id="Frame_Controls" pos="35 -55.66">
@@ -52,12 +56,13 @@ Text Build(K_SubMenu[] _Menu) {
 
             <quad size="70 111.33" scriptevents="1" id="Quad_Trigger"
                     data-preventdefault="{{{Item.PreventDefault}}}"
-                    data-target="Quad_Poster Label_Name Quad_Background Frame_Controls"
-                    data-default-anim="<quad scale=&quot;1.&quot; pos=&quot;0 0&quot;/> <label scale=&quot;1.&quot; pos=&quot;0 -95.67&quot;/> <quad opacity=&quot;0.8&quot; scale=&quot;1&quot;/> <frame scale=&quot;1.&quot;/>"
-                    data-target-anim="<quad scale=&quot;1.06&quot; pos=&quot;0 4&quot;/> <label scale=&quot;1.12&quot; pos=&quot;0 -98.33&quot;/> <quad opacity=&quot;1&quot; scale=&quot;1.06&quot;/> <frame scale=&quot;1.06&quot;/>"/>
+                    data-target="Quad_Icon Quad_Poster Label_Name Quad_Background Frame_Controls"
+                    data-default-anim="<quad opacity=&quot;0.8&quot; scale=&quot;1&quot; pos=&quot;0 -40.33&quot; rot=&quot;{{{DefaultRot}}}&quot;/> <quad scale=&quot;1.&quot; pos=&quot;0 0&quot;/> <label scale=&quot;1.&quot; pos=&quot;0 -95.67&quot;/> <quad opacity=&quot;0.8&quot; scale=&quot;1&quot;/> <frame scale=&quot;1.&quot;/>"
+                    data-target-anim="<quad opacity=&quot;1&quot; scale=&quot;1.12&quot; pos=&quot;0 -39&quot; rot=&quot;{{{TargetRot}}}&quot;/> <quad scale=&quot;1.06&quot; pos=&quot;0 4&quot;/> <label scale=&quot;1.12&quot; pos=&quot;0 -98.33&quot;/> <quad opacity=&quot;1&quot; scale=&quot;1.06&quot;/> <frame scale=&quot;1.06&quot;/>"/>
 
             <frame id="Frame_Content" pos="35">
-                <quad size="70 80.67" halign="center" id="Quad_Poster" image="{{{Item.Image}}}"/>
+                <quad image="file://Media/Images/Obstacle/Moods/{{{Item.Image}}}.png" rot="{{{DefaultRot}}}" opacity="0.8" pos="0 -40.33" size="28.17 34.17" keepratio="Fit" halign="center" valign="center" id="Quad_Icon"/>
+                <quad image="file://Media/Images/Obstacle/Moods/F{{{Item.Image}}}.png" size="70 80.67" halign="center" id="Quad_Poster"/>
 
                 <label class="lato" id="Label_Name" text="{{{Item.Name}}}" textprefix="$t" pos="0 -95.67" halign="center" valign="center2" textsize="5" textcolor="fff"/>
                 <quad size="70 110.67" pos="0 -55.33" image="file://Media/Images/Obstacle/Menu/FNav.png" halign="center" valign="center" opacity="0.8" id="Quad_Background"/>

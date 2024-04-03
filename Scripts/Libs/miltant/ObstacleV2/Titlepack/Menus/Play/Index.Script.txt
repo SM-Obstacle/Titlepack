@@ -49,26 +49,26 @@ Void Load() {
 
 	declare SubMenu::K_SubMenu Campaign;
 	Campaign.Name = "campaign";
-	Campaign.Image = "file://Media/Images/Obstacle/Moods/campaign.png";
+	Campaign.Image = "campaign";
 	SubMenus.add(Campaign);
 	Campaign::Load();
 
 	declare SubMenu::K_SubMenu Online;
 	Online.Name = "online";
-	Online.Image = "file://Media/Images/Obstacle/Moods/online.png";
+	Online.Image = "online";
 	SubMenus.add(Online);
 	Servers::Load();
 
 	declare SubMenu::K_SubMenu Local;
 	Local.Name = "local";
-	Local.Image = "file://Media/Images/Obstacle/Moods/local.png";
+	Local.Image = "local";
 	Local.PreventDefault = True;
 	SubMenus.add(Local);
 
 	declare LanguageDropDown = BuildLanguageDropDown();
 	declare SubMenu::K_SubMenu Tutorials;
 	Tutorials.Name = "tutorials";
-	Tutorials.Image = "file://Media/Images/Obstacle/Moods/tutorials.png";
+	Tutorials.Image = "tutorials";
 	Tutorials.PreventDefault = True;
 	Tutorials.DangerouslySetControls = LanguageDropDown[0];
 	Tutorials.DangerouslySetControlsScriptInit = LanguageDropDown[1];
