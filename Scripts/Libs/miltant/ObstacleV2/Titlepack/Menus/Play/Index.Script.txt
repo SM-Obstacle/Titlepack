@@ -24,21 +24,20 @@ Void StartLocalPlay() {
 Text[] BuildLanguageDropDown() {
 	declare Languages = Internationalization::GetLanguageList([
 		"en", "fr", "hr", "ru", "uk"
-	], True);
+	]);
 
-	foreach (ISO => Lang in Languages) // I don't know how to access the last element xd
+	foreach (ISO => Lang in Languages) { // I don't know how to access the first element xd
 		G_PreferredTutorialLanguage = ISO;
+		break;
+	}
 
 	declare DropDown = DropDown::Build(
 		Languages,
 		G_PreferredTutorialLanguage,
 		Components::K_Options {
 			Name = "Tutorial__Language_DropDown",
-			X = 34.33,
-			Y = -60.,
-			Width = 68.67,
-			Height = 8.,
-			HAlign = "right"
+			X = -35.,
+			Y = 62.33
 		}
 	);
 
