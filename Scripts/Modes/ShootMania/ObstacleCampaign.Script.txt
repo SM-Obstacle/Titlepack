@@ -11,39 +11,33 @@ G_IsCampaign = True;
 log("mode is Obstacle Campaign");
 ***
 
+***Campaign_Match_Yield***
+***
+switch (Event.CustomEventType) {
+    case "campaign:improve": {
+        declare Player = SM::GetPlayer(Event.CustomEventData[0]);
+        Obstacle::ObsRespawnPlayer(Player, True);
+        Layers::Detach("EndScreen", Player);
+        UIManager.GetUI(Player).UISequence = CUIConfig::EUISequence::Playing;
+    }
+    case "campaign:next_map": {
+        if (ServerAdmin == Null) MB_Private_StopMatch();
+    }
+}
+***
+
 ***Campaign_EndRound***
 ***
 // DestroyUI(False);
-Layers::Create("EndScreen", EndScreen::GetLayer());
-Layers::Attach("EndScreen");
+Layers::Attach("EndScreen", Player);
 
-UIManager.UIAll.OverlayHideNotices = True;
-UIManager.UIAll.UISequence = CUIConfig::EUISequence::Podium;
+UIManager.GetUI(Player).OverlayHideNotices = True;
+UIManager.GetUI(Player).UISequence = CUIConfig::EUISequence::Podium;
+***
 
-declare Text CampaignEvent for Teams[0];
-
-while (True) {
-    MB_Private_Yield();
-
-    if (CampaignEvent != "") {
-        switch (CampaignEvent) {
-            case "improve": {
-                foreach (Player in Players) {
-                    Obstacle::ObsRespawnPlayer(Player, True);
-                }
-            }
-            case "next_map": {
-                MB_Private_StopMatch();
-            }
-        }
-        UIManager.UIAll.UISequence = CUIConfig::EUISequence::Playing;
-        Layers::Detach("EndScreen");
-        // CreateUI();
-        break;
-    }
-}
-
-CampaignEvent = "";
+***Campaign_CreateUI***
+***
+Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null, S_EventEdition));
 ***
 
 ***MB_Private_EnableLadder***

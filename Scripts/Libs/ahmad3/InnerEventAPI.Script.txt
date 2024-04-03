@@ -1,0 +1,174 @@
+#Include "TextLib" as TL
+
+#Include "Libs/smokegun/Constants.Script.txt" as C
+#Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
+
+#Struct K_RequestAttr {
+    Integer Type;
+    Text Route;
+}
+
+declare Text[] G_PendingEvents;
+declare Integer[Text] G_PendingLoadingEditions;
+declare K_RequestAttr[Ident] G_PendingRequests;
+declare Types::K_Event[Text] G_Events;
+declare Boolean G_HasFailed;
+
+declare Text G_AuthHeaders;
+
+Boolean HasFailed() {
+    return G_HasFailed;
+}
+
+Boolean EventHasContent(Text _EventHandle) {
+    if (!G_Events.existskey(_EventHandle) || G_PendingEvents.exists(_EventHandle)) return False;
+    declare Types::K_Event Event = G_Events[_EventHandle];
+    // If this event is not pending, at least count its editions amount to be sure it's fully loaded
+    return !G_HasFailed && Event.EditionsDetails.count > 0;
+}
+
+Types::K_Event[Text] Private_EventAPI_GetEvents() {
+    return G_Events;
+}
+
+Types::K_Event GetEvent(Text _EventHandle) {
+    return G_Events[_EventHandle];
+}
+
+Boolean Private_CheckErr(Text _Route, CHttpRequest _Req) {
+    if (_Req.StatusCode == 200) return False;
+    if (G_HasFailed) return True;
+    log("error on route: " ^ _Route);
+    log(_Req.Result);
+    G_HasFailed = True;
+    return True;
+}
+
+Void Private_InitRequest(Text _Route, Integer _Type) {
+    declare CHttpRequest Req = Http.CreateGet(C::C_HostUrl ^ _Route, False, "Content-Type: application/json" ^ G_AuthHeaders);
+    G_PendingRequests[Req.Id] = K_RequestAttr {
+        Type = _Type,
+        Route = _Route
+    };
+}
+
+Void Private_InitRequest(Text _Route, Integer _Type, Text _EventHandle) {
+    Private_InitRequest(_Route, _Type);
+    if (!G_PendingEvents.exists(_EventHandle)) G_PendingEvents.add(_EventHandle);
+}
+
+Void LoadEdition(Text _EventHandle, Integer _EventEdition, Boolean _Lazy) {
+    // If the event hasn't been fetched yet, then we put it with the requested edition
+    // in the pending list
+    if (!G_Events.existskey(_EventHandle) || !G_Events[_EventHandle].Editions.existskey(_EventEdition)) {
+        G_PendingLoadingEditions[_EventHandle] = _EventEdition;
+        return;
+    }
+
+    // We already loaded the edition for this event, so it doesn't require to refetch the API
+    if (_Lazy && G_Events[_EventHandle].EditionsDetails.existskey(_EventEdition)) {
+        return;
+    }
+
+    Private_InitRequest("event/" ^ _EventHandle ^ "/" ^ _EventEdition, C::C_Request_EventHandleEdition, _EventHandle);
+}
+
+Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
+    LoadEdition(_EventHandle, _EventEdition, True);
+}
+
+Void Private_InitEventEditions(Types::K_EventResponse[] _Events) {
+    foreach (Event in _Events) {
+        Private_InitRequest("event/" ^ Event.handle, C::C_Request_EventHandle, Event.handle);
+        // This equals -1 if there's no edition registered yet
+        declare Integer EventEdition = Event.last_edition_id;
+        if (G_PendingLoadingEditions.existskey(Event.handle)) {
+            EventEdition = G_PendingLoadingEditions[Event.handle];
+            G_PendingLoadingEditions.removekey(Event.handle);
+        }
+        if (EventEdition > 0) {
+            Private_InitRequest("event/" ^ Event.handle ^ "/" ^ EventEdition, C::C_Request_EventHandleEdition, Event.handle);
+        }
+        G_Events[Event.handle] = Types::K_Event {
+            Event = Event,
+            Editions = [],
+            EditionsDetails = []
+        };
+    }
+}
+
+Void SetAuthHeaders(Text _AuthHeaders) {
+    G_AuthHeaders = _AuthHeaders;
+}
+
+Void Init() {
+    G_HasFailed = False;
+    Private_InitRequest("event", C::C_Request_Event);
+}
+
+/**
+ * Returns True if a new event edition was loaded with its details, False otherwise.
+ */
+Boolean Loop() {
+    declare Ident[] ReqToDelete;
+    declare Text[] PendingEventsToDelete;
+    declare Boolean EventEditionLoaded = False;
+
+    foreach (ReqId => ReqAttr in G_PendingRequests) {
+        declare CHttpRequest Request <=> Http.Requests[ReqId];
+
+        if (!Request.IsCompleted || Private_CheckErr(ReqAttr.Route, Request)) {
+            continue;
+        }
+
+        switch (ReqAttr.Type) {
+            // The /event request
+            case C::C_Request_Event: {
+                declare Types::K_EventResponse[] Events;
+                Events.fromjson(Request.Result);
+                Private_InitEventEditions(Events);
+            }
+
+            // The /event/<handle> request
+            case C::C_Request_EventHandle: {
+                declare Types::K_EventEdition[] EventEditions;
+                EventEditions.fromjson(Request.Result);
+                
+                declare Text Handle = TL::Split("/", ReqAttr.Route)[1];
+                foreach (Edition in EventEditions) {
+                    G_Events[Handle].Editions[Edition.id] = Edition;
+                }
+                PendingEventsToDelete.add(Handle);
+            }
+
+            // The /event/<handle>/<edition> request
+            case C::C_Request_EventHandleEdition: {
+                declare Types::K_EventEditionDetails EventEditionDetails;
+                EventEditionDetails.fromjson(Request.Result);
+
+                declare Text[] Splits = TL::Split("/", ReqAttr.Route);
+                declare Text Handle = Splits[1];
+                declare Integer EditionId = TL::ToInteger(Splits[2]);
+                G_Events[Handle].EditionsDetails[EditionId] = EventEditionDetails;
+                PendingEventsToDelete.add(Handle);
+
+                EventEditionLoaded = True;
+            }
+        }
+
+        ReqToDelete.add(ReqId);
+    }
+
+    foreach (ReqId in ReqToDelete) {
+        if (!Http.Requests.existskey(ReqId)) continue;
+        declare CHttpRequest Request <=> Http.Requests[ReqId];
+        G_PendingRequests.removekey(ReqId);
+        Http.Destroy(Request);
+    }
+
+    foreach (PendingEventToDel in PendingEventsToDelete) {
+        G_PendingEvents.remove(PendingEventToDel);
+    }
+
+    return EventEditionLoaded;
+}

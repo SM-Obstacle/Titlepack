@@ -1,9 +1,13 @@
 {
-    "linter": [
-      {
-        "rules": {
-            "type-declaration": "off"
-        }
+  "linter": [
+    {
+      "files": ["Libs/**/*.Script.txt"],
+      "msApiPath": "../../../Downloads/doc.h",
+      "rules": {
+        "no-empty": "error",
+        "no-lonely-if": "error",
+        "type-declaration": "off"
       }
-    ]
-  }
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+#Include "Libs/ahmad3/InnerEventAPI.Script.txt" as Inner
+#Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
+
+declare Boolean G_AuthHeadersPending;
+
+Boolean EventHasContent(Text _EventHandle) {
+    return Inner::EventHasContent(_EventHandle);
+}
+
+Types::K_Event GetEvent(Text _EventHandle) {
+    return Inner::GetEvent(_EventHandle);
+}
+
+Boolean HasCachedEvent(Text _EventHandle) {
+    declare persistent Types::K_Event[Text] ObsStore_EventsCache for LocalUser = [];
+    return ObsStore_EventsCache.existskey(_EventHandle)
+        && ObsStore_EventsCache[_EventHandle].EditionsDetails.count > 0;
+}
+
+Types::K_Event GetCachedEvent(Text _EventHandle) {
+    declare persistent Types::K_Event[Text] ObsStore_EventsCache for LocalUser = [];
+    return ObsStore_EventsCache[_EventHandle];
+}
+
+Void LoadEdition(Text _EventHandle, Integer _EventEdition, Boolean _Lazy) {
+    Inner::LoadEdition(_EventHandle, _EventEdition, _Lazy);
+}
+
+Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
+    Inner::LoadEdition(_EventHandle, _EventEdition);
+}
+
+Void Private_UpdateAuthHeaders() {
+    declare persistent Text ObsStore_UserToken for LocalUser = "";
+    if (G_AuthHeadersPending && ObsStore_UserToken != "") {
+        Inner::SetAuthHeaders("\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
+        G_AuthHeadersPending = False;
+    }
+}
+
+Void Load() {
+    G_AuthHeadersPending = True;
+    Private_UpdateAuthHeaders();
+    Inner::Init();
+}
+
+Void Private_UpdateEventsCache() {
+    declare Types::K_Event[Text] Events = Inner::Private_EventAPI_GetEvents();
+    declare persistent Types::K_Event[Text] ObsStore_EventsCache for LocalUser = [];
+    ObsStore_EventsCache = Events;
+}
+
+Void Loop() {
+    Private_UpdateAuthHeaders();
+    if (Inner::Loop()) {
+        Private_UpdateEventsCache();
+    }
+}

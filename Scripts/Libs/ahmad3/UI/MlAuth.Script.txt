@@ -47,7 +47,7 @@ If you think this is an error, please mention the developers
 Thank you.
 """
 
-#Const C_ErrMessage """An API error occurred. This may be due to many reasons,
+#Const C_ErrMessage """An error occurred. This may be due to many reasons,
 but to help the developers to find out a solution, please open the
 console window with Ctrl+G. You can also try to quit and join a server
 or play any local map.
@@ -106,7 +106,7 @@ Text GetLayer() {
 <frame id="Frame_ErrDialog" hidden="1">
 	<frame z-index="1000" pos="0 0">
 		<quad z-index="-1" size="100 75" style="Bgs1" substyle="BgButtonOff" halign="center" valign="center" />
-		<label pos="0 35" size="40 5" text="API error" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
+		<label pos="0 35" size="40 5" text="Error" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
 
 		<label id="ErrDialog_HeadMsg" size="96 5" halign="left" valign="center" pos="-48 4" textsize="1.4" text={{{dump(C_ErrMessage)}}} />
 
@@ -229,9 +229,17 @@ Ident MakePost(Text _Url, Text _Data) {
     return NullId;
 }
 
+Boolean _OnPopup_CannotShow(CMlFrame _Frame) {
+	declare Boolean __MlAuth_EndScreenVisible for LocalUser = False;
+	declare Boolean EndScreen = __MlAuth_EndScreenVisible;
+	// Turn it back to false
+	__MlAuth_EndScreenVisible = False;
+	return _Frame.Visible || EndScreen;
+}
+
 Void OnPopup(CMlFrame _Frame, CMlQuad _SubmitButton) {
 	// The popup is already shown for another reason
-	if (_Frame.Visible) {
+	if (_OnPopup_CannotShow(_Frame)) {
 		return;
 	}
 	ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
@@ -463,18 +471,14 @@ Void Private_UpdatePlayer() {
 	if (req.StatusCode == C_HttpErr_Unauthorized && !G_Errored) {
 		Private_UpdateToken(C_AuthMessage_UpdatePlayer);
 		return Private_UpdatePlayer();
-	} else if (req.StatusCode != 200) {
-		declare err = Error_Handle(req.StatusCode, req.Result);
-		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
-		OnError(err, "/player/update");
 	}
+
+	// We deliberately ignore any other error
 
 	Http.Destroy(Http.Requests[Req]);
 }
 
 Void InitPbCpsTimes() {
-	ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
-
 	declare netread Net_RecordsUpdated for Teams[0] = -1;
 	wait(Net_RecordsUpdated != -1 || InputPlayer.StartTime != -1);
 
@@ -485,17 +489,9 @@ Void InitPbCpsTimes() {
 	declare Req = Http.CreateGet(Url, True, "Accept: application/json\nPlayerLogin: " ^ InputPlayer.User.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
 
 	wait(Req.IsCompleted);
-	ClientUI.UISequence = CUIConfig::EUISequence::None;
 
-	if (Req.StatusCode != 200) {
-		declare Err = Error_Handle(Req.StatusCode, Req.Result);
-		UI.SendChat(Err.err.message);
-		// If the API is in maintenance, the Private_UpdatePlayer
-		// function should already have handled it (to avoid the frame to pop twice).
-		if (Err.err.type != C_Err_Maintenance) {
-			OnError(Err, "/player/pb");
-		}
-	} else {
+	// Ignore any error
+	if (Req.StatusCode == 200) {
 		SendCustomEvent("cpstimes:init", [InputPlayer.User.Login, Req.Result]);
 	}
 
@@ -550,6 +546,11 @@ main() {
 		G_SecurityFrame.Hide();
 		ClientUI.UISequence = CUIConfig::EUISequence::None;
 	}
+
+	// Waits for the map to be initialized before we start executing the script
+	declare netread Text Net_MapStartTime for Teams[0];
+	declare LastMapStartTime = Net_MapStartTime;
+	wait(InputPlayer.StartTime != -1 || LastMapStartTime != Net_MapStartTime);
 
 	Private_UpdatePlayer();
     declare netread _LastRun for UI = -1;

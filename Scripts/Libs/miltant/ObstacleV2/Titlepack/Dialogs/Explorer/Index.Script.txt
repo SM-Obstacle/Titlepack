@@ -73,10 +73,6 @@ Boolean StartLocalPlay() {
 					Status.CustomData[0],
 					"Shootmania/Obstacle.Script.txt",
 					""
-					/*"""<mode_script_settings>
-						<setting name='S_EventHandle' value='benchmark' type='text'/>
-						<setting name='S_EventEdition' value='2' type='text'/>
-					</mode_script_settings>"""*/
 				);
 			}
 		}

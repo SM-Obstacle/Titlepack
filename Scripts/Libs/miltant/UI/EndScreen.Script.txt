@@ -1,16 +1,47 @@
+#Include "TextLib" as TL
+
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
+#Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
 
 #Const  Version     "2023-29-06"
 #Const  ScriptName  "EndScreen.Script.txt"
 
-Text GetLayer() {
+Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
+	declare Text CampaignTitle;
+	declare Text CampaignSubtitle;
+	declare Text BannerImgUrl;
+
+	if (!ObsEvents::HasFailed() && ObsEvents::Current().EditionsDetails.existskey(_SelectedEdition)) {
+		declare CurrentEvent = ObsEvents::Current().EditionsDetails[_SelectedEdition];
+		declare Text[] EditionName = TL::Split("\t", CurrentEvent.name);
+		CampaignTitle = EditionName[0];
+		CampaignSubtitle = EditionName[1];
+		BannerImgUrl = CurrentEvent.banner_img_url;
+	}
+
+	declare Text NextMapButton = "";
+	// Avoids the gap between the Improve and the Quit buttons
+	declare Text QuitButtonPos = "0 -11";
+	if (_WithNextMapButton) {
+		NextMapButton = """
+		<frame pos="0 -11" data-name="next_map">
+			<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7" id="Label"/>
+			<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
+				scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
+				data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
+				data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
+		</frame>
+		""";
+		QuitButtonPos = "0 -22";
+	}
+	
     return """
 <manialink version="3" name="Obstacle:EndScreen">
 <frame pos="-48.5 62">
 	<frame>
-		<label pos="4.33 -7.5" size="85.8 8.91" text="summer" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
-		<label pos="5.17 -16.67" size="47.4 4.77" text="2023" textprefix="$t" textfont="lato" textsize="5" textcolor="fff"/>
-		<quad size="96.67 35" image="file://Media/Images/Obstacle/Campaign/SpringBanner01-Mini.png"/>
+		<label pos="4.33 -7.5" size="85.8 8.91" text="{{{CampaignTitle}}}" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
+		<label pos="5.17 -16.67" size="47.4 4.77" text="{{{CampaignSubtitle}}}" textprefix="$t" textfont="lato" textsize="5" textcolor="fff"/>
+		<quad size="96.67 35" bgcolor="00000099" image="{{{BannerImgUrl}}}"/>
 	</frame>
 	
 	<frame pos="0 -40">
@@ -42,14 +73,8 @@ Text GetLayer() {
 					data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
 					data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
 			</frame>
-			<frame pos="0 -11" data-name="next_map">
-				<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7" id="Label"/>
-				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
-					scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
-					data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
-					data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
-			</frame>
-			<frame pos="0 -22" data-name="quit">
+			{{{NextMapButton}}}
+			<frame pos="{{{QuitButtonPos}}}" data-name="quit">
 				<label halign="center" valign="center2" size="28.67 8" text="Quit" textsize="2.7" id="Label"/>
 				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
 					scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
@@ -67,37 +92,11 @@ Text GetLayer() {
 	#Include "TextLib" as TL
 	#Include "ColorLib" as CL
 
-	#Const Summer23Medals [
-        "qpKzvXQaaJGvSsXPTNk_iVWmRTg" => [57000, 52000, 41000, 37000],
-        "Fcgbnv1RwTIdgRySDLwtyzzMj9j" => [29000, 24000, 19500, 18500],
-        "TEDQRUPTU1VkGrzBKLhIOY9cYV1" => [48000, 40000, 35000, 33000],
-        "GBEPgbo_hFst5xII2zoz7sP8xBe" => [47000, 40000, 36000, 35000],
-        "90qdC1x5f2s4C4oFveHhimcwLzj" => [43000, 38000, 34000, 32500],
-        "eKbgGOAuuwUP6ByvWlP8G728fuc" => [50000, 45000, 40000, 38000],
-        "hzlKEVfxuGyriKXlTm__LoiVRAj" => [46000, 40000, 35000, 32750],
-        "VSn_Cz45JUGLH_LJaRBUKaRIQsh" => [52000, 45000, 41000, 38500],
-        "H5yHFPEOVcdmJv7DabEGYqhUSDc" => [45000, 40000, 36000, 35000],
-        "0u6aaVnLw1cbwUIi7I1hyP1EHT0" => [48000, 44000, 40000, 37000],
-        "7ki7DAx8RGHufasKBLzlHnvFMUj" => [70000, 63000, 56000, 51750],
-        "JTeY36K5VrDL7noJGzl4dqwPC5j" => [60000, 54000, 50000, 47000],
-        "9rs_79lkU09Edy3FCyjXNTPNj_j" => [75000, 68000, 63000, 59000],
-        "uHN22ZmWSNesgZqOVcjgWYv7cPc" => [70000, 64000, 57000, 53000],
-        "TcwGFWuciPoKzccgWa6wRVM7yvd" => [67000, 60000, 55000, 53000],
-        "18FInhM7gAcqAgvwPwllYEDE6rk" => [53000, 48000, 44000, 41900],
-        "pAv3QI4f8y6fbSU2qoMj4cFRQTi" => [52000, 46000, 43000, 41000],
-        "G5Dm8fjoFSqS8nui1mP1wKZ4z_3" => [80000, 71000, 65000, 62000],
-        "tSd082VQJ51_71EXvCobORPlhZl" => [80000, 71000, 66000, 64000],
-        "KkqC5yQSQ18XyhEfpqMLER3vAjc" => [58000, 50000, 46000, 43500],
-        "uHYccBmFsS1kSLc45zLhlOya1eb" => [96000, 88000, 77000, 72000],
-        "F1bDc8HpEr3VjgXwuZh5m_2sb6e" => [80000, 70000, 64000, 61000],
-        "exsvJlTM1oQq1VJ8d9u2qSgFyla" => [78000, 71000, 66000, 64000],
-        "Okx2W7jKXCue7s58kpcStl9vRF3" => [88000, 81000, 76000, 74000],
-        "GwjMPymVycUB9NkGvk00juY4E55" => [80000, 72000, 64000, 61000]
-    ]
+	declare Integer[][Text] G_MedalsTimesPerMap;
 
     Integer GetMedal(Integer Medal) {
-        if (Summer23Medals.existskey(Map.MapInfo.MapUid)) {
-            return Summer23Medals[Map.MapInfo.MapUid][Medal];
+        if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
+            return G_MedalsTimesPerMap[Map.MapInfo.MapUid][Medal];
         }
         switch (Medal) {
             case 0: {
@@ -121,6 +120,10 @@ Text GetLayer() {
 		{{{Styles::GetInitFrameMenus()}}}
         wait(InputPlayer != Null && Page != Null);
 
+        declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
+        declare netread Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
+        declare Integer MedalsTimesPerMapUpdated = -1;
+
 		declare Label_Map = (Page.GetFirstChild("Label_Map") as CMlLabel);
 		declare Label_Author = (Page.GetFirstChild("Label_Author") as CMlLabel);
 		declare Label_PB = (Page.GetFirstChild("Label_PB") as CMlLabel);
@@ -139,15 +142,21 @@ Text GetLayer() {
 		declare netread Net_NewGoal for InputPlayer = 0;
 		declare NewGoal = 0;
 		
+		// Notify the MlAuth manialink that we're in the end screen
+		// so that it doesn't show any error popup.
+		declare Boolean __MlAuth_EndScreenVisible for LocalUser;
+		__MlAuth_EndScreenVisible = True;
+		
 		while (True) {
 			yield;
 
 			Label_Map.Value = Map.MapName;
 			Label_Author.Value = Map.AuthorNickName;
-			
-			if (!CampaignRecords.existskey(Map.MapInfo.MapUid)) {
-				continue;
-			}
+
+            if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
+                G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
+                MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
+            }
 
 			declare RerenderUI = False;
 			if (LastRank != CurrentPlayerRank) {
@@ -158,7 +167,28 @@ Text GetLayer() {
 				RerenderUI = True;
 			}
 
-			if (RerenderUI) {
+			foreach (Event in PendingEvents) {
+				{{{Styles::GetEventLoopActiveItem("campaign_action")}}}
+
+				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
+					if (Event.ControlId == "Quad_Trigger") {
+						declare Name = Event.Control.Parent.DataAttributeGet("name");
+						
+						if (Name == "quit") {
+							Playground.QuitServer(True);
+						} else {
+							// We notify the TP that we're about to unload the map
+							if (Name == "next_map") {
+								declare Integer PendingPlayingMapsUpdate for LocalUser;
+								PendingPlayingMapsUpdate = Now;
+							}
+							SendCustomEvent("campaign:" ^ Name, [LocalUser.Login]);
+						}
+					}
+				}
+			}
+
+			if (RerenderUI && CampaignRecords.existskey(Map.MapInfo.MapUid)) {
 				NewGoal = Net_NewGoal;
 				declare Diff = "";
 
@@ -202,23 +232,6 @@ Text GetLayer() {
 					for (I, 0, 2) {
 						declare Quad_Medal = (Frame_Record.GetFirstChild("Quad_Medal_" ^ I) as CMlQuad);
 						Quad_Medal.Hide();
-					}
-				}
-			}
-
-
-			foreach (Event in PendingEvents) {
-				{{{Styles::GetEventLoopActiveItem("campaign_action")}}}
-
-				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
-					if (Event.ControlId == "Quad_Trigger") {
-						declare Name = Event.Control.Parent.DataAttributeGet("name");
-						
-						if (Name == "quit") {
-							Playground.QuitServer(True);
-						} else {
-							CampaignEvent = Name;
-						}
 					}
 				}
 			}

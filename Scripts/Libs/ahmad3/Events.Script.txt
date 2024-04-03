@@ -1,0 +1,30 @@
+#Include "Libs/smokegun/Constants.Script.txt" as C
+#Include "Libs/ahmad3/InnerEventAPI.Script.txt" as EventAPI
+#Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
+
+declare Types::K_Event G_Event;
+
+Boolean HasFailed() {
+    return EventAPI::HasFailed();
+}
+
+Types::K_Event Current() {
+    return G_Event;
+}
+
+Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
+    EventAPI::Init();
+    EventAPI::LoadEdition(_EventHandle, _EventEdition);
+
+    while (True) {
+        yield;
+        EventAPI::Loop();
+        if (EventAPI::HasFailed() || EventAPI::EventHasContent(_EventHandle)) {
+            break;
+        }
+    }
+
+    if (!EventAPI::HasFailed()) {
+        G_Event = EventAPI::GetEvent(_EventHandle);
+    }
+}
