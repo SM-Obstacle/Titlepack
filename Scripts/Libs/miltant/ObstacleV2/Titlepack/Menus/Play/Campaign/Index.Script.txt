@@ -113,8 +113,8 @@ Text Build() {
 
 		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" textfont="regular" id="Label_EventLn1"/>
 		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" textfont="light" id="Label_EventLn2"/>
-		<label pos="181 -24.5" textsize="2" text="Leaderboards..." textprefix="$fff$i$l[{{{Constants::C_WebsiteUrl}}}/campaign/29/summer_23]" textfont="light" halign="right"/>
-		<label pos="181 -29.5" textsize="1.7" text="Any feedback? Contact $iunmecrandomofficiel$i  on Discord" textfont="light" halign="right"/>
+		<label id="Label_LeaderboardsLink" pos="181 -24.5" textsize="2" textfont="light" halign="right"/>
+		<label pos="181 -29.5" textsize="1.7" text="$sAny feedback? Contact $iunmecrandomofficiel$i  on Discord" textfont="light" halign="right"/>
 		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
 		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
@@ -200,6 +200,7 @@ Text Build() {
 		declare Label_Map = (Page.GetFirstChild("Label_Map") as CMlLabel);
 		declare Label_Mapper = (Page.GetFirstChild("Label_Mapper") as CMlLabel);
 		declare Label_PB = (Page.GetFirstChild("Label_PB") as CMlLabel);
+		declare Label_LeaderboardsLink = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
 
 		declare Integer P_SelectedEdition for Page;
 		declare Integer P_SelectedMapI for Page;
@@ -210,6 +211,7 @@ Text Build() {
 
 		// Clear the page
 		Frame_Infos.Hide();
+		Label_LeaderboardsLink.Hide();
 		for (I, 1, C_MaxCategoriesPerPage) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ I) as CMlFrame);
 			// We first hide the sub-frames for the maps cards
@@ -240,7 +242,11 @@ Text Build() {
 		declare K_EventEditionContentMap SelectedMap = SelectedCategory
 			.maps[ML::Min(P_SelectedMapJ, SelectedCategory.maps.count - 1)];
 
-		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/map/" ^ SelectedMap.map_uid ^ "]";
+		declare LeaderboardsLink = "$fff$s$i$l[{{{Constants::C_WebsiteUrl}}}/event/" ^ P_CampaignEvent.Event.handle ^ "/" ^ P_SelectedEdition ^ "]Leaderboards...";
+		Label_LeaderboardsLink.Show();
+		Label_LeaderboardsLink.SetText(LeaderboardsLink);
+
+		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/event/campaign/" ^ P_SelectedEdition ^ "/map/" ^ SelectedMap.map_uid ^ "]";
 		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.main_author.login ^ "]";
 
 		declare MapName = TL::RegexReplace("\\$[lL](\\[.*\\])?", SelectedMap.name, "g", "");
@@ -368,7 +374,10 @@ Text Build() {
 			declare Integer ControlIndex = (P_CampaignEvent.Editions.count-I+1);
 			declare CMlFrame Frame_CampaignEdition = (Page.GetFirstChild("CampaignEditionItem_" ^ ControlIndex) as CMlFrame);
 			declare CMlLabel Label_CampaignEdition = (Frame_CampaignEdition.GetFirstChild("Label_CampaignEdition") as CMlLabel);
-			Label_CampaignEdition.SetText(TL::Replace(Edition.name, "\t", " "));
+			declare EditionName = Edition.name;
+			if (Edition.subtitle != "")
+				EditionName ^= " " ^ Edition.subtitle;
+			Label_CampaignEdition.SetText(EditionName);
 			declare Vec3 TextColor = CL::HexToRgb("B4B4B4");
 			if (P_SelectedEdition == I) {
 				TextColor = CL::HexToRgb("FFFFFF");
@@ -413,10 +422,10 @@ Text Build() {
 				InitCampaignEditionsList();
 				SelectedCampaign = P_SelectedEdition;
 
-				Quad_Banner.ChangeImageUrl(P_CampaignEvent.EditionsDetails[SelectedCampaign].banner_img_url);
-				declare Text[] EditionName = TL::Split("\t", P_CampaignEvent.EditionsDetails[SelectedCampaign].name);
-				Label_EventLn1.SetText(EditionName[0]);
-				Label_EventLn2.SetText(EditionName[1]);
+				declare SelectedEdition = P_CampaignEvent.EditionsDetails[SelectedCampaign];
+				Quad_Banner.ChangeImageUrl(SelectedEdition.banner_img_url);
+				Label_EventLn1.SetText(SelectedEdition.name);
+				Label_EventLn2.SetText(SelectedEdition.subtitle);
 				MapsNeedRefresh = True;
 			}
 
@@ -559,13 +568,16 @@ Void Loop() {
 	declare CMlPage P <=> Windows::GetPage(GetName());
 
 	// Check if a player has finished a map
-	declare Boolean CampaignRecordsUpdated for LocalUser = False;
-	if (CampaignRecordsUpdated) {
+	declare Boolean __EndScreen_MapFinished for LocalUser = False;
+	if (__EndScreen_MapFinished) {
 		declare Integer P_SelectedEdition for P;
 		// Refetches the current edition even if it has already been loaded
 		EventAPI::LoadEdition("campaign", P_SelectedEdition, False);
-		CampaignRecordsUpdated = False;
+		__EndScreen_MapFinished = False;
 		G_CampaignContentLoading = True;
+
+		declare Integer P_SelectedMapJ for P = -1;
+		P_SelectedMapJ += 1;
 	}
 
 	// Check if the player is nexting a map
@@ -577,9 +589,6 @@ Void Loop() {
 		declare Integer P_SelectedMapI for P = -1;
 		declare Integer P_SelectedMapJ for P = -1;
 
-		declare Text MapPath = G_PendingPlayingMaps[0][0];
-		G_PendingPlayingMaps[0].removekey(0);
-		P_SelectedMapJ += 1;
 		if (G_PendingPlayingMaps[0].count == 0) {
 			P_SelectedMapI += 1;
 			if (P_SelectedMapI == G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories.count) {
@@ -588,6 +597,8 @@ Void Loop() {
 			P_SelectedMapJ = 0;
 			G_PendingPlayingMaps.removekey(0);
 		}
+		declare Text MapPath = G_PendingPlayingMaps[0][0];
+		G_PendingPlayingMaps[0].removekey(0);
 
 		wait(TitleControl.IsReady);
 		TitleControl.PlayMap(MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
@@ -609,7 +620,7 @@ Void Loop() {
 	// player selects a cached edition
 	if (G_UpdateCampaignContent) {
 		G_UpdateCampaignContent = False;
-		
+
 		declare EventAPITypes::K_Event P_CampaignEvent for P;
 		P_CampaignEvent = G_CampaignEvent;
 
@@ -728,8 +739,6 @@ Void Loop() {
 								}
 							}
 						}
-
-						log("Pending map " ^ Path);
 
 						CategoryMaps.add(Path);
 					}

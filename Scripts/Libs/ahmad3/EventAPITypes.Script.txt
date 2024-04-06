@@ -6,6 +6,7 @@
 #Struct K_EventEdition {
     Integer id;
     Text name;
+    Text subtitle;
     Text start_date;
 }
 
@@ -38,8 +39,10 @@
 #Struct K_EventEditionDetails {
     Integer id;
     Text name;
+    Text subtitle;
     Text start_date;
     Text banner_img_url;
+    Text banner2_img_url;
     Integer mx_id;
     K_EventEditionContentCategory[] categories;
 }
@@ -65,6 +68,7 @@ Text ML_Preproc() {
 #Struct K_EventEdition {
     Integer id;
     Text name;
+    Text subtitle;
     Text start_date;
 }
 
@@ -97,8 +101,10 @@ Text ML_Preproc() {
 #Struct K_EventEditionDetails {
     Integer id;
     Text name;
+    Text subtitle;
     Text start_date;
     Text banner_img_url;
+    Text banner2_img_url;
     Integer mx_id;
     K_EventEditionContentCategory[] categories;
 }

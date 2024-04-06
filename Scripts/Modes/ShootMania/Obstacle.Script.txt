@@ -232,7 +232,9 @@ declare LastUpdate = -1;
 declare NextLowTimeMessage = 0;
 
 declare netwrite Text Net_EventRoutePrefix for Teams[0];
-if (S_EventHandle != "" && S_EventEdition >= 1) {
+if (S_EventHandle == "" || S_EventEdition <= 0) {
+    Net_EventRoutePrefix = "";
+} else {
     Net_EventRoutePrefix = "event/" ^ S_EventHandle ^ "/" ^ S_EventEdition ^ "/";
 
     ObsEvents::LoadEdition(S_EventHandle, S_EventEdition);
@@ -807,7 +809,7 @@ Void CreateUI() {
     Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
     Layers::Create("Items", Items::CreateLayerItems());
 
-    if (Obstacle::IsLeaderboardEnabled() && G_EnableRecords) {
+    if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords) {
         Layers::Create("Auth", MlAuth::GetLayer());
         Layers::Attach("Auth");
 

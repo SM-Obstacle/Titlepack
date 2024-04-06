@@ -13,10 +13,29 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
 
 	if (!ObsEvents::HasFailed() && ObsEvents::Current().EditionsDetails.existskey(_SelectedEdition)) {
 		declare CurrentEvent = ObsEvents::Current().EditionsDetails[_SelectedEdition];
-		declare Text[] EditionName = TL::Split("\t", CurrentEvent.name);
-		CampaignTitle = EditionName[0];
-		CampaignSubtitle = EditionName[1];
-		BannerImgUrl = CurrentEvent.banner_img_url;
+		CampaignTitle = CurrentEvent.name;
+		CampaignSubtitle = CurrentEvent.subtitle;
+		BannerImgUrl = CurrentEvent.banner2_img_url;
+	}
+
+	// This is just a "security" check to ensure there's no way the TP is notified when playing online
+	declare Text NotifyNextMapToTP;
+	if (_WithNextMapButton) {
+		NotifyNextMapToTP = """
+		// We notify the TP that we're about to unload the map
+		if (Name == "next_map") {
+			declare Integer PendingPlayingMapsUpdate for LocalUser;
+			PendingPlayingMapsUpdate = Now;
+		}
+		""";
+	}
+	declare Text NotifyFinishedMapToTP;
+	if (_WithNextMapButton) {
+		NotifyFinishedMapToTP = """
+		// We notify the TP that the player finished a map
+		declare Boolean __EndScreen_MapFinished for LocalUser;
+		__EndScreen_MapFinished = True;
+		""";
 	}
 
 	declare Text NextMapButton = "";
@@ -39,8 +58,8 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
 <manialink version="3" name="Obstacle:EndScreen">
 <frame pos="-48.5 62">
 	<frame>
-		<label pos="4.33 -7.5" size="85.8 8.91" text="{{{CampaignTitle}}}" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
-		<label pos="5.17 -16.67" size="47.4 4.77" text="{{{CampaignSubtitle}}}" textprefix="$t" textfont="lato" textsize="5" textcolor="fff"/>
+		<label pos="4.33 -7.5" size="85.8 8.91" text="$s{{{CampaignTitle}}}" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
+		<label pos="5.17 -16.67" size="47.4 4.77" text="$s{{{CampaignSubtitle}}}" textprefix="$t" textfont="lato" textsize="5" textcolor="fff"/>
 		<quad size="96.67 35" bgcolor="00000099" image="{{{BannerImgUrl}}}"/>
 	</frame>
 	
@@ -177,11 +196,7 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
 						if (Name == "quit") {
 							Playground.QuitServer(True);
 						} else {
-							// We notify the TP that we're about to unload the map
-							if (Name == "next_map") {
-								declare Integer PendingPlayingMapsUpdate for LocalUser;
-								PendingPlayingMapsUpdate = Now;
-							}
+							{{{NotifyNextMapToTP}}}
 							SendCustomEvent("campaign:" ^ Name, [LocalUser.Login]);
 						}
 					}
@@ -201,6 +216,7 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
 					}
 					CampaignRecords[Map.MapInfo.MapUid] = Net_Time1;
 					CampaignRecordsUpdated = True;
+					{{{NotifyFinishedMapToTP}}}
 				} else {
 					Frame_Record.RelativePosition_V3.Y = 7.;
 					Label_PB.Opacity = 0.;
