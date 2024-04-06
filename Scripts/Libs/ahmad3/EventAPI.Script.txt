@@ -1,3 +1,7 @@
+#Include "TextLib" as TL
+
+#Include "Libs/smokegun/Constants.Script.txt" as Constants
+
 #Include "Libs/ahmad3/InnerEventAPI.Script.txt" as Inner
 #Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
 
@@ -11,15 +15,43 @@ Types::K_Event GetEvent(Text _EventHandle) {
     return Inner::GetEvent(_EventHandle);
 }
 
+Integer Private_FindCharIndex(Text _Haystack, Text _ToFind) {
+    for (I, 0, TL::Length(_Haystack)) {
+        if (TL::SubText(_Haystack, I, 1) == _ToFind) {
+            return I;
+        }
+    }
+    return -1;
+}
+
+/**
+ * Returns `""` when the cache isn't compatible, otherwise the events cache in its JSON format.
+ */
+Text Private_GetRawCache() {
+    declare persistent Text ObsStore_EventsCache for LocalUser;
+    declare Integer VersIndex = Private_FindCharIndex(ObsStore_EventsCache, "{");
+    if (VersIndex == -1) return "";
+    declare Text Version = TL::SubText(ObsStore_EventsCache, 0, VersIndex);
+    declare Text EventsCache = TL::SubText(ObsStore_EventsCache, VersIndex, TL::Length(ObsStore_EventsCache) - VersIndex);
+    if (Constants::C_Version_EventsCache == Version) 
+        return EventsCache;
+    return "";
+}
+
 Boolean HasCachedEvent(Text _EventHandle) {
-    declare persistent Types::K_Event[Text] ObsStore_EventsCache for LocalUser = [];
-    return ObsStore_EventsCache.existskey(_EventHandle)
-        && ObsStore_EventsCache[_EventHandle].EditionsDetails.count > 0;
+    declare Text RawEventsCache = Private_GetRawCache();
+    if (RawEventsCache == "") return False;
+    declare Types::K_Event[Text] EventsCache;
+    EventsCache.fromjson(RawEventsCache);
+    return EventsCache.existskey(_EventHandle)
+        && EventsCache[_EventHandle].EditionsDetails.count > 0;
 }
 
 Types::K_Event GetCachedEvent(Text _EventHandle) {
-    declare persistent Types::K_Event[Text] ObsStore_EventsCache for LocalUser = [];
-    return ObsStore_EventsCache[_EventHandle];
+    declare Text RawEventsCache = Private_GetRawCache();
+    declare Types::K_Event[Text] EventsCache;
+    EventsCache.fromjson(RawEventsCache);
+    return EventsCache[_EventHandle];
 }
 
 Void LoadEdition(Text _EventHandle, Integer _EventEdition, Boolean _Lazy) {
@@ -46,8 +78,8 @@ Void Load() {
 
 Void Private_UpdateEventsCache() {
     declare Types::K_Event[Text] Events = Inner::Private_EventAPI_GetEvents();
-    declare persistent Types::K_Event[Text] ObsStore_EventsCache for LocalUser = [];
-    ObsStore_EventsCache = Events;
+    declare persistent Text ObsStore_EventsCache for LocalUser = "";
+    ObsStore_EventsCache = Constants::C_Version_EventsCache ^ Events.tojson();
 }
 
 Void Loop() {
