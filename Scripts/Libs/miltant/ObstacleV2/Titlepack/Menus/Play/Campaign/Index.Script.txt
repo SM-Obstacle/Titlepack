@@ -120,9 +120,9 @@ Text Build() {
 				<frameinstance modelid="CampaignEditionItem" pos="0 -50.4" id="CampaignEditionItem_8"/>
 			</frame>
 			
-			<quad size="7.67 7.67"  image="file://Media/Images/Obstacle/Campaign/MX.png" pos="10.67 -2.83"/>
-			<label pos="34 -7.1" textsize="5.2" text="seasons" textprefix="$t" halign="center" valign="center2" class="lato"/>
-			<quad size="62 123.83"  image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
+			<quad pos="10.67 -5" size="7.67 7.67"  image="file://Media/Images/Obstacle/Campaign/MX.png" valign="center"/>
+			<label pos="34 -5.5" textsize="5.2" text="seasons" textprefix="$t" halign="center" valign="center2" class="lato"/>
+			<quad size="62 123.83" image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
 		</frame>
 
 		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" class="lator" id="Label_EventLn1"/>
@@ -506,9 +506,6 @@ Text Build() {
 						if (Event.ControlId != "Label_CampaignEdition") continue;
 
 						declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
-						declare Integer EditionIdx = 1 + P_CampaignEvent.Editions.count - TL::ToInteger(TL::SubString(Label_Edition.Parent.ControlId, 20, 1));
-						if (EditionIdx == P_SelectedEdition) continue;
-
 						Label_Edition.TextColor = CL::HexToRgb("FFFFFF");
 					}
 					case CMlScriptEvent::Type::MouseOut: {
