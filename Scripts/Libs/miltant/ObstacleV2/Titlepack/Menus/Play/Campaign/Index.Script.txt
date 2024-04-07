@@ -46,15 +46,17 @@ Text Build() {
 	</framemodel>
 
 	<framemodel id="MapCard">
-		<label pos="1 -4.5" valign="center2" textsize="5" textcolor="5F5F64" class="lator" id="Label_Num"/>
+		<label pos="1 -4.83" valign="center2" textsize="5" textcolor="fff" class="lato" id="Label_Num"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_MedalC" hidden="1"/>
 		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1"/>
 		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1"/>
-		<quad pos="14.75 -4.165" size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png" id="Button_Map" scriptevents="1" halign="center" valign="center"
+		<quad pos="14.75 -8.67" size="10.33 1.67" image="file://Media/Images/Obstacle/Campaign/LCompleted.png" id="Quad_CompletedIndicator" halign="center" valign="center" hidden="0"/>
+		<quad pos="14.75 -4.17" size="30.83 9.67" image="file://Media/Images/Obstacle/Campaign/OutlineMapCampaign.png" id="Outline_Map" halign="center" valign="center" hidden="1"/>
+		<quad pos="14.75 -4.17" size="29.67 8.5" image="file://Media/Images/Obstacle/Campaign/BMapCampaign.png" id="Button_Map" scriptevents="1" halign="center" valign="center"
 				data-target="Button_Map" data-anim-length="70"
 				data-default-anim="<quad scale=&quot;1.&quot;/>"
-				data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
+				data-target-anim="<quad scale=&quot;1.03&quot;/>"/>
 	</framemodel>
 
 	<framemodel id="CategoryModel">
@@ -118,15 +120,15 @@ Text Build() {
 				<frameinstance modelid="CampaignEditionItem" pos="0 -50.4" id="CampaignEditionItem_8"/>
 			</frame>
 			
-			<quad size="7.66 7.66"  image="file://Media/Images/Obstacle/Campaign/MX.png" pos="10.66 -2.83"/>
+			<quad size="7.67 7.67"  image="file://Media/Images/Obstacle/Campaign/MX.png" pos="10.67 -2.83"/>
 			<label pos="34 -7.1" textsize="5.2" text="seasons" textprefix="$t" halign="center" valign="center2" class="lato"/>
 			<quad size="62 123.83"  image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
 		</frame>
 
 		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" class="lator" id="Label_EventLn1"/>
 		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" class="lato" id="Label_EventLn2"/>
-		<label pos="181 -24.5" textsize="2" text="29]Leaderboards..." textprefix="$fff$i$l[{{{Constants::C_WebsiteUrl}}}/campaign/" class="lato" halign="left" id="Label_Leaderboards"/>
-		<label pos="181 -29.5" textsize="1.7" text="Any feedback? Contact unmecrandomofficiel  on Discord" class="lato" halign="left" id="Label_Feedback"/>
+		<label pos="181 -24.5" textsize="2" text="29]Leaderboards..." textprefix="$s$fff$i$l[{{{Constants::C_WebsiteUrl}}}/campaign/" class="lato" halign="left" id="Label_Leaderboards"/>
+		<label pos="181 -29.5" textsize="2" text="$sAny feedback? Contact $iunmecrandomofficiel$z  on Discord!" class="lato" halign="left" id="Label_Feedback"/>
 		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
 		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
@@ -273,11 +275,10 @@ Text Build() {
 		Label_Mapper.SetText("   " ^ AuthorLink ^ AuthorName);
 
 		if (SelectedMap.personal_best < 0) {
-			Label_PB.TextColor = <1., 1., 1.>;
+			Label_PB.TextColor = CL::HexToRgb("FFFFFF");
 			Label_PB.SetText("-- : -- : --");
 		} else {
-			// #5D7FCE
-			Label_PB.TextColor = <.365, .498, .808>;
+			Label_PB.TextColor = CL::HexToRgb("5D7FCE");
 			Label_PB.SetText(TL::TimeToText(SelectedMap.personal_best, True));
 		}
 		Frame_Infos.Show();
@@ -298,7 +299,7 @@ Text Build() {
 				.slice(MapsSliceStart, C_MaxMapsPerCategoryPage);
 
 			// Used to put 0 left padding in the map indexes
-			declare Integer DigitNum = NumberOfDigits(Category.maps.count);
+			declare Integer DigitNum = ML::Max(NumberOfDigits(Category.maps.count), 2);
 
 			foreach (MapI => Map in Category.maps) {
 				if (MapI < MapsSliceStart || MapI >= MapsSliceStart + C_MaxMapsPerCategoryPage) continue;
@@ -308,7 +309,9 @@ Text Build() {
 
 				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ (CardI+1)) as CMlFrame);
 				Frame_Card.Show();
-
+				
+				declare CMlQuad CompletedIndicator = (Frame_Card.GetFirstChild("Quad_CompletedIndicator") as CMlQuad);
+				declare CMlQuad Outline_Map = (Frame_Card.GetFirstChild("Outline_Map") as CMlQuad);
 				declare CMlQuad Button_Map = (Frame_Card.GetFirstChild("Button_Map") as CMlQuad);
 				declare CMlLabel Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
 				declare CMlQuad Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
@@ -323,14 +326,20 @@ Text Build() {
 				}
 				Label_Num.SetText(Label_Num_Text ^ (MapI+1));
 
-				if (P_SelectedMapJ == MapI && P_SelectedMapI == I)
-					// #7D7E82
-					Button_Map.ModulateColor = <.294, .333, .404>;
-				else // #C2AE47
-					Button_Map.ModulateColor = <1., 1., 1.>;
+				if (P_SelectedMapJ == MapI && P_SelectedMapI == I) {
+					Label_Num.TextColor = CL::HexToRgb("1D1F37");
+					
+					CompletedIndicator.RelativePosition_V3.Y = -8.67;
+					Outline_Map.Show();
+				} else {
+					Label_Num.TextColor = CL::HexToRgb("FFFFFF");
+					
+					CompletedIndicator.RelativePosition_V3.Y = -8.33;
+					Outline_Map.Hide();
+				}
 
 				if (Map.personal_best >= 0) {
-					Label_Num.TextColor = <.761, .682, .278>;
+					CompletedIndicator.Show();
 
 					if (Map.personal_best <= Map.champion_time) {
 						Quad_MedalC.Show();
@@ -344,10 +353,8 @@ Text Build() {
 					if (Map.personal_best <= Map.bronze_time) {
 						Quad_MedalB.Show();
 					}
-				} else if (P_SelectedMapJ == MapI && P_SelectedMapI == I) {
-					Label_Num.TextColor = <.18, .18, .18>;
 				} else {
-					Label_Num.TextColor = <.373, .373, .392>;
+					CompletedIndicator.Hide();
 				}
 			}
 		}
