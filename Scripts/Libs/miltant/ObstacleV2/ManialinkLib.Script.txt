@@ -47,20 +47,10 @@ Text GetDeclareGlobals() {
 			Duration = TL::ToInteger(_Event.Control.DataAttributeGet("anim-length"));
 		}
 
-		declare AttributeAnim = "default-anim";
-		declare EasingType = CAnimManager::EAnimManagerEasing::QuadOut;
+		declare AttributeAnim = "target-anim";
+		declare EasingType = CAnimManager::EAnimManagerEasing::QuadIn;
 
-		if (_Event.Type == CMlScriptEvent::Type::MouseOut) {
-			declare Vec3[Text] ModulateColor_Default for _Event.Control;
-
-			foreach (Id => Color in ModulateColor_Default) {
-				declare Quad = (Frame_MenuItem.GetFirstChild(Id) as CMlQuad);
-				Quad.ModulateColor = Color;
-			}
-			if (_Event.Control.DataAttributeExists("anim-cursor") && ManialinkLib_LastMenu != Null) {
-				ManialinkLib_AnimateCursor(ManialinkLib_LastMenu);
-			}
-		} else {
+		if (_Event.Type == CMlScriptEvent::Type::MouseOver) {
 			declare Vec3[Text] ModulateColor_Target for _Event.Control;
 
 			foreach (Id => Color in ModulateColor_Target) {
@@ -71,9 +61,26 @@ Text GetDeclareGlobals() {
 			if (_Event.Control.DataAttributeExists("anim-cursor")) {
 				ManialinkLib_AnimateCursor(_Event.Control);
 			}
+		} else { // MouseOut or MouseClick
+			declare Vec3[Text] ModulateColor_Default for _Event.Control;
 
-			EasingType = CAnimManager::EAnimManagerEasing::QuadIn;
-			AttributeAnim = "target-anim";
+			foreach (Id => Color in ModulateColor_Default) {
+				declare Quad = (Frame_MenuItem.GetFirstChild(Id) as CMlQuad);
+				Quad.ModulateColor = Color;
+			}
+
+			if (_Event.Type == CMlScriptEvent::Type::MouseOut) {
+				if (_Event.Control.DataAttributeExists("anim-cursor") && ManialinkLib_LastMenu != Null) {
+					ManialinkLib_AnimateCursor(ManialinkLib_LastMenu);
+				}
+			} else { // MouseClick
+				if (_Event.Control.DataAttributeExists("anim-cursor")) {
+					ManialinkLib_AnimateCursor(_Event.Control);
+				}
+			}
+
+			EasingType = CAnimManager::EAnimManagerEasing::QuadOut;
+			AttributeAnim = "default-anim";
 		}
 
 		if (!_Event.Control.DataAttributeExists(AttributeAnim)) return;

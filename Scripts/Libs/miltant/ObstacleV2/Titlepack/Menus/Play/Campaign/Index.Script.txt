@@ -8,6 +8,17 @@
 #Include "TextLib" as TL
 #Include "MathLib" as ML
 
+#Const C_SpecialEventConfig [
+	"default" => [
+		"label1pos" => <181., -24.5>,
+		"label2pos" => <181., -29.5>
+	],
+	"Winter\t2024" => [
+		"label1pos" => <6., -24.5>,
+		"label2pos" => <6., -29.5>
+	]
+]
+
 #Struct K_LocalMapInfo {
 	Text MapUid;
 	Text FileName;
@@ -36,30 +47,32 @@ Text Build() {
 {{{Styles::GetStyleSheet()}}}
 <frame id="Frame_Campaign">
 	<framemodel id="CampaignEditionItem">
-		<label id="Label_CampaignEdition" halign="center" textprefix="$t" textfont="light" textcolor="" textsize="4.8" scriptevents="1" />
+		<label id="Label_CampaignEdition" halign="center" textprefix="$t" class="lato" textcolor="" textsize="4.8" scriptevents="1"/>
 	</framemodel>
 
 	<framemodel id="MapCard">
-		<label pos="1 -4.5" valign="center2" textsize="5" textcolor="5F5F64" class="lator" id="Label_Num"/>
+		<label pos="1 -4.83" valign="center2" textsize="5" textcolor="fff" class="lato" id="Label_Num"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_MedalC" hidden="1"/>
 		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1"/>
 		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1"/>
-		<quad pos="14.75 -4.165" size="29.5 8.33" image="file://Media/Images/Obstacle/Campaign/BMapCampagn.png" id="Button_Map" scriptevents="1" halign="center" valign="center"
+		<quad pos="14.75 -8.67" size="10.33 1.67" image="file://Media/Images/Obstacle/Campaign/LCompleted.png" id="Quad_CompletedIndicator" halign="center" valign="center" hidden="0"/>
+		<quad pos="14.75 -4.17" size="30.83 9.67" image="file://Media/Images/Obstacle/Campaign/OutlineMapCampaign.png" id="Outline_Map" halign="center" valign="center" hidden="1"/>
+		<quad pos="14.75 -4.17" size="29.67 8.5" image="file://Media/Images/Obstacle/Campaign/BMapCampaign.png" id="Button_Map" scriptevents="1" halign="center" valign="center"
 				data-target="Button_Map" data-anim-length="70"
 				data-default-anim="<quad scale=&quot;1.&quot;/>"
-				data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
+				data-target-anim="<quad scale=&quot;1.03&quot;/>"/>
 	</framemodel>
 
 	<framemodel id="CategoryModel">
-		<quad pos="16.75 2" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
-		<quad id="Category" pos="-.83" size="31.17 3.67" />
+		<quad pos="16.75 2" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
+		<quad id="Category" pos="-.83" size="31.17 3.67"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -8.67" id="Card_1"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -20.33" id="Card_2"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -32" id="Card_3"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -43.67" id="Card_4"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -55.33" id="Card_5"/>
-		<quad pos="16.75 -66.5" id="Quad_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
+		<quad pos="16.75 -66.5" id="Quad_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
 	</framemodel>
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
@@ -70,7 +83,8 @@ Text Build() {
 				data-target="Label_IconPlay Quad_Thumbnail" data-anim-length="70"
 				data-default-anim="<label scale=&quot;1&quot; opacity=&quot;0.4&quot;/> <quad scale=&quot;1&quot;/>"
 				data-target-anim="<label scale=&quot;1.2&quot; opacity=&quot;0.8&quot;/> <quad scale=&quot;1.06&quot;/>"/>
-			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Thumbnail" keepratio="Clip" />
+			<quad size="53 35.83" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Thumbnail" keepratio="Clip"/>
+			<quad size="12.5 10.17" pos="26.5 -17.915" halign="center" valign="center" id="Quad_Loader" image="file://Media/Images/Obstacle/Menu/Logo.png"/>
 		</frame>
 
 		<frame pos="0 15.67">
@@ -90,36 +104,36 @@ Text Build() {
 
 	<frame pos="-96.17 53.5">
 		<frame pos="8 -46.67">
-			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
-			<frameinstance modelid="CategoryModel" id="F_Category_1" hidden="1" />
-			<frameinstance modelid="CategoryModel" id="F_Category_2" hidden="1" pos="34.5" />
-			<frameinstance modelid="CategoryModel" id="F_Category_3" hidden="1" pos="69" />
-			<frameinstance modelid="CategoryModel" id="F_Category_4" hidden="1" pos="103.5" />
-			<frameinstance modelid="CategoryModel" id="F_Category_5" hidden="1" pos="138" />
-			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
+			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
+			<frameinstance modelid="CategoryModel" id="F_Category_1" hidden="1"/>
+			<frameinstance modelid="CategoryModel" id="F_Category_2" hidden="1" pos="34.5"/>
+			<frameinstance modelid="CategoryModel" id="F_Category_3" hidden="1" pos="69"/>
+			<frameinstance modelid="CategoryModel" id="F_Category_4" hidden="1" pos="103.5"/>
+			<frameinstance modelid="CategoryModel" id="F_Category_5" hidden="1" pos="138"/>
+			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
 		</frame>
 
 		<frame pos="188.33">
 			<frame pos="31 -24">
-				<frameinstance modelid="CampaignEditionItem" id="CampaignEditionItem_1" />
-				<frameinstance modelid="CampaignEditionItem" pos="0 -7.2" id="CampaignEditionItem_2" />
-				<frameinstance modelid="CampaignEditionItem" pos="0 -14.4" id="CampaignEditionItem_3" />
-				<frameinstance modelid="CampaignEditionItem" pos="0 -21.6" id="CampaignEditionItem_4" />
-				<frameinstance modelid="CampaignEditionItem" pos="0 -28.8" id="CampaignEditionItem_5" />
-				<frameinstance modelid="CampaignEditionItem" pos="0 -36" id="CampaignEditionItem_6" />
-				<frameinstance modelid="CampaignEditionItem" pos="0 -43.2" id="CampaignEditionItem_7" />
-				<frameinstance modelid="CampaignEditionItem" pos="0 -50.4" id="CampaignEditionItem_8" />
+				<frameinstance modelid="CampaignEditionItem" id="CampaignEditionItem_1"/>
+				<frameinstance modelid="CampaignEditionItem" pos="0 -7.2" id="CampaignEditionItem_2"/>
+				<frameinstance modelid="CampaignEditionItem" pos="0 -14.4" id="CampaignEditionItem_3"/>
+				<frameinstance modelid="CampaignEditionItem" pos="0 -21.6" id="CampaignEditionItem_4"/>
+				<frameinstance modelid="CampaignEditionItem" pos="0 -28.8" id="CampaignEditionItem_5"/>
+				<frameinstance modelid="CampaignEditionItem" pos="0 -36" id="CampaignEditionItem_6"/>
+				<frameinstance modelid="CampaignEditionItem" pos="0 -43.2" id="CampaignEditionItem_7"/>
+				<frameinstance modelid="CampaignEditionItem" pos="0 -50.4" id="CampaignEditionItem_8"/>
 			</frame>
 			
-			<quad size="7.66 7.66"  image="file://Media/Images/Obstacle/Campaign/MX.png" pos="10.66 -2.83"/>
-			<label pos="34 -7.1" textsize="5.2" text="seasons" textprefix="$t" halign="center" valign="center2" textfont="light"/>
-			<quad size="62 123.83"  image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
+			<quad pos="10.67 -5" size="7.67 7.67"  image="file://Media/Images/Obstacle/Campaign/MX.png" valign="center"/>
+			<label pos="34 -5.5" textsize="5.2" text="seasons" textprefix="$t" halign="center" valign="center2" class="lato"/>
+			<quad size="62 123.83" image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
 		</frame>
 
 		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" class="lator" id="Label_EventLn1"/>
-		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" textfont="light" id="Label_EventLn2"/>
-		<label id="Label_LeaderboardsLink" pos="181 -24.5" textsize="2" textfont="light" halign="right"/>
-		<label pos="181 -29.5" textsize="1.7" text="$sAny feedback? Contact $iunmecrandomofficiel$i  on Discord" textfont="light" halign="right"/>
+		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" class="lato" textfont="light" id="Label_EventLn2"/>
+		<label id="Label_LeaderboardsLink" pos="181 -24.5" textsize="2" textfont="light" halign="right" class="lato" />
+		<label id="Label_Feedback" pos="181 -29.5" textsize="2" text="$sAny feedback? Contact $iunmecrandomofficiel$i  on Discord" class="lato" textfont="light" halign="right"/>
 		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
 		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
@@ -140,6 +154,7 @@ Text Build() {
 
 	#Const C_MaxCategoriesPerPage 5
 	#Const C_MaxMapsPerCategoryPage 5
+	#Const C_SpecialEventConfig  {{{dump(C_SpecialEventConfig)}}}
 
 	{{{Styles::GetDeclareGlobals()}}}
 
@@ -254,8 +269,8 @@ Text Build() {
 		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/event/campaign/" ^ P_SelectedEdition ^ "/map/" ^ SelectedMap.map_uid ^ "]";
 		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.main_author.login ^ "]";
 
-		declare MapName = TL::RegexReplace("\\$[lL](\\[.*\\])?", SelectedMap.name, "g", "");
-		declare AuthorName = TL::RegexReplace("\\$[lL](\\[.*\\])?", SelectedMap.main_author.name, "g", "");
+		declare MapName = TL::RegexReplace("\\$[lLhHpP](\\[.*\\])?", SelectedMap.name, "g", "");
+		declare AuthorName = TL::RegexReplace("\\$[lLhHpP](\\[.*\\])?", SelectedMap.main_author.name, "g", "");
 		MapName = TL::Replace(MapName, "$z", "$z" ^ MapLink);
 		AuthorName = TL::Replace(AuthorName, "$z", "$z" ^ AuthorLink);
 
@@ -267,15 +282,14 @@ Text Build() {
 			ThumbnailPath = "https://sm.mania.exchange/maps/thumbnail/" ^ SelectedMap.mx_id ^ "?.jpg";
 		}
 		Quad_Thumbnail.ChangeImageUrl(ThumbnailPath);
-		Label_Map.SetText(MapLink ^ "   " ^ MapName);
-		Label_Mapper.SetText(AuthorLink ^ "   " ^ AuthorName);
+		Label_Map.SetText("   " ^ MapLink ^ MapName);
+		Label_Mapper.SetText("   " ^ AuthorLink ^ AuthorName);
 
 		if (SelectedMap.personal_best < 0) {
-			Label_PB.TextColor = <1., 1., 1.>;
+			Label_PB.TextColor = CL::HexToRgb("FFFFFF");
 			Label_PB.SetText("-- : -- : --");
 		} else {
-			// #E6D189
-			Label_PB.TextColor = <.901, .82, .537>;
+			Label_PB.TextColor = CL::HexToRgb("5D7FCE");
 			Label_PB.SetText(TL::TimeToText(SelectedMap.personal_best, True));
 		}
 		Frame_Infos.Show();
@@ -296,7 +310,7 @@ Text Build() {
 				.slice(MapsSliceStart, C_MaxMapsPerCategoryPage);
 
 			// Used to put 0 left padding in the map indexes
-			declare Integer DigitNum = NumberOfDigits(Category.maps.count);
+			declare Integer DigitNum = ML::Max(NumberOfDigits(Category.maps.count), 2);
 
 			foreach (MapI => Map in Category.maps) {
 				if (MapI < MapsSliceStart || MapI >= MapsSliceStart + C_MaxMapsPerCategoryPage) continue;
@@ -306,7 +320,9 @@ Text Build() {
 
 				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ (CardI+1)) as CMlFrame);
 				Frame_Card.Show();
-
+				
+				declare CMlQuad CompletedIndicator = (Frame_Card.GetFirstChild("Quad_CompletedIndicator") as CMlQuad);
+				declare CMlQuad Outline_Map = (Frame_Card.GetFirstChild("Outline_Map") as CMlQuad);
 				declare CMlQuad Button_Map = (Frame_Card.GetFirstChild("Button_Map") as CMlQuad);
 				declare CMlLabel Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
 				declare CMlQuad Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
@@ -321,13 +337,20 @@ Text Build() {
 				}
 				Label_Num.SetText(Label_Num_Text ^ (MapI+1));
 
-				// #7D7E82
-				if (P_SelectedMapJ == MapI && P_SelectedMapI == I) Button_Map.ModulateColor = <.294, .333, .404>;
-				// #C2AE47
-				else Button_Map.ModulateColor = <1., 1., 1.>;
+				if (P_SelectedMapJ == MapI && P_SelectedMapI == I) {
+					Label_Num.TextColor = CL::HexToRgb("1D1F37");
+					
+					CompletedIndicator.RelativePosition_V3.Y = -8.67;
+					Outline_Map.Show();
+				} else {
+					Label_Num.TextColor = CL::HexToRgb("FFFFFF");
+					
+					CompletedIndicator.RelativePosition_V3.Y = -8.33;
+					Outline_Map.Hide();
+				}
 
 				if (Map.personal_best >= 0) {
-					Label_Num.TextColor = <.761, .682, .278>;
+					CompletedIndicator.Show();
 
 					if (Map.personal_best <= Map.champion_time) {
 						Quad_MedalC.Show();
@@ -341,10 +364,8 @@ Text Build() {
 					if (Map.personal_best <= Map.bronze_time) {
 						Quad_MedalB.Show();
 					}
-				} else if (P_SelectedMapJ == MapI && P_SelectedMapI == I) {
-					Label_Num.TextColor = <.18, .18, .18>;
 				} else {
-					Label_Num.TextColor = <.373, .373, .392>;
+					CompletedIndicator.Hide();
 				}
 			}
 		}
@@ -393,10 +414,13 @@ Text Build() {
 		
 	main() {
 		declare Frame_Infos = (Page.GetFirstChild("Frame_Infos") as CMlFrame);
+		declare Quad_Loader = (Frame_Infos.GetFirstChild("Quad_Loader") as CMlQuad);
 
 		declare Quad_Banner = (Page.GetFirstChild("Quad_Banner") as CMlQuad);
 		declare Label_EventLn1 = (Page.GetFirstChild("Label_EventLn1") as CMlLabel);
 		declare Label_EventLn2 = (Page.GetFirstChild("Label_EventLn2") as CMlLabel);
+		declare Label_Leaderboards = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
+		declare Label_Feedback = (Page.GetFirstChild("Label_Feedback") as CMlLabel);
 
 		declare Integer[Text] CampaignRecords for LocalUser;
 		declare Boolean CampaignRecordsUpdated for LocalUser = False;
@@ -422,6 +446,18 @@ Text Build() {
 		wait(P_SelectedEdition != -1);
 
 		while (True) {
+			declare Lerp = ML::Abs(ML::Cos(Now % 2000 / 636.62));
+			Quad_Loader.Size = <Lerp * 12.5, 10.17>;
+
+			switch (ML::FloorInteger(Now / 1000.) % 4) {
+				case 1: {
+					Quad_Loader.ChangeImageUrl("file://Media/Images/Logos/LogoWeb.png");
+				}
+				case 3: {
+					Quad_Loader.ChangeImageUrl("file://Media/Images/Logos/LogoWebFlip.png");
+				}
+			}
+
 			if (SelectedCampaign != P_SelectedEdition) {
 				InitLastPages();
 				InitCampaignEditionsList();
@@ -432,6 +468,29 @@ Text Build() {
 				Label_EventLn1.SetText(SelectedEdition.name);
 				Label_EventLn2.SetText(SelectedEdition.subtitle);
 				MapsNeedRefresh = True;
+
+				declare Vec2[Text] SpecialConfig;
+				if (C_SpecialEventConfig.existskey(P_CampaignEvent.EditionsDetails[SelectedCampaign].name)) {
+					SpecialConfig = C_SpecialEventConfig[P_CampaignEvent.EditionsDetails[SelectedCampaign].name];
+				} else {
+					SpecialConfig = C_SpecialEventConfig["default"];
+				}
+
+				Label_Leaderboards.RelativePosition_V3.X = SpecialConfig["label1pos"].X;
+				Label_Leaderboards.RelativePosition_V3.Y = SpecialConfig["label1pos"].Y;
+				Label_Feedback.RelativePosition_V3.X = SpecialConfig["label2pos"].X;
+				Label_Feedback.RelativePosition_V3.Y = SpecialConfig["label2pos"].Y;
+
+				if (Label_Leaderboards.RelativePosition_V3.X < 81.67) {
+					Label_Leaderboards.HorizontalAlign = CMlControl::AlignHorizontal::Left;
+				} else {
+					Label_Leaderboards.HorizontalAlign = CMlControl::AlignHorizontal::Right;
+				}
+				if (Label_Feedback.RelativePosition_V3.X < 81.67) {
+					Label_Feedback.HorizontalAlign = CMlControl::AlignHorizontal::Left;
+				} else {
+					Label_Feedback.HorizontalAlign = CMlControl::AlignHorizontal::Right;
+				}
 			}
 
 			if (SelectedMapI != P_SelectedMapI || SelectedMapJ != P_SelectedMapJ) {
@@ -461,9 +520,6 @@ Text Build() {
 						if (Event.ControlId != "Label_CampaignEdition") continue;
 
 						declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
-						declare Integer EditionIdx = 1 + P_CampaignEvent.Editions.count - TL::ToInteger(TL::SubString(Label_Edition.Parent.ControlId, 20, 1));
-						if (EditionIdx == P_SelectedEdition) continue;
-
 						Label_Edition.TextColor = CL::HexToRgb("FFFFFF");
 					}
 					case CMlScriptEvent::Type::MouseOut: {
