@@ -1,9 +1,9 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"									as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"												as Styles
 #Include "Libs/miltant/ObstacleV2/String.Script.txt"													as StringLib
-#Include "Libs/miltant/ObstacleV2/ScrollBar.Script.txt"	 		       								as Scroll
+#Include "Libs/miltant/ObstacleV2/ScrollBar.Script.txt"	 			   									as Scroll
 
-#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
+#Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"	as ChannelInfoStructs
 
 Text GetName() {
 	return "online";
@@ -11,6 +11,7 @@ Text GetName() {
 
 Text Build() {
 	return """
+	{{{Styles::GetStyleSheet()}}}
 	<!-- 
 		opacity menus:
 			- base: 0.5
@@ -19,13 +20,13 @@ Text Build() {
 	 -->
 <framemodel id="Server">
 	<quad size="4.67 3.5" pos="4.17 -4.5" valign="center" halign="center" keepratio="Cover" id="Quad_Flag"/>
-	<label textcolor="fff" pos="8 -4.5" size="110" valign="center2" textfont="light" textsize="2.6" id="Label_Name"/>
+	<label textcolor="fff" pos="8 -4.5" size="110" valign="center2" class="lato" textsize="2.6" id="Label_Name"/>
 	<label textcolor="fff" pos="151 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Private"/>
 	<label textcolor="fff" pos="144 -4.5" size="20 5" text="" valign="center2" textsize="2.6" id="Label_Fav"/> <!--  -->
-	<label textcolor="fff" pos="165 -4.5" valign="center2" textfont="light" textsize="2.6" size="21" id="Label_Players"/>
-	<label textcolor="fff" pos="176 -4.5" valign="center2" textfont="light" textsize="2.6" size="4.8" halign="right" id="Label_Ping" hidden="1"/>
-	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_ms" hidden="1"/>
-	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" textfont="light" textsize="2.6" size="4.8" id="Label_Ping_graph" hidden="1"/>
+	<label textcolor="fff" pos="165 -4.5" valign="center2" class="lato" textsize="2.6" size="21" id="Label_Players"/>
+	<label textcolor="fff" pos="176 -4.5" valign="center2" class="lato" textsize="2.6" size="4.8" halign="right" id="Label_Ping" hidden="1"/>
+	<label textcolor="fff" pos="176.5 -4.5" text="ms" valign="center2" class="lato" textsize="2.6" size="4.8" id="Label_Ping_ms" hidden="1"/>
+	<label textcolor="fff" pos="165.5 -4.5" text="" valign="center2" class="lato" textsize="2.6" size="4.8" id="Label_Ping_graph" hidden="1"/>
 
 	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="fff" id="Quad_Back" hidden="1"/>
 	<quad size="183.5 8.5" image="file://Media/Images/Obstacle/Servers/FServer.png" modulatecolor="000"
@@ -34,6 +35,13 @@ Text Build() {
 		data-target-anim="<quad modulatecolor=&quot;fff&quot;/>"/>
 </framemodel>
 
+<frame pos="-91.67 45.83">
+	<label id="Label_ComingSoon" pos="92 -3.67" valign="center2" halign="center" opacity="0" text="Coming, soon!" textcolor="fff" class="lator"/>
+	<quad id="Quad_ComingSoon" data-target="Quad_ComingSoon Label_ComingSoon"
+		data-default-anim="<quad opacity=&quot;0&quot;/><label opacity=&quot;0&quot;/>"
+		data-target-anim="<quad opacity=&quot;1&quot;/><label opacity=&quot;1&quot;/>"
+		scriptevents="1" bgcolor="6D94FB33" opacity="0" size="184 7.33"/>
+</frame>
 
 <frame pos="-91.67 45.83" data-name="filter_all">
 	<label textcolor="fff" pos="4.42 -3.67" text="" valign="center2" halign="center"/>
@@ -49,7 +57,7 @@ Text Build() {
 </frame>
 
 <label textcolor="fff" pos="66.2 42.17" text="" valign="center2" halign="center"/>
-<entry textcolor="fff" textfont="light" pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
+<entry textcolor="fff" class="lato" pos="-58 42.5" size="110 7.33" default="" selecttext="1" textformat="Script" style="TextCardSmall" valign="center2" id="Entry_Search"/>
 <quad pos="-60.17 45.83" size="130.83 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search" scriptevents="1" opacity="0.5"/>
 
 <frame pos="72.33 45.83" data-name="create">
