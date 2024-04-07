@@ -12,15 +12,6 @@ Void Load(Text _FileType) {
 Boolean StartMapEditor() {
 	declare Status = Dialogs::Prompt("explorer", "explorer__start_map_editor", 85.25);
 
-	// Do these do anything?
-	// """<mode_script_settings>
-	// 	<setting name="S_Mode"					value="		type="text"/>
-	// 	<setting name="S_IsOfficialMap"			value="False"	type="boolean"/>
-	// 	<setting name="S_Gameplay_Acceleration"	value="1."		type="real"/>
-	// 	<setting name="S_Gameplay_Control"		value="1."		type="real"/>
-	// 	<setting name="S_Gameplay_Gravity"		value="1."		type="real"/>
-	// </mode_script_settings>"""
-
 	if (Status.Over) {
 		wait(TitleControl.IsReady);
 		

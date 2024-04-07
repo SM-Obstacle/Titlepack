@@ -1,0 +1,112 @@
+#Include "Libs/miltant/ObstacleV2/TitlePack/Components/Index.Script.txt" as Lib
+
+#Const C_Width 70.
+#Const C_Height 5.
+
+Text BuildML(Text[Text] _Values, Text _Default, Lib::K_Options _Options) {
+	declare List = "";
+	declare I = 0;
+	foreach (K => V in _Values) {
+		List ^= """<label text="{{{V}}}" data-key="{{{K}}}" pos="{{{C_Width / 2.}}} {{{-I * 5.67 - 2.83}}}" size="{{{C_Width}}} 5.67"
+			id="Component__DropDown_Option" class="lato" textsize="2.5" scriptevents="1" valign="center2" halign="center"/>""";
+		I += 1;
+	}
+
+	declare Default = "(choose)";
+	if (_Values.existskey(_Default)) {
+		Default = _Values[_Default];
+	}
+
+	declare ML_Text = """
+	<frame {{{Lib::BuildOptions(_Options, False)}}}>
+		<label pos="{{{C_Width / 2}}} {{{-C_Height / 2}}}" size="{{{C_Width - C_Height}}} {{{C_Height}}}" text="{{{Default}}}" class="lato" textsize="2.5" halign="center" valign="center2" id="Component__DropDown_Text"/>
+		<quad pos="{{{C_Width - 2.75}}} {{{-C_Height / 2}}}" size="2.17 1.67" image="file://Media/Images/Common/MarkerArrowDown2.png" id="Component__DropDown_Icon" rot="270" halign="center" valign="center"/>
+		<quad size="{{{C_Width}}} {{{C_Height}}}" image="file://Media/Images/Obstacle/Menu/BDropDown.png" scriptevents="1" id="Component__DropDown_Trigger"/>
+
+		<frame id="Component__DropDown_List" hidden="1">
+			{{{List}}}
+			<quad size="{{{C_Width}}} {{{5.67 * _Values.count}}}" image="file://Media/Images/Obstacle/Menu/FDropDown.png" id="Component__DropDown_Background"/>
+		</frame>
+	</frame>
+	""";
+
+	return ML_Text;
+}
+
+Text BuildInit(Text[Text] _Values, Lib::K_Options _Options) {
+	declare Init = """//!
+		declare Boolean Component__DropDown_LastMDown = True;
+	""";
+
+	return Init;
+}
+
+Text BuildMainLoop(Text[Text] _Values, Lib::K_Options _Options) {
+	declare MainLoop = """//!
+	foreach(Event in PendingEvents) {
+		if (Event.Type == CMlEvent::Type::MouseClick) {
+			switch (Event.ControlId) {
+				case "Component__DropDown_Trigger": {
+					declare Component <=> (Event.Control.Parent as CMlFrame);
+					declare List <=> (Component.GetFirstChild("Component__DropDown_List") as CMlFrame);
+					declare DropDown_Icon <=> Component.GetFirstChild("Component__DropDown_Icon");
+
+					if (List.Visible) {
+						List.Hide();
+						DropDown_Icon.RelativeRotation = 270.;
+					} else {
+						declare DropDown_Trigger <=> Component.GetFirstChild("Component__DropDown_Trigger");
+						declare DropDown_Background <=> List.GetFirstChild("Component__DropDown_Background");
+						
+						if (Component.AbsolutePosition_V3.Y > 0) {
+							List.RelativePosition_V3.Y = -DropDown_Trigger.Size.Y - 1.66;
+							List.VerticalAlign = CMlControl::AlignVertical::Top;
+						} else {
+							List.RelativePosition_V3.Y = DropDown_Background.Size.Y + 1.66;
+							List.VerticalAlign = CMlControl::AlignVertical::Bottom;
+						}
+
+						List.Show();
+						DropDown_Icon.RelativeRotation = 0.;
+						Component__DropDown_LastMDown = True;
+					}
+				}
+				case "Component__DropDown_Option": {
+					if (Event.Control.DataAttributeExists("key")) {
+						declare Option <=> (Event.Control as CMlLabel);
+						declare Component <=> (Option.Parent.Parent as CMlFrame);
+						declare Label <=> (Component.GetFirstChild("Component__DropDown_Text") as CMlLabel);
+
+						declare Key = Option.DataAttributeGet("key");
+						declare ComponentName = Component.DataAttributeGet("name");
+
+						Label.SetText(Option.Value);
+
+						SendCustomEvent("onChange__" ^ ComponentName, [Key]);
+					}
+				}
+			}
+		}
+	}
+	if (Input.MouseLeftButton && !Component__DropDown_LastMDown) {
+		declare List <=> (Page.GetFirstChild("Component__DropDown_List") as CMlFrame);
+		declare DropDown_Icon <=> Page.GetFirstChild("Component__DropDown_Icon");
+
+		List.Hide();
+		DropDown_Icon.RelativeRotation = 270.;
+		Component__DropDown_LastMDown = True;
+	} else {
+		Component__DropDown_LastMDown = Input.MouseLeftButton;
+	}
+	""";
+
+	return MainLoop;
+}
+
+Lib::K_Component Build(Text[Text] _Values, Text _Default, Lib::K_Options _Options) {
+	return Lib::K_Component {
+		XML = BuildML(_Values, _Default, _Options),
+		Init = BuildInit(_Values, _Options),
+		MainLoop = BuildMainLoop(_Values, _Options)
+	};
+}

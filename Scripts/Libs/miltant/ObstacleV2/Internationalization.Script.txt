@@ -1,0 +1,102 @@
+#Include "Libs/miltant/ObstacleV2/Zones.Script.txt"			as Zones
+#Include "TextLib" as TL
+
+declare Text[] RegionalGuessesSingleton;
+
+
+/**
+ * Returns a list of languages the user might speak based on their location.
+ * 
+ * @returns The list of languages.
+ */
+Text[] RegionalGuesses() {
+    if (RegionalGuessesSingleton.count > 0) // guaranteed true after 1st run
+        return RegionalGuessesSingleton;
+
+    // construct a list of countries the person hints interest for
+    declare UserCountries = Text[];
+
+    // guess 1: `LocalUser.ZonePath`
+    declare ZonePath = TL::Split("|", LocalUser.ZonePath);
+    if (ZonePath.count > 2) {
+        declare Countries = Zones::C_Countries;
+        UserCountries.add(Countries.keyof(ZonePath[2]));
+    }
+
+    // more guesses? could include the timezone or the flag
+
+    // infer a list of languages the person might speak from that
+    declare Result = Text[];
+    declare OfficialLanguages = Zones::C_OfficialLanguages;
+
+    foreach (Country in UserCountries) {
+        foreach (Language in OfficialLanguages[Country]) {
+            if (!Result.exists(Language))
+                Result.add(Language);
+        }
+    }
+
+    // just add English for everybody because that's how the world works
+    if (!Result.exists("en"))
+        Result.add("en");
+
+    RegionalGuessesSingleton = Result;
+    return Result;
+}
+
+
+/**
+ * Returns the given list of languages, but ordered with
+ * the game language and/or user-spoken languages (guess) first.
+ *
+ * @param {Text[]} _ISOSubset - The list of ISO codes to include
+ * @param {Boolean} _Reverse - Whether to put the guesses last
+ * @returns The list of languages.
+ */
+Text[Text] GetLanguageList(Text[] _ISOSubset, Boolean _Reverse) {
+    declare Result = Text[Text];
+    declare Guesses = Text[];
+    declare Languages = Zones::C_Languages;
+
+    // add game language
+    if (_ISOSubset.exists(LocalUser.Language) && Languages.existskey(LocalUser.Language)) {
+        Guesses.add(LocalUser.Language);
+    }
+
+    // add regional languages
+    foreach (ISO in RegionalGuesses()) {
+        if (_ISOSubset.exists(ISO) && !Guesses.exists(ISO)) {
+            Guesses.add(ISO);
+        }
+    }
+
+    if (!_Reverse) { // insert the guesses first
+        foreach (ISO in Guesses)
+            Result[ISO] = Languages[ISO];
+    }
+    
+    // fill in the rest
+    foreach (ISO in _ISOSubset)
+        if (Languages.existskey(ISO) && !Guesses.exists(ISO))
+            Result[ISO] = Languages[ISO];
+
+    if (_Reverse) { // insert the guesses last
+        for (I, 0, Guesses.count - 1) {
+            declare ISO = Guesses[Guesses.count - 1 - I];
+            Result[ISO] = Languages[ISO];
+        }
+    }
+
+    return Result;
+}
+
+/**
+ * Returns the given list of languages, but ordered with
+ * the game language and/or user-spoken languages (guess) first.
+ *
+ * @param {Text[]} _ISOSubset - The list of ISO codes to include
+ * @returns The list of languages.
+ */
+Text[Text] GetLanguageList(Text[] _ISOSubset) {
+    return GetLanguageList(_ISOSubset, False);
+}

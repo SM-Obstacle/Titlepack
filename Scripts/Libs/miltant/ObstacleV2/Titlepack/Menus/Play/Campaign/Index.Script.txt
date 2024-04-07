@@ -35,7 +35,7 @@ Text Build() {
 	</framemodel>
 
 	<framemodel id="MapCard">
-		<label pos="1 -4.5" valign="center2" textsize="5" textcolor="5F5F64" textfont="regular" id="Label_Num"/>
+		<label pos="1 -4.5" valign="center2" textsize="5" textcolor="5F5F64" class="lator" id="Label_Num"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_MedalC" hidden="1"/>
 		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1"/>
@@ -69,16 +69,16 @@ Text Build() {
 		</frame>
 
 		<frame pos="0 15.67">
-			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
 			<quad size="53 11.83" bgcolor="0009"/>
 		</frame>
 		<frame pos="0 2">
-			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
 			<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
 		</frame>
 		<frame pos="0 -25">
 			<label pos="-.17 5" text="personal best" textprefix="$t" textsize="2.05" textcolor="fff"/>
-			<label pos="26.5 -5.92" size="52 11.83" text="..:..:.." textsize="4" textfont="regular" halign="center" valign="center2" textcolor="fff" id="Label_PB"/>
+			<label pos="26.5 -5.92" size="52 11.83" text="..:..:.." textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_PB"/>
 			<quad size="53 11.83" bgcolor="0009" scriptevents="1"/>
 		</frame>
 	</frame>
@@ -111,7 +111,7 @@ Text Build() {
 			<quad size="62 123.83"  image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
 		</frame>
 
-		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" textfont="regular" id="Label_EventLn1"/>
+		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" class="lator" id="Label_EventLn1"/>
 		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" textfont="light" id="Label_EventLn2"/>
 		<label id="Label_LeaderboardsLink" pos="181 -24.5" textsize="2" textfont="light" halign="right"/>
 		<label pos="181 -29.5" textsize="1.7" text="$sAny feedback? Contact $iunmecrandomofficiel$i  on Discord" textfont="light" halign="right"/>

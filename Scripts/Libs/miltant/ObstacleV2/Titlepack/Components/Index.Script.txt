@@ -1,0 +1,64 @@
+#Include "TextLib" as TL
+
+#Struct K_Component {
+    Text XML;
+    Text Init;
+    Text MainLoop;
+}
+
+#Struct K_Options {
+    Text Name;
+
+    Real X;
+    Real Y;
+    Real Width;
+    Real Height;
+
+    Text HAlign;
+    Text VAlign;
+
+    Text Color;
+}
+
+Text BuildVec2(Real _X, Real _Y) {
+    declare Result = "";
+
+    if (_X != 0)
+        Result = TL::ToText(_X);
+    else
+        Result = "0";
+
+    if (_Y != 0)
+        Result = Result ^ " " ^ TL::ToText(_Y);
+
+    return Result;
+}
+
+Text BuildOptions(K_Options _Options, Boolean _IncludeSize, Boolean _IncludeColor) {
+    declare Options = "data-name=\"" ^ _Options.Name ^ "\"";
+
+    if (_Options.X != 0 || _Options.Y != 0)
+        Options ^= " pos=\"" ^ BuildVec2(_Options.X, _Options.Y) ^ "\"";
+
+    if ((_Options.Width != 0 || _Options.Height != 0) && _IncludeSize)
+        Options ^= " size=\"" ^ BuildVec2(_Options.Width, _Options.Height) ^ "\"";
+
+    if (_Options.HAlign != "")
+        Options ^= " halign=\"" ^ _Options.HAlign ^ "\"";
+
+    if (_Options.VAlign != "")
+        Options ^= " valign=\"" ^ _Options.VAlign ^ "\"";
+
+    if (_Options.Color != "" && _IncludeColor)
+        Options ^= " bgcolor=\"" ^ _Options.Color ^ "\"";
+
+    return Options;
+}
+
+Text BuildOptions(K_Options _Options, Boolean _IncludeSize) {
+    return BuildOptions(_Options, _IncludeSize, False);
+}
+
+Text BuildOptions(K_Options _Options) {
+    return BuildOptions(_Options, True);
+}

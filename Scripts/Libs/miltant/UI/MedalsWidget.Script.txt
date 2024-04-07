@@ -42,7 +42,7 @@ Text Private_GetSmallRecords() {
     <frame pos="139 75">
         <frame id="Frame_Records" pos="0 -3">
             <frameinstance modelid="small_record" pos="0 0" id="record0"/>
-            <frameinstance modelid="small_record" pos="0 -4" id="record1" />
+            <frameinstance modelid="small_record" pos="0 -4" id="record1"/>
             <frameinstance modelid="small_record" pos="0 -8" id="record2"/>
 
 			<frame pos="-20 -13" id="Frame_Medal_3">

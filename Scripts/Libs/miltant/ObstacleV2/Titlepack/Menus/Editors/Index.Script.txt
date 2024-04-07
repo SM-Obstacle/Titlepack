@@ -36,37 +36,37 @@ Void Load() {
 	declare SubMenu::K_SubMenu Maps;
 	Maps.Name = "Maps";
 	Maps.PreventDefault = True;
-	Maps.Image = "file://Media/Images/Obstacle/Moods/maps.png";
+	Maps.Image = "maps";
 	SubMenus.add(Maps);
 
 	declare SubMenu::K_SubMenu Replay;
 	Replay.Name = "Replay";
 	Replay.PreventDefault = True;
-	Replay.Image = "file://Media/Images/Obstacle/Moods/replay.png";
+	Replay.Image = "replay";
 	SubMenus.add(Replay);
 
 	declare SubMenu::K_SubMenu Item;
 	Item.Name = "Item";
 	Item.PreventDefault = True;
-	Item.Image = "file://Media/Images/Obstacle/Moods/item.png";
+	Item.Image = "item";
 	SubMenus.add(Item);
 
 	declare SubMenu::K_SubMenu Action;
 	Action.Name = "Action";
 	Action.PreventDefault = True;
-	Action.Image = "file://Media/Images/Obstacle/Moods/action.png";
+	Action.Image = "action";
 	SubMenus.add(Action);
 
 	declare SubMenu::K_SubMenu Interface;
 	Interface.Name = "Interface";
 	Interface.PreventDefault = True;
-	Interface.Image = "file://Media/Images/Obstacle/Moods/interface.png";
+	Interface.Image = "interface";
 	SubMenus.add(Interface);
 
 	declare SubMenu::K_SubMenu Ghost;
 	Ghost.Name = "Ghost";
 	Ghost.PreventDefault = True;
-	Ghost.Image = "file://Media/Images/Obstacle/Moods/ghost.png";
+	Ghost.Image = "ghost";
 	SubMenus.add(Ghost);
 
 

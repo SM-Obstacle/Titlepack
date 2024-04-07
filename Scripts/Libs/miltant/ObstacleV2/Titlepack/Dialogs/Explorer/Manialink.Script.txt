@@ -1,6 +1,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Store.Script.txt"           as ObsStore
 #Include "Libs/miltant/ObstacleV2/String.Script.txt"					as StringLib
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"				as Styles
+#Include "Libs/miltant/ObstacleV2/Scrollbar.Script.txt"					as Scroll
 
 #Const C_Dialog_Close "Explorer_Close"
 
@@ -15,8 +16,8 @@ Text Build(Text _FileType, Boolean _New) {
 	} else {
 		NewCoords = MainCoords;
 	}
-	
-	
+
+
 	declare ML_Text = """
 <manialink version="3">
 	<framemodel id="EmoteTile">
@@ -89,7 +90,7 @@ Text Build(Text _FileType, Boolean _New) {
 				scriptevents="1" modulatecolor="000" opacity="0.5"/>
 		</frame>
 
-		<frame id="Frame_Body" pos="2 -19">
+		<frame id="Frame_Body" pos="-1.33 -19.5">
 			<frame size="296 89.5" scroll="1" scrollmax="0 0" id="Frame_Content">
 				<frame id="Frame_Emotes" pos="1">
 					<frameinstance modelid="EmoteTile" pos="1.33 -1.5" data-index="0"/>
@@ -137,6 +138,7 @@ Text Build(Text _FileType, Boolean _New) {
 			</frame>
 
 			<label pos="104.25 -95.5" halign="center" valign="center2" textfont="light" textcolor="f99" textsize="1.5" size="44" id="Label_WhyNotPlayable" />
+			{{{Scroll::GetScrollBarML(<199., 0.>, "Frame_Content", "y")}}}
 		</frame>
 	</frame>
 	<script><![CDATA[
@@ -218,10 +220,10 @@ Text Build(Text _FileType, Boolean _New) {
 		foreach (Folder => {{{_FileType}}}s in ObsStore_{{{_FileType}}}s) {
 			declare Parents = TL::Split("\\", Folder);
 			declare CurrentPath = "/";
-			
+
 			if (Parents.count > 0 && Parents[0] == "MEDIABROWSER_HiddenResources")
 				continue;
-				
+
 			foreach (Parent in Parents) {
 				if (!Folders.existskey(CurrentPath)) {
 					Folders[CurrentPath] = [];
@@ -235,7 +237,7 @@ Text Build(Text _FileType, Boolean _New) {
 						break;
 					}
 				}
-				
+
 				if (!Found) {
 					FolderTiles[CurrentPath][TL::ToLowerCase(Parent)] = K_Tile {
 						Icon = "",
@@ -246,13 +248,13 @@ Text Build(Text _FileType, Boolean _New) {
 				}
 				CurrentPath ^= Parent ^ "/";
 			}
-	
+
 			if (!Folders.existskey(CurrentPath)) {
 				Folders[CurrentPath] = [];
 				{{{_FileType}}}Tiles[CurrentPath] = [];
 				FolderTiles[CurrentPath] = [];
 			}
-	
+
 			foreach (Name => {{{_FileType}}} in {{{_FileType}}}s) {
 				{{{_FileType}}}Tiles[CurrentPath].add(K_Tile {
 					Image = "file://Thumbnails/MapUid/" ^ {{{_FileType}}}.MapUid ^ "/",
@@ -264,9 +266,8 @@ Text Build(Text _FileType, Boolean _New) {
 					WhyNotPlayable = {{{_FileType}}}.WhyNotPlayable
 				});
 			}
-
 		}
-	
+
 		foreach (Path => Tiles in FolderTiles) {
 			declare SortedTiles = Tiles.sortkey();
 			foreach (Folder in SortedTiles) {
@@ -333,7 +334,7 @@ Text Build(Text _FileType, Boolean _New) {
 		declare Frame_Content = (Page.GetFirstChild("Frame_Content") as CMlFrame);
 		declare Frame_Emotes = (Page.GetFirstChild("Frame_Emotes") as CMlFrame);
 		declare Frame_Thumbnail = (Page.GetFirstChild("Frame_Thumbnail") as CMlFrame);
-				declare Quad_Bg = (Page.GetFirstChild("Quad_Bg") as CMlQuad);
+		declare Quad_Bg = (Page.GetFirstChild("Quad_Bg") as CMlQuad);
 
 		declare Quad_Preview = (Page.GetFirstChild("Quad_Preview") as CMlQuad);
 		declare Label_Deco = (Page.GetFirstChild("Label_Deco") as CMlLabel);
@@ -362,24 +363,12 @@ Text Build(Text _FileType, Boolean _New) {
 
 		G_CurrentFolder = "/";
 		Refresh();
-				
-		declare Skins_Loaded = False;""";
 
-		/*if (_New) {
-			ML_Text ^=
-			"""if (ObsStore_Previews.count < Decos.count) {
-				foreach (Deco in Decos) {
-					foreach (Mood in Moods) {
-						declare V = Video.CreateVideo("file://Media/Images/Previews/" ^ Deco ^ Mood ^ ".webm", True, True);
-						ObsStore_Previews[Deco ^ Mood] = V;
-					}
-				}
-			}""";
-		}*/
-
-		ML_Text ^= """
+		declare Skins_Loaded = False;
+		
 		G_SelectedMood = 1;
 		{{{Update_NewMap}}}
+		{{{Scroll::GetInitFrames()}}}
 
 		while (True) {
 			if (!Skins_Loaded && ObsStore_Skins.count > 0) {
@@ -402,6 +391,7 @@ Text Build(Text _FileType, Boolean _New) {
 				G_NeedRerender = True;
 			}
 
+			{{{Scroll::GetLoop()}}}
 			foreach (Event in PendingEvents) {
 				{{{Styles::GetEventLoopActiveItem()}}}
 				switch (Event.Type) {
@@ -450,7 +440,7 @@ Text Build(Text _FileType, Boolean _New) {
 								case "Quad_Trigger": {
 									if (!Event.Control.Parent.DataAttributeExists("index"))
 										break;
-									
+
 									declare Index = TL::ToInteger(Event.Control.Parent.DataAttributeGet("index")) + TilesScrollOffset;
 									declare Tile = Folders[G_CurrentFolder][Index];
 									if (LastClick + 500 > Now && G_Selected_Name == Tile.Name) {
@@ -477,7 +467,7 @@ Text Build(Text _FileType, Boolean _New) {
 									if (ObsStore_Skins.existskey(G_SelectedMod)) {
 										SelectedMod = ObsStore_Skins[G_SelectedMod].FileName;
 									}
-		
+
 									declare CustomData = [Decos[G_SelectedDeco], Moods[G_SelectedMood], SelectedMod];
 									SendCustomEvent("{{{C_Dialog_Close}}}", CustomData);
 								}
@@ -491,21 +481,21 @@ Text Build(Text _FileType, Boolean _New) {
 								}
 								case "Deco_Plus": {
 									G_SelectedDeco = ML::Clamp(G_SelectedDeco + 1, 0, Decos.count - 1);
-		
+
 									declare Deco_Minus = (Page.GetFirstChild("Deco_Minus") as CMlLabel);
 									Deco_Minus.Show();
 									Event.Control.Hide();
 								}
 								case "Deco_Minus": {
 									G_SelectedDeco = ML::Clamp(G_SelectedDeco - 1, 0, Decos.count - 1);
-		
+
 									declare Deco_Plus = (Page.GetFirstChild("Deco_Plus") as CMlLabel);
 									Deco_Plus.Show();
 									Event.Control.Hide();
 								}
 								case "Mood_Plus": {
 									G_SelectedMood = ML::Clamp(G_SelectedMood + 1, 0, Moods.count - 1);
-		
+
 									declare Mood_Minus = (Page.GetFirstChild("Mood_Minus") as CMlLabel);
 									Mood_Minus.Show();
 		
@@ -518,7 +508,7 @@ Text Build(Text _FileType, Boolean _New) {
 		
 									declare Mood_Plus = (Page.GetFirstChild("Mood_Plus") as CMlLabel);
 									Mood_Plus.Show();
-		
+
 									if (G_SelectedMood == 0) {
 										Event.Control.Hide();
 									}
@@ -529,7 +519,7 @@ Text Build(Text _FileType, Boolean _New) {
 		
 										declare Mod_Minus = (Page.GetFirstChild("Mod_Minus") as CMlLabel);
 										Mod_Minus.Show();
-			
+
 										if (G_SelectedMod == ObsStore_Skins.count - 1) {
 											Event.Control.Hide();
 										}
@@ -538,10 +528,10 @@ Text Build(Text _FileType, Boolean _New) {
 								case "Mod_Minus": {
 									if (ObsStore_Skins.count > 0) {
 										G_SelectedMod = ML::Clamp(G_SelectedMod - 1, 0, ObsStore_Skins.count - 1);
-		
+
 										declare Mod_Plus = (Page.GetFirstChild("Mod_Plus") as CMlLabel);
 										Mod_Plus.Show();
-		
+
 										if (G_SelectedMod == 0) {
 											Event.Control.Hide();
 										}
@@ -555,13 +545,12 @@ Text Build(Text _FileType, Boolean _New) {
 						}
 					}
 					case CMlEvent::Type::MouseOver: {
-						declare Frame_Banner = (Event.Control.Parent.GetFirstChild("Frame_Banner") as CMlFrame);
-						if (Frame_Banner == Null) {
-							
-						} else {
-							declare Label_Name = (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
-							declare Label_Author = (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
-							
+						declare Frame_Thumbnail = (Event.Control.Parent as CMlFrame);
+						declare Frame_Banner = (Frame_Thumbnail.GetFirstChild("Frame_Banner") as CMlFrame);
+						if (Frame_Banner != Null && Frame_Thumbnail.ControlId != "Frame_Content") {
+							declare Label_Name <=> (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
+							declare Label_Author <=> (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
+
 							AnimMgr.Add(
 								Frame_Banner, "<frame pos=\"0 8\"/>",
 								200, CAnimManager::EAnimManagerEasing::QuadIn
@@ -579,13 +568,12 @@ Text Build(Text _FileType, Boolean _New) {
 						}
 					}
 					case CMlEvent::Type::MouseOut: {
-						declare Frame_Banner = (Event.Control.Parent.GetFirstChild("Frame_Banner") as CMlFrame);
-						if (Frame_Banner == Null) {
-							
-						} else {
-							declare Label_Author = (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
-							declare Label_Name = (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
-							
+						declare Frame_Thumbnail = (Event.Control.Parent as CMlFrame);
+						declare Frame_Banner <=> (Frame_Thumbnail.GetFirstChild("Frame_Banner") as CMlFrame);
+						if (Frame_Banner != Null && Frame_Thumbnail.ControlId != "Frame_Content") {
+							declare Label_Author <=> (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
+							declare Label_Name <=> (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
+
 							if (G_Selected_Name != Frame_Banner.Parent.DataAttributeGet("name")) {
 								AnimMgr.Add(
 									Frame_Banner, "<frame pos=\"0 0\"/>",
@@ -618,7 +606,7 @@ Text Build(Text _FileType, Boolean _New) {
 							declare FileName = "/" ^ TL::Replace(ObsStore_{{{_FileType}}}s_SearchResults[Target_Tile], "\\", "/");
 							declare PathSplit = TL::RegexMatch("^(.*/)?([^/]+)$", FileName, "");
 							declare K_Tile Tile;
-							
+
 							if (PathSplit.count == 3) {
 								foreach (File in Folders[PathSplit[1]]) {
 									if (File.Name == ObsStore_{{{_FileType}}}s_SearchResults[Target_Tile]) {
@@ -653,18 +641,18 @@ Text Build(Text _FileType, Boolean _New) {
 					} else if (Folders.existskey(G_CurrentFolder)) {
 						if (Folders[G_CurrentFolder].count > Target_Tile) {
 							declare Tile = Folders[G_CurrentFolder][Target_Tile];
-							
+
 							if (Tile.Image != "") {
 								declare Frame_Instance = (Frame_Thumbnail.Controls[I] as CMlFrame);
 								Frame_Instance.Show();
 								Frame_Instance.DataAttributeSet("name", Tile.Name);
-	
+
 								declare Quad_Trigger = (Frame_Instance.GetFirstChild("Quad_Trigger") as CMlQuad);
 								declare Label_Warn = (Frame_Instance.GetFirstChild("Label_Warn") as CMlLabel);
 								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
 								declare Label_Author = (Frame_Instance.GetFirstChild("Label_Author") as CMlLabel);
 								declare Frame_Banner = (Frame_Instance.GetFirstChild("Frame_Banner") as CMlFrame);
-	
+
 								Quad_Trigger.ChangeImageUrl(Tile.Image);
 								Label_Warn.Visible = Tile.Author != "" && !Tile.IsPlayable;
 								Label_Name.SetText(ContrastString(Tile.DisplayName));
@@ -681,10 +669,10 @@ Text Build(Text _FileType, Boolean _New) {
 							} else {
 								declare Frame_Instance = (Frame_Emotes.Controls[I] as CMlFrame);
 								Frame_Instance.Show();
-	
+
 								declare Label_Emote = (Frame_Instance.GetFirstChild("Label_Emote") as CMlLabel);
 								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
-	
+
 								Label_Emote.SetText(Tile.Icon);
 								Label_Name.SetText(ContrastString(Tile.DisplayName));
 							}
