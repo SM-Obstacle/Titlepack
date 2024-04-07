@@ -14,6 +14,16 @@ G_IsCampaign = True;
 log("mode is Obstacle Campaign");
 ***
 
+***Match_InitMap***
+***
+if (ServerAdmin == Null) {
+    declare CSmPlayer Player = Players[0];
+    declare Boolean __MlAuth_LoadingDialogPlayingMap for Player.User = False;
+    __MlAuth_LoadingDialogPlayingMap = True;
+    log("set to true here " ^ __MlAuth_LoadingDialogPlayingMap);
+}
+***
+
 ***Campaign_Match_Yield***
 ***
 switch (Event.CustomEventType) {

@@ -3,6 +3,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/smokegun/Constants.Script.txt"									as Constants
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt"   			as UI
 
 #Include "TextLib" as TL
 #Include "MathLib" as ML
@@ -12,6 +13,10 @@
 	Text FileName;
 }
 
+#Struct K_PendingPlayingMap {
+	Text MapPath;
+	Text MapName;
+}
 
 Text GetName() {
 	return "campaign";
@@ -22,7 +27,7 @@ declare Boolean G_CampaignContentLoading;
 declare Boolean G_UpdateCampaignContent;
 declare EventAPITypes::K_Event G_CampaignEvent;
 declare K_LocalMapInfo[][Integer] G_CampaignLocalMapsUids;
-declare Text[][] G_PendingPlayingMaps;
+declare K_PendingPlayingMap[][] G_PendingPlayingMaps;
 declare Integer G_PendingPlayingMapsUpdate;
 declare Integer G_LoadedEdition;
 
@@ -562,8 +567,37 @@ Void Load() {
 	}
 }
 
+declare Integer G_LoadingMapDialog;
+declare Boolean G_LoadingMap;
+
+Void Private_InitLoadingMapDialogLoop(Text _MapName) {
+	G_LoadingMap = True;
+	G_LoadingMapDialog = UI::NewDialog(
+		"Loading...",
+		UI::K_Message {
+			Label = "Loading the map $<" ^ _MapName ^ "$>, please wait..."
+		},
+		[]
+	);
+}
+
+Void Private_LoadingMapDialogLoop() {
+	if (!G_LoadingMap) return;
+
+	declare Boolean __MlAuth_LoadingDialogPlayingMap for LocalUser = False;
+	if (__MlAuth_LoadingDialogPlayingMap) {
+		__MlAuth_LoadingDialogPlayingMap = False;
+		G_LoadingMap = False;
+		UI::CloseDialog(G_LoadingMapDialog);
+		return;
+	}
+
+	UI::Prompt(G_LoadingMapDialog, True);
+}
+
 Void Loop() {
 	EventAPI::Loop();
+	Private_LoadingMapDialogLoop();
 
 	declare CMlPage P <=> Windows::GetPage(GetName());
 
@@ -581,6 +615,7 @@ Void Loop() {
 	}
 
 	// Check if the player is nexting a map
+	// This is also triggered when the player clicks on "Play map"
 	declare Integer PendingPlayingMapsUpdate for LocalUser = -1;
 	if (PendingPlayingMapsUpdate != G_PendingPlayingMapsUpdate) {
 		G_PendingPlayingMapsUpdate = PendingPlayingMapsUpdate;
@@ -597,13 +632,15 @@ Void Loop() {
 			P_SelectedMapJ = 0;
 			G_PendingPlayingMaps.removekey(0);
 		}
-		declare Text MapPath = G_PendingPlayingMaps[0][0];
+		declare K_PendingPlayingMap NextMap = G_PendingPlayingMaps[0][0];
 		G_PendingPlayingMaps[0].removekey(0);
 
 		declare Boolean IsLastMap = G_PendingPlayingMaps.count == 1 && G_PendingPlayingMaps[0].count == 0;
 
+		Private_InitLoadingMapDialogLoop(NextMap.MapName);
+
 		wait(TitleControl.IsReady);
-		TitleControl.PlayMap(MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
+		TitleControl.PlayMap(NextMap.MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
 		<mode_script_settings>
 			<setting name="S_EventHandle" value="campaign" type="text" />
 			<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />
@@ -711,7 +748,7 @@ Void Loop() {
 				declare EventAPITypes::K_EventEditionContentCategory[] CampaignCategories = G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
 
 				// Initialize with the current category maps
-				declare Text[][] MapList = [[]];
+				declare K_PendingPlayingMap[][] MapList = [[]];
 
 				foreach (Map in CampaignCategories[P_SelectedMapI].maps.slice(P_SelectedMapJ, CampaignCategories[P_SelectedMapI].maps.count)) {
 					declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
@@ -725,11 +762,14 @@ Void Loop() {
 						}
 					}
 
-					MapList[0].add(Path);
+					MapList[0].add(K_PendingPlayingMap {
+						MapName = Map.name,
+						MapPath = Path
+					});
 				}
 
 				foreach (Category in CampaignCategories.slice(P_SelectedMapI + 1, CampaignCategories.count)) {
-					declare Text[] CategoryMaps;
+					declare K_PendingPlayingMap[] CategoryMaps;
 
 					foreach (Map in Category.maps) {
 						declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
@@ -743,7 +783,10 @@ Void Loop() {
 							}
 						}
 
-						CategoryMaps.add(Path);
+						CategoryMaps.add(K_PendingPlayingMap {
+							MapName = Map.name,
+							MapPath = Path
+						});
 					}
 
 					MapList.add(CategoryMaps);
