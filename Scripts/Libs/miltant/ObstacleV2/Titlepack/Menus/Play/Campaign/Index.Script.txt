@@ -256,8 +256,8 @@ Text Build() {
 		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/map/" ^ SelectedMap.map_uid ^ "]";
 		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.main_author.login ^ "]";
 
-		declare MapName = TL::RegexReplace("\\$[lL](\\[.*\\])?", SelectedMap.name, "g", "");
-		declare AuthorName = TL::RegexReplace("\\$[lL](\\[.*\\])?", SelectedMap.main_author.name, "g", "");
+		declare MapName = TL::RegexReplace("\\$[lLhHpP](\\[.*\\])?", SelectedMap.name, "g", "");
+		declare AuthorName = TL::RegexReplace("\\$[lLhHpP](\\[.*\\])?", SelectedMap.main_author.name, "g", "");
 		MapName = TL::Replace(MapName, "$z", "$z" ^ MapLink);
 		AuthorName = TL::Replace(AuthorName, "$z", "$z" ^ AuthorLink);
 
@@ -269,8 +269,8 @@ Text Build() {
 			ThumbnailPath = "https://sm.mania.exchange/maps/thumbnail/" ^ SelectedMap.mx_id ^ "?.jpg";
 		}
 		Quad_Thumbnail.ChangeImageUrl(ThumbnailPath);
-		Label_Map.SetText(MapLink ^ "   " ^ MapName);
-		Label_Mapper.SetText(AuthorLink ^ "   " ^ AuthorName);
+		Label_Map.SetText("   " ^ MapLink ^ MapName);
+		Label_Mapper.SetText("   " ^ AuthorLink ^ AuthorName);
 
 		if (SelectedMap.personal_best < 0) {
 			Label_PB.TextColor = <1., 1., 1.>;
