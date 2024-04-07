@@ -6,7 +6,7 @@
 #Const  Version     "2023-29-06"
 #Const  ScriptName  "EndScreen.Script.txt"
 
-Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
+Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition, Boolean _LastMap) {
 	declare Text CampaignTitle;
 	declare Text CampaignSubtitle;
 	declare Text BannerImgUrl;
@@ -20,38 +20,39 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
 
 	// This is just a "security" check to ensure there's no way the TP is notified when playing online
 	declare Text NotifyNextMapToTP;
-	if (_WithNextMapButton) {
-		NotifyNextMapToTP = """
-		// We notify the TP that we're about to unload the map
-		if (Name == "next_map") {
-			declare Integer PendingPlayingMapsUpdate for LocalUser;
-			PendingPlayingMapsUpdate = Now;
-		}
-		""";
-	}
 	declare Text NotifyFinishedMapToTP;
+	declare Text NextMapButton = "";
+	// Avoids the gap between the Improve and the Quit buttons
+	declare Text QuitButtonPos = "0 -11";
 	if (_WithNextMapButton) {
+		// We don't show the "Next map" button if it's the last one
+		if (!_LastMap) {
+			NextMapButton = """
+			<frame pos="0 -11" data-name="next_map">
+				<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7" id="Label"/>
+				<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
+					scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
+					data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
+					data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
+			</frame>
+			""";
+
+			QuitButtonPos = "0 -22";
+
+			NotifyNextMapToTP = """
+			// We notify the TP that we're about to unload the map
+			if (Name == "next_map") {
+				declare Integer PendingPlayingMapsUpdate for LocalUser;
+				PendingPlayingMapsUpdate = Now;
+			}
+			""";
+		}
+
 		NotifyFinishedMapToTP = """
 		// We notify the TP that the player finished a map
 		declare Boolean __EndScreen_MapFinished for LocalUser;
 		__EndScreen_MapFinished = True;
 		""";
-	}
-
-	declare Text NextMapButton = "";
-	// Avoids the gap between the Improve and the Quit buttons
-	declare Text QuitButtonPos = "0 -11";
-	if (_WithNextMapButton) {
-		NextMapButton = """
-		<frame pos="0 -11" data-name="next_map">
-			<label halign="center" valign="center2" size="28.67 8" text="Next Map" textsize="2.7" id="Label"/>
-			<quad halign="center" valign="center" size="28.67 8" image="file://Media/Images/Obstacle/Campaign/Ingame/Button.png"
-				scriptevents="1" id="Quad_Trigger" data-target="Quad_Trigger Label" modulatecolor="000" data-anim-lenght="50"
-				data-default-anim="<quad modulatecolor=&quot;000&quot; scale=&quot;1.&quot;/> <label textcolor=&quot;fff&quot;/>"
-				data-target-anim="<quad modulatecolor=&quot;fff&quot; scale=&quot;1.02&quot;/> <label textcolor=&quot;000&quot;/>"/>
-		</frame>
-		""";
-		QuitButtonPos = "0 -22";
 	}
 	
     return """
@@ -165,6 +166,7 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
 		// so that it doesn't show any error popup.
 		declare Boolean __MlAuth_EndScreenVisible for LocalUser;
 		__MlAuth_EndScreenVisible = True;
+		{{{NotifyFinishedMapToTP}}}
 		
 		while (True) {
 			yield;
@@ -216,7 +218,6 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition) {
 					}
 					CampaignRecords[Map.MapInfo.MapUid] = Net_Time1;
 					CampaignRecordsUpdated = True;
-					{{{NotifyFinishedMapToTP}}}
 				} else {
 					Frame_Record.RelativePosition_V3.Y = 7.;
 					Label_PB.Opacity = 0.;

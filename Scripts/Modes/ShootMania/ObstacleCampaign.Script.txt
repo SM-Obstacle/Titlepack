@@ -2,6 +2,9 @@
 
 #Include "Libs/miltant/UI/EndScreen.Script.txt" as EndScreen
 
+// This is used by the TP to know if we're playing the last map of the event or not.
+#Setting S_LastMap False as "<hidden>"
+
 ***Match_InitServer***
 ***
 G_EnableRecords = False;
@@ -37,7 +40,7 @@ UIManager.GetUI(Player).UISequence = CUIConfig::EUISequence::Podium;
 
 ***Campaign_CreateUI***
 ***
-Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null, S_EventEdition));
+Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null, S_EventEdition, S_LastMap));
 ***
 
 ***MB_Private_EnableLadder***

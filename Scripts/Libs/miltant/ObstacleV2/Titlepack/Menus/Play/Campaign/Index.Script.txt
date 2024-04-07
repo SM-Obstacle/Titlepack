@@ -600,11 +600,14 @@ Void Loop() {
 		declare Text MapPath = G_PendingPlayingMaps[0][0];
 		G_PendingPlayingMaps[0].removekey(0);
 
+		declare Boolean IsLastMap = G_PendingPlayingMaps.count == 1 && G_PendingPlayingMaps[0].count == 0;
+
 		wait(TitleControl.IsReady);
 		TitleControl.PlayMap(MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
 		<mode_script_settings>
 			<setting name="S_EventHandle" value="campaign" type="text" />
 			<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />
+			<setting name="S_LastMap" value="{{{IsLastMap}}}" type="boolean" />
 		</mode_script_settings>
 		""");
 	}
