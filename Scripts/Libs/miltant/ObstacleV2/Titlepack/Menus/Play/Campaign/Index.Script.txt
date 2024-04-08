@@ -8,12 +8,20 @@
 #Include "TextLib" as TL
 #Include "MathLib" as ML
 
+// TODO: generalize this in the API
+
+#Const C_SpecialEventConfigKey [
+	"campaign" => [
+		2 => 1
+	]
+]
+
 #Const C_SpecialEventConfig [
-	"default" => [
+	0 => [
 		"label1pos" => <181., -24.5>,
 		"label2pos" => <181., -29.5>
 	],
-	"Winter\t2024" => [
+	1 => [
 		"label1pos" => <6., -24.5>,
 		"label2pos" => <6., -29.5>
 	]
@@ -165,6 +173,7 @@ Text Build() {
 
 	#Const C_MaxCategoriesPerPage 5
 	#Const C_MaxMapsPerCategoryPage 5
+	#Const C_SpecialEventConfigKey {{{dump(C_SpecialEventConfigKey)}}}
 	#Const C_SpecialEventConfig  {{{dump(C_SpecialEventConfig)}}}
 
 	{{{Styles::GetDeclareGlobals()}}}
@@ -481,10 +490,12 @@ Text Build() {
 				MapsNeedRefresh = True;
 
 				declare Vec2[Text] SpecialConfig;
-				if (C_SpecialEventConfig.existskey(P_CampaignEvent.EditionsDetails[SelectedCampaign].name)) {
-					SpecialConfig = C_SpecialEventConfig[P_CampaignEvent.EditionsDetails[SelectedCampaign].name];
+				if (C_SpecialEventConfigKey["campaign"].existskey(SelectedCampaign)
+					&& C_SpecialEventConfig.existskey(C_SpecialEventConfigKey["campaign"][SelectedCampaign]))
+				{
+					SpecialConfig = C_SpecialEventConfig[C_SpecialEventConfigKey["campaign"][SelectedCampaign]];
 				} else {
-					SpecialConfig = C_SpecialEventConfig["default"];
+					SpecialConfig = C_SpecialEventConfig[0];
 				}
 
 				Label_Leaderboards.RelativePosition_V3.X = SpecialConfig["label1pos"].X;
