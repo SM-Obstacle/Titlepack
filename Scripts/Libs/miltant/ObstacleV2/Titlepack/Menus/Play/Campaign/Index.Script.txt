@@ -19,6 +19,8 @@
 	]
 ]
 
+#Const C_EventsRefreshPeriod 5 // In seconds
+
 #Struct K_LocalMapInfo {
 	Text MapUid;
 	Text FileName;
@@ -41,6 +43,13 @@ declare K_LocalMapInfo[][Integer] G_CampaignLocalMapsUids;
 declare K_PendingPlayingMap[][] G_PendingPlayingMaps;
 declare Integer G_PendingPlayingMapsUpdate;
 declare Integer G_LoadedEdition;
+
+// Used to handle the state of the map loading dialog
+declare Integer G_LoadingMapDialog;
+declare Boolean G_LoadingMap;
+
+// Used to debounce the refresh of the event editions
+declare Integer G_RefreshInstant;
 
 Text Build() {
 	return """
@@ -125,6 +134,8 @@ Text Build() {
 				<frameinstance modelid="CampaignEditionItem" pos="0 -50.4" id="CampaignEditionItem_8"/>
 			</frame>
 			
+			<quad pos="6.5 -120" id="Quad_Refresh" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="Refresh" scriptevents="1" />
+			<label pos="12 -120" textsize="1.3" text="Refresh" halign="center" valign="center" class="lato"/>
 			<quad pos="10.67 -5" size="7.67 7.67"  image="file://Media/Images/Obstacle/Campaign/MX.png" valign="center"/>
 			<label pos="34 -5.5" textsize="5.2" text="seasons" textprefix="$t" halign="center" valign="center2" class="lato"/>
 			<quad size="62 123.83" image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
@@ -573,6 +584,9 @@ Text Build() {
 									MapsNeedRefresh = True;
 								}
 							}
+							case "Quad_Refresh": {
+								SendCustomEvent("refresh", []);
+							}
 						}
 
 						// Manages the click event of the categories pagination buttons
@@ -623,9 +637,6 @@ Void Load() {
 	}
 }
 
-declare Integer G_LoadingMapDialog;
-declare Boolean G_LoadingMap;
-
 Void Private_InitLoadingMapDialogLoop(Text _MapName) {
 	G_LoadingMap = True;
 	G_LoadingMapDialog = UI::NewDialog(
@@ -649,6 +660,12 @@ Void Private_LoadingMapDialogLoop() {
 	}
 
 	UI::Prompt(G_LoadingMapDialog, True);
+}
+
+Void Private_DebounceRefresh() {
+	if (Now - G_RefreshInstant < C_EventsRefreshPeriod * 1000) return;
+	G_RefreshInstant = Now;
+	Load();
 }
 
 Void Loop() {
@@ -867,6 +884,9 @@ Void Loop() {
 				if (EventAPI::GetCachedEvent("campaign").EditionsDetails.existskey(G_LoadedEdition)) {
 					G_UpdateCampaignContent = True;
 				}
+			}
+			case "refresh": {
+				Private_DebounceRefresh();
 			}
 		}
 	}

@@ -103,6 +103,7 @@ Void SetAuthHeaders(Text _AuthHeaders) {
 
 Void Init() {
     G_HasFailed = False;
+    G_Events = [];
     Private_InitRequest("event", C::C_Request_Event);
 }
 
