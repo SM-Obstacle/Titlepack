@@ -28,11 +28,11 @@ Integer Private_FindCharIndex(Text _Haystack, Text _ToFind) {
  * Returns `""` when the cache isn't compatible, otherwise the events cache in its JSON format.
  */
 Text Private_GetRawCache() {
-    declare persistent Text ObsStore_EventsCache for LocalUser;
-    declare Integer VersIndex = Private_FindCharIndex(ObsStore_EventsCache, "{");
+    declare persistent Text ObsStore_EventsCache2 for LocalUser;
+    declare Integer VersIndex = Private_FindCharIndex(ObsStore_EventsCache2, "{");
     if (VersIndex == -1) return "";
-    declare Text Version = TL::SubText(ObsStore_EventsCache, 0, VersIndex);
-    declare Text EventsCache = TL::SubText(ObsStore_EventsCache, VersIndex, TL::Length(ObsStore_EventsCache) - VersIndex);
+    declare Text Version = TL::SubText(ObsStore_EventsCache2, 0, VersIndex);
+    declare Text EventsCache = TL::SubText(ObsStore_EventsCache2, VersIndex, TL::Length(ObsStore_EventsCache2) - VersIndex);
     if (Constants::C_Version_EventsCache == Version) 
         return EventsCache;
     return "";
@@ -78,8 +78,8 @@ Void Load() {
 
 Void Private_UpdateEventsCache() {
     declare Types::K_Event[Text] Events = Inner::Private_EventAPI_GetEvents();
-    declare persistent Text ObsStore_EventsCache for LocalUser = "";
-    ObsStore_EventsCache = Constants::C_Version_EventsCache ^ Events.tojson();
+    declare persistent Text ObsStore_EventsCache2 for LocalUser = "";
+    ObsStore_EventsCache2 = Constants::C_Version_EventsCache ^ Events.tojson();
 }
 
 Void Loop() {
