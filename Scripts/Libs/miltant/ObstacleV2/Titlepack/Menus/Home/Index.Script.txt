@@ -4,12 +4,16 @@
 
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
+#Struct K_LatestnewsImageResponse {
+	Text img_url;
+	Text link;
+}
 
 Text GetName() {
 	return "home";
 }
 
-Text Build() {
+Text Build(Text _NewsImgUrl, Text _NewsImgLink) {
 	return """
 {{{Styles::GetStyleSheet()}}}
 <frame pos="-160 73.33">
@@ -24,7 +28,7 @@ Text Build() {
 			<frame pos="0 -10.33" size="70 74.67">
 				<quad size="70 74.67" image="file://Media/Images/Obstacle/Home/ContoursNews.png"/>
 				<frame pos="34.67 -37.67" clip="1" clipsizen="69.33 74.17">
-					<quad size="70 74.67" halign="center" valign="center" image="file://Media/Images/Obstacle/Home/News.png" id="Quad_News"/>
+					<quad size="70 74.67" halign="center" valign="center" image="{{{_NewsImgUrl}}}" id="Quad_News"/>
 				</frame>
 			</frame>
 		</frame>
@@ -89,7 +93,7 @@ Text Build() {
 							}
 							case "Quad_News": {
 								if (Event.Type == CMlScriptEvent::Type::MouseClick) {
-									OpenLink("{{{Constants::C_WebsiteUrl}}}/latestnews", CMlScript::LinkType::ExternalBrowser);
+									OpenLink("{{{_NewsImgLink}}}", CMlScript::LinkType::ExternalBrowser);
 								}
 							}
 						}
@@ -112,9 +116,17 @@ Text Build() {
 }
 
 Void Load() {
+	// TODO: make this in background
+	declare CHttpRequest ImageUrlReq = Http.CreateGet(Constants::C_HostUrl ^ "latestnews_image", True, "Accept: application/json");
+	wait(ImageUrlReq.IsCompleted);
+	declare K_LatestnewsImageResponse Res;
+	if (ImageUrlReq.StatusCode == 200) {
+		Res.fromjson(ImageUrlReq.Result);
+	}
+
 	declare Windows::K_Window Window;
 	Window.Name = GetName();
-	Window.Manialink = Build();
+	Window.Manialink = Build(Res.img_url, Res.link);
 	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
