@@ -22,31 +22,31 @@ Text Build() {
 		<quad size="61 31" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/FrameNews.png" id="Frame_Trigger" scriptevents="1"/>
 	</framemodel>
 			
-	<frame pos="-104.25 49.75" size="208.5 99.5">
+	<frame pos="-104.25 49.75" size="210.5 99.5">
 		<frame id="Frame_Header">
-			<label pos="3.7 -2" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
-			<label pos="0 -2" text="" textfont="light" textcolor="fff" textsize="3.5" id="Label_Favourite" hidden="1"/>
+			<label pos="3.7 -2" class="lato" textcolor="fff" textsize="3.5" id="Label_Name"/>
+			<label pos="0 -2" text="" class="lato" textcolor="fff" textsize="3.5" id="Label_Favourite" hidden="1"/>
 
 			<frame pos="12.6 -11.9">
-				<label text="Play" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
-				<quad size="18.5 6" id="Quad_Join" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BActive18.png"
+				<label text="Play" class="lato" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+				<quad size="18.5 6" id="Quad_Join" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/BPlay.png"
 					scriptevents="1" data-target="Quad_Join" data-anim-length="70"
 					data-default-anim="<quad scale=&quot;1&quot;/>" data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
 			</frame>
 			<frame pos="34 -11.9">
-				<label text="Spectate" textfont="light" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
-				<quad size="18.5 6" id="Quad_Spec" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/BDefault.png"
+				<label text="Spectate" class="lato" textcolor="fff" halign="center" valign="center2" textsize="1.7" pos="0 -.33"/>
+				<quad size="18.5 6" id="Quad_Spec" halign="center" valign="center" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/BSpectate.png"
 					scriptevents="1" data-target="Quad_Spec" data-anim-length="70"
 					data-default-anim="<quad scale=&quot;1&quot;/>" data-target-anim="<quad scale=&quot;1.06&quot;/>"/>
 			</frame>
 
 		
-			<!-- <label pos="162 -7" textfont="light" textcolor="fff" textsize="1.7" id="Label_Owner" halign="right" textprefix="  "/> -->
-			<label pos="165 -7" size="30 4.5" text="maniaplanet://#join" textfont="light" textcolor="fff" textsize="1.7" id="Label_JoinLink" textprefix="  " scriptevents="1" focusareacolor1="0000" focusareacolor2="0002"/>
+			<!-- <label pos="162 -7" class="lato" textcolor="fff" textsize="1.7" id="Label_Owner" halign="right" textprefix="  "/> -->
+			<label pos="160 -9.5" size="35 4.5" text="maniaplanet://#join" class="lato" textcolor="fff" textsize="1.7" id="Label_JoinLink" textprefix="  " scriptevents="1" focusareacolor1="0000" focusareacolor2="0002" valign="center2"/>
 		</frame>
 
 		<frame id="Frame_Body" pos="2 -19">
-			<label pos="0 -1" textprefix="  " text="Description" textfont="light" textcolor="fff" textsize="1.7"/>
+			<label pos="0 -1" textprefix="  " text="Description" class="lato" textcolor="fff" textsize="1.7"/>
 			<frame size="134 30.5" pos="0 -7" scroll="1" scrollmax="0 500">
 				<label pos="67 -.5" size="134" autonewline="1" halign="center" textsize="2" textcolor="fff" id="Label_Description"/>
 				<quad scriptevents="1" size="134 700" pos="0 100"/>
@@ -56,25 +56,27 @@ Text Build() {
 			<frameinstance pos="72.83 -43.67" modelid="Model_News" hidden="1"/>
 			
 			<frame pos="136.5 -1">
-				<label textprefix="  " text="Players" textfont="light" textcolor="fff" textsize="1.7" id="Label_TitlePlayers"/>
+				<label textprefix="  " text="Players" class="lato" textcolor="fff" textsize="1.7" id="Label_TitlePlayers"/>
 				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="fff" id="Quad_Players"/>
-				<label textfont="light" textcolor="cb5" textsize="1.7" pos="67 0" halign="right" id="Label_Players"/>
+				<label class="lato" textcolor="4E6D8C" textsize="1.7" pos="67 0" halign="right" id="Label_Players"/>
 				
-				<frame size="134 31.83" pos="0 -5.83" scroll="1" scrollmax="0 30">
+				<frame size="69 31.17" pos="0 -6.17" scroll="1" scrollmax="0 30">
 					<label pos="33" size="66" autonewline="1" halign="center" textsize="2" id="List_Players"/>
-					<quad  scriptevents="1" size="134 700" pos="0 100"/>
+					<quad scriptevents="1" size="69.67 700" pos="0 100"/>
 				</frame>
+				<quad size="69.67 31.83" pos="0 -5.83" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/FSection.png"/>
 			</frame>
 			
-			<frame pos="136.5 -39">
-				<label textprefix="  " text="Maps" textfont="light" textcolor="fff" textsize="1.7" id="Label_TitleMaps"/>
+			<frame pos="136.5 -41">
+				<label textprefix="  " text="Maps" class="lato" textcolor="fff" textsize="1.7" id="Label_TitleMaps"/>
 				<quad pos="19.2 -2" size="27.5 0.17" bgcolor="fff" id="Quad_Maps"/>
-				<label textfont="light" textcolor="cb5" textsize="1.7" pos="67 0" halign="right" id="Label_Maps"/>
+				<label class="lato" textcolor="4E6D8C" textsize="1.7" pos="67 0" halign="right" id="Label_Maps"/>
 				
-				<frame size="134 31.83" pos="0 -5.83" scroll="1" scrollmax="0 30">
+				<frame size="69 31.17" pos="0 -6.17" scroll="1" scrollmax="0 30">
 					<label pos="33" size="66" autonewline="1" halign="center" textsize="2" id="List_Maps"/>
-					<quad  scriptevents="1" size="134 700" pos="0 100"/>
+					<quad scriptevents="1" size="69.67 700" pos="0 100"/>
 				</frame>
+				<quad size="69.67 31.83" pos="0 -5.83" image="file://Media/Images/Obstacle/Dialogs/ServerInfo/FSection.png"/>
 			</frame>
 		</frame>
 	</frame>

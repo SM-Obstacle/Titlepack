@@ -162,7 +162,7 @@ Text Build() {
 
 		foreach (IP => Person in Group.People) {
 			declare PosX = TextOffsets[IP % 2];
-			declare ML_Person = """<label pos="{{{PosX}}} {{{-CurAppendHeight-6}}}" class="lato" size="{{{TextWidth}}} 5" text="{{{Person.Name}}}" halign="center" valign="center" textsize="4" textcolor="5D7FCE"/>""";
+			declare ML_Person = """<label pos="{{{PosX}}} {{{-CurAppendHeight-6}}}" class="lato" size="{{{TextWidth}}} 5" text="{{{Person.Name}}}" halign="center" valign="center" textsize="4" textcolor="4E6D8C"/>""";
 			
 			declare PersonHeight = 7.;
 			foreach (IR => Role in Person.Roles) {
@@ -176,7 +176,7 @@ Text Build() {
 				if (Role.Date != "") {
 					PersonHeight += 5.;
 					ML_Role ^= """
-						<label pos="{{{PosX}}} {{{-CurAppendHeight-PersonHeight}}}" class="lato" size="{{{TextWidth}}} 3" text="{{{Role.Date}}}" halign="center" valign="center" textsize="2" textcolor="5D7FCE"/>
+						<label pos="{{{PosX}}} {{{-CurAppendHeight-PersonHeight}}}" class="lato" size="{{{TextWidth}}} 3" text="{{{Role.Date}}}" halign="center" valign="center" textsize="2" textcolor="4E6D8C"/>
 					""";
 				}
 				ML_Person ^= ML_Role;

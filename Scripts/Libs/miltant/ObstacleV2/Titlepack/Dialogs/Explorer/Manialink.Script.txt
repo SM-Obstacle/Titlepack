@@ -23,14 +23,17 @@ Text Build(Text _FileType, Boolean _New) {
 	<framemodel id="EmoteTile">
 		<label pos="23.17 -12.83" halign="center" valign="center2" textcolor="fff" textsize="10" id="Label_Emote"/>
 		<label pos="23.17 -25.5" halign="center" valign="center2" textfont="light" textcolor="fff" textsize="1.5" size="46" id="Label_Name"/>
-		<quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" style="Bgs1InRace" substyle="HealthBar" modulatecolor="414245"/>
+		<quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" image="file://Media/Images/Obstacle/Dialogs/Explorer/FFolder.png"
+			data-target="Label_Emote Quad_Trigger" data-anim-length="70"
+			data-default-anim="<label pos=&quot;23.17 -12.38&quot;/> <quad opacity=&quot;1&quot;/>"
+			data-target-anim="<label pos=&quot;23.17 -13.5&quot;/> <quad opacity=&quot;0.8&quot;/>"/>
 	</framemodel>
 
 	<framemodel id="ThumbnailTile" size="46.33 30.67">
 		<frame id="Frame_Banner">
 			<label pos="23.17 -27.17" halign="center" valign="center2" textfont="light" textcolor="fff" textsize="1.5" size="44" id="Label_Name"/>
 			<label pos="23.17 -34" halign="center" valign="center2" textfont="light" textcolor="fff" textsize="1.5" size="44" id="Label_Author" hidden="1" textprefix="  "/>
-			<quad pos="0 -23.17" size="46.33 19.33" id="Quad_Banner" bgcolor="000b"/>
+			<quad pos="0 -23.17" size="46.33 19.33" id="Quad_Banner" image="file://Media/Images/Obstacle/Dialogs/Explorer/FMap.png"/>
 		</frame>
 		<label id="Label_Warn" pos="43 -3.5" halign="center" valign="center2" textcolor="f99" textsize="3" text=""/>
 		<quad size="46.33 30.67" scriptevents="1" id="Quad_Trigger" keepratio="Clip"/>
@@ -73,7 +76,7 @@ Text Build(Text _FileType, Boolean _New) {
 		</frame>
 	</frame>
 
-	<frame pos="{{{MainCoords}}}" size="208.5 121" id="Window_Picker">
+	<frame pos="{{{MainCoords}}}" size="204 110" id="Window_Picker">
 		<frame id="Frame_Header">
 			<label pos="3.7 -6" text="Pick a {{{_FileType}}}" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
 			<!-- <frame pos="12.6 -11.9">
@@ -86,12 +89,12 @@ Text Build(Text _FileType, Boolean _New) {
 			<label textcolor="fff" pos="153.17 -9.17" text="" valign="center2" halign="center" id="Label_Parent" scriptevents="1" size="8 8" focusareacolor1="0000" focusareacolor2="0000"/>
 			<label textcolor="fff" pos="160.17 -9.17" text="" valign="center2" halign="center" id="Label_Refresh" scriptevents="1" size="8 8" focusareacolor1="0000" focusareacolor2="0000"/>
 			<label textcolor="fff" pos="48.33 -9" text="$ff0" valign="center2" halign="center" id="Label_Folder" scriptevents="1" size="8 8" focusareacolor1="0000" focusareacolor2="0000"/>
-			<quad pos="44.33 -5.17" size="120.17 7.33" image="file://Media/Images/Obstacle/Servers/FSearch.png" id="Quad_Search"
-				scriptevents="1" modulatecolor="000" opacity="0.5"/>
+			<quad pos="44.33 -5.17" size="120.17 7.33" image="file://Media/Images/Obstacle/Dialogs/TextEdit.png" id="Quad_Search"
+				scriptevents="1" opacity="0.8"/>
 		</frame>
 
 		<frame id="Frame_Body" pos="-1.33 -19.5">
-			<frame size="296 89.5" scroll="1" scrollmax="0 0" id="Frame_Content">
+			<frame size="296 89.5" scroll="1" scrollmax="0 0" id="Frame_Content" pos="1">
 				<frame id="Frame_Emotes" pos="1">
 					<frameinstance modelid="EmoteTile" pos="1.33 -1.5" data-index="0"/>
 					<frameinstance modelid="EmoteTile" pos="50.67 -1.5" data-index="1"/>
@@ -199,7 +202,7 @@ Text Build(Text _FileType, Boolean _New) {
 		if (Folders[G_CurrentFolder].count < 9) {
 			Frame_Content.ScrollMax.Y = 0.;
 		} else {
-			Frame_Content.ScrollMax.Y = ML::CeilingInteger(Folders[G_CurrentFolder].count / 4. - 2.5) * 33.666666 + 10.;
+			Frame_Content.ScrollMax.Y = ML::CeilingInteger(Folders[G_CurrentFolder].count / 4. - 3.01) * 33.666666 + 10.;
 		}
 
 		Entry_Search.Value = G_CurrentFolder;
@@ -550,11 +553,13 @@ Text Build(Text _FileType, Boolean _New) {
 						if (Frame_Banner != Null && Frame_Thumbnail.ControlId != "Frame_Content") {
 							declare Label_Name <=> (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
 							declare Label_Author <=> (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
+							declare Quad_Banner <=> (Frame_Banner.GetFirstChild("Quad_Banner") as CMlQuad);
 
 							AnimMgr.Add(
 								Frame_Banner, "<frame pos=\"0 8\"/>",
 								200, CAnimManager::EAnimManagerEasing::QuadIn
 							);
+							Quad_Banner.ModulateColor = <0., 0., 0.>;
 
 							if (Label_Author.Value != "") {
 								Label_Author.Show();
@@ -573,12 +578,14 @@ Text Build(Text _FileType, Boolean _New) {
 						if (Frame_Banner != Null && Frame_Thumbnail.ControlId != "Frame_Content") {
 							declare Label_Author <=> (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
 							declare Label_Name <=> (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
+							declare Quad_Banner <=> (Frame_Banner.GetFirstChild("Quad_Banner") as CMlQuad);
 
 							if (G_Selected_Name != Frame_Banner.Parent.DataAttributeGet("name")) {
 								AnimMgr.Add(
 									Frame_Banner, "<frame pos=\"0 0\"/>",
 									200, CAnimManager::EAnimManagerEasing::QuadOut
 								);
+								Quad_Banner.ModulateColor = <1., 1., 1.>;
 								Label_Author.Hide();
 							}
 						}
@@ -625,6 +632,7 @@ Text Build(Text _FileType, Boolean _New) {
 								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
 								declare Label_Author = (Frame_Instance.GetFirstChild("Label_Author") as CMlLabel);
 								declare Frame_Banner = (Frame_Instance.GetFirstChild("Frame_Banner") as CMlFrame);
+								declare Quad_Banner = (Frame_Banner.GetFirstChild("Quad_Banner") as CMlQuad);
 
 								Quad_Trigger.ChangeImageUrl(Tile.Image);
 								Label_Warn.Visible = Tile.Author != "" && !Tile.IsPlayable;
@@ -633,8 +641,10 @@ Text Build(Text _FileType, Boolean _New) {
 
 								if (G_Selected_Name == Tile.Name) {
 									Frame_Banner.RelativePosition_V3.Y = 8.;
+									Quad_Banner.ModulateColor = <0., 0., 0.>;
 								} else {
 									Frame_Banner.RelativePosition_V3.Y = 0.;
+									Quad_Banner.ModulateColor = <1., 1., 1.>;
 								}
 							}
 						}
@@ -652,6 +662,7 @@ Text Build(Text _FileType, Boolean _New) {
 								declare Label_Name = (Frame_Instance.GetFirstChild("Label_Name") as CMlLabel);
 								declare Label_Author = (Frame_Instance.GetFirstChild("Label_Author") as CMlLabel);
 								declare Frame_Banner = (Frame_Instance.GetFirstChild("Frame_Banner") as CMlFrame);
+								declare Quad_Banner = (Frame_Banner.GetFirstChild("Quad_Banner") as CMlQuad);
 
 								Quad_Trigger.ChangeImageUrl(Tile.Image);
 								Label_Warn.Visible = Tile.Author != "" && !Tile.IsPlayable;
@@ -665,6 +676,7 @@ Text Build(Text _FileType, Boolean _New) {
 									Label_WhyNotPlayable.SetText(WhyNotPlayableTxt);
 								} else {
 									Frame_Banner.RelativePosition_V3.Y = 0.;
+									Quad_Banner.ModulateColor = <1., 1., 1.>;
 								}
 							} else {
 								declare Frame_Instance = (Frame_Emotes.Controls[I] as CMlFrame);
