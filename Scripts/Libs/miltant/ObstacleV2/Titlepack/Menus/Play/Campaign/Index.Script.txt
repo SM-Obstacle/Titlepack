@@ -278,7 +278,7 @@ Text Build() {
 			Label_PB.TextColor = CL::HexToRgb("FFFFFF");
 			Label_PB.SetText("-- : -- : --");
 		} else {
-			Label_PB.TextColor = CL::HexToRgb("5D7FCE");
+			Label_PB.TextColor = CL::HexToRgb("4E6D8C");
 			Label_PB.SetText(TL::TimeToText(SelectedMap.personal_best, True));
 		}
 		Frame_Infos.Show();

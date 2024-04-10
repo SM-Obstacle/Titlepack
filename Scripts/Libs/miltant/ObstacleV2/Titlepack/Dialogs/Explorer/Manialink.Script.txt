@@ -73,7 +73,7 @@ Text Build(Text _FileType, Boolean _New) {
 		</frame>
 	</frame>
 
-	<frame pos="{{{MainCoords}}}" size="208.5 121" id="Window_Picker">
+	<frame pos="{{{MainCoords}}}" size="204 110" id="Window_Picker">
 		<frame id="Frame_Header">
 			<label pos="3.7 -6" text="Pick a {{{_FileType}}}" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name"/>
 			<!-- <frame pos="12.6 -11.9">
@@ -91,7 +91,7 @@ Text Build(Text _FileType, Boolean _New) {
 		</frame>
 
 		<frame id="Frame_Body" pos="-1.33 -19.5">
-			<frame size="296 89.5" scroll="1" scrollmax="0 0" id="Frame_Content">
+			<frame size="296 89.5" scroll="1" scrollmax="0 0" id="Frame_Content" pos="1">
 				<frame id="Frame_Emotes" pos="1">
 					<frameinstance modelid="EmoteTile" pos="1.33 -1.5" data-index="0"/>
 					<frameinstance modelid="EmoteTile" pos="50.67 -1.5" data-index="1"/>
