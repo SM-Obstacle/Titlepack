@@ -69,12 +69,12 @@ Text Build() {
 
 	<framemodel id="MapCard">
 		<label pos="1 -4.83" valign="center2" textsize="5" textcolor="fff" class="lato" id="Label_Num"/>
-		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_MedalC" hidden="1"/>
-		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1"/>
-		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1"/>
-		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1"/>
+		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_MedalC" hidden="1" z-index="4"/>
+		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1" z-index="3"/>
+		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1" z-index="2"/>
+		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1" z-index="1"/>
 		<quad pos="14.75 -8.67" size="10.33 1.67" image="file://Media/Images/Obstacle/Campaign/LCompleted.png" id="Quad_CompletedIndicator" halign="center" valign="center" hidden="0"/>
-		<quad pos="14.75 -4.17" size="30.83 9.67" image="file://Media/Images/Obstacle/Campaign/OutlineMapCampaign.png" id="Outline_Map" halign="center" valign="center" hidden="1"/>
+		<quad pos="14.75 -4.17" size="30.83 9.67" image="file://Media/Images/Obstacle/Campaign/OutlineMapCampaign.png" id="Outline_Map" halign="center" valign="center" hidden="1" z-index="-1"/>
 		<quad pos="14.75 -4.17" size="29.67 8.5" image="file://Media/Images/Obstacle/Campaign/BMapCampaign.png" id="Button_Map" scriptevents="1" halign="center" valign="center"
 				data-target="Button_Map" data-anim-length="70"
 				data-default-anim="<quad scale=&quot;1.&quot;/>"

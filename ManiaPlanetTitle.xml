@@ -13,8 +13,8 @@ Obstacle’s discord server: $lhttps://discord.gg/w2j64wXpjb$l
 Shootmania’s discord server: $lhttps://discord.gg/XG9aVHr4F2$l</desc>
 	<url>ObstacleMP4</url>
 	<download_url></download_url>
-	<title_version>2.5.5</title_version>
-	<allowed_client_title_version>2.5.2</allowed_client_title_version>
+	<title_version>2.6</title_version>
+	<allowed_client_title_version>2.6</allowed_client_title_version>
 	<maker>SMStormMaker@nadeo</maker>
 	<base>SMStorm</base>
 	<player_model>ArenaPlayer</player_model>
