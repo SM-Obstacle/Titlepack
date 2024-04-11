@@ -75,7 +75,7 @@ K_Group[] GetCredits() {
 				K_Person { Name = "Booby", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
 				K_Person { Name = "Buggz", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
 				K_Person { Name = "Khass", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
-				K_Person { Name = "HawKen", Roles = [ K_Role { Names = ["Trailer"] } ] }
+				K_Person { Name = "HawKen", Roles = [ K_Role { Names = ["Cinematic Artist"] } ] }
 			]
 		},
 		K_Group {
