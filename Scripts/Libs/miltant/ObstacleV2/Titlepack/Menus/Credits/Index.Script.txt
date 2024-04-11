@@ -42,7 +42,7 @@ K_Group[] GetCredits() {
 		K_Group {
 			Title = "Brand Team",
 			People = [
-				K_Person { Name = "HawKen", Roles = [ K_Role { Names = ["Cinematic Artist"], Date = "2024" } ] },
+				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Cinematic Artist"], Date = "2024" } ] },
 				K_Person { Name = "ZenyoX", Roles = [ K_Role { Names = ["Creative director"], Date = "2023 - Present" } ] }
 			]
 		},
@@ -74,7 +74,8 @@ K_Group[] GetCredits() {
 				K_Person { Name = "UnMecRandom", Roles = [ K_Role { Names = ["Mappers Referent", "Reference Times"] } ] },
 				K_Person { Name = "Booby", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
 				K_Person { Name = "Buggz", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
-				K_Person { Name = "Khass", Roles = [ K_Role { Names = ["Mappers Referent"] } ] }
+				K_Person { Name = "Khass", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
+				K_Person { Name = "HawKen", Roles = [ K_Role { Names = ["Trailer"] } ] }
 			]
 		},
 		K_Group {
@@ -117,6 +118,7 @@ K_Group[] GetCredits() {
 		K_Group {
 			Title = "Assets Creators",
 			People = [
+				K_Person { Name = "InnerPeace", Roles = [ K_Role { Names = ["Slide Items Set"], Date = "2024" } ] },
 				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Dynamic Items"], Date = "2023" } ] },
 				K_Person { Name = "Aurel & InnerPeace", Roles = [ K_Role { Names = ["ColorPalette", "Missing Materials"], Date = "2023" } ] },
 				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Invisible Skin"], Date = "2022" } ] },
