@@ -137,6 +137,16 @@ K_Group[] GetCredits() {
 				K_Person { Name = "Bert", Roles = [ K_Role { Names = ["Russian texts"], Date = "2023" } ] },
 				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Mapper", "Lead of translations", "English, French texts"], Date = "2022 - Present" } ] }
 			]
+		},
+		K_Group {
+			Title = "Texture Mods",
+			People = [
+				K_Person { Name = "Ziyx", Roles = [ K_Role { Names = ["Old Storm B0 Modified"] } ] },
+				K_Person { Name = "$i(unknown)", Roles = [ K_Role { Names = ["Old Storm B2"] } ] },
+				K_Person { Name = "OrecaShadow", Roles = [ K_Role { Names = ["Frozen Storm"] } ] },
+				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Lunar"] } ] },
+				K_Person { Name = "Bervt", Roles = [ K_Role { Names = ["Snow Storm"] } ] }
+			]
 		}
 	];
 }
