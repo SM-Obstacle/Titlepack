@@ -314,6 +314,9 @@ Text Build() {
 		}
 		Frame_Infos.Show();
 
+		// Number displayed on the maps cards
+		declare DisplayNumber = 0;
+
 		// Show all of current page
 		declare K_EventEditionContentCategory[] Categories = P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories
 			.slice(C_MaxCategoriesPerPage * (G_CurrentPage_Categories-1), C_MaxCategoriesPerPage);
@@ -350,12 +353,13 @@ Text Build() {
 				declare CMlQuad Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
 				declare CMlQuad Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
 
+				DisplayNumber += 1;
 				// Put left padding with 0
 				declare Text Label_Num_Text = "";
-				for (I, 0, DigitNum - NumberOfDigits(MapI+1) - 1) {
+				for (I, 0, DigitNum - NumberOfDigits(DisplayNumber) - 1) {
 					Label_Num_Text ^= "0";
 				}
-				Label_Num.SetText(Label_Num_Text ^ (MapI+1));
+				Label_Num.SetText(Label_Num_Text ^ DisplayNumber);
 
 				if (P_SelectedMapJ == MapI && P_SelectedMapI == I) {
 					Label_Num.TextColor = CL::HexToRgb("1D1F37");
