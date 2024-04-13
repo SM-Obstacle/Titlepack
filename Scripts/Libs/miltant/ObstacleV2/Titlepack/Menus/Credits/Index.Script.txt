@@ -42,7 +42,7 @@ K_Group[] GetCredits() {
 		K_Group {
 			Title = "Brand Team",
 			People = [
-				K_Person { Name = "HawKen", Roles = [ K_Role { Names = ["Cinematic Artist"], Date = "2024" } ] },
+				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Cinematic Artist"], Date = "2024" } ] },
 				K_Person { Name = "ZenyoX", Roles = [ K_Role { Names = ["Creative director"], Date = "2023 - Present" } ] }
 			]
 		},
@@ -74,7 +74,8 @@ K_Group[] GetCredits() {
 				K_Person { Name = "UnMecRandom", Roles = [ K_Role { Names = ["Mappers Referent", "Reference Times"] } ] },
 				K_Person { Name = "Booby", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
 				K_Person { Name = "Buggz", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
-				K_Person { Name = "Khass", Roles = [ K_Role { Names = ["Mappers Referent"] } ] }
+				K_Person { Name = "Khass", Roles = [ K_Role { Names = ["Mappers Referent"] } ] },
+				K_Person { Name = "HawKen", Roles = [ K_Role { Names = ["Cinematic Artist"] } ] }
 			]
 		},
 		K_Group {
@@ -117,6 +118,7 @@ K_Group[] GetCredits() {
 		K_Group {
 			Title = "Assets Creators",
 			People = [
+				K_Person { Name = "InnerPeace", Roles = [ K_Role { Names = ["Slide Items Set"], Date = "2024" } ] },
 				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Dynamic Items"], Date = "2023" } ] },
 				K_Person { Name = "Aurel & InnerPeace", Roles = [ K_Role { Names = ["ColorPalette", "Missing Materials"], Date = "2023" } ] },
 				K_Person { Name = "HasCrashed", Roles = [ K_Role { Names = ["Invisible Skin"], Date = "2022" } ] },
@@ -134,6 +136,16 @@ K_Group[] GetCredits() {
 				K_Person { Name = "Monk", Roles = [ K_Role { Names = ["Croatian texts"], Date = "2023" } ] },
 				K_Person { Name = "Bert", Roles = [ K_Role { Names = ["Russian texts"], Date = "2023" } ] },
 				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Mapper", "Lead of translations", "English, French texts"], Date = "2022 - Present" } ] }
+			]
+		},
+		K_Group {
+			Title = "Texture Mods",
+			People = [
+				K_Person { Name = "Ziyx", Roles = [ K_Role { Names = ["Old Storm B0 Modified"] } ] },
+				K_Person { Name = "$i(unknown)", Roles = [ K_Role { Names = ["Old Storm B2"] } ] },
+				K_Person { Name = "OrecaShadow", Roles = [ K_Role { Names = ["Frozen Storm"] } ] },
+				K_Person { Name = "Aurel", Roles = [ K_Role { Names = ["Lunar"] } ] },
+				K_Person { Name = "Bervt", Roles = [ K_Role { Names = ["Snow Storm"] } ] }
 			]
 		}
 	];
