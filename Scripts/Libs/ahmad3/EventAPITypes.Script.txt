@@ -16,6 +16,12 @@
     Text zone_path;
 }
 
+#Struct K_NextOpponent {
+    Text login;
+    Text name;
+    Integer time;
+}
+
 #Struct K_EventEditionContentMap {
     Integer mx_id;
     K_EventEditionContentMapAuthor main_author;
@@ -27,6 +33,7 @@
     Integer gold_time;
     Integer champion_time;
     Integer personal_best;
+    K_NextOpponent next_opponent;
 }
 
 #Struct K_EventEditionContentCategory {
@@ -59,7 +66,7 @@
 }
 
 Text ML_Preproc() {
-    return """
+    return """//!
 #Struct K_EventResponse {
     Text handle;
     Integer last_edition_id;
@@ -78,6 +85,12 @@ Text ML_Preproc() {
     Text zone_path;
 }
 
+#Struct K_NextOpponent {
+    Text login;
+    Text name;
+    Integer time;
+}
+
 #Struct K_EventEditionContentMap {
     Integer mx_id;
     K_EventEditionContentMapAuthor main_author;
@@ -89,6 +102,7 @@ Text ML_Preproc() {
     Integer gold_time;
     Integer champion_time;
     Integer personal_best;
+    K_NextOpponent next_opponent;
 }
 
 #Struct K_EventEditionContentCategory {

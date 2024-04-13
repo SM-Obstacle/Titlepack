@@ -117,6 +117,15 @@ Text Build() {
 			<label pos="26.5 -5.92" size="52 11.83" text="..:..:.." textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_PB"/>
 			<quad size="53 11.83" bgcolor="0009" scriptevents="1"/>
 		</frame>
+		<frame pos="0 -45">
+			<label pos="-.17 5" text="next opponent" textprefix="$t" textsize="2.05" textcolor="fff"/>
+
+			<quad z-index="1" pos="5 -3.25" size="5 5" id="Quad_NextOppMedal" hidden="1" />
+			<label pos="26.5 -5.92" size="52 11.83" text="None" textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_NextOpponent" />
+			<label pos="26.5 -12" size="52 11.83" text="--:--:--" textsize="2" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_NextOppTime" />
+
+			<quad size="53 15" bgcolor="0009" scriptevents="1" />
+		</frame>
 	</frame>
 
 	<frame pos="-96.17 53.5">
@@ -240,6 +249,9 @@ Text Build() {
 		declare Label_Map = (Page.GetFirstChild("Label_Map") as CMlLabel);
 		declare Label_Mapper = (Page.GetFirstChild("Label_Mapper") as CMlLabel);
 		declare Label_PB = (Page.GetFirstChild("Label_PB") as CMlLabel);
+		declare Label_NextOpponent = (Page.GetFirstChild("Label_NextOpponent") as CMlLabel);
+		declare Label_NextOppTime = (Page.GetFirstChild("Label_NextOppTime") as CMlLabel);
+		declare Quad_NextOppMedal = (Page.GetFirstChild("Quad_NextOppMedal") as CMlQuad);
 		declare Label_LeaderboardsLink = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
 
 		declare Integer P_SelectedEdition for Page;
@@ -251,6 +263,9 @@ Text Build() {
 
 		// Clear the page
 		Frame_Infos.Hide();
+		Quad_NextOppMedal.Hide();
+		Label_NextOppTime.SetText("--:--:--");
+		Label_NextOpponent.SetText("None");
 		Label_LeaderboardsLink.Hide();
 		for (I, 1, C_MaxCategoriesPerPage) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ I) as CMlFrame);
@@ -277,6 +292,7 @@ Text Build() {
 
 		// Keeps the page cleared
 		if (P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories.count == 0) return;
+
 		declare SelectedCategory = P_CampaignEvent.EditionsDetails[P_SelectedEdition]
 			.categories[P_SelectedMapI];
 		declare K_EventEditionContentMap SelectedMap = SelectedCategory
@@ -311,7 +327,42 @@ Text Build() {
 		} else {
 			Label_PB.TextColor = CL::HexToRgb("4E6D8C");
 			Label_PB.SetText(TL::TimeToText(SelectedMap.personal_best, True));
+
+			declare Text NextOppTxt;
+			declare Integer NextOppTime = -1;
+
+			if (SelectedMap.champion_time > 0 && SelectedMap.personal_best > SelectedMap.champion_time) {
+				Quad_NextOppMedal.Show();
+				declare Text NextMedalImg;
+				if (SelectedMap.personal_best > SelectedMap.bronze_time) {
+					NextMedalImg = "file://Media/Images/Obstacle/Medals/bronze.png";
+					NextOppTxt = "Bronze";
+					NextOppTime = SelectedMap.bronze_time;
+				} else if (SelectedMap.personal_best > SelectedMap.silver_time) {
+					NextMedalImg = "file://Media/Images/Obstacle/Medals/silver.png";
+					NextOppTxt = "Silver";
+					NextOppTime = SelectedMap.silver_time;
+				} else if (SelectedMap.personal_best > SelectedMap.gold_time) {
+					NextMedalImg = "file://Media/Images/Obstacle/Medals/gold.png";
+					NextOppTxt = "Gold";
+					NextOppTime = SelectedMap.gold_time;
+				} else if (SelectedMap.personal_best > SelectedMap.champion_time) {
+					NextMedalImg = "file://Media/Images/Obstacle/Medals/champion.png";
+					NextOppTxt = "Champion";
+					NextOppTime = SelectedMap.champion_time;
+				}
+				Quad_NextOppMedal.ChangeImageUrl(NextMedalImg);
+			} else if (SelectedMap.next_opponent.time != -1) {
+				NextOppTxt = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.next_opponent.login ^ "]$z" ^ SelectedMap.next_opponent.name ^ "";
+				NextOppTime = SelectedMap.next_opponent.time;
+			}
+
+			if (NextOppTime != -1) {
+				Label_NextOpponent.SetText(NextOppTxt);
+				Label_NextOppTime.SetText(TL::TimeToText(NextOppTime, True));
+			}
 		}
+
 		Frame_Infos.Show();
 
 		// Show all of current page
