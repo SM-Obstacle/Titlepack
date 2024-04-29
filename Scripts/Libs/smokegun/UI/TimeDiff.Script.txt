@@ -32,12 +32,25 @@ Text GetLayer() {
         #Include "TextLib" as TextLib
         #Include "MathLib" as MathLib
 
+        #Struct K_WebhookBody {
+            Text run_time;
+            Text map_name;
+            Text map_uid;
+            Text cp_times;
+            Text player_field;
+            Text server_text;
+            Text irl_time_passed;
+            Text discrepancy;
+            Text discrepancy_ratio;
+            Text ac_version;
+        }
+
         declare Ident[] G_WaitingToComplete;
         declare Text[] G_WaitingToSend;
 
         Ident MakePost(Text _Data) {
             if (Http.SlotsAvailable > 0) {
-                declare request <=> Http.CreatePost("https://discord.com/api/webhooks/961462988945129492/V4UkNpI9f4G2YIHsO8RQI8_OSdRyHQ3hMKiRmX9mM1-gpeU_p_usJ1OQRnDvqDFWEWLJ", _Data,
+                declare request <=> Http.CreatePost("https://obstacle.titlepack.io/api/player/ac", _Data,
                 "Content-Type: application/json\nAccept: application/json");
                 return request.Id;
             }
@@ -137,7 +150,7 @@ Text GetLayer() {
                 if (Net_LayerTimeDiffUpdated != LayerTimeDiffUpdated) {
                     LayerTimeDiffUpdated = Net_LayerTimeDiffUpdated;
 
-                    CPTimes ^= Net_Time1 ^ ";" ^ Now ^ ";" ^ System.CurrentLocalDate ^ "\\n";
+                    CPTimes ^= Net_Time1 ^ ";" ^ Now ^ ";" ^ System.CurrentLocalDate ^ "\n";
 
                     declare DiffString = "";
                     declare Diff = 0;
@@ -205,61 +218,35 @@ Text GetLayer() {
                             }
 
                             if (CurrentServerLogin != "" || CurrentServerName != "") {
-                                ServerText = TextLib::StripFormatting(CurrentServerName) ^ "  (\\\"" ^ CurrentServerLogin ^ "\\\")";
+                                ServerText = TextLib::StripFormatting(CurrentServerName) ^ "  (\"" ^ CurrentServerLogin ^ "\")";
                                 continue;
                             }
 
                             declare DiscrepancyRatio = Net_Time1 * 100. / (Net_Time1 * 1. + Discrepancy * 1.);
                             declare DiscrepancyRatioA = Net_Time1 * 100. / (Net_Time1 * 1. + Discrepancy * 1. - 999.);
                             declare DiscrepancyRatioB = Net_Time1 * 100. / (Net_Time1 * 1. + Discrepancy * 1. + 999.);
-
-                            declare Body = "{" ^
-                            "\"content\": \"Map has been finished in " ^ TextLib::TimeToText(Net_Time1, True) ^ "\"," ^
-                            "\"embeds\": [" ^
-                                "{" ^
-                                "\"title\": \"" ^ TextLib::StripFormatting(Map.MapName) ^ "\"," ^
-                                "\"description\": \"" ^ CPTimes ^ "\"," ^
-                                "\"url\": \"https://www.obstacle.ovh/map/" ^ Map.Id ^ "\"," ^
-                                "\"color\": 5814783," ^
-                                "\"fields\": [" ^
-                                    "{" ^
-                                        "\"name\": \"Player: \"," ^
-                                        "\"value\": \"" ^ TextLib::StripFormatting(InputPlayer.User.Name) ^ "  (\\\"" ^ InputPlayer.User.Login ^ "\\\")\"" ^
-                                    "}," ^
-                                    "{" ^
-                                        "\"name\": \"Server: \"," ^
-                                        "\"value\": \"" ^ ServerText ^ "\"" ^
-                                    "}," ^
-                                    "{" ^
-                                        "\"name\": \"IRL Time elapsed: \"," ^
-                                        "\"value\": \"" ^ TextLib::TimeToText(Net_Time1 + Discrepancy, True) ^ "\"," ^
-                                        "\"inline\": true" ^
-                                    "}," ^
-                                    "{" ^
-                                        "\"name\": \"Discrepancy: \"," ^
-                                        "\"value\": \"" ^ TextLib::TimeToText(Discrepancy, True) ^ "\"," ^
-                                        "\"inline\": true" ^
-                                    "}," ^
-                                    "{" ^
-                                        "\"name\": \"Discrepancy Ratio: \"," ^
-                                        "\"value\": \"" ^ MathLib::Min(DiscrepancyRatioA, DiscrepancyRatioB) ^ " < speed% < " ^ MathLib::Max(DiscrepancyRatioA, DiscrepancyRatioB) ^ "\"" ^
-                                    "}," ^
-                                    "{" ^
-                                        "\"name\": \"Anticheat Version: \"," ^
-                                        "\"value\": \"{{{Version}}}\"" ^
-                                    "}" ^
-                                "]" ^
-                                "}" ^
-                            "]}";
-                            SendPost(Body);
+                            
+                            declare Body = K_WebhookBody {
+                                run_time = TextLib::TimeToText(Net_Time1, True),
+                                map_name = TextLib::StripFormatting(Map.MapName),
+                                map_uid = "" ^ Map.Id,
+                                cp_times = CPTimes,
+                                player_field = TextLib::StripFormatting(InputPlayer.User.Name) ^ " (" ^ InputPlayer.User.Login ^ ")",
+                                server_text = ServerText,
+                                irl_time_passed = TextLib::TimeToText(Net_Time1 + Discrepancy, True),
+                                discrepancy = TextLib::TimeToText(Discrepancy, True),
+                                discrepancy_ratio = MathLib::Min(DiscrepancyRatioA, DiscrepancyRatioB) ^ " < speed% < " ^ MathLib::Max(DiscrepancyRatioA, DiscrepancyRatioB),
+                                ac_version = "{{{Version}}}"
+                            };
+                            SendPost(Body.tojson());
                         }
                     }
                     
                     if (Net_NewSpawn != NewSpawn) {
                         NewSpawn = Net_NewSpawn;
 
-                        CPTimes = "Arena ; UI ; Computer\\n";
-                        CPTimes ^= "-2500;" ^ Now ^ ";" ^ System.CurrentLocalDate ^ "\\n";
+                        CPTimes = "Arena ; UI ; Computer\n";
+                        CPTimes ^= "-2500;" ^ Now ^ ";" ^ System.CurrentLocalDate ^ "\n";
 
                         InitialDifference = System.CurrentLocalDate * 1000 - Now;
                     }
