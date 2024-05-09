@@ -163,6 +163,11 @@ Text GetLayer() {
             if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
             if (LocalPlayer == Null) continue;
 
+            if (LocalPlayer.User.Login != LastPlayerLogin) {
+                LastUpdate = -1;
+                LastPlayerLogin = LocalPlayer.User.Login;
+            }
+
             if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
                 G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
                 MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
