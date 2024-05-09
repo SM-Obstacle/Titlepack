@@ -837,17 +837,16 @@ Void CreateUI() {
     Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));
     Layers::Attach("RespawnBehavior");
     Layers::Attach("NextMapVote");
+    Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
+    Layers::Create("SpecList", SpecList::GetLayer());
+    Layers::Create("Glitches", Glitches::GetLayer());
+    Layers::Attach("SpectatorCount");
+    Layers::Attach("SpecList");
+    Layers::Attach("Glitches");
 
     if (!G_IsCampaign) {
         Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
-        Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
-        Layers::Create("SpecList", SpecList::GetLayer());
-        Layers::Create("Glitches", Glitches::GetLayer());
-        
         Layers::Attach("SurvivalRanking");
-        Layers::Attach("SpectatorCount");
-        Layers::Attach("SpecList");
-        Layers::Attach("Glitches");
     }
 
     //Layers::AttachReplay("SpecKeys");
