@@ -9,6 +9,7 @@
 #Include "TimeLib" as TimeLib
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/miltant/RunFlags.Script.txt" as RunFlags
+#Include "Libs/ahmad3/Utils.Script.txt" as Utils
 
 #Include "Libs/ahmad3/Error.Script.txt" as Error
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
@@ -193,6 +194,26 @@ Text GetLayer() {
 	Integer respawn_count;
 }
 
+/**
+ * A staggered request.
+ *
+ * This is used to store the failed requests in a cache to send them later.
+ */
+#Struct K_StaggeredReq {
+	/**
+	 * The API route segment of the request.
+	 */
+	Text Route;
+	/**
+	 * The request timestamp.
+	 */
+	Integer Tstp;
+	/**
+	 * The request JSON body.
+	 */
+	Text Body;
+}
+
 {{{Ban::ML_Preproc()}}}
 {{{Error::ML_Preproc()}}}
 {{{RunFlags::ML_Preproc()}}}
@@ -200,6 +221,7 @@ Text GetLayer() {
 {{{Ban::ML_Content()}}}
 {{{Error::ML_Content()}}}
 {{{RunFlags::ML_FlagSum()}}}
+{{{Utils::ML_FindCharIndex("Utils_", "TL")}}}
 
 declare Boolean G_Errored;
 
@@ -404,6 +426,82 @@ Boolean usedSpeedHack(CSmPlayer _Player) {
     return Net_UsedSpeedHack;
 }
 
+/**
+ * Returns the stored cache of the requests of the player.
+ * 
+ * @return The stored staggered requests cache of the player.
+ */
+K_StaggeredReq[] _Staggered_GetCache() {
+	declare persistent Text ObsStore_ReqCache for LocalUser;
+	declare Integer VersIndex = Utils_FindCharIndex(ObsStore_ReqCache, "[");
+	if (VersIndex == -1) return [];
+	declare Text Version = TL::SubText(ObsStore_ReqCache, 0, VersIndex);
+	declare Text ReqCache = TL::SubText(ObsStore_ReqCache, VersIndex, TL::Length(ObsStore_ReqCache) - VersIndex);
+	if ("{{{Constants::C_Version_ReqCache}}}" != Version)
+		return [];
+	declare K_StaggeredReq[] StaggeredReqs;
+	StaggeredReqs.fromjson(ReqCache);
+	return StaggeredReqs;
+}
+
+/**
+ * Saves the cache of the player.
+ * 
+ * @param _Cache The new staggered requests cache.
+ */
+Void _Staggered_SaveCache(K_StaggeredReq[] _Cache) {
+	declare persistent Text ObsStore_ReqCache for LocalUser;
+	ObsStore_ReqCache = "{{{Constants::C_Version_ReqCache}}}" ^ _Cache.tojson();
+}
+
+/**
+ * Used to save the provided body to the request cache of the player.
+ * 
+ * @param _Body the JSON body of the request.
+ * @param _Route the request route on the API.
+ */
+Void SaveStaggered(Text _Body, Text _Route) {
+	declare K_StaggeredReq[] StaggeredReqs = _Staggered_GetCache();
+	StaggeredReqs.add(K_StaggeredReq {
+		Route = _Route,
+		Tstp = TL::ToInteger(TimeLib::GetCurrent()),
+		Body = _Body
+	});
+	_Staggered_SaveCache(StaggeredReqs);
+}
+
+/**
+ * Tries to send the stored cache requests of the player as staggered requests.
+ */
+Void TrySendStaggeredReqs() {
+	declare K_StaggeredReq[] StaggeredReqs = _Staggered_GetCache();
+	declare K_StaggeredReq[Integer] IndexedStaggeredReqs;
+	foreach (I => StagReq in StaggeredReqs) {
+		IndexedStaggeredReqs[I] = StagReq;
+	}
+
+	foreach (I => StagReq in IndexedStaggeredReqs) {
+		declare Text Body = "{\"req_tstp\":" ^ StagReq.Tstp ^ ",\"body\":" ^ StagReq.Body ^ "}";
+		declare Ident ReqId = MakePost("staggered/" ^ StagReq.Route, Body);
+		if (ReqId == NullId) continue;
+		declare CHttpRequest Req <=> Http.Requests[ReqId];
+		wait(Req.IsCompleted);
+		if (Req.StatusCode == 200) {
+			IndexedStaggeredReqs.removekey(I);
+		}
+	}
+
+	StaggeredReqs = [];
+	foreach (RemainingStagReq in IndexedStaggeredReqs) {
+		StaggeredReqs.add(RemainingStagReq);
+	}
+
+	_Staggered_SaveCache(StaggeredReqs);
+
+	declare Boolean StaggeredReqsLoaded for LocalUser = False;
+	StaggeredReqsLoaded = True;
+}
+
 // Send records
 Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _LastCpTimes) {
     declare Flags = GetFlagsSum(
@@ -425,8 +523,10 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
         cps = _LastCpTimes
     };
 
+	declare Text JsonBody = body.tojson();
+
 	declare netread Text Net_EventRoutePrefix for Teams[0];
-    declare Req = MakePost(Net_EventRoutePrefix ^ "player/finished", body.tojson());
+    declare Req = MakePost(Net_EventRoutePrefix ^ "player/finished", JsonBody);
 	if (Req == NullId) {
 		log("Could not send request to server");
 		return;
@@ -443,7 +543,8 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 		declare err = Error_Handle(req.StatusCode, req.Result);
 		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
 		UI.SendChat(err.err.message);
-		OnError(err, "/player/finished");
+		// Instead of notifying the error, we save it as staggered to be saved later.
+		SaveStaggered(JsonBody, Net_EventRoutePrefix ^ "player/finished");
 	} else {
 		SendCustomEvent("player:finished", [req.Result]);
 	}
@@ -518,6 +619,7 @@ Boolean HasDevMode() {
 
 main() {
 	Error_Init();
+	TrySendStaggeredReqs();
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
 

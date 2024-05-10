@@ -1,6 +1,7 @@
 #Include "TextLib" as TL
 
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
+#Include "Libs/ahmad3/Utils.Script.txt" as Utils
 
 #Include "Libs/ahmad3/InnerEventAPI.Script.txt" as Inner
 #Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
@@ -15,21 +16,12 @@ Types::K_Event GetEvent(Text _EventHandle) {
     return Inner::GetEvent(_EventHandle);
 }
 
-Integer Private_FindCharIndex(Text _Haystack, Text _ToFind) {
-    for (I, 0, TL::Length(_Haystack)) {
-        if (TL::SubText(_Haystack, I, 1) == _ToFind) {
-            return I;
-        }
-    }
-    return -1;
-}
-
 /**
  * Returns `""` when the cache isn't compatible, otherwise the events cache in its JSON format.
  */
 Text Private_GetRawCache() {
     declare persistent Text ObsStore_EventsCache2 for LocalUser;
-    declare Integer VersIndex = Private_FindCharIndex(ObsStore_EventsCache2, "{");
+    declare Integer VersIndex = Utils::FindCharIndex(ObsStore_EventsCache2, "{");
     if (VersIndex == -1) return "";
     declare Text Version = TL::SubText(ObsStore_EventsCache2, 0, VersIndex);
     declare Text EventsCache = TL::SubText(ObsStore_EventsCache2, VersIndex, TL::Length(ObsStore_EventsCache2) - VersIndex);

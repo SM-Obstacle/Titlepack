@@ -85,9 +85,24 @@ Text GetLayer() {
         G_Req = Http.CreateGet(url, True, "Accept: application/json");
     }
 
+    /**
+     * Waits for the cached requests of the player to be - tried to be - sent.
+     * 
+     * We do this because the player may have made 2 records on the same map
+     * with a better time on the second run. If we don't wait, the second staggered request
+     * won't have time to be sent before we fetch the leaderboard, so the latter won't be
+     * the correct final version.
+     */
+    Void WaitForStaggeredReqsToLoad() {
+        declare Boolean StaggeredReqsLoaded for LocalUser = False;
+        wait(StaggeredReqsLoaded);
+        StaggeredReqsLoaded = False;
+    }
+
     main() {
         {{{CustomUI::InjectMLInit()}}}
         Error_Init();
+        WaitForStaggeredReqsToLoad();
         wait(InputPlayer != Null && Page != Null);
 
         declare LastPlayerLogin = "";

@@ -130,9 +130,19 @@ Text GetLayer() {
         G_Req = Http.CreateGet(url, True, "Accept: application/json");
     }
 
+    /**
+     * See the same function definition in "Libs/smokegun/UI/RecordsWidget.Script.txt".
+     */
+    Void WaitForStaggeredReqsToLoad() {
+        declare Boolean StaggeredReqsLoaded for LocalUser = False;
+        wait(StaggeredReqsLoaded);
+        StaggeredReqsLoaded = False;
+    }
+
     main() {
         {{{CustomUI::InjectMLInit()}}}
         Error_Init();
+        WaitForStaggeredReqsToLoad();
         wait(InputPlayer != Null);
 
 		declare Integer[Text] CampaignRecords for LocalUser;
