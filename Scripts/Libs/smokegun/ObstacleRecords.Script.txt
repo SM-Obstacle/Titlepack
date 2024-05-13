@@ -44,7 +44,6 @@
     Text map_uid;
     Integer cps_number;
     K_UpdatePlayerBody author;
-    Boolean reversed;
 }
 
 #Struct K_HasFinishedResponse {
@@ -53,7 +52,6 @@
 	Integer old;
 	Integer new;
 	Integer current_rank;
-    Boolean reversed;
 }
 
 #Struct K_PbCpTimesResponseItem {
@@ -136,7 +134,7 @@ Void Init() {
 /////////////////////////////////////////////////////////////////
 
 // Send map infos
-Void ReplaceOrCreateMap(Integer _CpsNumber, Boolean _Reversed) {
+Void ReplaceOrCreateMap(Integer _CpsNumber) {
     declare body = K_UpdateMapBody {
         name = Map.MapName,
         map_uid = ""^Map.Id,
@@ -145,8 +143,7 @@ Void ReplaceOrCreateMap(Integer _CpsNumber, Boolean _Reversed) {
             login = Map.AuthorLogin,
             name = Map.AuthorNickName,
             zone_path = Map.AuthorZonePath
-        },
-        reversed = _Reversed
+        }
     };
 
     SendPost("map/insert", body.tojson(), Constants::C_Request_ReplaceOrCreateMap, G_PostHeaders);

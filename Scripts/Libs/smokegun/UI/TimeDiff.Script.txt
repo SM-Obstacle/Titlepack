@@ -83,8 +83,6 @@ Text GetLayer() {
             declare Text CPTimes = "";
             declare InitialDifference = 0;
 
-            declare netread Net_ReversedMapLB for Teams[0] = False;
-
             while (True) {
                 yield;
 
@@ -162,15 +160,13 @@ Text GetLayer() {
                         Diff = Net_Time1 - Net_Time2;
                     }
 
-                    if (Diff < 0 && !Net_ReversedMapLB || Diff > 0 && Net_ReversedMapLB) {
+                    if (Diff < 0) {
                         declare PrefixOp = "-";
-                        if (Net_ReversedMapLB) PrefixOp = "+";
                         DiffString = "$s$33f" ^ PrefixOp ^ TextLib::TimeToText(MathLib::Abs(Diff), True);
                     } else if (Diff == 0) {
                         DiffString = "$s$3f3 (00:00.00)";
-                    } else if (Diff > 0 && !Net_ReversedMapLB || Diff < 0 && Net_ReversedMapLB) {
+                    } else if (Diff > 0) {
                         declare PrefixOp = "+";
-                        if (Net_ReversedMapLB) PrefixOp = "-";
                         DiffString = "$s$f33" ^ PrefixOp ^ TextLib::TimeToText(MathLib::Abs(Diff), True);
                     }
 

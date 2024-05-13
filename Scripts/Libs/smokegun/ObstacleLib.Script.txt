@@ -288,7 +288,7 @@ Boolean PrepareMap(Text ModeName) {
     }
 
     if (MapAttr::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
-        API::ReplaceOrCreateMap(G_CheckpointsTotal, MapAttr::IsLeaderboardReversed());
+        API::ReplaceOrCreateMap(G_CheckpointsTotal);
     }
 
     return True;
@@ -773,7 +773,7 @@ Void Private_HandleFinish(CSmPlayer _Player, Ident _GoalId) {
     Net_NewGoal = Now;
 
     // Check if last run is better
-    if (Time < BestRun && !MapAttr::IsLeaderboardReversed() || Time > BestRun && MapAttr::IsLeaderboardReversed() || BestRun < 0) {
+    if (Time < BestRun || BestRun < 0) {
         Player::setBestRun(_Player, Time);
         Player::setBestCPTimes(_Player, Player::getLastCPTimes(_Player));
 

@@ -68,7 +68,6 @@
 #Setting S_LegacyRespawn False as "<hidden>"
 #Setting S_BestNewRecordMsg "%1$z made a new record! (%2, got %3)" as "<hidden>"
 #Setting S_WorseNewRecordMsg "$zToo late by %5 (previous was %4)!" as "<hidden>"
-#Setting S_ReversedWorseNewRecordMsg "$zToo fast by %5 (previous was %4)!" as "<hidden>"
 #Setting S_CheckpointMarkersCount 1 as "Count of different checkpoint markers"
 
 #Setting S_ForceRNGSeed "" as "Seed to use for randomizer maps (Integer)"
@@ -271,9 +270,6 @@ if (!Obstacle::PrepareMap(ModeInfo::GetName()) && Editor_WayPointSpawn_Flag == 0
     MB_Private_StopMap();
 }
 
-declare netwrite Boolean Net_ReversedMapLB for Teams[0];
-Net_ReversedMapLB = MapAttr::IsLeaderboardReversed();
-
 UsePvPWeapons = Obstacle::IsPvPWeaponsMap();
 UsePvPCollisions = Obstacle::IsPvPCollisionsMap();
 UseSameWallJump = Obstacle::IsSameWallJumpMap();
@@ -367,9 +363,7 @@ foreach (Event in UIManager.PendingEvents) {
                     }
                 } else if (Player != Null) {
                     declare Text Txt;
-                    if (Res.reversed && S_ReversedWorseNewRecordMsg != "") {
-                        Txt = TL::Compose(S_ReversedWorseNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime);
-                    } else if (S_WorseNewRecordMsg != "") {
+                    if (S_WorseNewRecordMsg != "") {
                         Txt = TL::Compose(S_WorseNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime);
                     }
                     UIManager.GetUI(Player).SendChat(Txt);
@@ -936,10 +930,6 @@ Void UpdateSettings() {
 
     if (S_WorseNewRecordMsg != Settings::GetWorseNewRecordMsg()) {
         Settings::SetWorseNewRecordMsg(S_WorseNewRecordMsg);
-    }
-
-    if (S_ReversedWorseNewRecordMsg != Settings::GetReversedWorseNewRecordMsg()) {
-        Settings::SetReversedWorseNewRecordMsg(S_ReversedWorseNewRecordMsg);
     }
 
     declare Boolean ForceInvisibleSkin = S_ForceInvisibleSkin && G_ForceInvisibleSkin;

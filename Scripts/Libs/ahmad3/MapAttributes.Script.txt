@@ -10,8 +10,3 @@ Boolean IsLeaderboardEnabled() {
     declare metadata Meta_LB_Enabled for Map = True;
     return Meta_LB_Enabled;
 }
-
-Boolean IsLeaderboardReversed() {
-    declare metadata Meta_LB_Reversed for Map = False;
-    return Meta_LB_Reversed;
-}

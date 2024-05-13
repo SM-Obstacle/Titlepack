@@ -29,7 +29,6 @@ declare Real G_NextMapVotingRatio;
 
 declare Text G_BestNewRecordMsg;
 declare Text G_WorseNewRecordMsg;
-declare Text G_ReversedWorseNewRecordMsg;
 declare Text G_ForceRNGSeed;
 declare Boolean G_ForcePvPWeapons;
 declare Boolean G_ForcePvPCollisions;
@@ -236,14 +235,6 @@ Text GetWorseNewRecordMsg() {
 
 Void SetWorseNewRecordMsg(Text _Value) {
 	G_WorseNewRecordMsg = _Value;
-}
-
-Text GetReversedWorseNewRecordMsg() {
-	return G_ReversedWorseNewRecordMsg;
-}
-
-Void SetReversedWorseNewRecordMsg(Text _Value) {
-	G_ReversedWorseNewRecordMsg = _Value;
 }
 
 Text GetForceRNGSeed() {

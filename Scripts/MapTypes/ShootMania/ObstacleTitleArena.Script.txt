@@ -461,7 +461,6 @@ Void EditMap()
     declare metadata Boolean Meta_SameWallJump for Map = True;
     declare metadata Integer Meta_ForceFastRS for Map = 0;
     declare metadata Integer Meta_Invulnerability for Map = 2000;
-    declare metadata Boolean Meta_LB_Reversed for Map = False;
     declare metadata Boolean Meta_LB_Enabled for Map = True;
 
     declare PvP_Weapons for ManialinkPage = Meta_PvP_Weapons;
@@ -469,7 +468,6 @@ Void EditMap()
     declare SameWallJump for ManialinkPage = Meta_SameWallJump;
     declare ForceFastRS for ManialinkPage = Meta_ForceFastRS;
     declare Invulnerability for ManialinkPage = Meta_Invulnerability;
-    declare ReversedLB for ManialinkPage = Meta_LB_Reversed;
     declare EnabledLB for ManialinkPage = Meta_LB_Enabled;
 
     /// --- Manialink
@@ -482,8 +480,7 @@ Void EditMap()
             {{{Property("-20 -17.5", "Fast Respawn", Checkbox("13 0", "Checkbox_ForceFastRS"))}}}
             {{{BigProperty("0 -28", "Weapon Ready Delay", Entry("0 -7.5", "Entry_Invulnerability"))}}}
             {{{BigProperty("0 -46.5", "Leaderboard", "")}}}
-            {{{Property("-20 -54", "Reversed", Checkbox("13 0", "Checkbox_LB_Reversed"))}}}
-            {{{Property("12.5 -54", "Enabled", Checkbox("13 0", "Checkbox_LB_Enabled"))}}}
+            {{{Property("0 -55", "Enabled", Checkbox("13 0", "Checkbox_LB_Enabled"))}}}
         </frame>
     """;
 
@@ -501,7 +498,6 @@ Void EditMap()
         declare Boolean SameWallJump for Page;
         declare Integer ForceFastRS for Page;
         declare Integer Invulnerability for Page;
-        declare Boolean ReversedLB for Page;
         declare Boolean EnabledLB for Page;
 
         declare Label_PvP_Weapons <=> (Page.GetFirstChild("Checkbox_PvP_Weapons") as CMlLabel);
@@ -509,7 +505,6 @@ Void EditMap()
         declare Label_SameWallJump <=> (Page.GetFirstChild("Checkbox_SameWallJump") as CMlLabel);
         declare Label_ForceFastRS <=> (Page.GetFirstChild("Checkbox_ForceFastRS") as CMlLabel);
         declare Entry_Invulnerability <=> (Page.GetFirstChild("Entry_Invulnerability") as CMlEntry);
-        declare Label_LB_Reversed <=> (Page.GetFirstChild("Checkbox_LB_Reversed") as CMlLabel);
         declare Label_LB_Enabled <=> (Page.GetFirstChild("Checkbox_LB_Enabled") as CMlLabel);
 
         if (!EnabledLB && Label_LB_Enabled.Value != "") {
@@ -517,13 +512,6 @@ Void EditMap()
         }
         if (EnabledLB && Label_LB_Enabled.Value != "✖") {
             Label_LB_Enabled.SetText("✖");
-        }
-
-        if (!ReversedLB && Label_LB_Reversed.Value != "") {
-            Label_LB_Reversed.SetText("");
-        }
-        if (ReversedLB && Label_LB_Reversed.Value != "✖") {
-            Label_LB_Reversed.SetText("✖");
         }
 
         if (!PvP_Weapons && Label_PvP_Weapons.Value != "") {
@@ -568,7 +556,6 @@ Void EditMap()
         declare Boolean SameWallJump for Page;
         declare Integer ForceFastRS for Page;
         declare Integer Invulnerability for Page;
-        declare Boolean ReversedLB for Page;
         declare Boolean EnabledLB for Page;
 
         declare NeedUpdate = False;
@@ -604,21 +591,8 @@ Void EditMap()
                                 }
                             }
 
-                            case "Checkbox_LB_Reversed": {
-                                if (!ReversedLB && !EnabledLB) {
-                                    EnabledLB = True;
-                                }
-
-                                ReversedLB = !ReversedLB;
-                            }
-
-                            case "Checkbox_LB_Enabled": {
-                                if (EnabledLB && ReversedLB) {
-                                    ReversedLB = False;
-                                }
-                                
+                            case "Checkbox_LB_Enabled":
                                 EnabledLB = !EnabledLB;
-                            }
                         }
 
                         NeedUpdate = True;
@@ -647,7 +621,6 @@ Void SaveMapSettings()
     declare metadata Boolean Meta_SameWallJump for Map;
     declare metadata Integer Meta_ForceFastRS for Map;
     declare metadata Integer Meta_Invulnerability for Map;
-    declare metadata Boolean Meta_LB_Reversed for Map;
     declare metadata Boolean Meta_LB_Enabled for Map;
 
     declare Boolean PvP_Weapons for ManialinkPage;
@@ -655,7 +628,6 @@ Void SaveMapSettings()
     declare Boolean SameWallJump for ManialinkPage;
     declare Integer ForceFastRS for ManialinkPage;
     declare Integer Invulnerability for ManialinkPage;
-    declare Boolean ReversedLB for ManialinkPage;
     declare Boolean EnabledLB for ManialinkPage;
 
     Meta_PvP_Weapons = PvP_Weapons;
@@ -663,7 +635,6 @@ Void SaveMapSettings()
     Meta_SameWallJump = SameWallJump;
     Meta_ForceFastRS = ForceFastRS;
     Meta_Invulnerability = Invulnerability;
-    Meta_LB_Reversed = ReversedLB;
     Meta_LB_Enabled = EnabledLB;
 }
 
