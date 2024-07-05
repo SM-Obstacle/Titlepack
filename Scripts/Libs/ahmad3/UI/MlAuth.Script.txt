@@ -619,9 +619,10 @@ Boolean HasDevMode() {
 
 main() {
 	Error_Init();
-	TrySendStaggeredReqs();
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
+
+	TrySendStaggeredReqs();
 
 	G_AuthDialog <=> (Page.GetFirstChild("Frame_AuthDialog") as CMlFrame);
 	G_AuthDialog_Submit <=> (Page.GetFirstChild("Frame_AuthDialog_Button_OK") as CMlQuad);
