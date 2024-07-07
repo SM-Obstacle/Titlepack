@@ -488,6 +488,7 @@ Void TrySendStaggeredReqs() {
 		wait(Req.IsCompleted);
 		if (Req.StatusCode == 200) {
 			IndexedStaggeredReqs.removekey(I);
+			Http.Destroy(Req);
 		}
 	}
 
@@ -622,8 +623,6 @@ main() {
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
 
-	TrySendStaggeredReqs();
-
 	G_AuthDialog <=> (Page.GetFirstChild("Frame_AuthDialog") as CMlFrame);
 	G_AuthDialog_Submit <=> (Page.GetFirstChild("Frame_AuthDialog_Button_OK") as CMlQuad);
 	G_AuthDialog_HeadMsg <=> (Page.GetFirstChild("AuthDialog_HeadMsg") as CMlLabel);
@@ -656,6 +655,8 @@ main() {
 	wait(InputPlayer.StartTime != -1 || LastMapStartTime != Net_MapStartTime);
 
 	Private_UpdatePlayer();
+	TrySendStaggeredReqs();
+
     declare netread _LastRun for UI = -1;
     declare netread _RespawnCount for UI = 0;
     declare netread Integer[] _LastCPTimes for UI;
