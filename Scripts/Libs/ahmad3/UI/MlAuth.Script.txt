@@ -488,6 +488,7 @@ Void TrySendStaggeredReqs() {
 		wait(Req.IsCompleted);
 		if (Req.StatusCode == 200) {
 			IndexedStaggeredReqs.removekey(I);
+			Http.Destroy(Req);
 		}
 	}
 
@@ -622,8 +623,6 @@ main() {
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
 
-	TrySendStaggeredReqs();
-
 	G_AuthDialog <=> (Page.GetFirstChild("Frame_AuthDialog") as CMlFrame);
 	G_AuthDialog_Submit <=> (Page.GetFirstChild("Frame_AuthDialog_Button_OK") as CMlQuad);
 	G_AuthDialog_HeadMsg <=> (Page.GetFirstChild("AuthDialog_HeadMsg") as CMlLabel);
@@ -638,24 +637,14 @@ main() {
 	G_MaintenanceDialog <=> (Page.GetFirstChild("Frame_MaintenanceDialog") as CMlFrame);
 	G_MaintenanceDialog_Submit <=> (Page.GetFirstChild("Frame_MaintenanceDialog_Button_OK") as CMlQuad);
 
-	if(HasDevMode()) {
-		ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
-		G_SecurityFrame.Show();
-	}
-
-	wait(!HasDevMode());
-
-	if (G_SecurityFrame.Visible) {
-		G_SecurityFrame.Hide();
-		ClientUI.UISequence = CUIConfig::EUISequence::None;
-	}
-
 	// Waits for the map to be initialized before we start executing the script
 	declare netread Text Net_MapStartTime for Teams[0];
 	declare LastMapStartTime = Net_MapStartTime;
 	wait(InputPlayer.StartTime != -1 || LastMapStartTime != Net_MapStartTime);
 
 	Private_UpdatePlayer();
+	TrySendStaggeredReqs();
+
     declare netread _LastRun for UI = -1;
     declare netread _RespawnCount for UI = 0;
     declare netread Integer[] _LastCPTimes for UI;
@@ -668,14 +657,9 @@ main() {
 		yield;
 
 		if (HasDevMode()) {
-			if (!G_SecurityFrame.Visible) {
-				ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
-				G_SecurityFrame.Show();
-			}
-			continue;
-		} else if (G_SecurityFrame.Visible) {
-			G_SecurityFrame.Hide();
-			ClientUI.UISequence = CUIConfig::EUISequence::None;
+			ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+			G_SecurityFrame.Show();
+			return;
 		}
 
 		if (_LastRun != LastRun_Cache || _RespawnCount != RespawnCount_Cache) {
