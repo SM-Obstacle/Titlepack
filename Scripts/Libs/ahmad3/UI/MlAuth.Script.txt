@@ -488,8 +488,8 @@ Void TrySendStaggeredReqs() {
 		wait(Req.IsCompleted);
 		if (Req.StatusCode == 200) {
 			IndexedStaggeredReqs.removekey(I);
-			Http.Destroy(Req);
 		}
+		Http.Destroy(Req);
 	}
 
 	StaggeredReqs = [];
