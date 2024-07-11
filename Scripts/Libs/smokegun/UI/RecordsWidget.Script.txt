@@ -76,22 +76,59 @@ Text GetLayer() {
     {{{Ban::ML_Content()}}}
     {{{Error::ML_Content()}}}
 
+    /**
+     * The pending requests
+     */
+    declare Text[] G_PendingReqs;
+    /**
+     * The current GET `/overview` request
+     */
     declare CHttpRequest G_Req;
+
+    /**
+     * Tries to send the GET request with the provided URL.
+     * 
+     * @param _Url the URL for the GET request
+     * @return `True` if the request cannot be sent immediately, `False` otherwise
+     */
+    Boolean TrySendReq(Text _Url) {
+        if (Http.SlotsAvailable > 0) {
+            G_Req = Http.CreateGet(_Url, True, "Accept: application/json");
+            return False;
+        }
+        G_PendingReqs.add(_Url);
+        return True;
+    }
 
     Void UpdateRecords(Text _Login) {
         declare params = "?mapId="^Map.Id^"&playerId="^_Login;
         declare netread Text Net_EventRoutePrefix for Teams[0];
         declare url = "{{{Constants::C_HostUrl}}}" ^ Net_EventRoutePrefix ^ "overview"^params;
-        G_Req = Http.CreateGet(url, True, "Accept: application/json");
+        log("Pending requests " ^ G_PendingReqs);
+        TrySendReq(url);
+    }
+
+    /**
+     * Attempts to send the pending requests.
+     */
+    Void SendPendingReqs() {
+        declare Text[] Rest;
+        foreach (PendingReq in G_PendingReqs) {
+            // If the request can't be sent immediately
+            if (TrySendReq(PendingReq)) {
+                Rest.add(PendingReq);
+            }
+        }
+        G_PendingReqs = Rest;
     }
 
     /**
      * Waits for the cached requests of the player to be - tried to be - sent.
      * 
      * We do this because the player may have made 2 records on the same map
-     * with a better time on the second run. If we don't wait, the second staggered request
-     * won't have time to be sent before we fetch the leaderboard, so the latter won't be
-     * the correct final version.
+     * with a better time on the second run, which hasn't been saved immediately.
+     * If we don't wait, the second staggered request won't have time to be sent before
+     * we fetch the leaderboard, so the latter won't be the correct final version.
      */
     Void WaitForStaggeredReqsToLoad() {
         declare Boolean StaggeredReqsLoaded for LocalUser = False;
@@ -180,6 +217,9 @@ Text GetLayer() {
                     }
                 }
             }
+
+            SendPendingReqs();
+
             {{{CustomUI::InjectMLLoop()}}}
         }
     }
