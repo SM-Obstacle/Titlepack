@@ -329,7 +329,7 @@ Void Refresh_Maps(Text _Path) {
 Void Load_Replays(Text _Path, Boolean _Force) {
     declare K_MapInfo[Text][Text] ObsStore_Replays for LocalUser;
     declare Path = NormalizePath(_Path);
-    if (!_Force && ObsStore_Replays.existskey(Path) && ObsStore_Replays[Path].count == 0) {
+    if (!_Force && ObsStore_Replays.existskey(Path) && ObsStore_Replays[Path].count > 0) {
         return;
     }
 
