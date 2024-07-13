@@ -247,7 +247,6 @@ Void Load_Maps(Text _Path) {
 Void Loop_Maps() {
     if (!G_MapsHasFetched && G_MapsTaskResult != Null && !G_MapsTaskResult.IsProcessing && G_MapsTaskResult.HasSucceeded) {
         G_MapsHasFetched = True;
-        log(G_MapsTaskResult.SubFolders);
 
         declare K_MapInfo[Text][Text] ObsStore_Maps for LocalUser;
         declare Integer ObsStore_Maps_LastUpdate for LocalUser;
