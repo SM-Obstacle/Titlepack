@@ -223,12 +223,21 @@ Void Loop_ServerInfo(Text[] _Servers) {
     }
 }
 
-Void Load_Maps(Text _Path) {
+Void Load_Maps(Text _Path, Boolean _Force) {
+    declare K_MapInfo[Text][Text] ObsStore_Maps for LocalUser;
+    if (!_Force && ObsStore_Maps.existskey(_Path)) {
+        return;
+    }
+
     G_MapsHasFetched = False;
     if (G_MapsTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_MapsTaskResult.Id);
     }
-	G_MapsTaskResult = DataFileMgr.Map_GetGameList(_Path, False);
+    G_MapsTaskResult = DataFileMgr.Map_GetGameList(_Path, False);
+}
+
+Void Load_Maps(Text _Path) {
+    Load_Maps(_Path, False);
 }
 
 Void Loop_Maps() {
@@ -286,15 +295,24 @@ Void Loop_Maps() {
 
 Void Refresh_Maps(Text _Path) {
     DataFileMgr.Map_RefreshFromDisk();
-    Load_Maps(_Path);
+    Load_Maps(_Path, True);
 }
 
-Void Load_Replays(Text _Path) {
+Void Load_Replays(Text _Path, Boolean _Force) {
+    declare K_MapInfo[Text][Text] ObsStore_Replays for LocalUser;
+    if (!_Force && ObsStore_Replays.existskey(_Path)) {
+        return;
+    }
+
     G_ReplaysHasFetched = False;
     if (G_ReplaysTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_ReplaysTaskResult.Id);
     }
 	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList(_Path, False);
+}
+
+Void Load_Replays(Text _Path) {
+    Load_Replays(_Path, False);
 }
 
 Void Loop_Replays() {
@@ -329,7 +347,7 @@ Void Loop_Replays() {
 
 Void Refresh_Replays(Text _Path) {
     DataFileMgr.Replay_RefreshFromDisk();
-    Load_Replays(_Path);
+    Load_Replays(_Path, True);
 }
 
 Void Load_Skins() {
@@ -388,7 +406,6 @@ Void Loop() {
             }
             case "Search_Maps": {
                 declare Text[] ObsStore_Maps_SearchResults for LocalUser;
-                log("Searching maps: " ^ Args[0]);
                 if (Args.count > 0) {
                     ObsStore_Maps_SearchResults = Indexer::Search(Args[0], "Maps", 8);
                 }
@@ -417,7 +434,6 @@ Void Loop() {
             }
             case "ObsStore_RefreshMaps": {
                 foreach (Path in Args) {
-                    log("Refreshing maps: " ^ Path);
                     Refresh_Maps(Path);
                 }
             }
@@ -428,7 +444,6 @@ Void Loop() {
             }
             case "ObsStore_BrowseMaps": {
                 foreach (Path in Args) {
-                    log("Browsing maps: " ^ Path);
                     Load_Maps(Path);
                 }
             }
