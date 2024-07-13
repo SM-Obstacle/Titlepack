@@ -171,7 +171,7 @@ Text Build(Text _FileType, Boolean _New) {
 	declare Integer G_SelectedDeco;
 	declare Integer G_SelectedMood;
 	declare Integer G_SelectedMod;
-	
+
 	declare K_Tile[][Text] Folders;
 	declare Text G_CurrentFolder;
 	declare Boolean G_NeedRerender;
@@ -180,6 +180,31 @@ Text Build(Text _FileType, Boolean _New) {
 	declare Integer G_RefreshDebouncer;
 
 	{{{StringLib::ExportContrast()}}}
+
+	Void Refresh() {
+		declare Text[][Text] ObsStore_Requests for LocalUser;
+
+		if (G_RefreshDebouncer + 1000 < Now) {
+			G_RefreshDebouncer = Now;
+			ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [G_CurrentFolder];
+
+			declare Label_Refresh = (Page.GetFirstChild("Label_Refresh") as CMlLabel);
+			Label_Refresh.RelativeRotation = 0.;
+			AnimMgr.Add(
+				Label_Refresh, "<label rot=\"180\"/>",
+				1000, CAnimManager::EAnimManagerEasing::QuadOut
+			);
+			AnimMgr.AddChain(
+				Label_Refresh, "<label rot=\"0\"/>",
+				0, CAnimManager::EAnimManagerEasing::Linear
+			);
+		}
+	}
+
+	Void BrowseRefresh() {
+		declare Text[][Text] ObsStore_Requests for LocalUser;
+		ObsStore_Requests["ObsStore_Browse{{{_FileType}}}s"] = [G_CurrentFolder];
+	}
 
 	Void BrowseAbsolute(Text _Path) {
 		if (!Folders.existskey(_Path)) {
@@ -213,14 +238,14 @@ Text Build(Text _FileType, Boolean _New) {
 	}
 
 	Void Update_Explorer() {
-		declare K_MapInfo[Text][Text] ObsStore_{{{_FileType}}}s for LocalUser;
-	
+		declare K_MapInfo[Text][Text] ObsStore_{{{_FileType}}}s as ObsStore_Files for LocalUser;
+
 		declare K_Tile[Text][Text] FolderTiles;
-		declare K_Tile[][Text] {{{_FileType}}}Tiles;
-	
+		declare K_Tile[][Text] FileTiles;
+
 		Folders.clear();
 
-		foreach (Folder => {{{_FileType}}}s in ObsStore_{{{_FileType}}}s) {
+		foreach (Folder => Files in ObsStore_Files) {
 			declare Parents = TL::Split("\\", Folder);
 			declare CurrentPath = "/";
 
@@ -230,7 +255,7 @@ Text Build(Text _FileType, Boolean _New) {
 			foreach (Parent in Parents) {
 				if (!Folders.existskey(CurrentPath)) {
 					Folders[CurrentPath] = [];
-					{{{_FileType}}}Tiles[CurrentPath] = [];
+					FileTiles[CurrentPath] = [];
 					FolderTiles[CurrentPath] = [];
 				}
 				declare Found = False;
@@ -254,19 +279,19 @@ Text Build(Text _FileType, Boolean _New) {
 
 			if (!Folders.existskey(CurrentPath)) {
 				Folders[CurrentPath] = [];
-				{{{_FileType}}}Tiles[CurrentPath] = [];
+				FileTiles[CurrentPath] = [];
 				FolderTiles[CurrentPath] = [];
 			}
 
-			foreach (Name => {{{_FileType}}} in {{{_FileType}}}s) {
-				{{{_FileType}}}Tiles[CurrentPath].add(K_Tile {
-					Image = "file://Thumbnails/MapUid/" ^ {{{_FileType}}}.MapUid ^ "/",
-					Name = {{{_FileType}}}.FileName,
-					DisplayName = {{{_FileType}}}.Name,
-					Author = {{{_FileType}}}.Author,
+			foreach (Name => File in Files) {
+				FileTiles[CurrentPath].add(K_Tile {
+					Image = "file://Thumbnails/MapUid/" ^ File.MapUid ^ "/",
+					Name = File.FileName,
+					DisplayName = File.Name,
+					Author = File.Author,
 					IsFolder = False,
-					IsPlayable = {{{_FileType}}}.IsPlayable,
-					WhyNotPlayable = {{{_FileType}}}.WhyNotPlayable
+					IsPlayable = File.IsPlayable,
+					WhyNotPlayable = File.WhyNotPlayable
 				});
 			}
 		}
@@ -277,10 +302,10 @@ Text Build(Text _FileType, Boolean _New) {
 				Folders[Path].add(Folder);
 			}
 		}
-		foreach (Path => Tiles in {{{_FileType}}}Tiles) {
+		foreach (Path => Tiles in FileTiles) {
 			// Tiles.sortkey();
-			foreach ({{{_FileType}}} in Tiles) {
-				Folders[Path].add({{{_FileType}}});
+			foreach (File in Tiles) {
+				Folders[Path].add(File);
 			}
 		}
 
@@ -311,26 +336,6 @@ Text Build(Text _FileType, Boolean _New) {
 		}
 	}
 
-	Void Refresh() {
-		declare Text[][Text] ObsStore_Requests for LocalUser;
-
-		if (G_RefreshDebouncer + 1000 < Now) {
-			G_RefreshDebouncer = Now;
-			ObsStore_Requests["ObsStore_Refresh{{{_FileType}}}s"] = [];
-
-			declare Label_Refresh = (Page.GetFirstChild("Label_Refresh") as CMlLabel);
-			Label_Refresh.RelativeRotation = 0.;
-			AnimMgr.Add(
-				Label_Refresh, "<label rot=\"180\"/>",
-				1000, CAnimManager::EAnimManagerEasing::QuadOut
-			);
-			AnimMgr.AddChain(
-				Label_Refresh, "<label rot=\"0\"/>",
-				0, CAnimManager::EAnimManagerEasing::Linear
-			);
-		}
-	}
-
 	main () {
 		declare Window_Picker = (Page.GetFirstChild("Window_Picker") as CMlFrame);
 		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
@@ -350,12 +355,12 @@ Text Build(Text _FileType, Boolean _New) {
 
 		declare Text[][Text] ObsStore_Requests for LocalUser;
 		declare K_MapInfo[Text][Text] ObsStore_{{{_FileType}}}s for LocalUser;
-		declare Integer ObsStore_{{{_FileType}}}s_LastUpdate for LocalUser;
+		declare Integer ObsStore_{{{_FileType}}}s_LastUpdate as ObsStore_LastUpdate for LocalUser;
 		declare Text[] ObsStore_{{{_FileType}}}s_SearchResults for LocalUser;
 		declare Text ObsStore_Selected{{{_FileType}}}_Name for LocalUser;
 		declare Text ObsStore_Selected{{{_FileType}}} for LocalUser;
 
-		declare Integer {{{_FileType}}}s_LastUpdate = 0;
+		declare Integer Local_LastUpdate = 0;
 		declare Integer LastClick = 0;
 		declare LastScrollOffset = 0.;
 		G_NeedRerender = True;
@@ -368,7 +373,7 @@ Text Build(Text _FileType, Boolean _New) {
 		Refresh();
 
 		declare Skins_Loaded = False;
-		
+
 		G_SelectedMood = 1;
 		{{{Update_NewMap}}}
 		{{{Scroll::GetInitFrames()}}}
@@ -381,8 +386,8 @@ Text Build(Text _FileType, Boolean _New) {
 				Skins_Loaded = True;
 			}
 
-			if (ObsStore_{{{_FileType}}}s_LastUpdate != {{{_FileType}}}s_LastUpdate) {
-				{{{_FileType}}}s_LastUpdate = ObsStore_{{{_FileType}}}s_LastUpdate;
+			if (ObsStore_LastUpdate != Local_LastUpdate) {
+				Local_LastUpdate = ObsStore_LastUpdate;
 				Update_Explorer();
 			}
 			if (SearchResults && PendingSearch) {
@@ -439,6 +444,7 @@ Text Build(Text _FileType, Boolean _New) {
 										}
 										BrowseAbsolute(NewPath);
 									}
+									BrowseRefresh();
 								}
 								case "Quad_Trigger": {
 									if (!Event.Control.Parent.DataAttributeExists("index"))
@@ -449,6 +455,7 @@ Text Build(Text _FileType, Boolean _New) {
 									if (LastClick + 500 > Now && G_Selected_Name == Tile.Name) {
 										if (Tile.IsFolder) {
 											BrowseRelative(Tile.Name);
+											BrowseRefresh();
 										} else {
 											SendCustomEvent("{{{C_Dialog_Close}}}", [Tile.Name]);
 										}
@@ -501,14 +508,14 @@ Text Build(Text _FileType, Boolean _New) {
 
 									declare Mood_Minus = (Page.GetFirstChild("Mood_Minus") as CMlLabel);
 									Mood_Minus.Show();
-		
+
 									if (G_SelectedMood == Moods.count - 1) {
 										Event.Control.Hide();
 									}
 								}
 								case "Mood_Minus": {
 									G_SelectedMood = ML::Clamp(G_SelectedMood - 1, 0, Moods.count - 1);
-		
+
 									declare Mood_Plus = (Page.GetFirstChild("Mood_Plus") as CMlLabel);
 									Mood_Plus.Show();
 
@@ -519,7 +526,7 @@ Text Build(Text _FileType, Boolean _New) {
 								case "Mod_Plus": {
 									if (ObsStore_Skins.count > 0) {
 										G_SelectedMod = ML::Clamp(G_SelectedMod + 1, 0, ObsStore_Skins.count - 1);
-		
+
 										declare Mod_Minus = (Page.GetFirstChild("Mod_Minus") as CMlLabel);
 										Mod_Minus.Show();
 

@@ -115,7 +115,7 @@ Void Loop_Multiplayer() {
 Void Loop_ServerInfo(Text[] _Servers) {
     if (!TitleControl.IsReady)
         return;
-    
+
     if (G_FetchingServer != "") {
         switch (TitleControl.LatestResult) {
             case CTitleControl::EResult::Success: {
@@ -177,7 +177,7 @@ Void Loop_ServerInfo(Text[] _Servers) {
                 }
             }
             // case CTitleControl::EResult::Error_Net_ServerNotFound: {
-                
+
             // }
             // case CTitleControl::EResult::Error_Net_ServerUnreachable: {
             //    declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
@@ -194,16 +194,16 @@ Void Loop_ServerInfo(Text[] _Servers) {
             //     }
             // }
             // case CTitleControl::EResult::Error_Net_Disconnected: {
-                
+
             // }
             // case CTitleControl::EResult::Error_Net_WrongPassword: {
-                
+
             // }
             // case CTitleControl::EResult::Error_Network_OnlineExpired: {
-                
+
             // }
             // case CTitleControl::EResult::Error_Network_ServerFull: {
-                
+
             // }
             // CTitleControl::EResult::Error_Abort
             // CTitleControl::EResult::Error_Internal
@@ -223,24 +223,29 @@ Void Loop_ServerInfo(Text[] _Servers) {
     }
 }
 
-Void Load_Maps() {
+Void Load_Maps(Text _Path) {
     G_MapsHasFetched = False;
     if (G_MapsTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_MapsTaskResult.Id);
     }
-	G_MapsTaskResult = DataFileMgr.Map_GetGameList("", True);
+	G_MapsTaskResult = DataFileMgr.Map_GetGameList(_Path, True);
 }
 
 Void Loop_Maps() {
 	if (!G_MapsHasFetched && G_MapsTaskResult != Null && !G_MapsTaskResult.IsProcessing && G_MapsTaskResult.HasSucceeded) {
 		G_MapsHasFetched = True;
-        
+
         declare K_MapInfo[Text][Text] ObsStore_Maps for LocalUser;
         declare Integer ObsStore_Maps_LastUpdate for LocalUser;
         G_Maps.clear();
-        ObsStore_Maps.clear();
         ObsStore_Maps_LastUpdate = Now;
-        
+
+        if (G_MapsTaskResult.MapInfos.count > 0) {
+            if (ObsStore_Maps.existskey(G_MapsTaskResult.MapInfos[0].Path)) {
+                ObsStore_Maps[G_MapsTaskResult.MapInfos[0].Path].clear();
+            }
+        }
+
         foreach (I => Map in G_MapsTaskResult.MapInfos) {
             if (Map.CollectionName != "Storm") continue;
 
@@ -279,29 +284,34 @@ Void Loop_Maps() {
 	}
 }
 
-Void RefreshMaps() {
+Void Refresh_Maps(Text _Path) {
     DataFileMgr.Map_RefreshFromDisk();
-    Load_Maps();
+    Load_Maps(_Path);
 }
 
-Void Load_Replays() {
+Void Load_Replays(Text _Path) {
     G_ReplaysHasFetched = False;
     if (G_ReplaysTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_ReplaysTaskResult.Id);
     }
-	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList("", True);
+	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList(_Path, True);
 }
 
 Void Loop_Replays() {
 	if (!G_ReplaysHasFetched && G_ReplaysTaskResult != Null && !G_ReplaysTaskResult.IsProcessing && G_ReplaysTaskResult.HasSucceeded) {
 		G_ReplaysHasFetched = True;
-        
+
         declare K_MapInfo[Text][Text] ObsStore_Replays for LocalUser;
         declare Integer ObsStore_Replays_LastUpdate for LocalUser;
         G_Replays.clear();
-        ObsStore_Replays.clear();
         ObsStore_Replays_LastUpdate = Now;
-        
+
+        if (G_ReplaysTaskResult.ReplayInfos.count > 0) {
+            if (ObsStore_Replays.existskey(G_ReplaysTaskResult.ReplayInfos[0].Path)) {
+                ObsStore_Replays[G_ReplaysTaskResult.ReplayInfos[0].Path].clear();
+            }
+        }
+
         foreach (I => Replay in G_ReplaysTaskResult.ReplayInfos) {
             if (!ObsStore_Replays.existskey(Replay.Path)) {
                 ObsStore_Replays[Replay.Path] = [];
@@ -317,9 +327,9 @@ Void Loop_Replays() {
 	}
 }
 
-Void RefreshReplays() {
+Void Refresh_Replays(Text _Path) {
     DataFileMgr.Replay_RefreshFromDisk();
-    Load_Replays();
+    Load_Replays(_Path);
 }
 
 Void Load_Skins() {
@@ -333,20 +343,20 @@ Void Load_Skins() {
 Void Loop_Skins() {
     if (!G_SkinsHasFetched && G_SkinsTaskResult != Null && !G_SkinsTaskResult.IsProcessing && G_SkinsTaskResult.HasSucceeded) {
 		G_SkinsHasFetched = True;
-        
+
         declare K_FileInfo[] ObsStore_Skins for LocalUser;
         ObsStore_Skins.clear();
         ObsStore_Skins.add(K_FileInfo { Name = "Default Textures", FileName = "" });
 
         foreach (FileName in G_SkinsTaskResult.Files) {
             // +? is non greedy, dank
-            declare Matches = TL::RegexMatch("^Storm\\\\Mod.*\\\\(.+?)(\\.zip)?$", FileName, "i");
+            declare Matches = TL::RegexMatch("""^Storm\\Mod.*\\(.+?)(\.zip)?$""", FileName, "i");
             declare Name = FileName;
 
             if (Matches.count > 1)
                 Name = Matches[1];
-            
-            Name = TL::RegexReplace("[-_.,+\\(\\)\\[\\]\\s]+", Name, "g", " ");
+
+            Name = TL::RegexReplace("""[-_.,+\(\)\[\]\s]+""", Name, "g", " ");
             ObsStore_Skins.add(K_FileInfo { Name = Name, FileName = FileName });
         }
     }
@@ -406,10 +416,26 @@ Void Loop() {
                 }
             }
             case "ObsStore_RefreshMaps": {
-                RefreshMaps();
+                foreach (Path in Args) {
+                    log("Refreshing maps: " ^ Path);
+                    Refresh_Maps(Path);
+                }
             }
             case "ObsStore_RefreshReplays": {
-                RefreshReplays();
+                foreach (Path in Args) {
+                    Refresh_Replays(Path);
+                }
+            }
+            case "ObsStore_BrowseMaps": {
+                foreach (Path in Args) {
+                    log("Browsing maps: " ^ Path);
+                    Load_Maps(Path);
+                }
+            }
+            case "ObsStore_BrowseReplays": {
+                foreach (Path in Args) {
+                    Load_Replays(Path);
+                }
             }
         }
     }
