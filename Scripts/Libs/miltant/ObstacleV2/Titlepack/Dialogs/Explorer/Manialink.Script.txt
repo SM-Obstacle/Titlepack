@@ -213,14 +213,14 @@ Text Build(Text _FileType, Boolean _New) {
 	}
 
 	Void Update_Explorer() {
-		declare K_MapInfo[Text][Text] ObsStore_{{{_FileType}}}s for LocalUser;
+		declare K_MapInfo[Text][Text] ObsStore_{{{_FileType}}}s as ObsStore_Files for LocalUser;
 	
 		declare K_Tile[Text][Text] FolderTiles;
-		declare K_Tile[][Text] {{{_FileType}}}Tiles;
+		declare K_Tile[][Text] FileTiles;
 	
 		Folders.clear();
 
-		foreach (Folder => {{{_FileType}}}s in ObsStore_{{{_FileType}}}s) {
+		foreach (Folder => Files in ObsStore_Files) {
 			declare Parents = TL::Split("\\", Folder);
 			declare CurrentPath = "/";
 
@@ -230,7 +230,7 @@ Text Build(Text _FileType, Boolean _New) {
 			foreach (Parent in Parents) {
 				if (!Folders.existskey(CurrentPath)) {
 					Folders[CurrentPath] = [];
-					{{{_FileType}}}Tiles[CurrentPath] = [];
+					FileTiles[CurrentPath] = [];
 					FolderTiles[CurrentPath] = [];
 				}
 				declare Found = False;
@@ -254,19 +254,19 @@ Text Build(Text _FileType, Boolean _New) {
 
 			if (!Folders.existskey(CurrentPath)) {
 				Folders[CurrentPath] = [];
-				{{{_FileType}}}Tiles[CurrentPath] = [];
+				FileTiles[CurrentPath] = [];
 				FolderTiles[CurrentPath] = [];
 			}
 
-			foreach (Name => {{{_FileType}}} in {{{_FileType}}}s) {
-				{{{_FileType}}}Tiles[CurrentPath].add(K_Tile {
-					Image = "file://Thumbnails/MapUid/" ^ {{{_FileType}}}.MapUid ^ "/",
-					Name = {{{_FileType}}}.FileName,
-					DisplayName = {{{_FileType}}}.Name,
-					Author = {{{_FileType}}}.Author,
+			foreach (Name => File in Files) {
+				FileTiles[CurrentPath].add(K_Tile {
+					Image = "file://Thumbnails/MapUid/" ^ File.MapUid ^ "/",
+					Name = File.FileName,
+					DisplayName = File.Name,
+					Author = File.Author,
 					IsFolder = False,
-					IsPlayable = {{{_FileType}}}.IsPlayable,
-					WhyNotPlayable = {{{_FileType}}}.WhyNotPlayable
+					IsPlayable = File.IsPlayable,
+					WhyNotPlayable = File.WhyNotPlayable
 				});
 			}
 		}
@@ -277,10 +277,10 @@ Text Build(Text _FileType, Boolean _New) {
 				Folders[Path].add(Folder);
 			}
 		}
-		foreach (Path => Tiles in {{{_FileType}}}Tiles) {
+		foreach (Path => Tiles in FileTiles) {
 			// Tiles.sortkey();
-			foreach ({{{_FileType}}} in Tiles) {
-				Folders[Path].add({{{_FileType}}});
+			foreach (File in Tiles) {
+				Folders[Path].add(File);
 			}
 		}
 
