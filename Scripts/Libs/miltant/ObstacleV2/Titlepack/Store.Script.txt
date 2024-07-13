@@ -76,11 +76,11 @@ Void Load_Multiplayer() {
 
 Void Loop_Multiplayer() {
     declare Integer ObsStore_LastUpdate_TopServers for LocalUser;
-	if (MultiplayerAPI::HasFetched()) {
-		declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
+    if (MultiplayerAPI::HasFetched()) {
+        declare ChannelInfoStructs::K_ServerInfo[] ObsStore_TopServers for LocalUser;
 
-		declare Servers = MultiplayerAPI::GetServersInfos();
-		if (Servers.count > 0) {
+        declare Servers = MultiplayerAPI::GetServersInfos();
+        if (Servers.count > 0) {
             ObsStore_TopServers.clear();
 
             foreach (Server in Servers) {
@@ -100,14 +100,14 @@ Void Loop_Multiplayer() {
 
                 ObsStore_TopServers.add(ServersCache[Server.server_login]);
             }
-		}
+        }
         ObsStore_LastUpdate_TopServers = Now;
 
         G_Servers.clear();
         foreach (Server in Servers) {
             G_Servers.add(Server.server_login);
         }
-	} else if (Now - ObsStore_LastUpdate_TopServers > 20000 && !MultiplayerAPI::HasStartedFetch()) {
+    } else if (Now - ObsStore_LastUpdate_TopServers > 20000 && !MultiplayerAPI::HasStartedFetch()) {
         MultiplayerAPI::FetchServerListAsync();
     }
 }
@@ -223,12 +223,16 @@ Void Loop_ServerInfo(Text[] _Servers) {
     }
 }
 
+Text NormalizePath(Text _Path) {
+    return TL::RegexReplace("/", TL::SubString(_Path, 1, TL::Length(_Path) - 1), "g", "\\");
+}
+
 Void Load_Maps(Text _Path, Boolean _Force) {
     declare K_MapInfo[Text][Text] ObsStore_Maps for LocalUser;
-    if (!_Force && ObsStore_Maps.existskey(_Path)) {
+    declare Path = NormalizePath(_Path);
+    if (!_Force && ObsStore_Maps.existskey(Path) && ObsStore_Maps[Path].count > 0) {
         return;
     }
-
     G_MapsHasFetched = False;
     if (G_MapsTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_MapsTaskResult.Id);
@@ -241,17 +245,41 @@ Void Load_Maps(Text _Path) {
 }
 
 Void Loop_Maps() {
-	if (!G_MapsHasFetched && G_MapsTaskResult != Null && !G_MapsTaskResult.IsProcessing && G_MapsTaskResult.HasSucceeded) {
-		G_MapsHasFetched = True;
+    if (!G_MapsHasFetched && G_MapsTaskResult != Null && !G_MapsTaskResult.IsProcessing && G_MapsTaskResult.HasSucceeded) {
+        G_MapsHasFetched = True;
+        log(G_MapsTaskResult.SubFolders);
 
         declare K_MapInfo[Text][Text] ObsStore_Maps for LocalUser;
         declare Integer ObsStore_Maps_LastUpdate for LocalUser;
         G_Maps.clear();
         ObsStore_Maps_LastUpdate = Now;
 
-        if (G_MapsTaskResult.MapInfos.count > 0) {
-            if (ObsStore_Maps.existskey(G_MapsTaskResult.MapInfos[0].Path)) {
-                ObsStore_Maps[G_MapsTaskResult.MapInfos[0].Path].clear();
+        if (ObsStore_Maps.existskey(G_MapsTaskResult.Path)) {
+            ObsStore_Maps[G_MapsTaskResult.Path].clear();
+        }
+
+        declare Text[] ToRemove;
+        foreach (CachedFolder => _maps in ObsStore_Maps) {
+            if (TL::Length(G_MapsTaskResult.Path) == 0 || TL::StartsWith(G_MapsTaskResult.Path, CachedFolder)) {
+                declare FoundSubfolder = False;
+                foreach (ExistingFolder in G_MapsTaskResult.SubFolders) {
+                    if (TL::StartsWith(ExistingFolder, CachedFolder)) {
+                        FoundSubfolder = True;
+                        break;
+                    }
+                }
+                if (!FoundSubfolder) {
+                    ToRemove.add(CachedFolder);
+                }
+            }
+        }
+        foreach (Folder in ToRemove) {
+            ObsStore_Maps.removekey(Folder);
+        }
+
+        foreach (I => Folder in G_MapsTaskResult.SubFolders) {
+            if (!ObsStore_Maps.existskey(Folder)) {
+                ObsStore_Maps[Folder] = [];
             }
         }
 
@@ -290,7 +318,7 @@ Void Loop_Maps() {
             };
             G_Maps.add(Map.FileName);
         }
-	}
+    }
 }
 
 Void Refresh_Maps(Text _Path) {
@@ -300,7 +328,8 @@ Void Refresh_Maps(Text _Path) {
 
 Void Load_Replays(Text _Path, Boolean _Force) {
     declare K_MapInfo[Text][Text] ObsStore_Replays for LocalUser;
-    if (!_Force && ObsStore_Replays.existskey(_Path)) {
+    declare Path = NormalizePath(_Path);
+    if (!_Force && ObsStore_Replays.existskey(Path) && ObsStore_Replays[Path].count == 0) {
         return;
     }
 
@@ -308,7 +337,7 @@ Void Load_Replays(Text _Path, Boolean _Force) {
     if (G_ReplaysTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_ReplaysTaskResult.Id);
     }
-	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList(_Path, False);
+    G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList(_Path, False);
 }
 
 Void Load_Replays(Text _Path) {
@@ -316,17 +345,40 @@ Void Load_Replays(Text _Path) {
 }
 
 Void Loop_Replays() {
-	if (!G_ReplaysHasFetched && G_ReplaysTaskResult != Null && !G_ReplaysTaskResult.IsProcessing && G_ReplaysTaskResult.HasSucceeded) {
-		G_ReplaysHasFetched = True;
+    if (!G_ReplaysHasFetched && G_ReplaysTaskResult != Null && !G_ReplaysTaskResult.IsProcessing && G_ReplaysTaskResult.HasSucceeded) {
+        G_ReplaysHasFetched = True;
 
         declare K_MapInfo[Text][Text] ObsStore_Replays for LocalUser;
         declare Integer ObsStore_Replays_LastUpdate for LocalUser;
         G_Replays.clear();
         ObsStore_Replays_LastUpdate = Now;
 
-        if (G_ReplaysTaskResult.ReplayInfos.count > 0) {
-            if (ObsStore_Replays.existskey(G_ReplaysTaskResult.ReplayInfos[0].Path)) {
-                ObsStore_Replays[G_ReplaysTaskResult.ReplayInfos[0].Path].clear();
+        if (ObsStore_Replays.existskey(G_ReplaysTaskResult.Path)) {
+            ObsStore_Replays[G_ReplaysTaskResult.Path].clear();
+        }
+
+        declare Text[] ToRemove;
+        foreach (CachedFolder => _replays in ObsStore_Replays) {
+            if (TL::Length(G_ReplaysTaskResult.Path) == 0 || TL::StartsWith(G_ReplaysTaskResult.Path, CachedFolder)) {
+                declare FoundSubfolder = False;
+                foreach (ExistingFolder in G_ReplaysTaskResult.SubFolders) {
+                    if (TL::StartsWith(ExistingFolder, CachedFolder)) {
+                        FoundSubfolder = True;
+                        break;
+                    }
+                }
+                if (!FoundSubfolder) {
+                    ToRemove.add(CachedFolder);
+                }
+            }
+        }
+        foreach (Folder in ToRemove) {
+            ObsStore_Replays.removekey(Folder);
+        }
+
+        foreach (I => Folder in G_ReplaysTaskResult.SubFolders) {
+            if (!ObsStore_Replays.existskey(Folder)) {
+                ObsStore_Replays[Folder] = [];
             }
         }
 
@@ -342,7 +394,7 @@ Void Loop_Replays() {
             };
             G_Replays.add(Replay.FileName);
         }
-	}
+    }
 }
 
 Void Refresh_Replays(Text _Path) {
@@ -355,12 +407,12 @@ Void Load_Skins() {
     if (G_SkinsTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_SkinsTaskResult.Id);
     }
-	G_SkinsTaskResult = DataFileMgr.Media_GetGameList(CDataFileMgr::EMediaType::Skins, "Storm/Mod/", True);
+    G_SkinsTaskResult = DataFileMgr.Media_GetGameList(CDataFileMgr::EMediaType::Skins, "Storm/Mod/", True);
 }
 
 Void Loop_Skins() {
     if (!G_SkinsHasFetched && G_SkinsTaskResult != Null && !G_SkinsTaskResult.IsProcessing && G_SkinsTaskResult.HasSucceeded) {
-		G_SkinsHasFetched = True;
+        G_SkinsHasFetched = True;
 
         declare K_FileInfo[] ObsStore_Skins for LocalUser;
         ObsStore_Skins.clear();
