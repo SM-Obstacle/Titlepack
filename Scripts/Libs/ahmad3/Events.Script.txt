@@ -2,29 +2,98 @@
 #Include "Libs/ahmad3/InnerEventAPI.Script.txt" as EventAPI
 #Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
 
-declare Types::K_Event G_Event;
+declare Types::K_EventEditionDetails G_Event;
 
-Boolean HasFailed() {
-    return EventAPI::HasFailed();
+declare Text G_EventHandle;
+declare Integer G_EventEdition;
+
+/**
+ * Used to force the non-use of an event, because of a failure somewhere.
+ */
+declare Boolean G_ForceClear;
+declare Text G_LastEventHandle;
+declare Integer G_LastEventEdition;
+
+Text GetEventHandle() {
+    return G_EventHandle;
+}
+Void SetEventHandle(Text _EventHandle) {
+    G_EventHandle = _EventHandle;
 }
 
-Types::K_Event Current() {
+Integer GetEventEdition() {
+    return G_EventEdition;
+}
+Void SetEventEdition(Integer _EventEdition) {
+    G_EventEdition = _EventEdition;
+}
+
+Void ResetForcedClear() {
+    G_ForceClear = False;
+    G_LastEventHandle = "";
+    G_LastEventEdition = -1;
+}
+Boolean HasForcedClear() {
+    return G_ForceClear;
+}
+
+Void ClearSelectedEvent(Boolean _Force) {
+    G_ForceClear = _Force;
+    G_LastEventHandle = G_EventHandle;
+    G_LastEventEdition = G_EventEdition;
+    G_EventHandle = "";
+    G_EventEdition = -1;
+}
+
+Void ClearSelectedEvent() {
+    ClearSelectedEvent(False);
+}
+
+Types::K_EventEditionDetails CurrentEdition() {
     return G_Event;
 }
 
-Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
-    EventAPI::Init();
-    EventAPI::LoadEdition(_EventHandle, _EventEdition);
+Boolean HasFailed() {
+    return EventAPI::HasFailed() || G_Event.expired;
+}
+Text GetFailReason() {
+    if (G_Event.expired) {
+        return "The event has expired";
+    }
+    return EventAPI::GetFailReason();
+}
 
+Text GetLastEventHandle() {
+    return G_LastEventHandle;
+}
+Integer GetLastEventEdition() {
+    return G_LastEventEdition;
+}
+
+Void LoadEdition() {
+    EventAPI::Init();
+
+    // We first load the event
+    EventAPI::LoadEvent(G_EventHandle);
     while (True) {
         yield;
         EventAPI::Loop();
-        if (EventAPI::HasFailed() || EventAPI::EventHasContent(_EventHandle)) {
+        if (EventAPI::Private_EventAPI_GetEvents().existskey(G_EventHandle) || EventAPI::HasFailed()) {
+            break;
+        }
+    }
+
+    // Then we load the edition
+    EventAPI::LoadEdition(G_EventHandle, G_EventEdition);
+    while (True) {
+        yield;
+        EventAPI::Loop();
+        if (EventAPI::EventHasContent(G_EventHandle) || EventAPI::HasFailed()) {
             break;
         }
     }
 
     if (!EventAPI::HasFailed()) {
-        G_Event = EventAPI::GetEvent(_EventHandle);
+        G_Event = EventAPI::GetEvent(G_EventHandle).EditionsDetails[G_EventEdition];
     }
 }

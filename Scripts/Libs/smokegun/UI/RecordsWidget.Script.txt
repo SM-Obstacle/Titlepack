@@ -104,7 +104,6 @@ Text GetLayer() {
         declare params = "?mapId="^Map.Id^"&playerId="^_Login;
         declare netread Text Net_EventRoutePrefix for Teams[0];
         declare url = "{{{Constants::C_HostUrl}}}" ^ Net_EventRoutePrefix ^ "overview"^params;
-        log("Pending requests " ^ G_PendingReqs);
         TrySendReq(url);
     }
 

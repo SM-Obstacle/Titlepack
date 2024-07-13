@@ -2,6 +2,7 @@
 
 #Include "Libs/smokegun/Constants.Script.txt" as C
 #Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
+#Include "Libs/ahmad3/Error.Script.txt" as Err
 
 #Struct K_RequestAttr {
     Integer Type;
@@ -12,12 +13,18 @@ declare Text[] G_PendingEvents;
 declare Integer[Text] G_PendingLoadingEditions;
 declare K_RequestAttr[Ident] G_PendingRequests;
 declare Types::K_Event[Text] G_Events;
+
 declare Boolean G_HasFailed;
+declare Err::K_Error G_Failure;
 
 declare Text G_AuthHeaders;
 
 Boolean HasFailed() {
     return G_HasFailed;
+}
+
+Text GetFailReason() {
+    return G_Failure.err.message;
 }
 
 Boolean EventHasContent(Text _EventHandle) {
@@ -38,14 +45,15 @@ Types::K_Event GetEvent(Text _EventHandle) {
 Boolean Private_CheckErr(Text _Route, CHttpRequest _Req) {
     if (_Req.StatusCode == 200) return False;
     if (G_HasFailed) return True;
-    log("error on route: " ^ _Route);
-    log(_Req.Result);
+
+    G_Failure = Err::Handle(_Req.StatusCode, _Req.Result);
+
     G_HasFailed = True;
     return True;
 }
 
 Void Private_InitRequest(Text _Route, Integer _Type) {
-    declare CHttpRequest Req = Http.CreateGet(C::C_HostUrl ^ _Route, False, "Content-Type: application/json" ^ G_AuthHeaders);
+    declare CHttpRequest Req = Http.CreateGet(C::C_HostUrl ^ _Route, False, "Accept: application/json" ^ G_AuthHeaders);
     G_PendingRequests[Req.Id] = K_RequestAttr {
         Type = _Type,
         Route = _Route
@@ -75,6 +83,10 @@ Void LoadEdition(Text _EventHandle, Integer _EventEdition, Boolean _Lazy) {
 
 Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
     LoadEdition(_EventHandle, _EventEdition, True);
+}
+
+Void LoadEvent(Text _EventHandle) {
+    Private_InitRequest("event/" ^ _EventHandle, C::C_Request_EventHandle, _EventHandle);
 }
 
 Void Private_InitEventEditions(Types::K_EventResponse[] _Events) {
@@ -121,7 +133,10 @@ Boolean Loop() {
     foreach (ReqId => ReqAttr in G_PendingRequests) {
         declare CHttpRequest Request <=> Http.Requests[ReqId];
 
-        if (!Request.IsCompleted || Private_CheckErr(ReqAttr.Route, Request)) {
+        if (!Request.IsCompleted) {
+            continue;
+        } else if (Private_CheckErr(ReqAttr.Route, Request)) {
+            ReqToDelete.add(ReqId);
             continue;
         }
 
@@ -139,6 +154,18 @@ Boolean Loop() {
                 EventEditions.fromjson(Request.Result);
                 
                 declare Text Handle = TL::Split("/", ReqAttr.Route)[1];
+
+                // If this happens, it's because the request to `/event` didn't return
+                // an event with the `Handle` event handle. This means that the event is
+                // not playable, because it doesn't exist, has expired, or is not yet released.
+                if (!G_Events.existskey(Handle)) {
+                    PendingEventsToDelete.add(Handle);
+                    ReqToDelete.add(ReqId);
+                    G_HasFailed = True;
+                    G_Failure.err.message = "Event was not found or has expired";
+                    continue;
+                }
+
                 foreach (Edition in EventEditions) {
                     G_Events[Handle].Editions[Edition.id] = Edition;
                 }

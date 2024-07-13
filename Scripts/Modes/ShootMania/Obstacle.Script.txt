@@ -226,18 +226,33 @@ Obstacle::LoadActions();
 
 ***Match_InitMap***
 ***
+ObsEvents::ResetForcedClear();
+
+// This needs to be called before PrepareMap to have the right settings
+UpdateSettings();
+
 declare PrevTimeLimit = -1;
 declare LastUpdate = -1;
 declare NextLowTimeMessage = 0;
 
 declare netwrite Text Net_EventRoutePrefix for Teams[0];
-if (S_EventHandle == "" || S_EventEdition <= 0) {
+if (Settings::GetEventHandle() == "" || Settings::GetEventEdition() <= 0) {
     Net_EventRoutePrefix = "";
 } else {
-    Net_EventRoutePrefix = "event/" ^ S_EventHandle ^ "/" ^ S_EventEdition ^ "/";
+    ObsEvents::LoadEdition();
+    if (ObsEvents::HasFailed()) {
+        ObsEvents::ClearSelectedEvent(True);
+        Net_EventRoutePrefix = "";
 
-    ObsEvents::LoadEdition(S_EventHandle, S_EventEdition);
-    MedalsWidget::Init(S_EventEdition);
+        log("--- EVENT INIT FAIL ---");
+        log("event loading has failed, cancelling its use");
+        log("reason: " ^ ObsEvents::GetFailReason());
+        log("event handle: `" ^ ObsEvents::GetLastEventHandle() ^ "`, edition id: " ^ ObsEvents::GetLastEventEdition());
+        log("--- END ---");
+    } else {
+        Net_EventRoutePrefix = "event/" ^ Settings::GetEventHandle() ^ "/" ^ Settings::GetEventEdition() ^ "/";
+        MedalsWidget::Init();
+    }
 }
 
 ***
@@ -247,8 +262,6 @@ if (S_EventHandle == "" || S_EventEdition <= 0) {
 
 CreateUI();
 
-// This needs to be called before PrepareMap to have the right settings
-UpdateSettings();
 Dynamics::UseDynamics();
 
 declare Editor_WayPointSpawn_Flag for This = 0;
@@ -970,5 +983,24 @@ Void UpdateSettings() {
     if (S_CheckpointMarkersCount != Settings::GetCheckpointMarkersCount()) {
         Settings::SetCheckpointMarkersCount(S_CheckpointMarkersCount);
         Layers::Update("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
+    }
+
+    // --- Event settings ---
+
+    if (!ObsEvents::HasForcedClear()) {
+        if (ObsEvents::GetEventHandle() == "" && S_EventHandle != ""
+            && ObsEvents::GetEventEdition() <= 0 && S_EventEdition > 0)
+        {
+            ObsEvents::SetEventHandle(S_EventHandle);
+            ObsEvents::SetEventEdition(S_EventEdition);
+        }
+    }
+
+    if (ObsEvents::GetEventHandle() != Settings::GetEventHandle()) {
+        Settings::SetEventHandle(ObsEvents::GetEventHandle());
+    }
+
+    if (ObsEvents::GetEventEdition() != Settings::GetEventEdition()) {
+        Settings::SetEventEdition(ObsEvents::GetEventEdition());
     }
 }

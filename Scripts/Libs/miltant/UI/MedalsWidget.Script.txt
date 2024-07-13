@@ -14,13 +14,13 @@
 #Const  Version     "2023-28-06"
 #Const  ScriptName  "RecordsWidget.Script.txt"
 
-Void Init(Integer _EventEdition) {
+Void Init() {
     if (ObsEvents::HasFailed()) return;
 
     declare netwrite Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
     declare netwrite Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
 
-    foreach (Category in ObsEvents::Current().EditionsDetails[_EventEdition].categories) {
+    foreach (Category in ObsEvents::CurrentEdition().categories) {
         foreach (Map in Category.maps) {
             Net_MedalsTimesPerMap[Map.map_uid] = [Map.bronze_time, Map.silver_time, Map.gold_time, Map.champion_time];
         }

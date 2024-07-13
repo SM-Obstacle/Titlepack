@@ -51,6 +51,7 @@
     Text banner_img_url;
     Text banner2_img_url;
     Integer mx_id;
+    Boolean expired;
     K_EventEditionContentCategory[] categories;
 }
 
@@ -120,6 +121,7 @@ Text ML_Preproc() {
     Text banner_img_url;
     Text banner2_img_url;
     Integer mx_id;
+    Boolean expired;
     K_EventEditionContentCategory[] categories;
 }
 

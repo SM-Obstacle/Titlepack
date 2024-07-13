@@ -1,37 +1,39 @@
-// Generated from Settings.py and Settings.tmpl (not, actually)
+// Generated from Settings.py and Settings.tmpl
 
 
-declare Integer G_TimeLimit;
-declare Integer G_ScoreMode;
-declare Integer G_RoundLimit;
-declare Integer G_MinPlayers;
-declare Integer G_PointLimit;
-declare Integer G_PointsMax;
-declare Integer G_PointsMin;
-declare Integer G_PointsDeduced;
-declare Integer G_RoundCooldown;
-declare Integer G_WarmupRounds;
-declare Integer G_WarmupRoundsTime;
-declare Integer G_MinTimeLeft;
-declare Integer G_MaxTimeLeft;
-declare Integer G_CheckpointMarkersCount;
+declare Integer G_TimeLimit;	
+declare Integer G_ScoreMode;	
+declare Integer G_RoundLimit;	
+declare Integer G_MinPlayers;	
+declare Integer G_PointLimit;	
+declare Integer G_PointsMax;	
+declare Integer G_PointsMin;	
+declare Integer G_PointsDeduced;	
+declare Integer G_RoundCooldown;	
+declare Integer G_WarmupRounds;	
+declare Integer G_WarmupRoundsTime;	
+declare Integer G_MinTimeLeft;	
+declare Integer G_MaxTimeLeft;	
+declare Integer G_CheckpointMarkersCount;	
+declare Integer G_EventEdition;	
 
-declare Boolean G_FastRespawn;
-declare Boolean G_AllowJump;
-declare Boolean G_EnableRecords;
-declare Boolean G_LegacyRespawn;
-declare Boolean G_FullAmmoSpawn;
-declare Boolean G_PointDistribution;
-declare Boolean G_ForceInvisibleSkin;
-declare Boolean G_EnablePlayerHighlight;
+declare Boolean G_FastRespawn;	
+declare Boolean G_AllowJump;	
+declare Boolean G_EnableRecords;	
+declare Boolean G_LegacyRespawn;	
+declare Boolean G_FullAmmoSpawn;	
+declare Boolean G_PointDistribution;	
+declare Boolean G_ForceInvisibleSkin;	
+declare Boolean G_EnablePlayerHighlight;	
+declare Boolean G_ForcePvPWeapons;	
+declare Boolean G_ForcePvPCollisions;	
 
-declare Real G_NextMapVotingRatio;
+declare Real G_NextMapVotingRatio;	
 
-declare Text G_BestNewRecordMsg;
-declare Text G_WorseNewRecordMsg;
-declare Text G_ForceRNGSeed;
-declare Boolean G_ForcePvPWeapons;
-declare Boolean G_ForcePvPCollisions;
+declare Text G_BestNewRecordMsg;	
+declare Text G_WorseNewRecordMsg;	
+declare Text G_ForceRNGSeed;	
+declare Text G_EventHandle;	
 
 
 Integer GetTimeLimit() {
@@ -146,6 +148,14 @@ Void SetCheckpointMarkersCount(Integer _Value) {
 	G_CheckpointMarkersCount = _Value;
 }
 
+Integer GetEventEdition() {
+	return G_EventEdition;
+}
+
+Void SetEventEdition(Integer _Value) {
+	G_EventEdition = _Value;
+}
+
 
 Boolean GetFastRespawn() {
 	return G_FastRespawn;
@@ -211,6 +221,22 @@ Void SetEnablePlayerHighlight(Boolean _Value) {
 	G_EnablePlayerHighlight = _Value;
 }
 
+Boolean GetForcePvPWeapons() {
+	return G_ForcePvPWeapons;
+}
+
+Void SetForcePvPWeapons(Boolean _Value) {
+	G_ForcePvPWeapons = _Value;
+}
+
+Boolean GetForcePvPCollisions() {
+	return G_ForcePvPCollisions;
+}
+
+Void SetForcePvPCollisions(Boolean _Value) {
+	G_ForcePvPCollisions = _Value;
+}
+
 
 Real GetNextMapVotingRatio() {
 	return G_NextMapVotingRatio;
@@ -245,20 +271,12 @@ Void SetForceRNGSeed(Text _Value) {
 	G_ForceRNGSeed = _Value;
 }
 
-
-Boolean GetForcePvPWeapons() {
-	return G_ForcePvPWeapons;
+Text GetEventHandle() {
+	return G_EventHandle;
 }
 
-Void SetForcePvPWeapons(Boolean _Value) {
-	G_ForcePvPWeapons = _Value;
+Void SetEventHandle(Text _Value) {
+	G_EventHandle = _Value;
 }
 
 
-Boolean GetForcePvPCollisions() {
-	return G_ForcePvPCollisions;
-}
-
-Void SetForcePvPCollisions(Boolean _Value) {
-	G_ForcePvPCollisions = _Value;
-}
