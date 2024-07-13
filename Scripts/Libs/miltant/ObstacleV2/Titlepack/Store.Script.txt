@@ -228,7 +228,7 @@ Void Load_Maps(Text _Path) {
     if (G_MapsTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_MapsTaskResult.Id);
     }
-	G_MapsTaskResult = DataFileMgr.Map_GetGameList(_Path, True);
+	G_MapsTaskResult = DataFileMgr.Map_GetGameList(_Path, False);
 }
 
 Void Loop_Maps() {
@@ -294,7 +294,7 @@ Void Load_Replays(Text _Path) {
     if (G_ReplaysTaskResult != Null) {
         DataFileMgr.TaskResult_Release(G_ReplaysTaskResult.Id);
     }
-	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList(_Path, True);
+	G_ReplaysTaskResult = DataFileMgr.Replay_GetGameList(_Path, False);
 }
 
 Void Loop_Replays() {
