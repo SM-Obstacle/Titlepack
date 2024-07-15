@@ -3,6 +3,7 @@
 #Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
 
 declare Types::K_EventEditionDetails G_Event;
+declare Boolean G_EventLoaded;
 
 declare Text G_EventHandle;
 declare Integer G_EventEdition;
@@ -28,11 +29,6 @@ Void SetEventEdition(Integer _EventEdition) {
     G_EventEdition = _EventEdition;
 }
 
-Void ResetForcedClear() {
-    G_ForceClear = False;
-    G_LastEventHandle = "";
-    G_LastEventEdition = -1;
-}
 Boolean HasForcedClear() {
     return G_ForceClear;
 }
@@ -53,6 +49,10 @@ Types::K_EventEditionDetails CurrentEdition() {
     return G_Event;
 }
 
+Boolean HasEventLoaded() {
+    return G_EventLoaded;
+}
+
 Boolean HasFailed() {
     return EventAPI::HasFailed() || G_Event.expired;
 }
@@ -68,6 +68,15 @@ Text GetLastEventHandle() {
 }
 Integer GetLastEventEdition() {
     return G_LastEventEdition;
+}
+
+Void Init() {
+    G_EventLoaded = False;
+    G_LastEventHandle = "";
+    G_LastEventEdition = -1;
+    G_EventHandle = "";
+    G_EventEdition = -1;
+    G_ForceClear = False;
 }
 
 Void LoadEdition() {
@@ -95,5 +104,6 @@ Void LoadEdition() {
 
     if (!EventAPI::HasFailed()) {
         G_Event = EventAPI::GetEvent(G_EventHandle).EditionsDetails[G_EventEdition];
+        G_EventLoaded = True;
     }
 }

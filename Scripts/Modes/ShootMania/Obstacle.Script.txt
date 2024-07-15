@@ -228,7 +228,7 @@ Obstacle::LoadActions();
 
 ***Match_InitMap***
 ***
-ObsEvents::ResetForcedClear();
+ObsEvents::Init();
 
 // This needs to be called before PrepareMap to have the right settings
 UpdateSettings();
