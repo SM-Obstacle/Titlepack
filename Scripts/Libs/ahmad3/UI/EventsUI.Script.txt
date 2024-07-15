@@ -1,0 +1,67 @@
+#Const Version "2024-07-15"
+#Const ScriptName "EventsUI.Script.txt"
+
+Text Private_GetWidget() {
+    return """
+<frame id="Frame_EventsUI" hidden="1">
+    <frame id="Frame_Heading">
+		<quad pos="0 40" z-index="-1" size="220 0.5" bgcolor="000000AA" halign="center"/>
+    </frame>
+    <frame pos="0 35" id="Frame_Events">
+
+    </frame>
+	<frame id="Frame_Background">
+		<quad z-index="-1" size="220 100" bgcolor="000000FF" halign="center" valign="center"  opacity="0.5" pos="0 0"/>
+		<quad pos="0 40" z-index="-1" size="220 85" bgcolor="000000AA" halign="center" valign="top"/>
+	</frame>
+</frame>
+""";
+}
+
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:EventsUI">
+    <frame>{{{Private_GetWidget()}}}</frame>
+    <script><![CDATA[
+
+Void UpdateFrameTab(CUIConfig _UI, CMlPage _Page, Text _TabKey, Text _FrameTabId)
+{
+    declare netread Boolean _TabsLib_UseTabs for _UI;
+    if (! _TabsLib_UseTabs) return;
+
+    declare Boolean _TabsLib_ScoresLayerIsVisible   for _UI;
+    declare Boolean _TabsLib_AltLayerIsVisible      for _UI;
+    declare Text    _TabsLib_CurrentTab             for _UI;
+    declare netread Text _TabsLib_ScoresTableTab    for _UI;
+
+    declare Boolean ShowCurrentTab = _TabsLib_AltLayerIsVisible && (_TabsLib_CurrentTab == _TabKey);
+
+    if (_TabKey == _TabsLib_ScoresTableTab)
+    {
+        // log("_TabsLib_ScoresTableTab: "^_TabsLib_ScoresTableTab);
+        ShowCurrentTab = _TabsLib_ScoresLayerIsVisible ||
+            (_TabsLib_AltLayerIsVisible && (_TabsLib_CurrentTab == _TabsLib_ScoresTableTab));
+    }
+
+    declare MainFrame <=> (_Page.GetFirstChild(_FrameTabId) as CMlFrame);
+    if (MainFrame == Null) return;
+
+    if (ShowCurrentTab) {
+        MainFrame.Show();
+    } else {
+        MainFrame.Hide();
+    }
+}
+
+main() {
+    while (True) {
+        yield;
+
+        UpdateFrameTab(UI, Page, "EventsUI", "Frame_EventsUI");
+    }
+}
+
+]]></script>
+</manialink>
+""";
+}

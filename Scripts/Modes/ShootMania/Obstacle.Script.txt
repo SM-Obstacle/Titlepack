@@ -36,6 +36,7 @@
 #Include "Libs/smokegun/UI/SurvivalRanking.Script.txt" as SurvivalRanking
 
 #Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
+#Include "Libs/ahmad3/UI/EventsUI.Script.txt" as EventsUI
 //#Include "Libs/miltant/KeysSettings.Script.txt" as KeysSettings
 
 #Include "Libs/smokegun/Items.Script.txt" as Items
@@ -178,7 +179,8 @@ if (Hud != Null) {
             Tabs::Load();
             declare TabsLayer <=> Tabs::CreateTabPaneLayer(
                 [ "ScoresTab" => "Rankings"
-                , "CPTimes" => "Race"]
+                , "CPTimes" => "Race"
+                , "EventsUI" => "Events"]
             // , "KeysSettings" => "Inputs"]
                 , 15, 7, False);
             TabsLayer.Type = CUILayer::EUILayerType::AltMenu;
@@ -808,6 +810,7 @@ Void CreateUI() {
     Layers::Create("TimeDiff", TimeDiff::GetLayer());
     Layers::Create("CpProgress", CpProgress::GetLayer());
     Layers::Create("CPTimes", CPTimes::GetLayer());
+    Layers::Create("EventsUI", EventsUI::GetLayer());
     //Layers::Create("KeysSettings", KeysSettings::GetLayer());
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
 
@@ -835,6 +838,7 @@ Void CreateUI() {
     Layers::Attach("TimeDiff");
     Layers::Attach("CpProgress");
     Layers::Attach("CPTimes");
+    Layers::Attach("EventsUI");
     //Layers::Attach("KeysSettings");
     Layers::Attach("Items");
     Layers::Attach("Markers");
@@ -868,6 +872,7 @@ Void DestroyUI(Boolean _Hard) {
     Layers::Detach("TimeDiff");
     Layers::Detach("CpProgress");
     Layers::Detach("CPTimes");
+    Layers::Detach("EventsUI");
     //Layers::Detach("KeysSettings");
     Layers::Detach("Items");
     Layers::Detach("Records");
