@@ -64,6 +64,8 @@
 #Setting S_ForceInvisibleSkin True as "Force invisible skin"
 #Setting S_EnablePlayerHighlight False as "Highlight players"
 
+#Setting S_SwitchEventVotingRatio 0.7 as "<hidden>"
+#Setting S_LockEventsUI False as "<hidden>"
 #Setting S_NextMapVotingRatio 0.7 as "<hidden>"
 #Setting S_FullAmmoSpawn True as "<hidden>"
 #Setting S_LegacyRespawn False as "<hidden>"
@@ -254,6 +256,7 @@ if (Settings::GetEventHandle() == "" || Settings::GetEventEdition() <= 0) {
     } else {
         Net_EventRoutePrefix = "event/" ^ Settings::GetEventHandle() ^ "/" ^ Settings::GetEventEdition() ^ "/";
         MedalsWidget::Init();
+        EventsUI::Init();
     }
 }
 
@@ -437,6 +440,9 @@ foreach (Event in UIManager.PendingEvents) {
                 Obstacle::UpdatePlayerBestTimeColumn(Player);
                 CPTimes::ResetLayer(Player, Obstacle::GetCheckpointsTotal());
             }
+            default: {
+                EventsUI::HandleCustomEvent(Event);
+            }
         }
     }
 }
@@ -446,6 +452,11 @@ foreach (Event in UIManager.PendingEvents) {
 ***
 //Replay_SaveInterface();
 Dynamics::Compute();
+
+// If a new event edition was loaded, notify the UI
+if (ObsEvents::Loop()) {
+    EventsUI::UpdateActiveEvents();
+}
 
 if (LastUpdate + C_SettingsUpdateInterval < Now) {
     LastUpdate = Now;
@@ -1007,5 +1018,13 @@ Void UpdateSettings() {
 
     if (ObsEvents::GetEventEdition() != Settings::GetEventEdition()) {
         Settings::SetEventEdition(ObsEvents::GetEventEdition());
+    }
+
+    if (S_SwitchEventVotingRatio != Settings::GetSwitchEventVotingRatio()) {
+        Settings::SetSwitchEventVotingRatio(S_SwitchEventVotingRatio);
+    }
+
+    if (S_LockEventsUI != Settings::GetLockEventsUI()) {
+        Settings::SetLockEventsUI(S_LockEventsUI);
     }
 }

@@ -7,7 +7,7 @@ model = {
 	'Booleans': [
 		'FastRespawn', 'AllowJump', 'EnableRecords', 'LegacyRespawn',
 		'FullAmmoSpawn', 'PointDistribution', 'ForceInvisibleSkin', 'EnablePlayerHighlight',
-		'ForcePvPWeapons', 'ForcePvPCollisions'],
-	'Reals': ['NextMapVotingRatio'],
+		'ForcePvPWeapons', 'ForcePvPCollisions', 'LockEventsUI'],
+	'Reals': ['NextMapVotingRatio', 'SwitchEventVotingRatio'],
 	'Texts': ['BestNewRecordMsg', 'WorseNewRecordMsg', 'ForceRNGSeed', 'EventHandle']
 }

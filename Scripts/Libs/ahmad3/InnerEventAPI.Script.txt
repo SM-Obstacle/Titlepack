@@ -27,6 +27,16 @@ Text GetFailReason() {
     return G_Failure.err.message;
 }
 
+Boolean EventHandleIsLoading(Text _EventHandle) {
+    return G_PendingEvents.exists(_EventHandle);
+}
+
+Boolean EventEditionIsLoading(Text _EventHandle, Integer _EventEdition) {
+    return EventHandleIsLoading(_EventHandle)
+        || G_PendingLoadingEditions.existskey(_EventHandle)
+            && G_PendingLoadingEditions[_EventHandle] == _EventEdition;
+}
+
 Boolean EventHasContent(Text _EventHandle) {
     if (!G_Events.existskey(_EventHandle) || G_PendingEvents.exists(_EventHandle)) return False;
     declare Types::K_Event Event = G_Events[_EventHandle];
@@ -34,7 +44,7 @@ Boolean EventHasContent(Text _EventHandle) {
     return !G_HasFailed && Event.EditionsDetails.count > 0;
 }
 
-Types::K_Event[Text] Private_EventAPI_GetEvents() {
+Types::K_Event[Text] GetEvents() {
     return G_Events;
 }
 

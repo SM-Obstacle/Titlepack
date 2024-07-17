@@ -53,8 +53,30 @@ Boolean HasEventLoaded() {
     return G_EventLoaded;
 }
 
+Boolean EventHasCurrentMap(Text _EventHandle, Integer _EventEdition) {
+    if (!EventAPI::EventHasContent(_EventHandle)
+        || !EventAPI::GetEvent(_EventHandle).EditionsDetails.existskey(_EventEdition))
+    {
+        return False;
+    }
+
+    declare Types::K_EventEditionDetails ThisEvent =
+        EventAPI::GetEvent(_EventHandle).EditionsDetails[_EventEdition];
+
+    foreach (Category in ThisEvent.categories) {
+        foreach (CatMap in Category.maps) {
+            if (CatMap.map_uid == "" ^ Map.Id) {
+                return True;
+            }
+        }
+    }
+    return False;
+}
+
 Boolean HasFailed() {
-    return EventAPI::HasFailed() || G_Event.expired;
+    return EventAPI::HasFailed()
+        || G_Event.expired
+        || !EventHasCurrentMap(G_EventHandle, G_EventEdition);
 }
 Text GetFailReason() {
     if (G_Event.expired) {
@@ -77,6 +99,11 @@ Void Init() {
     G_EventHandle = "";
     G_EventEdition = -1;
     G_ForceClear = False;
+    EventAPI::Init();
+}
+
+Types::K_Event[Text] GetEvents() {
+    return EventAPI::GetEvents();
 }
 
 Void LoadEdition() {
@@ -87,7 +114,7 @@ Void LoadEdition() {
     while (True) {
         yield;
         EventAPI::Loop();
-        if (EventAPI::Private_EventAPI_GetEvents().existskey(G_EventHandle) || EventAPI::HasFailed()) {
+        if (EventAPI::GetEvents().existskey(G_EventHandle) || EventAPI::HasFailed()) {
             break;
         }
     }
@@ -106,4 +133,8 @@ Void LoadEdition() {
         G_Event = EventAPI::GetEvent(G_EventHandle).EditionsDetails[G_EventEdition];
         G_EventLoaded = True;
     }
+}
+
+Boolean Loop() {
+    return EventAPI::Loop();
 }

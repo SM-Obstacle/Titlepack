@@ -66,33 +66,33 @@
     K_EventEditionDetails[Integer] EditionsDetails;
 }
 
-Text ML_Preproc() {
+Text ML_Preproc(Text _Prefix) {
     return """//!
-#Struct K_EventResponse {
+#Struct {{{_Prefix}}}K_EventResponse {
     Text handle;
     Integer last_edition_id;
 }
 
-#Struct K_EventEdition {
+#Struct {{{_Prefix}}}K_EventEdition {
     Integer id;
     Text name;
     Text subtitle;
     Text start_date;
 }
 
-#Struct K_EventEditionContentMapAuthor {
+#Struct {{{_Prefix}}}K_EventEditionContentMapAuthor {
     Text login;
     Text name;
     Text zone_path;
 }
 
-#Struct K_NextOpponent {
+#Struct {{{_Prefix}}}K_NextOpponent {
     Text login;
     Text name;
     Integer time;
 }
 
-#Struct K_EventEditionContentMap {
+#Struct {{{_Prefix}}}K_EventEditionContentMap {
     Integer mx_id;
     K_EventEditionContentMapAuthor main_author;
     Text name;
@@ -106,14 +106,14 @@ Text ML_Preproc() {
     K_NextOpponent next_opponent;
 }
 
-#Struct K_EventEditionContentCategory {
+#Struct {{{_Prefix}}}K_EventEditionContentCategory {
     Text handle;
     Text name;
     Text banner_img_url;
     K_EventEditionContentMap[] maps;
 }
 
-#Struct K_EventEditionDetails {
+#Struct {{{_Prefix}}}K_EventEditionDetails {
     Integer id;
     Text name;
     Text subtitle;
@@ -125,10 +125,14 @@ Text ML_Preproc() {
     K_EventEditionContentCategory[] categories;
 }
 
-#Struct K_Event {
+#Struct {{{_Prefix}}}K_Event {
     K_EventResponse Event;
     K_EventEdition[Integer] Editions;
     K_EventEditionDetails[Integer] EditionsDetails;
 }
 """;
+}
+
+Text ML_Preproc() {
+    return ML_Preproc("");
 }

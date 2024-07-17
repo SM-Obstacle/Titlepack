@@ -27,8 +27,10 @@ declare Boolean G_ForceInvisibleSkin;
 declare Boolean G_EnablePlayerHighlight;	
 declare Boolean G_ForcePvPWeapons;	
 declare Boolean G_ForcePvPCollisions;	
+declare Boolean G_LockEventsUI;	
 
 declare Real G_NextMapVotingRatio;	
+declare Real G_SwitchEventVotingRatio;	
 
 declare Text G_BestNewRecordMsg;	
 declare Text G_WorseNewRecordMsg;	
@@ -237,6 +239,14 @@ Void SetForcePvPCollisions(Boolean _Value) {
 	G_ForcePvPCollisions = _Value;
 }
 
+Boolean GetLockEventsUI() {
+	return G_LockEventsUI;
+}
+
+Void SetLockEventsUI(Boolean _Value) {
+	G_LockEventsUI = _Value;
+}
+
 
 Real GetNextMapVotingRatio() {
 	return G_NextMapVotingRatio;
@@ -244,6 +254,14 @@ Real GetNextMapVotingRatio() {
 
 Void SetNextMapVotingRatio(Real _Value) {
 	G_NextMapVotingRatio = _Value;
+}
+
+Real GetSwitchEventVotingRatio() {
+	return G_SwitchEventVotingRatio;
+}
+
+Void SetSwitchEventVotingRatio(Real _Value) {
+	G_SwitchEventVotingRatio = _Value;
 }
 
 

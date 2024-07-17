@@ -69,7 +69,7 @@ Void Load() {
 }
 
 Void Private_UpdateEventsCache() {
-    declare Types::K_Event[Text] Events = Inner::Private_EventAPI_GetEvents();
+    declare Types::K_Event[Text] Events = Inner::GetEvents();
     declare persistent Text ObsStore_EventsCache2 for LocalUser = "";
     ObsStore_EventsCache2 = Constants::C_Version_EventsCache ^ Events.tojson();
 }

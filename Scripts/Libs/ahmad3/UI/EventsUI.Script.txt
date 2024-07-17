@@ -1,5 +1,156 @@
+#Include "Libs/smokegun/Settings.Script.txt" as Settings
+#Include "Libs/ahmad3/Events.Script.txt" as Events
+
+#Include "TextLib" as TL
+
 #Const Version "2024-07-15"
 #Const ScriptName "EventsUI.Script.txt"
+
+#Const C_CE_SelectEvent "obsevents:select_event"
+#Const C_CE_ToggleSwitchToEvent "obsevents:toggle_switch_to_event"
+
+/**
+ * Represents the data of an event in the UI.
+ */
+#Struct K_Event {
+    Text Handle;
+    Integer Edition;
+    Text Name;
+}
+
+/**
+ * The array containing the votes of each player.
+ * The keys are the logins of the players, and the values are the selected events.
+ */
+declare Text[Text] G_VotingToSwitchEvent;
+
+/**
+ * Checks if the provided event is currently running in the mode.
+ *
+ * @param _EventHandle the handle of the event to check.
+ * @param _EventEdition the edition of the event to check.
+ * @return True of the provided event is running, False otherwise.
+ */
+Boolean Private_IsEventRunning(Text _EventHandle, Integer _EventEdition) {
+    return Events::GetEventHandle() == _EventHandle && Events::GetEventEdition() == _EventEdition;
+}
+
+/**
+ * Updates the selected event for the provided UI.
+ *
+ * @param _EventHandle the event handle of the event to select.
+ * @param _EventEdition the event edition of the event to select.
+ * @param _UI the UI to update.
+ */
+Void Private_UpdateSelectedEvent(Text _EventHandle, Integer _EventEdition, CUIConfig _UI) {
+    declare netwrite Text Net_EventsUI_SelectedEvent for _UI;
+    declare netwrite Boolean Net_EventsUI_SelectedEventIsValid for _UI;
+    declare netwrite Boolean Net_EventsUI_SelectedEventIsRunning for _UI;
+    declare netwrite Integer Net_EventsUI_SelectedEventUpdate for _UI;
+
+    Net_EventsUI_SelectedEvent = _EventHandle ^ _EventEdition;
+    Net_EventsUI_SelectedEventIsValid = !Events::EventHasCurrentMap(_EventHandle, _EventEdition);
+    Net_EventsUI_SelectedEventIsRunning = Private_IsEventRunning(_EventHandle, _EventEdition);
+    Net_EventsUI_SelectedEventUpdate = Now;
+}
+
+/**
+ * Updates the selected event for all the players.
+ * 
+ * @param _EventHandle the event handle of the event to select.
+ * @param _EventEdition the event edition of the event to select.
+ */
+Void Private_UpdateSelectedEvent(Text _EventHandle, Integer _EventEdition) {
+    Private_UpdateSelectedEvent(_EventHandle, _EventEdition, UIManager.UIAll);
+}
+
+/**
+ * Toggles the vote of switch to an event for the provided user login.
+ *
+ * @param _EventHandle the event handle of the event to vote/unvote for.
+ * @param _EventEdition the event edition of the event to vote/unvote for.
+ * @param _UserLogin the login of the user who triggered this.
+ * @param _UI the associated UI that triggered this.
+ */
+Void Private_ToggleSwitchToEventFor(
+    Text _EventHandle, Integer _EventEdition, Text _UserLogin, CUIConfig _UI
+) {
+    if (!Events::EventHasCurrentMap(_EventHandle, _EventEdition)
+        || Private_IsEventRunning(_EventHandle, _EventEdition))
+    {
+        // Make sure that the selected event is playable for the current map,
+        // and that it is not already being played.
+        return;
+    }
+
+    declare Text SelectedEvent = _EventHandle ^ _EventEdition;
+    if (G_VotingToSwitchEvent.existskey(_UserLogin)
+        && G_VotingToSwitchEvent[_UserLogin] == SelectedEvent)
+    {
+        G_VotingToSwitchEvent.removekey(_UserLogin);
+    } else {
+        G_VotingToSwitchEvent[_UserLogin] = SelectedEvent;
+    }
+}
+
+/**
+ * Updates the active events panel for all UIs.
+ */
+Void UpdateActiveEvents() {
+    declare Events = Events::GetEvents();
+    declare netwrite K_Event[] Net_EventsUI_Events for Teams[0];
+
+    // Clear the array then fill it with the `Events` lib data
+    Net_EventsUI_Events = [];
+    foreach (EventHandle => Event in Events) {
+        foreach (Edition in Event.EditionsDetails) {
+            declare Text EventName = Edition.name;
+            if (TL::Length(Edition.subtitle) > 0)
+                EventName ^= Edition.subtitle;
+
+            Net_EventsUI_Events.add(K_Event {
+                Handle = EventHandle,
+                Edition = Edition.id,
+                Name = EventName
+            });
+
+            if (Events::GetEventHandle() == EventHandle && Events::GetEventEdition() == Edition.id) {
+                Private_UpdateSelectedEvent(EventHandle, Edition.id);
+            }
+        }
+    }
+
+    declare netwrite Integer Net_EventsUI_EventsUpdate for Teams[0];
+    Net_EventsUI_EventsUpdate = Now;
+}
+
+/**
+ * Initializes the UIs of everyone.
+ */
+Void Init() {
+    declare netwrite Boolean Net_EventsUI_LockView for Teams[0];
+    Net_EventsUI_LockView = Settings::GetLockEventsUI();
+
+    UpdateActiveEvents();
+}
+
+Void HandleCustomEvent(CUIConfigEvent _Event) {
+    switch (_Event.CustomEventType) {
+        case C_CE_SelectEvent: {
+            declare Text EventHandle = _Event.CustomEventData[0];
+            declare Integer EventEdition = TL::ToInteger(_Event.CustomEventData[1]);
+
+            Private_UpdateSelectedEvent(EventHandle, EventEdition, _Event.UI);
+        }
+        case C_CE_ToggleSwitchToEvent: {
+            declare Text UserLogin = _Event.CustomEventData[0];
+            declare Text EventHandle = _Event.CustomEventData[1];
+            declare Integer EventEdition = TL::ToInteger(_Event.CustomEventData[2]);
+
+            Private_ToggleSwitchToEventFor(EventHandle, EventEdition, UserLogin, _Event.UI);
+        }
+    }
+}
 
 Text Private_GetWidget() {
     return """
@@ -23,6 +174,11 @@ Text GetLayer() {
 <manialink version="3" name="Obstacle:EventsUI">
     <frame>{{{Private_GetWidget()}}}</frame>
     <script><![CDATA[
+
+// declare K_Event[] G_Events;
+declare Text G_SelectedEvent;
+
+declare Boolean G_LockView;
 
 Void UpdateFrameTab(CUIConfig _UI, CMlPage _Page, Text _TabKey, Text _FrameTabId)
 {
@@ -53,9 +209,61 @@ Void UpdateFrameTab(CUIConfig _UI, CMlPage _Page, Text _TabKey, Text _FrameTabId
     }
 }
 
+Void SelectEvent(Text _EventHandle, Integer _EventEdition) {
+    SendCustomEvent({{{dump(C_CE_SelectEvent)}}}, [_EventHandle, "" ^ _EventEdition]);
+}
+
+Void HandleSwitchBtnClick(Text _EventHandle, Integer _EventEdition) {
+    SendCustomEvent({{{dump(C_CE_ToggleSwitchToEvent)}}}, [LocalUser.Login, _EventHandle, "" ^ _EventEdition]);
+}
+
+Void UpdateEventList() {
+    // declare netread Net_EventsUI_Events for Teams[0];
+    // G_Events = Net_EventsUI_Events;
+    
+    // TODO: edit the UI for event list update
+}
+
+Void UpdateSelectedEvent() {
+    declare netread Text Net_EventsUI_SelectedEvent for UI;
+    G_SelectedEvent = Net_EventsUI_SelectedEvent;
+
+    // TODO: edit the UI for selected event and switch btn
+}
+
+Void CheckLockView() {
+    declare netread Boolean Net_EventsUI_LockView for Teams[0];
+    G_LockView = Net_EventsUI_LockView;
+    if (G_LockView) {
+        // TODO: show the frame of the lock text.
+    } else {
+        // TODO: hide the frame of the lock text, but it should be already hidden at this point.
+    }
+}
+
 main() {
+    wait(Page != Null);
+
+    declare netread Integer Net_EventsUI_EventsUpdate for Teams[0];
+    declare Integer EventsUpdate;
+
+    declare netread Integer Net_EventsUI_SelectedEventUpdate for UI;
+    declare Integer SelectedEventUpdate;
+
+    CheckLockView();
+
     while (True) {
         yield;
+
+        if (EventsUpdate != Net_EventsUI_EventsUpdate) {
+            EventsUpdate = Net_EventsUI_EventsUpdate;
+            UpdateEventList();
+        }
+
+        if (SelectedEventUpdate != Net_EventsUI_SelectedEventUpdate) {
+            SelectedEventUpdate = Net_EventsUI_SelectedEventUpdate;
+            UpdateSelectedEvent();
+        }
 
         UpdateFrameTab(UI, Page, "EventsUI", "Frame_EventsUI");
     }
