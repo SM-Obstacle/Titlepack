@@ -22,8 +22,9 @@ Void StartLocalPlay() {
 }
 
 Text[] BuildLanguageDropDown() {
+	// English first, then lexicographic order
 	declare Languages = Internationalization::GetLanguageList([
-		"en", "fr", "hr", "ru", "uk"
+		"en", "de", "fr", "hr", "ru", "uk"
 	]);
 
 	foreach (ISO => Lang in Languages) { // I don't know how to access the first element xd
