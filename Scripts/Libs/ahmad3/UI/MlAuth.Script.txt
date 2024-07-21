@@ -9,7 +9,7 @@
 #Include "Libs/miltant/RunFlags.Script.txt" as RunFlags
 #Include "Libs/ahmad3/Utils.Script.txt" as Utils
 
-#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 /*********************************************
@@ -213,11 +213,11 @@ Text GetLayer() {
 }
 
 {{{Ban::ML_Preproc("BanMgr")}}}
-{{{Error::ML_Preproc("ErrMgr", "BanMgr")}}}
+{{{ErrMgr::ML_Preproc("ErrMgr", "BanMgr")}}}
 {{{RunFlags::ML_Preproc()}}}
 
 {{{Ban::ML_Content("BanMgr")}}}
-{{{Error::ML_Content("ErrMgr", "TL", "BanMgr")}}}
+{{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 {{{RunFlags::ML_FlagSum()}}}
 {{{Utils::ML_FindCharIndex("Utils_", "TL")}}}
 

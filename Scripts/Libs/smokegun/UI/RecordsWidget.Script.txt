@@ -2,7 +2,7 @@
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
-#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 #Include "Libs/ahmad3/Events.Script.txt" as Events
@@ -78,7 +78,7 @@ Text GetLayer() {
     #Include "TextLib" as TL
 
     {{{Ban::ML_Preproc("BanMgr")}}}
-    {{{Error::ML_Preproc("ErrMgr", "BanMgr")}}}
+    {{{ErrMgr::ML_Preproc("ErrMgr", "BanMgr")}}}
 
     #Struct K_RankedRecord {
         Integer rank;
@@ -92,7 +92,7 @@ Text GetLayer() {
     }
 
     {{{Ban::ML_Content("BanMgr")}}}
-    {{{Error::ML_Content("ErrMgr", "TL", "BanMgr")}}}
+    {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 
     /**
      * The pending requests

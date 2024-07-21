@@ -10,7 +10,7 @@
 
 #Include "Libs/miltant/Nadeo_Fork/Log.Script.txt" as Log
 
-#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
@@ -172,7 +172,7 @@ Void Loop()
                 }
             }
         } else {
-            declare err = Error::Handle(request.StatusCode, request.Result);
+            declare err = ErrMgr::Handle(request.StatusCode, request.Result);
             UIManager.UIAll.SendChat(err.Err.message);
         }
 

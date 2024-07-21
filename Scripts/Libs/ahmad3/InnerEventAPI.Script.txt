@@ -2,7 +2,7 @@
 
 #Include "Libs/smokegun/Constants.Script.txt" as C
 #Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
-#Include "Libs/ahmad3/Error.Script.txt" as Err
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as Err
 
 #Struct K_RequestAttr {
     Integer Type;

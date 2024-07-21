@@ -7,7 +7,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Store.Script.txt"   				as ObsStore
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt"   			as UI
 
-#Include "Libs/ahmad3/Error.Script.txt" as Error
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 #Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
@@ -108,7 +108,7 @@ one you use in game."""
 	UI::CloseDialog(PendingDialog);
 
 	if (req.StatusCode != 200) {
-		declare _err = Error::Handle(req.StatusCode, req.Result);
+		declare _err = ErrMgr::Handle(req.StatusCode, req.Result);
 		UI::Notice_Async("API error",
 			"""An error occurred.
 To help the developers to debug, you can open the
@@ -145,11 +145,11 @@ Ban::K_OptBanishment Private_UpdatePlayer(Text _Secret) {
 	
 	wait (req.IsCompleted);
 
-	if (req.StatusCode == Error::C_HttpErr_Unauthorized && !G_Errored) {
+	if (req.StatusCode == ErrMgr::C_HttpErr_Unauthorized && !G_Errored) {
 		// updating token
 		return Private_UpdatePlayer(Private_UpdateToken());
 	} else if (req.StatusCode != 200) {
-		return Error::Handle(req.StatusCode, req.Result).Ban;
+		return ErrMgr::Handle(req.StatusCode, req.Result).Ban;
 	}
 
 	return Ban::Empty();

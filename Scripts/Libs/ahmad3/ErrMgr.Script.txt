@@ -13,8 +13,8 @@
   CONSTANTS
  *********************************************/
 
-#Const  Version     "2023-07-08"
-#Const  ScriptName  "Error.Script.txt"
+#Const  Version     "2024-07-22"
+#Const  ScriptName  "ErrMgr.Script.txt"
 
 #Const C_JsonRegex """\{.*\}|\[.*\]"""
 
