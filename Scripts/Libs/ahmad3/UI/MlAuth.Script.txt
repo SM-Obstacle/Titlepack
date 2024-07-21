@@ -5,8 +5,6 @@
  *   Util functions for auth system              *
  ************************************************/
 
-#Include "MathLib" as MathLib
-#Include "TimeLib" as TimeLib
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 #Include "Libs/miltant/RunFlags.Script.txt" as RunFlags
 #Include "Libs/ahmad3/Utils.Script.txt" as Utils
@@ -214,12 +212,12 @@ Text GetLayer() {
 	Text Body;
 }
 
-{{{Ban::ML_Preproc()}}}
-{{{Error::ML_Preproc()}}}
+{{{Ban::ML_Preproc("BanMgr")}}}
+{{{Error::ML_Preproc("ErrMgr", "BanMgr")}}}
 {{{RunFlags::ML_Preproc()}}}
 
-{{{Ban::ML_Content()}}}
-{{{Error::ML_Content()}}}
+{{{Ban::ML_Content("BanMgr")}}}
+{{{Error::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 {{{RunFlags::ML_FlagSum()}}}
 {{{Utils::ML_FindCharIndex("Utils_", "TL")}}}
 
@@ -298,8 +296,8 @@ Void OnPopup(CMlFrame _Frame, CMlQuad _SubmitButton) {
 	ClientUI.UISequence = CUIConfig::EUISequence::None;
 }
 
-Void OnError(K_Error _Error, Text _OnRoute) {
-	if (_Error.err.type == C_Err_Maintenance) {
+Void OnError(ErrMgr_K_Error _Error, Text _OnRoute) {
+	if (_Error.Err.type == ErrMgr_C_Err_Maintenance) {
 		OnPopup(G_MaintenanceDialog, G_MaintenanceDialog_Submit);
 		if (_OnRoute != "/player/finished") return;
 	} else {
@@ -311,10 +309,10 @@ Void OnError(K_Error _Error, Text _OnRoute) {
 
 	declare Body = K_ReportErrorBody {
 		on_route = _OnRoute,
-		request_id = _Error.err.request_id,
+		request_id = _Error.Err.request_id,
 		map_uid = "" ^ Map.Id,
-		err_type = _Error.err.type,
-		err_msg = _Error.err.message,
+		err_type = _Error.Err.type,
+		err_msg = _Error.Err.message,
 		time = _LastRun,
 		respawn_count = _RespawnCount
 	};
@@ -387,8 +385,8 @@ Void Private_UpdateToken(Text _HeadMsg) {
 	
 	wait(req.IsCompleted);
 	if (req.StatusCode != 200) {
-		declare err = Error_Handle(req.StatusCode, req.Result);
-		UI.SendChat(err.err.message);
+		declare err = ErrMgr_Handle(req.StatusCode, req.Result);
+		UI.SendChat(err.Err.message);
 		OnError(err, "/player/get_token");
 		G_Errored = True;
 		return;
@@ -537,13 +535,13 @@ Void Private_PlayerFinished(Integer _LastRun, Integer _RespawnCount, Integer[] _
 
 	wait (req.IsCompleted);
 
-	if (req.StatusCode == C_HttpErr_Unauthorized && !G_Errored) {
+	if (req.StatusCode == ErrMgr_C_HttpErr_Unauthorized && !G_Errored) {
 		Private_UpdateToken(C_AuthMessage_PlayerFinished);
 		return Private_PlayerFinished(_LastRun, _RespawnCount, _LastCpTimes);
 	} else if (req.StatusCode != 200) {
-		declare err = Error_Handle(req.StatusCode, req.Result);
-		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.ban.tojson()]);
-		UI.SendChat(err.err.message);
+		declare err = ErrMgr_Handle(req.StatusCode, req.Result);
+		SendCustomEvent("ban:update", [InputPlayer.User.Login, err.Ban.tojson()]);
+		UI.SendChat(err.Err.message);
 		// Instead of notifying the error, we save it as staggered to be saved later.
 		SaveStaggered(JsonBody, Net_EventRoutePrefix ^ "player/finished");
 	} else {
@@ -570,7 +568,7 @@ Void Private_UpdatePlayer() {
 	
 	wait (req.IsCompleted);
 
-	if (req.StatusCode == C_HttpErr_Unauthorized && !G_Errored) {
+	if (req.StatusCode == ErrMgr_C_HttpErr_Unauthorized && !G_Errored) {
 		Private_UpdateToken(C_AuthMessage_UpdatePlayer);
 		return Private_UpdatePlayer();
 	}
@@ -619,7 +617,6 @@ Boolean HasDevMode() {
 }
 
 main() {
-	Error_Init();
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
 

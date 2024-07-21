@@ -1,8 +1,11 @@
 {
   "linter": [
+    "mslint:recommended",
     {
-      "files": ["Libs/**/*.Script.txt"],
-      "msApiPath": "../../../Downloads/doc.h",
+      "files": [
+        "**/*.Script.txt"
+      ],
+      "msApiPath": "./doc.h",
       "rules": {
         "no-empty": "error",
         "no-lonely-if": "error",

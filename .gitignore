@@ -1,6 +1,7 @@
 .vscode/
 Media/Manialinks/Keyboard
 __pycache__
+node_modules/
 
 # Assets
 Maps/

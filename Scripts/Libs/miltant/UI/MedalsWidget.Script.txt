@@ -1,7 +1,5 @@
-#Include "Libs/miltant/Nadeo_Fork/Layers2.Script.txt" as Layers
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
-#Include "TextLib" as TL
 
 #Include "Libs/ahmad3/Error.Script.txt" as Error
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
@@ -96,11 +94,11 @@ Text GetLayer() {
         K_RankedRecord[] response;
     }
 
-    {{{Ban::ML_Preproc()}}}
-    {{{Error::ML_Preproc()}}}
+    {{{Ban::ML_Preproc("BanMgr")}}}
+    {{{Error::ML_Preproc("ErrMgr", "BanMgr")}}}
 
-    {{{Ban::ML_Content()}}}
-    {{{Error::ML_Content()}}}
+    {{{Ban::ML_Content("BanMgr")}}}
+    {{{Error::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 
     declare Integer[][Text] G_MedalsTimesPerMap;
     declare CHttpRequest G_Req;
@@ -141,7 +139,6 @@ Text GetLayer() {
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
-        Error_Init();
         WaitForStaggeredReqsToLoad();
         wait(InputPlayer != Null);
 
@@ -205,7 +202,7 @@ Text GetLayer() {
                 if (G_Req.StatusCode == 200)
                     UpdateUI = True;
                 else {
-                    declare err = Error_Handle(G_Req.StatusCode, G_Req.Result);
+                    declare err = ErrMgr_Handle(G_Req.StatusCode, G_Req.Result);
                     UI.SendChat(err.err.message);
                     Http.Destroy(G_Req);
                     G_Req = Null;

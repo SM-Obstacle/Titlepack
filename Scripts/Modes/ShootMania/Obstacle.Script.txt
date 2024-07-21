@@ -656,8 +656,8 @@ foreach (Cap in PendingCaptures) {
 }
 
 foreach (Player in Players) {
-    if (Player::getBanStatus(Player).isPresent && ServerAdmin != Null) {
-        ServerAdmin.Kick(Player.User, Player::getBanStatus(Player).ban.ban.reason);
+    if (Player::getBanStatus(Player).IsPresent && ServerAdmin != Null) {
+        ServerAdmin.Kick(Player.User, Player::getBanStatus(Player).Ban.ban.reason);
     }
 
     switch (Player.SpawnStatus) {

@@ -24,7 +24,7 @@ Boolean HasFailed() {
 }
 
 Text GetFailReason() {
-    return G_Failure.err.message;
+    return G_Failure.Err.message;
 }
 
 Boolean EventHandleIsLoading(Text _EventHandle) {
@@ -52,7 +52,7 @@ Types::K_Event GetEvent(Text _EventHandle) {
     return G_Events[_EventHandle];
 }
 
-Boolean Private_CheckErr(Text _Route, CHttpRequest _Req) {
+Boolean Private_CheckErr(CHttpRequest _Req) {
     if (_Req.StatusCode == 200) return False;
     if (G_HasFailed) return True;
 
@@ -145,7 +145,7 @@ Boolean Loop() {
 
         if (!Request.IsCompleted) {
             continue;
-        } else if (Private_CheckErr(ReqAttr.Route, Request)) {
+        } else if (Private_CheckErr(Request)) {
             ReqToDelete.add(ReqId);
             continue;
         }
@@ -172,7 +172,7 @@ Boolean Loop() {
                     PendingEventsToDelete.add(Handle);
                     ReqToDelete.add(ReqId);
                     G_HasFailed = True;
-                    G_Failure.err.message = "Event was not found or has expired";
+                    G_Failure.Err.message = "Event was not found or has expired";
                     continue;
                 }
 

@@ -9,16 +9,10 @@
 #Include "MathLib" as ML
 
 #Include "Libs/miltant/Nadeo_Fork/Log.Script.txt" as Log
-#Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
-#Include "Libs/miltant/Nadeo_Fork/ShootMania/SM3.Script.txt" as SM
 
 #Include "Libs/ahmad3/Error.Script.txt" as Error
-#Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
-#Include "Libs/smokegun/Player.Script.txt" as Player
-
-#Include "Libs/ahmad3/UI/MlAuth.Script.txt" as Auth
 
 /*********************************************
  CONSTANTS
@@ -179,7 +173,7 @@ Void Loop()
             }
         } else {
             declare err = Error::Handle(request.StatusCode, request.Result);
-            UIManager.UIAll.SendChat(err.err.message);
+            UIManager.UIAll.SendChat(err.Err.message);
         }
 
         ToDelete.add(reqId);

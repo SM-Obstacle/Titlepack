@@ -5,8 +5,6 @@
  *   Util functions for error handling
  ************************************************/
 
-#Include "MathLib" as MathLib
-#Include "TimeLib" as TimeLib
 #Include "TextLib" as TL
 
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
@@ -46,6 +44,29 @@
 #Const C_Err_PlayerNotFound             302
 #Const C_Err_MapNotFound                304
 
+#Const C_ErrToText [
+    // Internal server errors
+    101 =>                          "IO Error",
+    102 =>                          "MySQL",
+    103 =>                          "Redis",
+    104 =>                          "Sending external request",
+    105 =>                          "Unknown",
+
+    // Authorization errors
+    201 =>                          "Unauthorized",
+    202 =>                          "Forbidden",
+    203 =>                          "Missing /player/get_token request",
+    204 =>                          "State already received",
+    205 =>                          "Banned player",
+    206 =>                          "ManiaPlanet access token",
+    207 =>                          "Invalid ManiaPlanet code",
+    208 =>                          "Endpoints connection timeout",
+
+    // Logical errors
+    302 =>                          "Player not found",
+    304 =>                          "Map not found"
+]
+
 #Struct K_ErrorResponse {
     Text request_id;
     Integer type;
@@ -53,35 +74,8 @@
 }
 
 #Struct K_Error {
-    K_ErrorResponse err;
-    Ban::K_OptBanishment ban;
-}
-
-declare Text[Integer] G_ErrorList;
-
-Void Init() {
-    G_ErrorList = [
-        // Internal server errors
-        C_Err_IO =>                         "IO Error",
-        C_Err_MySql =>                      "MySQL",
-        C_Err_Redis =>                      "Redis",
-        C_Err_ExternalRequest =>            "Sending external request",
-        C_Err_Unknown =>                    "Unknown",
-
-        // Authorization errors
-        C_Err_Unauthorized =>               "Unauthorized",
-        C_Err_Forbidden =>                  "Forbidden",
-        C_Err_MissingGetTokenReq =>         "Missing /player/get_token request",
-        C_Err_StateAlreadyReceived =>       "State already received",
-        C_Err_BannedPlayer =>               "Banned player",
-        C_Err_AccessTokenErr =>             "ManiaPlanet access token",
-        C_Err_InvalidMPCode =>              "Invalid ManiaPlanet code",
-        C_Err_Timeout =>                    "Endpoints connection timeout",
-
-        // Logical errors
-        C_Err_PlayerNotFound =>             "Player not found",
-        C_Err_MapNotFound =>                "Map not found"
-    ];
+    K_ErrorResponse Err;
+    Ban::K_OptBanishment Ban;
 }
 
 Boolean Private_IsJson(Text _Text) {
@@ -89,172 +83,168 @@ Boolean Private_IsJson(Text _Text) {
 }
 
 K_Error Handle(Integer _StatusCode, Text _ReqResult) {
-    declare K_ErrorResponse res;
-    if (Private_IsJson(_ReqResult) && !res.fromjson(_ReqResult)) {
-        declare Ban::K_BannedPlayerResponse ban;
-        if (_StatusCode == C_HttpErr_Forbidden && ban.fromjson(_ReqResult)) {
+    declare K_ErrorResponse Res;
+    if (Private_IsJson(_ReqResult) && !Res.fromjson(_ReqResult)) {
+        declare Ban::K_BannedPlayerResponse Ban;
+        if (_StatusCode == C_HttpErr_Forbidden && Ban.fromjson(_ReqResult)) {
             return K_Error {
-                err = K_ErrorResponse {
+                Err = K_ErrorResponse {
                     request_id = "Unknown",
                     type = C_Err_BannedPlayer,
-                    message = ban.message
+                    message = Ban.message
                 },
-                ban = Ban::Of(ban)
+                Ban = Ban::Of(Ban)
             };
         }
 
-        res = K_ErrorResponse {
+        Res = K_ErrorResponse {
             request_id = "Unknown",
             type = C_Err_Unknown,
             message = "Unknown error (JSON object not respecting error structure):\n" ^ _ReqResult
         };
     } else {
-        res = K_ErrorResponse {
+        Res = K_ErrorResponse {
             type = C_Err_Unknown,
             message = "Unknown error (Got a non-JSON request result):\n" ^ _ReqResult
         };
     }
 
-    declare Text title;
-    if (res.type < 200) title = "Internal server error";
-    else if (res.type < 300) title = "Authentication error";
-    else if (res.type < 400) title = "Logical error";
+    declare Text Title;
+    if (Res.type < 200) Title = "Internal server error";
+    else if (Res.type < 300) Title = "Authentication error";
+    else if (Res.type < 400) Title = "Logical error";
 
-    declare Text type = G_ErrorList.get(res.type, "Unknown error (type not yet registered in TP)");
+    declare Text Type = C_ErrToText.get(Res.type, "Unknown error (type not yet registered in TP)");
 
-    declare rawMessage = """[{{{_StatusCode}}}]: "{{{res.message}}}" ({{{type}}}, {{{title}}}, request ID: {{{res.request_id}}})""";
+    declare Text RawMessage = """[{{{_StatusCode}}}]: "{{{Res.message}}}" ({{{Type}}}, {{{Title}}}, request ID: {{{Res.request_id}}})""";
     
-    declare Text message = """API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):
-{{{rawMessage}}}
+    declare Text Message = """API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):
+{{{RawMessage}}}
 Response body: {{{_ReqResult}}}""";
 
-    log(message);
+    log(Message);
 
     return K_Error {
-        err = res,
-        ban = Ban::Empty()
+        Err = Res,
+        Ban = Ban::Empty()
     };
 }
 
-Text ML_Preproc() {
-    return """
-#Const C_JsonRegex {{{dump(dump(dump(C_JsonRegex)))}}}
+Text ML_Preproc(Text _ModName, Text _BanMgr) {
+    return """//!
+#Const {{{_ModName}}}_C_JsonRegex {{{dump(dump(dump(C_JsonRegex)))}}}
 
 // HTTP errors
-#Const C_HttpErr_Unauthorized           401
-#Const C_HttpErr_Forbidden              403
+#Const {{{_ModName}}}_C_HttpErr_Unauthorized           401
+#Const {{{_ModName}}}_C_HttpErr_Forbidden              403
 
 // Internal server errors
-#Const C_Err_IO                         101
-#Const C_Err_MySql                      102
-#Const C_Err_Redis                      103
-#Const C_Err_ExternalRequest            104
-#Const C_Err_Unknown                    105
-#Const C_Err_Maintenance                106
+#Const {{{_ModName}}}_C_Err_IO                         101
+#Const {{{_ModName}}}_C_Err_MySql                      102
+#Const {{{_ModName}}}_C_Err_Redis                      103
+#Const {{{_ModName}}}_C_Err_ExternalRequest            104
+#Const {{{_ModName}}}_C_Err_Unknown                    105
+#Const {{{_ModName}}}_C_Err_Maintenance                106
 
 // Authentication errors
-#Const C_Err_Unauthorized               201
-#Const C_Err_Forbidden                  202
-#Const C_Err_MissingGetTokenReq         203
-#Const C_Err_StateAlreadyReceived       204
-#Const C_Err_BannedPlayer               205
-#Const C_Err_AccessTokenErr             206
-#Const C_Err_InvalidMPCode              207
-#Const C_Err_Timeout                    208
+#Const {{{_ModName}}}_C_Err_Unauthorized               201
+#Const {{{_ModName}}}_C_Err_Forbidden                  202
+#Const {{{_ModName}}}_C_Err_MissingGetTokenReq         203
+#Const {{{_ModName}}}_C_Err_StateAlreadyReceived       204
+#Const {{{_ModName}}}_C_Err_BannedPlayer               205
+#Const {{{_ModName}}}_C_Err_AccessTokenErr             206
+#Const {{{_ModName}}}_C_Err_InvalidMPCode              207
+#Const {{{_ModName}}}_C_Err_Timeout                    208
 
 // Logical errors
-#Const C_Err_PlayerNotFound             302
-#Const C_Err_MapNotFound                304
+#Const {{{_ModName}}}_C_Err_PlayerNotFound             302
+#Const {{{_ModName}}}_C_Err_MapNotFound                304
 
-#Struct K_ErrorResponse {
+#Const {{{_ModName}}}_C_ErrToText [
+    // Internal server errors
+    101 =>                          "IO Error",
+    102 =>                          "MySQL",
+    103 =>                          "Redis",
+    104 =>                          "Sending external request",
+    105 =>                          "Unknown",
+
+    // Authorization errors
+    201 =>                          "Unauthorized",
+    202 =>                          "Forbidden",
+    203 =>                          "Missing /player/get_token request",
+    204 =>                          "State already received",
+    205 =>                          "Banned player",
+    206 =>                          "ManiaPlanet access token",
+    207 =>                          "Invalid ManiaPlanet code",
+    208 =>                          "Endpoints connection timeout",
+
+    // Logical errors
+    302 =>                          "Player not found",
+    304 =>                          "Map not found"
+]
+
+#Struct {{{_ModName}}}_K_ErrorResponse {
     Text request_id;
     Integer type;
     Text message;
 }
 
-#Struct K_Error {
-    K_ErrorResponse err;
-    K_OptBanishment ban;
+#Struct {{{_ModName}}}_K_Error {
+    {{{_ModName}}}_K_ErrorResponse Err;
+    {{{_BanMgr}}}_K_OptBanishment Ban;
 }
     """;
 }
 
-Text ML_Content() {
-    return """
-declare Text[Integer] G_ErrorList;
-
-Void Error_Init() {
-    G_ErrorList = [
-        // Internal server errors
-        C_Err_IO =>                         "IO Error",
-        C_Err_MySql =>                      "MySQL",
-        C_Err_Redis =>                      "Redis",
-        C_Err_ExternalRequest =>            "Sending external request",
-        C_Err_Unknown =>                    "Unknown",
-
-        // Authorization errors
-        C_Err_Unauthorized =>               "Unauthorized",
-        C_Err_Forbidden =>                  "Forbidden",
-        C_Err_MissingGetTokenReq =>         "Missing /player/get_token request",
-        C_Err_StateAlreadyReceived =>       "State already received",
-        C_Err_BannedPlayer =>               "Banned player",
-        C_Err_AccessTokenErr =>             "ManiaPlanet access token",
-        C_Err_InvalidMPCode =>              "Invalid ManiaPlanet code",
-        C_Err_Timeout =>                    "Endpoints connection timeout",
-
-        // Logical errors
-        C_Err_PlayerNotFound =>             "Player not found",
-        C_Err_MapNotFound =>                "Map not found"
-    ];
+Text ML_Content(Text _ModName, Text _TextLib, Text _BanMgr) {
+    return """//!
+Boolean {{{_ModName}}}_Private_IsJson(Text _Text) {
+    return {{{_TextLib}}}::RegexFind({{{_ModName}}}_C_JsonRegex, _Text, "").count == 1;
 }
 
-Boolean Error_IsJson(Text _Text) {
-    return TL::RegexFind(C_JsonRegex, _Text, "").count == 1;
-}
-
-K_Error Error_Handle(Integer _StatusCode, Text _ReqResult) {
-    declare K_ErrorResponse res;
-    if (Error_IsJson(_ReqResult) && !res.fromjson(_ReqResult)) {
-        declare K_BannedPlayerResponse ban;
-        if (_StatusCode == C_HttpErr_Forbidden && ban.fromjson(_ReqResult)) {
-            return K_Error {
-                err = K_ErrorResponse {
-                    type = C_Err_BannedPlayer,
-                    message = ban.message
+{{{_ModName}}}_K_Error {{{_ModName}}}_Handle(Integer _StatusCode, Text _ReqResult) {
+    declare {{{_ModName}}}_K_ErrorResponse Res;
+    if ({{{_ModName}}}_Private_IsJson(_ReqResult) && !Res.fromjson(_ReqResult)) {
+        declare {{{_BanMgr}}}_K_BannedPlayerResponse Ban;
+        if (_StatusCode == {{{_ModName}}}_C_HttpErr_Forbidden && Ban.fromjson(_ReqResult)) {
+            return {{{_ModName}}}_K_Error {
+                Err = {{{_ModName}}}_K_ErrorResponse {
+                    type = {{{_ModName}}}_C_Err_BannedPlayer,
+                    message = Ban.message
                 },
-                ban = Ban_Of(ban)
+                Ban = {{{_BanMgr}}}_Ban_Of(Ban)
             };
         }
 
-        res = K_ErrorResponse {
+        Res = {{{_ModName}}}_K_ErrorResponse {
             request_id = "Unknown",
-            type = C_Err_Unknown,
+            type = {{{_ModName}}}_C_Err_Unknown,
             message = "Unknown error (JSON object not respecting error structure):\n" ^ _ReqResult
         };
     } else {
-        res = K_ErrorResponse {
-            type = C_Err_Unknown,
+        Res = {{{_ModName}}}_K_ErrorResponse {
+            type = {{{_ModName}}}_C_Err_Unknown,
             message = "Unknown error (Got a non-JSON request result):\n" ^ _ReqResult
         };
     }
 
-    declare Text title;
-    if (res.type < 200) title = "Internal server error";
-    else if (res.type < 300) title = "Authentication error";
-    else if (res.type < 400) title = "Logical error";
+    declare Text Title;
+    if (Res.type < 200) Title = "Internal server error";
+    else if (Res.type < 300) Title = "Authentication error";
+    else if (Res.type < 400) Title = "Logical error";
 
-    declare Text type = G_ErrorList.get(res.type, "Unknown error (type not yet registered in TP)");
+    declare Text Type = {{{_ModName}}}_C_ErrToText.get(Res.type, "Unknown error (type not yet registered in TP)");
 
-    declare rawMessage = "[" ^ _StatusCode ^ "]: \"" ^ res.message ^ "\" ("^ type ^", "^ title ^", request ID: \"" ^ res.request_id ^ "\")";
+    declare RawMessage = "[" ^ _StatusCode ^ "]: \"" ^ Res.message ^ "\" ("^ Type ^", "^ Title ^", request ID: \"" ^ Res.request_id ^ "\")";
     
-    declare Text message = "API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):\n"
-        ^ rawMessage ^ "\nResponse body: " ^ _ReqResult;
+    declare Text Message = "API ERROR (if you see this, please take a screenshot and post it in the $l[https://discord.gg/PfeBn98DyY]Obstacle discord$z):\n"
+        ^ RawMessage ^ "\nResponse body: " ^ _ReqResult;
 
-    log(message);
+    log(Message);
 
-    return K_Error {
-        err = res,
-        ban = Ban_Empty()
+    return {{{_ModName}}}_K_Error {
+        Err = Res,
+        Ban = {{{_BanMgr}}}_Ban_Empty()
     };
 }
     """;

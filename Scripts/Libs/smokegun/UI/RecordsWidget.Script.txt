@@ -1,7 +1,4 @@
-#Include "MathLib" as ML
 #Include "TextLib" as TL
-#Include "Libs/miltant/Nadeo_Fork/Log.Script.txt" as Log
-#Include "Libs/miltant/Nadeo_Fork/Layers2.Script.txt" as Layers
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
@@ -80,8 +77,8 @@ Text GetLayer() {
 <script><!--
     #Include "TextLib" as TL
 
-    {{{Ban::ML_Preproc()}}}
-    {{{Error::ML_Preproc()}}}
+    {{{Ban::ML_Preproc("BanMgr")}}}
+    {{{Error::ML_Preproc("ErrMgr", "BanMgr")}}}
 
     #Struct K_RankedRecord {
         Integer rank;
@@ -94,8 +91,8 @@ Text GetLayer() {
         K_RankedRecord[] response;
     }
 
-    {{{Ban::ML_Content()}}}
-    {{{Error::ML_Content()}}}
+    {{{Ban::ML_Content("BanMgr")}}}
+    {{{Error::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 
     /**
      * The pending requests
@@ -158,7 +155,6 @@ Text GetLayer() {
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
-        Error_Init();
         WaitForStaggeredReqsToLoad();
         wait(InputPlayer != Null && Page != Null);
 
@@ -191,8 +187,8 @@ Text GetLayer() {
                 log("RecordsWidget: Request completed");
                 log("RecordsWidget: Status code: " ^ G_Req.StatusCode);
                 if (G_Req.StatusCode != 200) {
-                    declare err = Error_Handle(G_Req.StatusCode, G_Req.Result);
-                    UI.SendChat(err.err.message);
+                    declare err = ErrMgr_Handle(G_Req.StatusCode, G_Req.Result);
+                    UI.SendChat(err.Err.message);
                     Http.Destroy(G_Req);
                     G_Req = Null;
                     continue;

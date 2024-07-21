@@ -5,9 +5,6 @@
  *   Banishment types
  ************************************************/
 
-#Include "MathLib" as MathLib
-#Include "TimeLib" as TimeLib
-
 #Struct K_Banishment {
     Integer id;
     Text date_ban;
@@ -24,28 +21,28 @@
 }
 
 #Struct K_OptBanishment {
-    K_BannedPlayerResponse ban;
-    Boolean isPresent;
+    K_BannedPlayerResponse Ban;
+    Boolean IsPresent;
 }
 
 K_OptBanishment Empty() {
-    declare K_BannedPlayerResponse ban;
+    declare K_BannedPlayerResponse Ban;
     return K_OptBanishment {
-        ban = ban,
-        isPresent = False
+        Ban = Ban,
+        IsPresent = False
     };
 }
 
 K_OptBanishment Of(K_BannedPlayerResponse _Ban) {
     return K_OptBanishment {
-        ban = _Ban,
-        isPresent = True
+        Ban = _Ban,
+        IsPresent = True
     };
 }
 
-Text ML_Preproc() {
-    return """
-#Struct K_Banishment {
+Text ML_Preproc(Text _ModName) {
+    return """//!
+#Struct {{{_ModName}}}_K_Banishment {
     Integer id;
     Text date_ban;
     Integer duration;
@@ -55,32 +52,32 @@ Text ML_Preproc() {
     Boolean was_reprieved;
 }
 
-#Struct K_BannedPlayerResponse {
+#Struct {{{_ModName}}}_K_BannedPlayerResponse {
     Text message;
-    K_Banishment ban;
+    {{{_ModName}}}_K_Banishment ban;
 }
 
-#Struct K_OptBanishment {
-    K_BannedPlayerResponse ban;
-    Boolean isPresent;
+#Struct {{{_ModName}}}_K_OptBanishment {
+    {{{_ModName}}}_K_BannedPlayerResponse Ban;
+    Boolean IsPresent;
 }
     """;
 }
 
-Text ML_Content() {
-    return """
-K_OptBanishment Ban_Empty() {
-    declare K_BannedPlayerResponse ban;
-    return K_OptBanishment {
-        ban = ban,
-        isPresent = False
+Text ML_Content(Text _ModName) {
+    return """//!
+{{{_ModName}}}_K_OptBanishment {{{_ModName}}}_Ban_Empty() {
+    declare {{{_ModName}}}_K_BannedPlayerResponse Ban;
+    return {{{_ModName}}}_K_OptBanishment {
+        Ban = Ban,
+        IsPresent = False
     };
 }
 
-K_OptBanishment Ban_Of(K_BannedPlayerResponse _Ban) {
-    return K_OptBanishment {
-        ban = _Ban,
-        isPresent = True
+{{{_ModName}}}_K_OptBanishment {{{_ModName}}}_Ban_Of({{{_ModName}}}_K_BannedPlayerResponse _Ban) {
+    return {{{_ModName}}}_K_OptBanishment {
+        Ban = _Ban,
+        IsPresent = True
     };
 }
     """;

@@ -149,7 +149,7 @@ Ban::K_OptBanishment Private_UpdatePlayer(Text _Secret) {
 		// updating token
 		return Private_UpdatePlayer(Private_UpdateToken());
 	} else if (req.StatusCode != 200) {
-		return Error::Handle(req.StatusCode, req.Result).ban;
+		return Error::Handle(req.StatusCode, req.Result).Ban;
 	}
 
 	return Ban::Empty();
@@ -213,7 +213,7 @@ Let's race on!"""
 
 	declare ban = Private_UpdatePlayer(ObsStore_UserToken);
 
-	if (ban.isPresent) {
+	if (ban.IsPresent) {
 		declare BanDialog = UI::NewDialog("Account Banned",
 			UI::K_Message {
 				Label = """We're sorry, but it appears that your account
@@ -250,7 +250,6 @@ support team on Discord."""
 main() {
 	log("Obstacle Titlepack loaded!");
 
-	Error::Init();
 	if (!DetectOffline())
 		Greet();
 	
