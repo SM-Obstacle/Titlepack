@@ -1,5 +1,9 @@
 #RequireContext CManiaAppTitle
 
+/**
+	THIS IS AN OLD VERSION, the real one is ObstacleTitlePack.Script.txt
+ */
+
 #Include "TextLib" as TL
 
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Index.Script.txt"				as ObstacleController

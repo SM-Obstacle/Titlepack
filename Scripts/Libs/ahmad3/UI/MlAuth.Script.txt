@@ -12,6 +12,8 @@
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
+#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
+
 /*********************************************
   CONSTANTS
  *********************************************/
@@ -220,6 +222,7 @@ Text GetLayer() {
 {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 {{{RunFlags::ML_FlagSum()}}}
 {{{Utils::ML_FindCharIndex("Utils_", "TL")}}}
+{{{AuthUtils::ML_Content("AuthUtils")}}}
 
 declare Boolean G_Errored;
 
@@ -242,8 +245,8 @@ Ident MakePost(Text _Url, Text _Data) {
     if (Http.SlotsAvailable > 0) {
         log(" Sending request to "^_Url);
         log(" Payload: "^_Data);
-		declare persistent ObsStore_UserToken for LocalUser = "";
-        declare request <=> Http.CreatePost({{{dump(Constants::C_HostUrl)}}}^_Url, _Data, "Content-Type: application/json\nAccept: application_json\nPlayerLogin: " ^ InputPlayer.User.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
+		declare Text Token = AuthUtils_GetUserToken();
+        declare request <=> Http.CreatePost({{{dump(Constants::C_HostUrl)}}}^_Url, _Data, "Content-Type: application/json\nAccept: application_json\nPlayerLogin: " ^ InputPlayer.User.Login ^ "\nAuthorization: " ^ Token);
         return request.Id;
     }
     return NullId;
@@ -357,7 +360,7 @@ Void Private_UpdateToken(Text _HeadMsg) {
 	G_AuthDialog.Hide();
 	ClientUI.UISequence = CUIConfig::EUISequence::None;
 
-	declare persistent Text ObsStore_UserToken for LocalUser;
+	declare Text Token = AuthUtils_GetUserToken();
 	
 	declare login = LocalUser.Login;
 	declare Text state = login ^ Now;
@@ -394,7 +397,7 @@ Void Private_UpdateToken(Text _HeadMsg) {
 	
 	declare K_GetTokenResponse response;
 	response.fromjson(req.Result);
-	ObsStore_UserToken = response.token;
+	AuthUtils_SetUserToken(response.token);
 	
 	log("Token updated!");
 }
@@ -582,11 +585,11 @@ Void InitPbCpsTimes() {
 	declare netread Net_RecordsUpdated for Teams[0] = -1;
 	wait(Net_RecordsUpdated != -1 || InputPlayer.StartTime != -1);
 
-	declare persistent ObsStore_UserToken for LocalUser = "";
+	declare Text Token = AuthUtils_GetUserToken();
 	
 	declare netread Text Net_EventRoutePrefix for Teams[0];
 	declare Url = "{{{Constants::C_HostUrl}}}" ^ Net_EventRoutePrefix ^ "player/pb?map_uid="^Map.Id;
-	declare Req = Http.CreateGet(Url, True, "Accept: application/json\nPlayerLogin: " ^ InputPlayer.User.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
+	declare Req = Http.CreateGet(Url, True, "Accept: application/json\nPlayerLogin: " ^ InputPlayer.User.Login ^ "\nAuthorization: " ^ Token);
 
 	wait(Req.IsCompleted);
 

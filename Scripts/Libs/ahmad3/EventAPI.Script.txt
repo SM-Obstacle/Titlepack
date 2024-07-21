@@ -6,6 +6,8 @@
 #Include "Libs/ahmad3/InnerEventAPI.Script.txt" as Inner
 #Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
 
+#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
+
 declare Boolean G_AuthHeadersPending;
 
 Boolean EventHasContent(Text _EventHandle) {
@@ -55,9 +57,9 @@ Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
 }
 
 Void Private_UpdateAuthHeaders() {
-    declare persistent Text ObsStore_UserToken for LocalUser = "";
-    if (G_AuthHeadersPending && ObsStore_UserToken != "") {
-        Inner::SetAuthHeaders("\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ ObsStore_UserToken);
+    declare Text Token = AuthUtils::GetUserToken(LocalUser);
+    if (G_AuthHeadersPending && Token != "") {
+        Inner::SetAuthHeaders("\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ Token);
         G_AuthHeadersPending = False;
     }
 }

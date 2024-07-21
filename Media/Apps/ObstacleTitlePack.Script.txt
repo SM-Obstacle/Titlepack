@@ -7,6 +7,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Store.Script.txt"   				as ObsStore
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt"   			as UI
 
+#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
@@ -42,7 +43,7 @@ Void LogError(Text _Msg) {
 Text Private_UpdateToken() {
 	LogMessage("Updating token...");
 
-	declare persistent ObsStore_UserToken for LocalUser = "";
+	declare Text Token = AuthUtils::GetUserToken(LocalUser);
 
 	declare login = LocalUser.Login;
 	declare Text state = login ^ Now;
@@ -118,16 +119,16 @@ If this problem persists, please contact the Obstacle
 developers (i.e. @ahmadbky or @miltant on discord)."""
 		);
 		G_Errored = True;
-		return ObsStore_UserToken;
+		return Token;
 	}
 	
 	declare K_GetTokenResponse response;
 	response.fromjson(req.Result);
-	ObsStore_UserToken = response.token;
+	AuthUtils::SetUserToken(response.token, LocalUser);
 
 	LogMessage("Token updated!");
 
-	return ObsStore_UserToken;
+	return AuthUtils::GetUserToken(LocalUser);
 }
 
 Ban::K_OptBanishment Private_UpdatePlayer(Text _Secret) {
@@ -178,9 +179,9 @@ Boolean DetectOffline() {
 Void Greet() {
 	G_Errored = False;
 
-	declare persistent ObsStore_UserToken for LocalUser = "";
+	declare Text Token = AuthUtils::GetUserToken(LocalUser);
 
-	if (ObsStore_UserToken == "") {
+	if (Token == "") {
 		declare WelcomeDialog = UI::NewDialog("Welcome to Obstacle!",
 			UI::K_Message {
 				Label = """Before we race on, let's take a quick pit stop: We're
@@ -211,7 +212,7 @@ Let's race on!"""
 		}
 	}
 
-	declare ban = Private_UpdatePlayer(ObsStore_UserToken);
+	declare ban = Private_UpdatePlayer(Token);
 
 	if (ban.IsPresent) {
 		declare BanDialog = UI::NewDialog("Account Banned",
