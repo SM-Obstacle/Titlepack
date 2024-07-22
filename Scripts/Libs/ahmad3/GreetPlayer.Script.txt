@@ -455,18 +455,39 @@ Boolean Private_LoopPlayerUpdateReq() {
     return True;
 }
 
+/**
+ * Returns whether the update procedure failed because the authentication failed or not.
+ *
+ * @return True if the update procedure needs the token update procedure to run before,
+ * False otherwise.
+ */
 Boolean Private_PlayerUpdateReqNeedsTokenUpdate() {
     return G_PlayerUpdateNeedsTokenUpdate;
 }
 
+/**
+ * Returns whether the update procedure failed.
+ *
+ * This returns False if the update procedure failed because the authentication failed.
+ *
+ * @return True if the update procedure failed, False otherwise.
+ */
 Boolean Private_PlayerUpdateReqFailed() {
     return G_PlayerUpdateFailed;
 }
 
+/**
+ * Returns the optional ban that results from the update procedure.
+ *
+ * @return the optional banishment type.
+ */
 Ban::K_OptBanishment Private_PlayerUpdateReqGetOptBan() {
     return G_PlayerUpdateOptBan;
 }
 
+/**
+ * Initializes the banishment dialog.
+ */
 Void Private_InitBanDialog() {
     G_InitBanDialog = True;
     G_BanDialogId = DialogsUI::NewDialog(
@@ -492,6 +513,11 @@ support team on Discord."""
     );
 }
 
+/**
+ * Updates the state of the banishment dialog.
+ *
+ * This waits for the player to valid the dialog, then quits the TP.
+ */
 Void Private_LoopBanDialog() {
     if (!G_InitBanDialog) return;
 
@@ -501,6 +527,11 @@ Void Private_LoopBanDialog() {
     }
 }
 
+/**
+ * Welcomes the player to the TP according to whether they're new or not.
+ *
+ * If they're new, the welcome dialog is initialized. Otherwise, the player update procedure begins.
+ */
 Void Private_InitGreetPlayer() {
     declare Text Token = AuthUtils::GetUserToken(LocalUser);
 
@@ -511,7 +542,12 @@ Void Private_InitGreetPlayer() {
     }
 }
 
-Boolean Private_AuthFailed() {
+/**
+ * Returns whether the token update procedure failed or not.
+ *
+ * @return True if the token update failed, False otherwise.
+ */
+Boolean Private_TokenUpdateFailed() {
     return G_TokenUpdateReqFinished && !G_TokenUpdateReqOk;
 }
 
@@ -519,14 +555,28 @@ Boolean Private_AuthFailed() {
 //// Public
 ////////////////////
 
+/**
+ * Returns whether the authentication was successful or not.
+ *
+ * A successful authentication can result from a successful player update procedure,
+ * or a successful token update procedure.
+ *
+ * @return True if the authentication is successful, False otherwise.
+ */
 Boolean AuthSuccess() {
     return G_PlayerUpdateOk || G_TokenUpdateReqFinished && G_TokenUpdateReqOk;
 }
 
+/**
+ * Loads the library.
+ */
 Void Load() {
     Private_InitOnlineTest();
 }
 
+/**
+ * Updates the state of the library.
+ */
 Void Loop() {
     // Checks if the online test is over and is OK
     if (Private_LoopOnlineTest() && Private_IsOnline()) {
@@ -538,18 +588,20 @@ Void Loop() {
         Private_InitUpdateToken();
     }
 
-    // If the token update is over and is OK
+    // Checks if the token update procedure is over and is OK
     if (Private_LoopUpdateToken() && Private_UpdateTokenIsOk()) {
         Private_InitPlayerUpdateReq();
     }
 
+    // Checks if the player update procedure is over
     if (Private_LoopPlayerUpdateReq()) {
-        if (Private_PlayerUpdateReqNeedsTokenUpdate() && !Private_AuthFailed()) {
+        if (Private_PlayerUpdateReqNeedsTokenUpdate() && !Private_TokenUpdateFailed()) {
             Private_InitUpdateToken();
         } else if (Private_PlayerUpdateReqGetOptBan().IsPresent) {
             Private_InitBanDialog();
         }
     }
 
+    // This is noop if there's no ban dialog.
     Private_LoopBanDialog();
 }
