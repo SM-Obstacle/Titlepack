@@ -10,6 +10,7 @@
 #Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
+#Include "Libs/ahmad3/GreetPlayer.Script.txt" as GreetPlayer
 
 #Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
 #Include "Libs/smokegun/Constants.Script.Txt" as Constants
@@ -251,9 +252,7 @@ support team on Discord."""
 main() {
 	log("Obstacle Titlepack loaded!");
 
-	if (!DetectOffline())
-		Greet();
-	
+	GreetPlayer::Load();
 	ObsStore::Load();
 	ObstacleController::Load();
 	Background::Load();
@@ -265,6 +264,7 @@ main() {
 	while(True) {
 		yield;
 		
+		GreetPlayer::Loop();
 		UI::Loop();
 		ObsStore::Loop();
 		ObstacleController::Loop();

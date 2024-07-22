@@ -1,0 +1,459 @@
+/************************************************
+ *   Obstacle Library                            *
+ *   Author:     ahmad3                          *
+ *                                               *
+ *   Utility functions used to manage the player *
+ *   when they enter the Titlepack.              *
+ ************************************************/
+
+#Include "TextLib" as TL
+
+#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
+#Include "Libs/smokegun/Constants.Script.txt" as Constants
+
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt" as DialogsUI
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt" as Dialogs
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-22"
+#Const ScriptName "GreetPlayer.Script.txt"
+
+#Const C_UpdateTokenDialogOk "OK_Button"
+#Const C_UpdateTokenDialogSkip "Skip_Button"
+
+/*********************************************
+  TYPES
+ *********************************************/
+
+#Struct Private_K_UpdatePlayerBody {
+    Text login;
+    Text name;
+    Text zone_path;
+}
+
+#Struct Private_K_GetTokenBody {
+    Text login;
+    Text state;
+    Text redirect_uri;
+}
+
+#Struct Private_K_GetTokenResponse {
+    Text token;
+}
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+//////////////// Token update procedure
+
+declare Integer G_TokenUpdateReqDialogId;
+declare Ident G_TokenUpdateReq;
+declare Boolean G_PendingTokenUpdateReq;
+declare Boolean G_TokenUpdateReqFinished;
+declare Boolean G_TokenUpdateReqOk;
+
+declare Boolean G_InitUpdateToken;
+declare Boolean G_TokenUpdateDialogOver;
+declare Boolean G_TokenUpdateDialogOk;
+declare Integer G_TokenUpdateDialogId;
+
+//////////////// Player update procedure
+
+declare Ident G_PlayerUpdateReq;
+declare Boolean G_PendingPlayerUpdateReq;
+
+//////////////// Online test
+
+declare Boolean G_OnlineTestSkipped;
+declare Boolean G_OnlineTestResult;
+declare Boolean G_PendingOnlineTest;
+declare Ident G_OnlineTestReq;
+
+//////////////// Welcome dialog
+
+declare Boolean G_InitWelcomeDialog;
+declare Boolean G_WelcomeDialogOver;
+declare Integer G_WelcomeDialogId;
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+/*********************************************
+  PRIVATE
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+/**
+ * Initializes the test to check if the player has access to online network.
+ *
+ * If the result is OK, then we can proceed with some requests to update the player info
+ * in the API and its token if needed.
+ *
+ * @return True if the online test is OK, False if it hasn't started yet
+ */
+Boolean Private_InitOnlineTest() {
+    G_OnlineTestSkipped = False;
+    G_PendingOnlineTest = False;
+    G_OnlineTestResult = False;
+    G_OnlineTestReq = NullId;
+
+	if (TL::Split("|", LocalUser.ZonePath).count > 0) {
+        G_OnlineTestSkipped = True;
+		return True;
+    }
+
+    G_PendingOnlineTest = True;
+    declare CHttpRequest Req = Http.CreateGet("http://clients3.google.com/generate_204", False);
+    G_OnlineTestReq = Req.Id;
+
+    return False;
+}
+
+/**
+ * Updates the state of the online test.
+ *
+ * @return True if the test has finished, False otherwise.
+ */
+Boolean Private_LoopOnlineTest() {
+    if (!G_PendingOnlineTest) {
+        if (G_OnlineTestSkipped) {
+            G_OnlineTestSkipped = False;
+            G_OnlineTestResult = True;
+            return True;
+        }
+        return False;
+    }
+
+    declare CHttpRequest Req = Http.Requests[G_OnlineTestReq];
+    if (!Req.IsCompleted) return False;
+
+    G_PendingOnlineTest = False;
+    G_OnlineTestResult = Req.StatusCode == 204 || Req.StatusCode == 200;
+
+    Http.Destroy(Req);
+
+    return True;
+}
+
+/**
+ * Returns the result of the online test.
+ *
+ * This function is callable only if `Private_LoopOnlineTest()` returned true.
+ *
+ * @return True if the online test is OK, False otherwise.
+ */
+Boolean Private_IsOnline() {
+    return G_OnlineTestResult;
+}
+
+/**
+ * Initializes the welcome dialog to the player.
+ */
+Void Private_InitWelcomeDialog() {
+    G_InitWelcomeDialog = True;
+    G_WelcomeDialogOver = False;
+    G_WelcomeDialogId = DialogsUI::NewDialog("Welcome to Obstacle!",
+        DialogsUI::K_Message {
+            Label = """Before we race on, let's take a quick pit stop: We're
+upgrading our system to include browser-based
+authentication via Maniaplanet services.
+
+This quick step ensures that only you can set
+records under your name.
+
+We appreciate your understanding and support.
+Let's race on!"""
+        }, [
+            DialogsUI::K_Button {
+                ControlId = "OK_Button",
+                Label = "Gear Up!",
+                Default = True
+            }
+        ]
+    );
+}
+
+/**
+ * Updates the state of the welcome dialog.
+ *
+ * @return True if the dialog is over, False otherwise.
+ */
+Boolean Private_LoopWelcomeDialog() {
+    if (!G_InitWelcomeDialog || G_WelcomeDialogOver) return False;
+    declare Dialogs::K_Result DialogState = DialogsUI::Prompt(G_WelcomeDialogId, True);
+    G_WelcomeDialogOver = DialogState.Over && DialogState.Success;
+    if (G_WelcomeDialogOver) {
+        DialogsUI::CloseDialog(G_WelcomeDialogId);
+        return True;
+    }
+    return False;
+}
+
+/**
+ * Initializes the update token procedure.
+ */
+Void Private_InitUpdateToken() {
+    G_InitUpdateToken = True;
+    G_TokenUpdateDialogOver = False;
+    G_TokenUpdateDialogId = DialogsUI::NewDialog(
+        "Authentication",
+        DialogsUI::K_Message {
+            Label = """We are about to refresh your personal tokens.
+
+This procedure will open your browser to the
+ManiaPlanet's login page. You will only have to
+authenticate with the same account as the
+one you use in game."""
+        }, [
+            DialogsUI::K_Button {
+                ControlId = C_UpdateTokenDialogOk,
+                Label = "OK",
+                Default = True
+            },
+            DialogsUI::K_Button {
+                ControlId = C_UpdateTokenDialogSkip,
+                Label = "Skip",
+                Default = False
+            }
+        ]
+    );
+}
+
+/**
+ * Updates the state of the authentication dialog.
+ *
+ * @return True if the dialog is over, False otherwise.
+ */
+Boolean Private_LoopUpdateTokenDialog() {
+    if (!G_InitUpdateToken || G_TokenUpdateDialogOver) return False;
+    declare Dialogs::K_Result DialogState = DialogsUI::Prompt(G_TokenUpdateDialogId);
+    G_TokenUpdateDialogOver = DialogState.Over;
+    G_TokenUpdateDialogOk = DialogState.Success && DialogState.CustomData.exists(C_UpdateTokenDialogOk);
+    if (G_TokenUpdateDialogOver) {
+        DialogsUI::CloseDialog(G_TokenUpdateDialogId);
+        return True;
+    }
+    return False;
+}
+
+/**
+ * Returns the result of the authentication dialog.
+ *
+ * @return True if the user clicked "OK", False otherwise.
+ */
+Boolean Private_UpdateTokenDialogIsOk() {
+    return G_TokenUpdateDialogOk;
+}
+
+/**
+ * Initializes the token update procedure.
+ *
+ * This includes the dialog and the token update HTTP request.
+ */
+Void Private_InitUpdateTokenReq() {
+    G_TokenUpdateReqFinished = False;
+    G_TokenUpdateReqOk = False;
+
+    declare Text Login = LocalUser.Login;
+    declare Text State = Login ^ Now;
+    declare Private_K_GetTokenBody Body = Private_K_GetTokenBody {
+        login = Login,
+        state = State,
+        redirect_uri = Constants::C_MP_Redirect
+    };
+
+    declare CHttpRequest Req = Http.CreatePost(
+        Constants::C_HostUrl ^ "player/get_token",
+        Body.tojson(),
+        "Content-Type: application/json\nAccept: application/json"
+    );
+
+    G_TokenUpdateReq = Req.Id;
+
+    declare Text Link = Constants::C_MP_Link
+        ^ "client_id=" ^ Constants::C_MP_App_Id
+        ^ "&redirect_uri=" ^ Constants::C_MP_Redirect
+        ^ "&state=" ^ State
+        ^ "&scope=basic";
+
+    OpenLink(Link, CManiaApp::ELinkType::ExternalBrowser);
+
+    G_PendingTokenUpdateReq = True;
+    G_TokenUpdateReqDialogId = DialogsUI::NewDialog(
+        "Authentication procedure",
+        DialogsUI::K_Message {
+            Label = """Please follow the instructions in your browser,
+or scan the QR code bellow:"""
+        },
+        []
+    );
+    DialogsUI::Add(
+        DialogsUI::K_Image {
+            URL = "http://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" ^ TL::URLEncode(Link) ^ "&.png",
+            PlaceHolder = "(Click to load...)",
+            Width = 50,
+            Height = 50
+        },
+        G_TokenUpdateReqDialogId
+    );
+}
+
+/**
+ * Updates the state of the token update procedure.
+ *
+ * @return True if the procedure is over, False otherwise.
+ */
+Boolean Private_LoopUpdateTokenReq() {
+    if (!G_PendingTokenUpdateReq) return False;
+
+    DialogsUI::Prompt(G_TokenUpdateReqDialogId, True);
+
+    declare CHttpRequest Req = Http.Requests[G_TokenUpdateReq];
+    if (!Req.IsCompleted) return False;
+
+    // At this point, the procedure is over
+
+    G_PendingTokenUpdateReq = False;
+    G_TokenUpdateReqFinished = True;
+
+    DialogsUI::CloseDialog(G_TokenUpdateReqDialogId);
+
+    if (Req.StatusCode == 200) {
+        G_TokenUpdateReqOk = True;
+        declare Private_K_GetTokenResponse Res;
+        Res.fromjson(Req.Result);
+        AuthUtils::SetUserToken(Res.token, LocalUser);
+    } else {
+        G_TokenUpdateReqOk = False;
+    }
+
+    Http.Destroy(Req);
+    return True;
+}
+
+/**
+ * Returns the result of the token update procedure.
+ *
+ * @return True if the token update was successful, False otherwise.
+ */
+Boolean Private_UpdateTokenReqIsOk() {
+    return G_TokenUpdateReqOk;
+}
+
+/**
+ * Updates the state of the update token procedure.
+ *
+ * @return True if the procedure is over, False otherwise.
+ */
+Boolean Private_LoopUpdateToken() {
+    if (Private_LoopUpdateTokenDialog() && Private_UpdateTokenDialogIsOk()) {
+        Private_InitUpdateTokenReq();
+    }
+
+    return Private_LoopUpdateTokenReq();
+}
+
+/**
+ * Returns the result of the token update procedure.
+ *
+ * @return True if the token update was successful, False otherwise.
+ */
+Boolean Private_UpdateTokenIsOk() {
+    return Private_UpdateTokenReqIsOk();
+}
+
+/**
+ * Initializes the player info update in the API.
+ *
+ * This needs to be called after the token update procedure.
+ *
+ * @param _Token the Obstacle token of the player.
+ */
+Void Private_InitPlayerUpdateReq(Text _Token) {
+    declare Private_K_UpdatePlayerBody Body = Private_K_UpdatePlayerBody {
+        login = LocalUser.Login,
+        name = LocalUser.Name,
+        zone_path = LocalUser.ZonePath
+    };
+
+    if (_Token == "") {
+        G_PendingPlayerUpdateReq = True;
+        Private_InitUpdateToken();
+        return;
+    }
+    
+    declare CHttpRequest Req = Http.CreatePost(
+        Constants::C_HostUrl ^ "player/update",
+        Body.tojson(),
+        """Content-Type: application/json
+Accept: application/json
+PlayerLogin: {{{LocalUser.Login}}}
+Authorization: {{{_Token}}}"""
+    );
+
+    G_PlayerUpdateReq = Req.Id;
+}
+
+/**
+ * Initializes the player info update in the API.
+ *
+ * This needs to be called after the token update procedure.
+ */
+Void Private_InitPlayerUpdateReq() {
+    Private_InitPlayerUpdateReq(AuthUtils::GetUserToken(LocalUser));
+}
+
+/**
+ * Updates the state of the player info update procedure.
+ */
+Void Private_LoopPlayerUpdateReq() {
+
+}
+
+Void Private_InitGreetPlayer() {
+    declare Text Token = AuthUtils::GetUserToken(LocalUser);
+
+    if (Token == "") {
+        Private_InitWelcomeDialog();
+    } else {
+        Private_InitPlayerUpdateReq(Token);
+    }
+}
+
+////////////////////
+//// Public
+////////////////////
+
+Void Load() {
+    G_PendingPlayerUpdateReq = False;
+    G_PlayerUpdateReq = NullId;
+
+    Private_InitOnlineTest();
+}
+
+Void Loop() {
+    // Checks if the online test is over and is OK
+    if (Private_LoopOnlineTest() && Private_IsOnline()) {
+        Private_InitGreetPlayer();
+    }
+
+    // Checks if the welcome dialog is over
+    if (Private_LoopWelcomeDialog()) {
+        Private_InitUpdateToken();
+    }
+
+    // If the token update is over and is OK
+    if (Private_LoopUpdateToken() && Private_UpdateTokenIsOk()) {
+        Private_InitPlayerUpdateReq();
+    }
+    
+    Private_LoopPlayerUpdateReq();
+}
