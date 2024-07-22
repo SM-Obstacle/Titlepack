@@ -8,8 +8,11 @@
 
 #Include "TextLib" as TL
 
-#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
+
+#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt" as DialogsUI
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt" as Dialogs
@@ -48,8 +51,14 @@
   GLOBALES
  *********************************************/
 
+//////////////// Ban dialog
+
+declare Boolean G_InitBanDialog;
+declare Integer G_BanDialogId;
+
 //////////////// Token update procedure
 
+declare Boolean G_InitUpdateTokenReq;
 declare Integer G_TokenUpdateReqDialogId;
 declare Ident G_TokenUpdateReq;
 declare Boolean G_PendingTokenUpdateReq;
@@ -63,7 +72,12 @@ declare Integer G_TokenUpdateDialogId;
 
 //////////////// Player update procedure
 
+declare Boolean G_InitPlayerUpdateReq;
 declare Ident G_PlayerUpdateReq;
+declare Boolean G_PlayerUpdateOk;
+declare Boolean G_PlayerUpdateFailed;
+declare Ban::K_OptBanishment G_PlayerUpdateOptBan;
+declare Boolean G_PlayerUpdateNeedsTokenUpdate;
 declare Boolean G_PendingPlayerUpdateReq;
 
 //////////////// Online test
@@ -259,6 +273,7 @@ Boolean Private_UpdateTokenDialogIsOk() {
  * This includes the dialog and the token update HTTP request.
  */
 Void Private_InitUpdateTokenReq() {
+    G_InitUpdateTokenReq = True;
     G_TokenUpdateReqFinished = False;
     G_TokenUpdateReqOk = False;
 
@@ -312,7 +327,7 @@ or scan the QR code bellow:"""
  * @return True if the procedure is over, False otherwise.
  */
 Boolean Private_LoopUpdateTokenReq() {
-    if (!G_PendingTokenUpdateReq) return False;
+    if (!G_InitUpdateTokenReq || !G_PendingTokenUpdateReq) return False;
 
     DialogsUI::Prompt(G_TokenUpdateReqDialogId, True);
 
@@ -373,22 +388,18 @@ Boolean Private_UpdateTokenIsOk() {
 /**
  * Initializes the player info update in the API.
  *
- * This needs to be called after the token update procedure.
- *
- * @param _Token the Obstacle token of the player.
+ * @param _Token the Obstacle token of the player. It must not be empty.
  */
 Void Private_InitPlayerUpdateReq(Text _Token) {
+    G_InitPlayerUpdateReq = True;
+    G_PlayerUpdateOk = False;
+    G_PendingPlayerUpdateReq = True;
+
     declare Private_K_UpdatePlayerBody Body = Private_K_UpdatePlayerBody {
         login = LocalUser.Login,
         name = LocalUser.Name,
         zone_path = LocalUser.ZonePath
     };
-
-    if (_Token == "") {
-        G_PendingPlayerUpdateReq = True;
-        Private_InitUpdateToken();
-        return;
-    }
     
     declare CHttpRequest Req = Http.CreatePost(
         Constants::C_HostUrl ^ "player/update",
@@ -413,9 +424,81 @@ Void Private_InitPlayerUpdateReq() {
 
 /**
  * Updates the state of the player info update procedure.
+ *
+ * @return True if the player update procedure has finished, False otherwise.
  */
-Void Private_LoopPlayerUpdateReq() {
+Boolean Private_LoopPlayerUpdateReq() {
+    if (!G_InitPlayerUpdateReq || !G_PendingPlayerUpdateReq) return False;
 
+    declare CHttpRequest Req = Http.Requests[G_PlayerUpdateReq];
+    if (!Req.IsCompleted) return False;
+
+    G_PendingPlayerUpdateReq = False;
+
+    switch (Req.StatusCode) {
+        case ErrMgr::C_HttpErr_Unauthorized: {
+            G_PlayerUpdateNeedsTokenUpdate = True;
+        }
+        case 200: {
+            G_PlayerUpdateNeedsTokenUpdate = False;
+            G_PlayerUpdateOk = True;
+        }
+        default: {
+            G_PlayerUpdateFailed = True;
+            G_PlayerUpdateOptBan = ErrMgr::Handle(Req.StatusCode, Req.Result).Ban;
+            G_PlayerUpdateNeedsTokenUpdate = False;
+        }
+    }
+
+    Http.Destroy(Req);
+
+    return True;
+}
+
+Boolean Private_PlayerUpdateReqNeedsTokenUpdate() {
+    return G_PlayerUpdateNeedsTokenUpdate;
+}
+
+Boolean Private_PlayerUpdateReqFailed() {
+    return G_PlayerUpdateFailed;
+}
+
+Ban::K_OptBanishment Private_PlayerUpdateReqGetOptBan() {
+    return G_PlayerUpdateOptBan;
+}
+
+Void Private_InitBanDialog() {
+    G_InitBanDialog = True;
+    G_BanDialogId = DialogsUI::NewDialog(
+        "Account banned",
+        DialogsUI::K_Message {
+            Label = """We're sorry, but it appears that your account
+has been banned from Obstacle.
+
+This may be due to violation of our community
+standards, like cheating or offensive behavior.
+
+If you believe this is a mistake or if you'd like
+to appeal the decision, please contact our
+support team on Discord."""
+        },
+        [
+            DialogsUI::K_Button {
+                ControlId = "OK",
+                Label = "Understood",
+                Default = True
+            }
+        ]
+    );
+}
+
+Void Private_LoopBanDialog() {
+    if (!G_InitBanDialog) return;
+
+    declare Dialogs::K_Result DialogState = DialogsUI::Prompt(G_BanDialogId, True);
+    if (DialogState.Over) {
+        Menu_Quit();
+    }
 }
 
 Void Private_InitGreetPlayer() {
@@ -428,14 +511,19 @@ Void Private_InitGreetPlayer() {
     }
 }
 
+Boolean Private_AuthFailed() {
+    return G_TokenUpdateReqFinished && !G_TokenUpdateReqOk;
+}
+
 ////////////////////
 //// Public
 ////////////////////
 
-Void Load() {
-    G_PendingPlayerUpdateReq = False;
-    G_PlayerUpdateReq = NullId;
+Boolean AuthSuccess() {
+    return G_PlayerUpdateOk || G_TokenUpdateReqFinished && G_TokenUpdateReqOk;
+}
 
+Void Load() {
     Private_InitOnlineTest();
 }
 
@@ -454,6 +542,14 @@ Void Loop() {
     if (Private_LoopUpdateToken() && Private_UpdateTokenIsOk()) {
         Private_InitPlayerUpdateReq();
     }
-    
-    Private_LoopPlayerUpdateReq();
+
+    if (Private_LoopPlayerUpdateReq()) {
+        if (Private_PlayerUpdateReqNeedsTokenUpdate() && !Private_AuthFailed()) {
+            Private_InitUpdateToken();
+        } else if (Private_PlayerUpdateReqGetOptBan().IsPresent) {
+            Private_InitBanDialog();
+        }
+    }
+
+    Private_LoopBanDialog();
 }
