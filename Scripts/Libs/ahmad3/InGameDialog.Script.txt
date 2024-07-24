@@ -1,0 +1,439 @@
+/************************************************
+ *   Obstacle Library                            *
+ *   Author:     ahmad3                          *
+ *                                               *
+ *   Utility functions used to show and hide     *
+ *   dialogs in a CMlScriptIngame context.       *
+ ************************************************/
+
+#Include "TextLib" as TL
+
+#Include "Libs/miltant/Nadeo_Fork/Layers2.Script.txt" as Layers
+#Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-23"
+#Const ScriptName "InGameDialog.Script.txt"
+
+///////////////// Custom events
+
+/**
+ * Triggered by an external manialink page to create a new dialog and put it
+ * in the pending dialogs of the player.
+ * 
+ * Data:
+ * 1. the ID of the page of the external manialink
+ * 2. an instance of K_Dialog (<mod_name>_K_Dialog in the ML) in JSON.
+ */
+#Const C_Ev_NewDialog "dialog:new"
+
+/**
+ * Triggered by an external manialink page to close an opened dialog.
+ * If the dialog is already closed, it is noop.
+ *
+ * Data:
+ * 1. The dialog ID (Integer).
+ */
+#Const C_Ev_CloseDialog "dialog:close"
+
+/**
+ * Triggered by the dialog manialink page when a button was clicked.
+ *
+ * Data:
+ * 1. The clicked button ID.
+ * 2. The data-success attribute value. This should be "True" or "False".
+ */
+#Const C_Ev_ButtonClicked "dialog:button:clicked"
+
+/**
+ * Triggered by the dialog manialink page when the script ends.
+ * It allows the mode to safely detach the dialog layer of the player without keeping
+ * the `CUIConfig::EUISequence::UIInteraction` sequence, which could block them.
+ *
+ * Data: nothing
+ */
+#Const C_Ev_DialogScriptFinish "dialog:scriptended"
+
+/*********************************************
+  TYPES
+ *********************************************/
+
+#Struct K_Button {
+    Text MlId;
+    Text Label;
+    Boolean Success;
+}
+
+#Struct K_Dialog {
+    Text Title;
+    Text Msg;
+    Boolean AllowClose;
+    K_Button[] Buttons;
+}
+
+#Struct K_DialogPromptResult {
+    Boolean Over;
+    Boolean Success;
+    Text[] MlId;
+}
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+/**
+ * Associates each player UI config ID to the last dialog ID.
+ */
+declare Integer[Ident] G_LastDialogIds;
+
+/**
+ * Associates each player UI config ID to an array associating dialog IDs to their content.
+ */
+declare K_Dialog[Integer][Ident] G_PendingDialogs;
+
+/**
+ * Associates each player UI config ID to the ID of the shown dialog.
+ */
+declare Integer[Ident] G_ShownDialogIds;
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Text Private_ML_K_Dialog(Text _ModName) {
+    return """//!
+#Struct {{{_ModName}}}_K_Button {
+    Text MlId;
+    Text Label;
+    Boolean Success;
+}
+
+#Struct {{{_ModName}}}_K_Dialog {
+    Text Title;
+    Text Msg;
+    Boolean AllowClose;
+    {{{_ModName}}}_K_Button[] Buttons;
+}
+
+#Struct {{{_ModName}}}_K_DialogPromptResult {
+    Boolean Over;
+    Boolean Success;
+    Text[] MlId;
+}
+    """;
+}
+
+Text Private_GetButtons(K_Button[] _Buttons) {
+    declare Text MlText;
+
+    foreach (Idx => Button in _Buttons) {
+        declare Text ButtonBg = "file://Media/Images/Obstacle/Dialogs/BDefault21.png";
+        if (Button.Success) {
+            ButtonBg = "file://Media/Images/Obstacle/Dialogs/BActive21.png";
+        }
+
+        MlText ^= """
+<frame id="{{{Button.MlId}}}" data-success="{{{Button.Success}}}" pos="{{{-Idx*17.5 + 40}}} 0">
+    <label
+        id="Label_Button" text="{{{Button.Label}}}" pos="0 1"
+        size="15 6" valign="bottom" halign="center"
+        textfont="regular" textsize="2.1" textcolor="fff"
+    />
+    <quad
+        pos="0 3" id="Quad_Button" scriptevents="1"
+        valign="center" halign="center" size="15 6"
+        image="{{{ButtonBg}}}"
+    />
+</frame>
+        """;
+    }
+
+    return MlText;
+}
+
+Text Private_GetLayer(Integer _DialogId, K_Dialog _Dialog) {
+    CustomUI::Add("Frame_ObsDialog", <0., 0.>, <100., 75.>, "center", "center", False, False, False);
+
+    return """
+<manialink version="3" name="Obstacle:InGameDialog">
+    <frame id="Frame_Modal" z-index="99999" class="LibCustomUI_Module">
+        <frame z-index="1000" pos="0 0">
+            <quad
+                z-index="-1" size="100 75" style="Bgs1"
+                substyle="BgButtonOff" halign="center" valign="center"
+            />
+
+            <label
+                id="Label_ModalTitle" text="{{{_Dialog.Title}}}"
+                pos="0 35" size="40 5" style="TextTitle3"
+                textsize="4" halign="center" textfont="OswaldMono"
+                maxline="1" valign="top" textemboss="1"
+            />
+
+            <frame pos="-48 25">
+                <label
+                    id="Label_ModalMsg" size="96 4" text="{{{_Dialog.Msg}}}"
+                    halign="left" valign="center" textsize="1.4"
+                />
+            </frame>
+
+            <frame id="Frame_ModalButtons" pos="0 -35">
+                {{{Private_GetButtons(_Dialog.Buttons)}}}
+            </frame>
+        </frame>
+    </frame>
+    <script><![CDATA[
+
+main() {
+    wait(Page != Null);
+    {{{CustomUI::InjectMLInit()}}}
+
+    declare netread Boolean Net_InGameDialog_ActiveDialog for UI = True;
+
+    ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+
+    while (Net_InGameDialog_ActiveDialog) {
+        yield;
+
+        // Force the UIInteraction sequence if another manialink page removed it
+        if (ClientUI.UISequence != CUIConfig::EUISequence::UIInteraction) {
+            ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+        }
+
+        foreach (Event in PendingEvents) {
+            switch (Event.Type) {
+                case CMlScriptEvent::Type::MouseClick: {
+                    if (Event.ControlId == "Quad_Button") {
+                        declare CMlQuad QuadButton <=> (Event.Control as CMlQuad);
+                        declare CMlFrame Button <=> QuadButton.Parent;
+                        SendCustomEvent(
+                            {{{dump(C_Ev_ButtonClicked)}}},
+                            ["{{{_DialogId}}}", Button.ControlId, Button.DataAttributeGet("success")]
+                        );
+                    }
+                }
+                case CMlScriptEvent::Type::MouseOver: {
+                    if (Event.ControlId == "Quad_Button") {
+                        Event.Control.Size *= 1.1;
+                    }
+                }
+                case CMlScriptEvent::Type::MouseOut: {
+                    if (Event.ControlId == "Quad_Button") {
+                        Event.Control.Size *= 0.90;
+                    }
+                }
+            }
+        }
+
+        {{{CustomUI::InjectMLLoop()}}}
+    }
+
+    ClientUI.UISequence = CUIConfig::EUISequence::None;
+    SendCustomEvent({{{dump(C_Ev_DialogScriptFinish)}}}, []);
+}
+
+    ]]></script>
+</manialink>
+    """;
+}
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Initializes the library.
+ */
+Void Init() {
+    G_PendingDialogs = [];
+    G_LastDialogIds = [];
+    G_ShownDialogIds = [];
+    foreach (Idx => UI in UIManager.UI) {
+        if (Idx == 0) continue;
+        declare netwrite Integer[Text] Net_Dlg_LastDialogIds for UI = [];
+        Net_Dlg_LastDialogIds = [];
+        declare netwrite Boolean Net_InGameDialog_ActiveDialog for UI = False;
+        Net_InGameDialog_ActiveDialog = False;
+        declare netwrite Text[Integer] Net_Dlg_PromptDialogResults for UI = [];
+        Net_Dlg_PromptDialogResults = [];
+        declare netwrite Integer[Integer] Net_Dlg_PromptDialogUpdates for UI = [];
+        Net_Dlg_PromptDialogUpdates = [];
+    }
+    Layers::Detach("InGameDialog");
+}
+
+/**
+ * Updates the state of the library by handling the provided custom UI event.
+ *
+ * @param _Event The event.
+ */
+Void HandleCustomEvent(CUIConfigEvent _Event) {
+    assert(_Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent);
+    switch (_Event.CustomEventType) {
+        ////////////
+        //// New dialog request
+        ////////////
+        case C_Ev_NewDialog: {
+            // Set the dialog to active if not already done.
+            declare netwrite Boolean Net_InGameDialog_ActiveDialog for _Event.UI = False;
+            Net_InGameDialog_ActiveDialog = True;
+
+            // Get the data from the custom event.
+            declare Text PageId = _Event.CustomEventData[0];
+            declare K_Dialog Dialog;
+            Dialog.fromjson(_Event.CustomEventData[1]);
+
+            // Push to the pending dialogs of the client.
+            if (!G_PendingDialogs.existskey(_Event.UI.Id)) {
+                G_PendingDialogs[_Event.UI.Id] = [];
+                G_LastDialogIds[_Event.UI.Id] = 0;
+            }
+            G_LastDialogIds[_Event.UI.Id] += 1;
+            declare Integer DialogId = G_LastDialogIds[_Event.UI.Id];
+            G_PendingDialogs[_Event.UI.Id][DialogId] = Dialog;
+
+            // Return the dialog ID to the requesting manialink page.
+            declare netwrite Integer[Text] Net_Dlg_LastDialogIds for _Event.UI = [];
+            Net_Dlg_LastDialogIds[PageId] = DialogId;
+
+            if (!G_ShownDialogIds.existskey(_Event.UI.Id)) {
+                Layers::Create("InGameDialog", Private_GetLayer(DialogId, Dialog));
+                declare CSmPlayer Player <=> GetPlayer(_Event.UI);
+                Layers::Attach("InGameDialog", Player);
+                G_ShownDialogIds[_Event.UI.Id] = DialogId;
+            }
+        }
+
+        ////////////
+        //// Close dialog request
+        ////////////
+        case C_Ev_CloseDialog: {
+            declare Integer DialogId = TL::ToInteger(_Event.CustomEventData[0]);
+
+            // Skip if the id of the current shown dialog of the client doesn't match.
+            if (!G_ShownDialogIds.existskey(_Event.UI.Id)
+                || G_ShownDialogIds[_Event.UI.Id] != DialogId)
+            {
+                return;
+            }
+
+            G_PendingDialogs[_Event.UI.Id].removekey(DialogId);
+
+            if (G_LastDialogIds[_Event.UI.Id] == DialogId) {
+                // This was the last dialog to show to the client,
+                // so we remove everything related to it.
+
+                G_LastDialogIds.removekey(_Event.UI.Id);
+                G_PendingDialogs.removekey(_Event.UI.Id);
+                G_ShownDialogIds.removekey(_Event.UI.Id);
+
+                // This will make the dialog script to terminate.
+                declare netwrite Boolean Net_InGameDialog_ActiveDialog for _Event.UI = True;
+                Net_InGameDialog_ActiveDialog = False;
+            } else {
+                // There are other pending dialogs for the client.
+
+                declare Integer NextDialogId = DialogId + 1;
+                G_ShownDialogIds[_Event.UI.Id] = NextDialogId;
+                declare K_Dialog NextDialog = G_PendingDialogs[_Event.UI.Id][NextDialogId];
+                Layers::Create("InGameDialog", Private_GetLayer(NextDialogId, NextDialog));
+                declare CSmPlayer Player <=> GetPlayer(_Event.UI);
+                Layers::Attach("InGameDialog", Player);
+            }
+        }
+
+        ////////////
+        //// Button clicked in a dialog
+        ////////////
+        case C_Ev_ButtonClicked: {
+            declare Integer DialogId = TL::ToInteger(_Event.CustomEventData[0]);
+            declare Text ButtonId = _Event.CustomEventData[1];
+            declare Boolean Success = False;
+            if (_Event.CustomEventData[2] == "True") {
+                Success = True;
+            }
+
+            declare netwrite Text[Integer] Net_Dlg_PromptDialogResults
+                for _Event.UI = [];
+            declare netwrite Integer[Integer] Net_Dlg_PromptDialogUpdates
+                for _Event.UI = [];
+
+            declare K_DialogPromptResult Res = K_DialogPromptResult {
+                Over = True,
+                Success = Success,
+                MlId = [ButtonId]
+            };
+            Net_Dlg_PromptDialogResults[DialogId] = Res.tojson();
+            Net_Dlg_PromptDialogUpdates[DialogId] = Now;
+        }
+
+        ////////////
+        //// A dialog has finished
+        ////////////
+        case C_Ev_DialogScriptFinish: {
+            declare CSmPlayer Player <=> GetPlayer(_Event.UI);
+            Layers::Detach("InGameDialog", Player);
+        }
+    }
+}
+
+Text ML_Preproc(Text _ModName) {
+    return """//!
+{{{Private_ML_K_Dialog(_ModName)}}}
+    """;
+}
+
+Text ML_Content(Text _ModName, Text _MlPage, Text _TL) {
+    return """//!
+declare Integer {{{_ModName}}}_G_LastDialogId;
+declare Integer[Integer] {{{_ModName}}}_G_PromptDialogUpdates;
+
+Void {{{_ModName}}}_CloseDialog(Integer _DialogId) {
+    SendCustomEvent({{{dump(C_Ev_CloseDialog)}}}, [_DialogId ^ ""]);
+}
+
+{{{_ModName}}}_K_DialogPromptResult {{{_ModName}}}_PromptDialog(Integer _DialogId) {
+    // Default prompt result
+    declare {{{_ModName}}}_K_DialogPromptResult Res = {{{_ModName}}}_K_DialogPromptResult {
+        Over = False,
+        Success = False,
+        MlId = []
+    };
+
+    // Check for an update for the `_DialogId` dialog
+    declare netread Integer[Integer] Net_Dlg_PromptDialogUpdates for UI = [];
+    if (!Net_Dlg_PromptDialogUpdates.existskey(_DialogId)
+        || {{{_ModName}}}_G_PromptDialogUpdates.existskey(_DialogId)
+            && {{{_ModName}}}_G_PromptDialogUpdates[_DialogId] == Net_Dlg_PromptDialogUpdates[_DialogId])
+    {
+        return Res;
+    }
+
+    declare netread Text[Integer] Net_Dlg_PromptDialogResults for UI = [];
+    if (!Net_Dlg_PromptDialogResults.existskey(_DialogId)) return Res;
+
+    // Fill the result with the updated prompt result
+    Res.fromjson(Net_Dlg_PromptDialogResults[_DialogId]);
+
+    {{{_ModName}}}_G_PromptDialogUpdates[_DialogId] = Net_Dlg_PromptDialogUpdates[_DialogId];
+    return Res;
+}
+
+Integer {{{_ModName}}}_NewDialog({{{_ModName}}}_K_Dialog _Dialog) {
+    SendCustomEvent({{{dump(C_Ev_NewDialog)}}}, ["{{{_MlPage}}}", _Dialog.tojson()]);
+
+    declare netread Integer[Text] Net_Dlg_LastDialogIds for UI = [];
+    wait(Net_Dlg_LastDialogIds.existskey("{{{_MlPage}}}")
+        && Net_Dlg_LastDialogIds["{{{_MlPage}}}"] != {{{_ModName}}}_G_LastDialogId);
+    {{{_ModName}}}_G_LastDialogId = Net_Dlg_LastDialogIds["{{{_MlPage}}}"];
+    return {{{_ModName}}}_G_LastDialogId;
+}
+    """;
+}

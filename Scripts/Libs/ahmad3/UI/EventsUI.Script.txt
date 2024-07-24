@@ -135,6 +135,7 @@ Void Init() {
 }
 
 Void HandleCustomEvent(CUIConfigEvent _Event) {
+    assert(_Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent);
     switch (_Event.CustomEventType) {
         case C_CE_SelectEvent: {
             declare Text EventHandle = _Event.CustomEventData[0];

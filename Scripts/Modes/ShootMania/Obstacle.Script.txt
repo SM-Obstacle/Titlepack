@@ -39,6 +39,9 @@
 #Include "Libs/ahmad3/UI/EventsUI.Script.txt" as EventsUI
 //#Include "Libs/miltant/KeysSettings.Script.txt" as KeysSettings
 
+#Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialog
+#Include "Libs/ahmad3/UI/TestDialog.Script.txt" as TestDialog
+
 #Include "Libs/smokegun/Items.Script.txt" as Items
 #Include "Libs/smokegun/ObstacleRecords.Script.txt" as API
 #Include "Libs/smokegun/Weapons.Script.txt" as Weapons
@@ -230,6 +233,7 @@ Obstacle::LoadActions();
 
 ***Match_InitMap***
 ***
+Dialog::Init();
 ObsEvents::Init();
 
 // This needs to be called before PrepareMap to have the right settings
@@ -442,6 +446,7 @@ foreach (Event in UIManager.PendingEvents) {
             }
             default: {
                 EventsUI::HandleCustomEvent(Event);
+                Dialog::HandleCustomEvent(Event);
             }
         }
     }
@@ -824,6 +829,7 @@ Void CreateUI() {
     Layers::Create("EventsUI", EventsUI::GetLayer());
     //Layers::Create("KeysSettings", KeysSettings::GetLayer());
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
+    Layers::Create("TestDialog", TestDialog::GetLayer());
 
     --- Campaign_CreateUI ---
 
@@ -854,6 +860,7 @@ Void CreateUI() {
     Layers::Attach("Items");
     Layers::Attach("Markers");
     Layers::Attach("SpecKeys");
+    Layers::Attach("TestDialog");
     
     Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(G_IsCampaign));
     Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));
@@ -892,6 +899,7 @@ Void DestroyUI(Boolean _Hard) {
     Layers::Detach("SpecList");
     Layers::Detach("NextMapVote");
     Layers::Detach("RespawnBehavior");
+    Layers::Detach("TestDialog");
     Layers::Detach("SpecKeys");
     Layers::Detach("SurvivalRanking");
 

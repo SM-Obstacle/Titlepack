@@ -12,6 +12,8 @@
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
+#Include "Libs/ahmad3/InGameDialog.Script.txt" as InGameDialog
+
 #Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
 
 /*********************************************
@@ -217,12 +219,14 @@ Text GetLayer() {
 {{{Ban::ML_Preproc("BanMgr")}}}
 {{{ErrMgr::ML_Preproc("ErrMgr", "BanMgr")}}}
 {{{RunFlags::ML_Preproc()}}}
+{{{InGameDialog::ML_Preproc("Dlg")}}}
 
 {{{Ban::ML_Content("BanMgr")}}}
 {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 {{{RunFlags::ML_FlagSum()}}}
 {{{Utils::ML_FindCharIndex("Utils_", "TL")}}}
 {{{AuthUtils::ML_Content("AuthUtils")}}}
+{{{InGameDialog::ML_Content("Dlg", "MlAuth", "TL")}}}
 
 declare Boolean G_Errored;
 

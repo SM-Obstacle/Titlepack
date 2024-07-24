@@ -297,14 +297,18 @@
 	 
 	 while (True) {
 		 yield;
-		 
+
 		 if (!PageIsVisible || InputPlayer == Null) continue;
 		 
 		 // Show/hide edit UI
 		 foreach (Event in PendingEvents) {
 			 if (Event.Type == CMlEvent::Type::KeyPress && Event.KeyName == "{{{G_Key}}}") {
 				 Frame_Global.Visible = !Frame_Global.Visible;
-				 if (Frame_Global.Visible && ClientUI.UISequence == CUIConfig::EUISequence::Playing ||ClientUI.UISequence == CUIConfig::EUISequence::None) {
+				 if (Frame_Global.Visible && ClientUI.UISequence == CUIConfig::EUISequence::Playing
+					|| ClientUI.UISequence == CUIConfig::EUISequence::None
+					|| ClientUI.UISequence == CUIConfig::EUISequence::UIInteraction
+						&& !LibCustomUI_IsVisible)
+				 {
 					 LibCustomUI_IsVisible = True;
 					 ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
 				 } else {
@@ -315,6 +319,11 @@
 		 }
 		 
 		 if (!LibCustomUI_IsVisible) continue;
+
+		 // Force the UIInteraction sequence if another manialink page removed it
+		 if (ClientUI.UISequence != CUIConfig::EUISequence::UIInteraction) {
+			ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+		 }
 		 
 		 foreach (Event in PendingEvents) {
 			 if (Event.Type == CMlEvent::Type::MouseClick) {

@@ -1,0 +1,134 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   ahmad3
+ ***********************************************/
+
+#Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialog
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-23"
+#Const ScriptName "TestDialog.Script.txt"
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Public
+////////////////////
+
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:TestDialog">
+    <script><![CDATA[
+#Include "TextLib" as TL
+
+{{{Dialog::ML_Preproc("Dlg")}}}
+
+{{{Dialog::ML_Content("Dlg", "TestDialog", "TL")}}}
+
+declare Boolean G_InitFirstDialog;
+declare Boolean G_FirstDialogOver;
+declare Integer G_FirstDialogId;
+
+declare Boolean G_InitSecondDialog;
+declare Boolean G_SecondDialogOver;
+declare Integer G_SecondDialogId;
+
+Void InitFirstDialog() {
+    G_InitFirstDialog = True;
+    G_FirstDialogOver = False;
+    G_FirstDialogId = Dlg_NewDialog(Dlg_K_Dialog {
+        Title = "hello",
+        Msg = {{{dump(dump(dump("""blablalblalblalblalbalblalbla
+bonsoir à tousssssssssssssssssssssssssssssssssssseeeeeeeee
+aaaaaaaaaaaaaa
+oooooooooooooo
+iiiiiiiiiii
+uuuuuuuuuuuuuuuuu
+mdr
+oooooooooooooooooooooooooooooooooooooooooooooooooo
+iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+uuuuuuuuuuuuuuuuuuuuuuuu
+mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+""")))}}},
+        AllowClose = False,
+        Buttons = [
+            Dlg_K_Button {
+                MlId = "OK_Button",
+                Label = "OK",
+                Success = True
+            }
+        ]
+    });
+}
+
+Void InitSecondDialog() {
+    G_InitSecondDialog = True;
+    G_SecondDialogOver = False;
+    G_SecondDialogId = Dlg_NewDialog(Dlg_K_Dialog {
+        Title = "abcdefghijklmnopqrstuvwxyz",
+        Msg = {{{dump(dump(dump("""bonsoir.
+ça va ?""")))}}},
+        AllowClose = False,
+        Buttons = [
+            Dlg_K_Button {
+                MlId = "OK_Button",
+                Label = "OK",
+                Success = True
+            },
+            Dlg_K_Button {
+                MlId = "Skip_Button",
+                Label = "Skip",
+                Success = False
+            }
+        ]
+    });
+}
+
+Void LoopFirstDialog() {
+    if (!G_InitFirstDialog || G_FirstDialogOver) return;
+    declare Dlg_K_DialogPromptResult DialogState = Dlg_PromptDialog(G_FirstDialogId);
+
+    if (DialogState.Over) {
+        Dlg_CloseDialog(G_FirstDialogId);
+        G_FirstDialogOver = True;
+    }
+}
+
+Void LoopSecondDialog() {
+    if (!G_InitSecondDialog || G_SecondDialogOver) return;
+    declare Dlg_K_DialogPromptResult DialogState = Dlg_PromptDialog(G_SecondDialogId);
+
+    if (DialogState.Over) {
+        Dlg_CloseDialog(G_SecondDialogId);
+        G_SecondDialogOver = True;
+    }
+}
+
+main() {
+    wait(Page != Null);
+
+    InitFirstDialog();
+    InitSecondDialog();
+
+    while (True) {
+        yield;
+
+        LoopFirstDialog();
+        LoopSecondDialog();
+    }
+}
+    ]]></script>
+</manialink>
+""";
+}
