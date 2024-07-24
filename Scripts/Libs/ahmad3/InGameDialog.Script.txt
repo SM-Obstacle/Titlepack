@@ -226,7 +226,7 @@ main() {
                 }
                 case CMlScriptEvent::Type::MouseOut: {
                     if (Event.ControlId == "Quad_Button") {
-                        Event.Control.Size *= 0.90;
+                        Event.Control.Size *= (1/1.1);
                     }
                 }
             }
