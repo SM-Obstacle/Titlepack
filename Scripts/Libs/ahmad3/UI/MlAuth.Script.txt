@@ -39,6 +39,8 @@ Do not skip this step, or your run will be lost! Don't worry, it's fast!
 """
 
 #Const C_Security_OpenplanetDevMsg """It looks like you have Openplanet with developer mode enabled.
+    log("ok");
+
 This may offer you a number of features that could be contrary to fair play.
 It is why we do not authorize it in our mode.
 
@@ -93,16 +95,6 @@ Text GetLayer() {
 				size="15 6"
 				image="file://Media/Images/Obstacle/Dialogs/BDefault21.png"
 			/>
-		</frame>
-	</frame>
-</frame>
-<frame id="Frame_Security_OpenplanetDev" hidden="1">
-	<frame z-index="1000" pos="0 0">
-		<quad z-index="-1" size="100 75" style="Bgs1" substyle="BgButtonOff" halign="center" valign="center" />
-		<label pos="0 35" size="40 5" text="Warning" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
-
-		<frame pos="-48 14">
-			<label id="Security_Msg" size="96 4" halign="left" valign="center" textsize="1.4" text={{{dump(C_Security_OpenplanetDevMsg)}}} />
 		</frame>
 	</frame>
 </frame>
@@ -233,8 +225,6 @@ declare Boolean G_Errored;
 declare CMlFrame	G_AuthDialog;
 declare CMlQuad		G_AuthDialog_Submit;
 declare CMlLabel	G_AuthDialog_HeadMsg;
-
-declare CMlFrame	G_SecurityFrame;
 
 // Error frames
 declare CMlFrame	G_ErrDialog;
@@ -609,15 +599,13 @@ main() {
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
 
-	Private_UpdatePlayer();
-	TrySendStaggeredReqs();
-	InitPbCpsTimes();
-
 	G_AuthDialog <=> (Page.GetFirstChild("Frame_AuthDialog") as CMlFrame);
 	G_AuthDialog_Submit <=> (Page.GetFirstChild("Frame_AuthDialog_Button_OK") as CMlQuad);
 	G_AuthDialog_HeadMsg <=> (Page.GetFirstChild("AuthDialog_HeadMsg") as CMlLabel);
 
-	G_SecurityFrame <=> (Page.GetFirstChild("Frame_Security_OpenplanetDev") as CMlFrame);
+	Private_UpdatePlayer();
+	TrySendStaggeredReqs();
+	InitPbCpsTimes();
 
 	// Error frames
 	G_ErrDialog <=> (Page.GetFirstChild("Frame_ErrDialog") as CMlFrame);

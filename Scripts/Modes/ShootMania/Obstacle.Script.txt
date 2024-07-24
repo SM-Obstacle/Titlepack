@@ -41,7 +41,6 @@
 
 #Include "Libs/ahmad3/UI/AntiDevMode.Script.txt" as AntiDevMode
 #Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialog
-#Include "Libs/ahmad3/UI/TestDialog.Script.txt" as TestDialog
 
 #Include "Libs/smokegun/Items.Script.txt" as Items
 #Include "Libs/smokegun/ObstacleRecords.Script.txt" as API
@@ -448,6 +447,7 @@ foreach (Event in UIManager.PendingEvents) {
             default: {
                 EventsUI::HandleCustomEvent(Event);
                 Dialog::HandleCustomEvent(Event);
+                AntiDevMode::HandleCustomEvent(Event);
             }
         }
     }
@@ -830,7 +830,6 @@ Void CreateUI() {
     Layers::Create("EventsUI", EventsUI::GetLayer());
     //Layers::Create("KeysSettings", KeysSettings::GetLayer());
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
-    Layers::Create("TestDialog", TestDialog::GetLayer());
     Layers::Create("AntiDevMode", AntiDevMode::GetLayer());
 
     --- Campaign_CreateUI ---
@@ -862,7 +861,6 @@ Void CreateUI() {
     Layers::Attach("Items");
     Layers::Attach("Markers");
     Layers::Attach("SpecKeys");
-    Layers::Attach("TestDialog");
     Layers::Attach("AntiDevMode");
     
     Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(G_IsCampaign));
@@ -902,7 +900,6 @@ Void DestroyUI(Boolean _Hard) {
     Layers::Detach("SpecList");
     Layers::Detach("NextMapVote");
     Layers::Detach("RespawnBehavior");
-    Layers::Detach("TestDialog");
     Layers::Detach("SpecKeys");
     Layers::Detach("SurvivalRanking");
     Layers::Detach("AntiDevMode");

@@ -886,6 +886,8 @@ Void Private_HandleCheckpoint(CSmPlayer _Player, Ident _CheckpointId) {
  * Returns: True if the player captured a goal
  */
 Boolean HandleCapture(CSmPlayer _Player) {
+    if (Player::hasDevMode(_Player)) return False;
+
     declare HasCapturedGoal = False;
 
     declare Landmark <=> _Player.CapturedLandmark;
