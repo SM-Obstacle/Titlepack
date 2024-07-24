@@ -244,6 +244,85 @@ main() {
     """;
 }
 
+Void Private_AttachDialogFor(CUIConfig _UI, Integer _DialogId, K_Dialog _Dialog) {
+    Layers::Create("InGameDialog", Private_GetLayer(_DialogId, _Dialog));
+    declare CSmPlayer Player <=> GetPlayer(_UI);
+    Layers::Attach("InGameDialog", Player);
+    G_ShownDialogIds[_UI.Id] = _DialogId;
+}
+
+Void Private_HandleNewDialog(CUIConfig _UI, Text _PageId, K_Dialog _Dialog) {
+    // Set the dialog to active if not already done.
+    declare netwrite Boolean Net_InGameDialog_ActiveDialog for _UI = False;
+    Net_InGameDialog_ActiveDialog = True;
+
+    // Push to the pending dialogs of the client.
+    if (!G_PendingDialogs.existskey(_UI.Id)) {
+        G_PendingDialogs[_UI.Id] = [];
+        G_LastDialogIds[_UI.Id] = 0;
+    }
+    G_LastDialogIds[_UI.Id] += 1;
+    declare Integer DialogId = G_LastDialogIds[_UI.Id];
+    G_PendingDialogs[_UI.Id][DialogId] = _Dialog;
+
+    // Return the dialog ID to the requesting manialink page.
+    declare netwrite Integer[Text] Net_Dlg_LastDialogIds for _UI = [];
+    Net_Dlg_LastDialogIds[_PageId] = DialogId;
+
+    if (!G_ShownDialogIds.existskey(_UI.Id)) {
+        Private_AttachDialogFor(_UI, DialogId, _Dialog);
+    }
+}
+
+Void Private_HandleCloseDialog(CUIConfig _UI, Integer _DialogId) {
+    // Skip if the id of the current shown dialog of the client doesn't match.
+    if (!G_ShownDialogIds.existskey(_UI.Id)
+        || G_ShownDialogIds[_UI.Id] != _DialogId)
+    {
+        return;
+    }
+
+    G_PendingDialogs[_UI.Id].removekey(_DialogId);
+
+    if (G_LastDialogIds[_UI.Id] == _DialogId) {
+        // This was the last dialog to show to the client,
+        // so we remove everything related to it.
+
+        G_LastDialogIds.removekey(_UI.Id);
+        G_PendingDialogs.removekey(_UI.Id);
+        G_ShownDialogIds.removekey(_UI.Id);
+
+        // This will make the dialog script to terminate.
+        declare netwrite Boolean Net_InGameDialog_ActiveDialog for _UI = True;
+        Net_InGameDialog_ActiveDialog = False;
+    } else {
+        // There are other pending dialogs for the client.
+
+        declare Integer NextDialogId = _DialogId + 1;
+        G_ShownDialogIds[_UI.Id] = NextDialogId;
+        declare K_Dialog NextDialog = G_PendingDialogs[_UI.Id][NextDialogId];
+        
+        Private_AttachDialogFor(_UI, NextDialogId, NextDialog);
+    }
+}
+
+Void Private_HandleButtonClicked(
+    CUIConfig _UI, Integer _DialogId, Text _ButtonId, Boolean _Success
+) {
+    declare netwrite Text[Integer] Net_Dlg_PromptDialogResults
+        for _UI = [];
+    declare netwrite Integer[Integer] Net_Dlg_PromptDialogUpdates
+        for _UI = [];
+
+    declare K_DialogPromptResult Res = K_DialogPromptResult {
+        Over = True,
+        Success = _Success,
+        MlId = [_ButtonId]
+    };
+    Net_Dlg_PromptDialogResults[_DialogId] = Res.tojson();
+    Net_Dlg_PromptDialogUpdates[_DialogId] = Now;
+}
+
 ////////////////////
 //// Public
 ////////////////////
@@ -281,34 +360,10 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
         //// New dialog request
         ////////////
         case C_Ev_NewDialog: {
-            // Set the dialog to active if not already done.
-            declare netwrite Boolean Net_InGameDialog_ActiveDialog for _Event.UI = False;
-            Net_InGameDialog_ActiveDialog = True;
-
-            // Get the data from the custom event.
             declare Text PageId = _Event.CustomEventData[0];
             declare K_Dialog Dialog;
             Dialog.fromjson(_Event.CustomEventData[1]);
-
-            // Push to the pending dialogs of the client.
-            if (!G_PendingDialogs.existskey(_Event.UI.Id)) {
-                G_PendingDialogs[_Event.UI.Id] = [];
-                G_LastDialogIds[_Event.UI.Id] = 0;
-            }
-            G_LastDialogIds[_Event.UI.Id] += 1;
-            declare Integer DialogId = G_LastDialogIds[_Event.UI.Id];
-            G_PendingDialogs[_Event.UI.Id][DialogId] = Dialog;
-
-            // Return the dialog ID to the requesting manialink page.
-            declare netwrite Integer[Text] Net_Dlg_LastDialogIds for _Event.UI = [];
-            Net_Dlg_LastDialogIds[PageId] = DialogId;
-
-            if (!G_ShownDialogIds.existskey(_Event.UI.Id)) {
-                Layers::Create("InGameDialog", Private_GetLayer(DialogId, Dialog));
-                declare CSmPlayer Player <=> GetPlayer(_Event.UI);
-                Layers::Attach("InGameDialog", Player);
-                G_ShownDialogIds[_Event.UI.Id] = DialogId;
-            }
+            Private_HandleNewDialog(_Event.UI, PageId, Dialog);
         }
 
         ////////////
@@ -316,37 +371,7 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
         ////////////
         case C_Ev_CloseDialog: {
             declare Integer DialogId = TL::ToInteger(_Event.CustomEventData[0]);
-
-            // Skip if the id of the current shown dialog of the client doesn't match.
-            if (!G_ShownDialogIds.existskey(_Event.UI.Id)
-                || G_ShownDialogIds[_Event.UI.Id] != DialogId)
-            {
-                return;
-            }
-
-            G_PendingDialogs[_Event.UI.Id].removekey(DialogId);
-
-            if (G_LastDialogIds[_Event.UI.Id] == DialogId) {
-                // This was the last dialog to show to the client,
-                // so we remove everything related to it.
-
-                G_LastDialogIds.removekey(_Event.UI.Id);
-                G_PendingDialogs.removekey(_Event.UI.Id);
-                G_ShownDialogIds.removekey(_Event.UI.Id);
-
-                // This will make the dialog script to terminate.
-                declare netwrite Boolean Net_InGameDialog_ActiveDialog for _Event.UI = True;
-                Net_InGameDialog_ActiveDialog = False;
-            } else {
-                // There are other pending dialogs for the client.
-
-                declare Integer NextDialogId = DialogId + 1;
-                G_ShownDialogIds[_Event.UI.Id] = NextDialogId;
-                declare K_Dialog NextDialog = G_PendingDialogs[_Event.UI.Id][NextDialogId];
-                Layers::Create("InGameDialog", Private_GetLayer(NextDialogId, NextDialog));
-                declare CSmPlayer Player <=> GetPlayer(_Event.UI);
-                Layers::Attach("InGameDialog", Player);
-            }
+            Private_HandleCloseDialog(_Event.UI, DialogId);
         }
 
         ////////////
@@ -360,18 +385,7 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
                 Success = True;
             }
 
-            declare netwrite Text[Integer] Net_Dlg_PromptDialogResults
-                for _Event.UI = [];
-            declare netwrite Integer[Integer] Net_Dlg_PromptDialogUpdates
-                for _Event.UI = [];
-
-            declare K_DialogPromptResult Res = K_DialogPromptResult {
-                Over = True,
-                Success = Success,
-                MlId = [ButtonId]
-            };
-            Net_Dlg_PromptDialogResults[DialogId] = Res.tojson();
-            Net_Dlg_PromptDialogUpdates[DialogId] = Now;
+            Private_HandleButtonClicked(_Event.UI, DialogId, ButtonId, Success);
         }
 
         ////////////
