@@ -26,11 +26,9 @@ Text GetLayer() {
     return """
 <manialink version="3" name="Obstacle:TestDialog">
     <script><![CDATA[
-#Include "TextLib" as TL
-
 {{{Dialog::ML_Preproc("Dlg")}}}
 
-{{{Dialog::ML_Content("Dlg", "TestDialog", "TL")}}}
+{{{Dialog::ML_Content("Dlg", "TestDialog")}}}
 
 declare Boolean G_InitFirstDialog;
 declare Boolean G_FirstDialogOver;

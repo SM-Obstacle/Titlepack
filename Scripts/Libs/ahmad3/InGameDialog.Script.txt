@@ -390,7 +390,7 @@ Text ML_Preproc(Text _ModName) {
     """;
 }
 
-Text ML_Content(Text _ModName, Text _MlPage, Text _TL) {
+Text ML_Content(Text _ModName, Text _MlPage) {
     return """//!
 declare Integer {{{_ModName}}}_G_LastDialogId;
 declare Integer[Integer] {{{_ModName}}}_G_PromptDialogUpdates;

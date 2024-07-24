@@ -226,7 +226,7 @@ Text GetLayer() {
 {{{RunFlags::ML_FlagSum()}}}
 {{{Utils::ML_FindCharIndex("Utils_", "TL")}}}
 {{{AuthUtils::ML_Content("AuthUtils")}}}
-{{{InGameDialog::ML_Content("Dlg", "MlAuth", "TL")}}}
+{{{InGameDialog::ML_Content("Dlg", "MlAuth")}}}
 
 declare Boolean G_Errored;
 
