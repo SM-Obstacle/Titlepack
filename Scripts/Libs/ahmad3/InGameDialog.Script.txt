@@ -61,22 +61,63 @@
   TYPES
  *********************************************/
 
+/**
+ * Represents a submit button in a dialog.
+ */
 #Struct K_Button {
+    /**
+     * The associated control ID.
+     */
     Text MlId;
+    /**
+     * The label of the button.
+     */
     Text Label;
+    /**
+     * If the button triggers the "success" flag.
+     */
     Boolean Success;
 }
 
+/**
+ * Represents a dialog.
+ */
 #Struct K_Dialog {
+    /**
+     * The title of the dialog shown in the top.
+     */
     Text Title;
+    /**
+     * The message of the dialog.
+     */
     Text Msg;
+    /**
+     * Do we allow the close by clicking outside of the dialog?
+     */
     Boolean AllowClose;
+    /**
+     * The submit buttons of the dialog.
+     */
     K_Button[] Buttons;
 }
 
+/**
+ * Represents the result of a dialog prompt.
+ */
 #Struct K_DialogPromptResult {
+    /**
+     * Was a button submitted?
+     */
     Boolean Over;
+    /**
+     * Was the success flag triggered?
+     */
     Boolean Success;
+    /**
+     * The optional control ID that triggered this result.
+     *
+     * The array is either filled with one element or empty.
+     */
     Text[] MlId;
 }
 
@@ -107,6 +148,9 @@ declare Integer[Ident] G_ShownDialogIds;
 //// Private
 ////////////////////
 
+/**
+ * Returns the manialink version of the previous types.
+ */
 Text Private_ML_K_Dialog(Text _ModName) {
     return """//!
 #Struct {{{_ModName}}}_K_Button {
@@ -130,6 +174,13 @@ Text Private_ML_K_Dialog(Text _ModName) {
     """;
 }
 
+/**
+ * Builds and returns the manialink fragment containing the list
+ * of the buttons correctly positioned.
+ *
+ * @param _Buttons The buttons of the dialog.
+ * @return The manialink fragment as a text.
+ */
 Text Private_GetButtons(K_Button[] _Buttons) {
     declare Text MlText;
 
@@ -158,6 +209,13 @@ Text Private_GetButtons(K_Button[] _Buttons) {
     return MlText;
 }
 
+/**
+ * Builds and returns the manialink of the dialog to show.
+ *
+ * @param _DialogId The dialog ID.
+ * @param _Dialog The content of the dialog.
+ * @return The manialink page as a text.
+ */
 Text Private_GetLayer(Integer _DialogId, K_Dialog _Dialog) {
     CustomUI::Add("Frame_ObsDialog", <0., 0.>, <100., 75.>, "center", "center", False, False, False);
 
@@ -244,6 +302,13 @@ main() {
     """;
 }
 
+/**
+ * Attaches the given dialog to the provided UI config.
+ *
+ * @param _UI The targeted UI config.
+ * @param _DialogId The dialog ID.
+ * @param _Dialog The content of the dialog.
+ */
 Void Private_AttachDialogFor(CUIConfig _UI, Integer _DialogId, K_Dialog _Dialog) {
     Layers::Create("InGameDialog", Private_GetLayer(_DialogId, _Dialog));
     declare CSmPlayer Player <=> GetPlayer(_UI);
@@ -251,6 +316,13 @@ Void Private_AttachDialogFor(CUIConfig _UI, Integer _DialogId, K_Dialog _Dialog)
     G_ShownDialogIds[_UI.Id] = _DialogId;
 }
 
+/**
+ * Handles the creation of a new dialog to the provided UI config.
+ *
+ * @param _UI The targeted UI config.
+ * @param _PageId The page ID that requested a new dialog.
+ * @param _Dialog The content of the dialog.
+ */
 Void Private_HandleNewDialog(CUIConfig _UI, Text _PageId, K_Dialog _Dialog) {
     // Set the dialog to active if not already done.
     declare netwrite Boolean Net_InGameDialog_ActiveDialog for _UI = False;
@@ -274,6 +346,14 @@ Void Private_HandleNewDialog(CUIConfig _UI, Text _PageId, K_Dialog _Dialog) {
     }
 }
 
+/**
+ * Handles the close of a dialog of the provided UI config.
+ *
+ * If the dialog associated to the dialog ID is not shown, this is noop.
+ *
+ * @param _UI The targeted UI config.
+ * @param _DialogId The ID of the dialog to close.
+ */
 Void Private_HandleCloseDialog(CUIConfig _UI, Integer _DialogId) {
     // Skip if the id of the current shown dialog of the client doesn't match.
     if (!G_ShownDialogIds.existskey(_UI.Id)
@@ -306,6 +386,14 @@ Void Private_HandleCloseDialog(CUIConfig _UI, Integer _DialogId) {
     }
 }
 
+/**
+ * Handles a button click event for the provided UI config.
+ *
+ * @param _UI The targeted UI config.
+ * @param _DialogId The ID of the submitted dialog.
+ * @param _ButtonId The control ID of the clicked button.
+ * @param _Success Whether the button triggers the success flag or not.
+ */
 Void Private_HandleButtonClicked(
     CUIConfig _UI, Integer _DialogId, Text _ButtonId, Boolean _Success
 ) {
@@ -398,12 +486,47 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
     }
 }
 
+/**
+ * Returns the manialink version of the type definitions of this library,
+ * prefixed by *_ModName*.
+ *
+ * See the documentation of [`K_Dialog`].
+ *
+ * @param _ModName The name of the module, like "Dlg" or "Dialog".
+ * @return The manialink fragment containing the struct definitions.
+ */
 Text ML_Preproc(Text _ModName) {
     return """//!
 {{{Private_ML_K_Dialog(_ModName)}}}
     """;
 }
 
+/**
+ * Returns the manialink fragment containing utility functions used to manipulate dialogs
+ * in any manialink page.
+ *
+ * Let's consider `_ModName` = "Dlg", the fragment provides 3 functions:
+ *
+ * 1. `Integer Dlg_NewDialog(Dlg_K_Dialog _Dialog);`
+ *
+ * This function pushes the provided dialog to the pending dialogs shown to the user.
+ * It returns the associated dialog ID used to prompt it or close.
+ *
+ * 2. `Dlg_K_DialogPromptResult Dlg_PromptDialog(Integer _DialogId);`
+ *
+ * This function fetches for a prompt result of the dialog associated to the provided dialog ID.
+ * If the associated dialog isn't shown, the result is always like nothing happened.
+ *
+ * 3. `Void Dlg_CloseDialog(Integer _DialogId);`
+ *
+ * This function closes the dialog associated to the provided dialog ID.
+ * If the associated dialog isn't shown, this is noop.
+ *
+ * @param _ModName The name of the module, like "Dlg" or "Dialog". This must be the same as the one
+ * used in the call of [`ML_Preproc`].
+ * @param _MlPage The name of the manialink page using the library.
+ * @return The definitions of the previous functions as a manialink script fragment.
+ */
 Text ML_Content(Text _ModName, Text _MlPage) {
     return """//!
 declare Integer {{{_ModName}}}_G_LastDialogId;
