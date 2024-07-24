@@ -1,0 +1,115 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   UI layer used to counter the Openplanet dev mode
+ ***********************************************/
+
+#Include "Libs/ahmad3/InGameDialog.Script.txt" as Dlg
+#Include "Libs/smokegun/Player.Script.txt" as Player
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-24"
+#Const ScriptName "AntiDevMode.Script.txt"
+
+#Const C_Ev_AntiDevMode "antidevmode:trigger"
+
+#Const C_AntiDevModeMsg """It looks like you have Openplanet with developer mode enabled.
+This may offer you a number of features that could be contrary to fair play.
+It is why we do not authorize it in our mode.
+
+Please disable the developer mode for the plugins signature.
+
+If you think this is an error, please mention the developers
+(i.e. @miltant or @ahmadbky) on Discord.
+
+Thank you."""
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Void HandleCustomEvent(CUIConfigEvent _Event) {
+    assert(_Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent);
+    if (_Event.CustomEventType != C_Ev_AntiDevMode) return;
+
+    declare CSmPlayer Player <=> GetPlayer(_Event.UI);
+    Player::setUseDevMode(Player, True);
+}
+
+/**
+ * Returns the manialink page of the UI.
+ */
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:AntiDevMode">
+    <script><![CDATA[
+#Include "TextLib" as TL
+
+{{{Dlg::ML_Preproc("Dlg")}}}
+{{{Dlg::ML_Content("Dlg", "AntiDevMode")}}}
+
+// Returns true if the user has Openplanet installed
+Boolean HasOpenplanet() {
+	return TL::RegexFind("^Openplanet ", System.ExtraTool_Info, "").count == 1;
+}
+
+// Returns the signature mode currently used in Openplanet
+Text GetOpenplanetSignatureMode() {
+	declare Text[] SignatureMode = TL::RegexMatch(" \\[([A-Z]*)\\]$", System.ExtraTool_Info, "");
+	if (SignatureMode.count == 2) {
+		return SignatureMode[1];
+	}
+	return "REGULAR";
+}
+
+Boolean HasDevMode() {
+	return HasOpenplanet() && GetOpenplanetSignatureMode() == "DEVMODE";
+}
+
+Void TriggerAntiDevMode() {
+    Dlg_NewDialog(Dlg_K_Dialog {
+        Title = "Warning",
+        Msg = {{{dump(dump(dump(C_AntiDevModeMsg)))}}},
+        AllowClose = False,
+        Buttons = []
+    });
+
+    SendCustomEvent({{{dump(C_Ev_AntiDevMode)}}}, []);
+}
+
+main() {
+    while (True) {
+        yield;
+
+        if (HasDevMode()) {
+            TriggerAntiDevMode();
+            return;
+        }
+    }
+}
+    ]]></script>
+</manialink>
+    """;
+}

@@ -9,7 +9,6 @@
 #Include "TextLib" as TL
 
 #Include "Libs/miltant/Nadeo_Fork/Layers2.Script.txt" as Layers
-#Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 
 /*********************************************
   CONSTANTS
@@ -217,11 +216,9 @@ Text Private_GetButtons(K_Button[] _Buttons) {
  * @return The manialink page as a text.
  */
 Text Private_GetLayer(Integer _DialogId, K_Dialog _Dialog) {
-    CustomUI::Add("Frame_ObsDialog", <0., 0.>, <100., 75.>, "center", "center", False, False, False);
-
     return """
 <manialink version="3" name="Obstacle:InGameDialog">
-    <frame id="Frame_Modal" z-index="99999" class="LibCustomUI_Module">
+    <frame id="Frame_Modal" z-index="99999">
         <frame z-index="1000" pos="0 0">
             <quad
                 z-index="-1" size="100 75" style="Bgs1"
@@ -251,7 +248,6 @@ Text Private_GetLayer(Integer _DialogId, K_Dialog _Dialog) {
 
 main() {
     wait(Page != Null);
-    {{{CustomUI::InjectMLInit()}}}
 
     declare netread Boolean Net_InGameDialog_ActiveDialog for UI = True;
 
@@ -289,8 +285,6 @@ main() {
                 }
             }
         }
-
-        {{{CustomUI::InjectMLLoop()}}}
     }
 
     ClientUI.UISequence = CUIConfig::EUISequence::None;

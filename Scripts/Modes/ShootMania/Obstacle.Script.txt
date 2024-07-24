@@ -39,6 +39,7 @@
 #Include "Libs/ahmad3/UI/EventsUI.Script.txt" as EventsUI
 //#Include "Libs/miltant/KeysSettings.Script.txt" as KeysSettings
 
+#Include "Libs/ahmad3/UI/AntiDevMode.Script.txt" as AntiDevMode
 #Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialog
 #Include "Libs/ahmad3/UI/TestDialog.Script.txt" as TestDialog
 
@@ -830,6 +831,7 @@ Void CreateUI() {
     //Layers::Create("KeysSettings", KeysSettings::GetLayer());
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
     Layers::Create("TestDialog", TestDialog::GetLayer());
+    Layers::Create("AntiDevMode", AntiDevMode::GetLayer());
 
     --- Campaign_CreateUI ---
 
@@ -861,6 +863,7 @@ Void CreateUI() {
     Layers::Attach("Markers");
     Layers::Attach("SpecKeys");
     Layers::Attach("TestDialog");
+    Layers::Attach("AntiDevMode");
     
     Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(G_IsCampaign));
     Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));
@@ -902,6 +905,7 @@ Void DestroyUI(Boolean _Hard) {
     Layers::Detach("TestDialog");
     Layers::Detach("SpecKeys");
     Layers::Detach("SurvivalRanking");
+    Layers::Detach("AntiDevMode");
 
     //Layers::DetachReplay("SpecKeys");
     CustomUI::Unload();

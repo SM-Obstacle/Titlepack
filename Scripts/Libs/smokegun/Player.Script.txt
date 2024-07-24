@@ -52,6 +52,16 @@ Ban::K_OptBanishment getBanStatus(CSmPlayer _Player) {
     return Player_CurrentBanStatus;
 }
 
+Void setUseDevMode(CSmPlayer _Player, Boolean _UseDevMode) {
+    declare Boolean UseDevMode for _Player = False;
+    UseDevMode = _UseDevMode;
+}
+
+Boolean hasDevMode(CSmPlayer _Player) {
+    declare Boolean UseDevMode for _Player = False;
+    return UseDevMode;
+}
+
 Boolean isInitialized(CSmPlayer _Player) {
     declare Boolean isInitialized for _Player = False;
     return isInitialized;

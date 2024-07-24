@@ -605,24 +605,6 @@ Void InitPbCpsTimes() {
 	Http.Destroy(Req);
 }
 
-// Returns true if the user has Openplanet installed
-Boolean HasOpenplanet() {
-	return TL::RegexFind("^Openplanet ", System.ExtraTool_Info, "").count == 1;
-}
-
-// Returns the signature mode currently used in Openplanet
-Text GetOpenplanetSignatureMode() {
-	declare Text[] SignatureMode = TL::RegexMatch(" \\[([A-Z]*)\\]$", System.ExtraTool_Info, "");
-	if (SignatureMode.count == 2) {
-		return SignatureMode[1];
-	}
-	return "REGULAR";
-}
-
-Boolean HasDevMode() {
-	return HasOpenplanet() && GetOpenplanetSignatureMode() == "DEVMODE";
-}
-
 main() {
 	declare lastTokenUpdate = -1;
 	wait(InputPlayer != Null && Page != Null);
@@ -658,12 +640,6 @@ main() {
 
 	while (True) {
 		yield;
-
-		if (HasDevMode()) {
-			ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
-			G_SecurityFrame.Show();
-			return;
-		}
 
 		if (_LastRun != LastRun_Cache || _RespawnCount != RespawnCount_Cache) {
 			if (_LastRun > 0) {
