@@ -42,6 +42,28 @@
   FUNCTIONS
  *********************************************/
 
+Void setHasWrongLbLine(CSmPlayer _Player, Boolean _HasWrongLbLine) {
+    declare netwrite Boolean Net_HasWrongLbLine for _Player = False;
+    Net_HasWrongLbLine = _HasWrongLbLine;
+    declare netwrite Integer Net_RecordsUpdated for Teams[0] = -1;
+    Net_RecordsUpdated = Now;
+}
+
+Boolean hasWrongLbLine(CSmPlayer _Player) {
+    declare netwrite Boolean Net_HasWrongLbLine for _Player = False;
+    return Net_HasWrongLbLine;
+}
+
+Void setHasInitPb(CSmPlayer _Player, Boolean _HasInitPb) {
+    declare netwrite Boolean Net_HasInitPb for _Player = False;
+    Net_HasInitPb = _HasInitPb;
+}
+
+Boolean hasInitPb(CSmPlayer _Player) {
+    declare netwrite Boolean Net_HasInitPb for _Player = False;
+    return Net_HasInitPb;
+}
+
 Void setBanned(CSmPlayer _Player, Ban::K_OptBanishment _Value) {
     declare Ban::K_OptBanishment Player_CurrentBanStatus for _Player;
     Player_CurrentBanStatus = _Value;
@@ -416,6 +438,8 @@ Ident loadLastLegitPosition(CSmPlayer _Player) {
 Void InitPlayer(CSmPlayer _Player) {
     if (_Player == Null || isInitialized(_Player)) return;
 
+    setHasWrongLbLine(_Player, False);
+    setHasInitPb(_Player, False);
     setInitialized(_Player, True);
     setStartTime(_Player, 0);
     setCpProgress(_Player, 0);

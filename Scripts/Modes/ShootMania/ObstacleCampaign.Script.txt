@@ -18,8 +18,8 @@ log("mode is Obstacle Campaign");
 ***
 if (ServerAdmin == Null) {
     declare CSmPlayer Player = Players[0];
-    declare Boolean __MlAuth_LoadingDialogPlayingMap for Player.User = False;
-    __MlAuth_LoadingDialogPlayingMap = True;
+    declare Boolean LoadingDialogPlayingMap for Player.User = False;
+    LoadingDialogPlayingMap = True;
 }
 ***
 
@@ -49,7 +49,7 @@ UIManager.GetUI(Player).UISequence = CUIConfig::EUISequence::Podium;
 
 ***Campaign_CreateUI***
 ***
-Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null, S_EventEdition, S_LastMap));
+Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null, S_LastMap));
 ***
 
 ***MB_Private_EnableLadder***

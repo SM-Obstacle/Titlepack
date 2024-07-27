@@ -4,10 +4,15 @@
 
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+
 #Struct K_LatestnewsImageResponse {
 	Text img_url;
 	Text link;
 }
+
+declare Ident G_LatestNewsImgReq;
+declare Integer G_PendingLatestNewsImgReq;
 
 Text GetName() {
 	return "home";
@@ -116,25 +121,59 @@ Text Build(Text _NewsImgUrl, Text _NewsImgLink) {
 }
 
 Void Load() {
-	// TODO: make this in background
-	declare CHttpRequest ImageUrlReq = Http.CreateGet(Constants::C_HostUrl ^ "latestnews_image", True, "Accept: application/json");
-	wait(ImageUrlReq.IsCompleted);
-	declare K_LatestnewsImageResponse Res;
-	if (ImageUrlReq.StatusCode == 200) {
-		Res.fromjson(ImageUrlReq.Result);
+	G_PendingLatestNewsImgReq = -1;
+
+	declare Ident ReqId = ReqMgr::MakeGet(ReqMgr::K_GetRequest {
+		Route = "latestnews_image",
+		UseCache = True,
+		Headers = ReqMgr::DefaultHeaders()
+	});
+
+	if (ReqId == NullId) {
+		G_PendingLatestNewsImgReq = ReqMgr::LastPendingReqId();
+	} else {
+		G_LatestNewsImgReq = ReqId;
+	}
+}
+
+Void LoopReq() {
+	if (G_LatestNewsImgReq == NullId && G_PendingLatestNewsImgReq == -1) return;
+
+	if (G_PendingLatestNewsImgReq >= 0) {
+		declare Ident ReqId = ReqMgr::MakePendingReq(G_PendingLatestNewsImgReq);
+		if (ReqId == NullId) return;
+		else {
+			G_LatestNewsImgReq = ReqId;
+			G_PendingLatestNewsImgReq = -1;
+		}
 	}
 
-	declare Windows::K_Window Window;
-	Window.Name = GetName();
-	Window.Manialink = Build(Res.img_url, Res.link);
-	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
+	declare CHttpRequest Req <=> Http.Requests[G_LatestNewsImgReq];
+	if (!Req.IsCompleted) return;
+
+	declare K_LatestnewsImageResponse Res;
+	if (Req.StatusCode == 200) {
+		Res.fromjson(Req.Result);
+	}
+
+	Http.Destroy(Req);
+	G_LatestNewsImgReq = NullId;
+
+	declare Windows::K_Window Window = Windows::K_Window {
+		Name = GetName(),
+		Manialink = Build(Res.img_url, Res.link),
+		Animation = CUILayer::EUILayerAnimation::LeftSlow
+	};
 
 	Windows::CreateWindow(Window);
+	Windows::Load(GetName());
 }
 
 Void Loop() {
+	LoopReq();
+
 	foreach(Event in PendingEvents) {
-		if ( Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
+		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent &&
 			Event.CustomEventData.count > 0 &&
 			Event.CustomEventType == "menu_item_click") {
 			switch (Event.CustomEventData[0]) {

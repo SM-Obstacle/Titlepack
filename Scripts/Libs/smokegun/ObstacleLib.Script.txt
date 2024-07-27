@@ -31,6 +31,8 @@
 
 #Include "Libs/ahmad3/MapAttributes.Script.txt" as MapAttr
 
+#Include "Libs/ahmad3/UI/PlayerFinished.Script.txt" as PlayerFinished
+
 /*********************************************
   CONSTANTS
  *********************************************/
@@ -69,16 +71,6 @@ Void SetMode(Integer _Mode) {
 
 Integer GetMode() {
     return G_Mode;
-}
-
-Text OrdinalSuffix(Integer _Rank) {
-    declare Text[Integer] Suffixes = [1 => "st", 2 => "nd", 3 => "rd"];
-    declare Suff = "th";
-    // Avoids 11, 12 and 13 to be taken into account
-    if (20 < _Rank % 100 || _Rank % 100 < 10) {
-        Suff = Suffixes.get(_Rank % 10, "th");
-    }
-    return TL::ToText(_Rank) ^ Suff;
 }
 
 Boolean IsPvPWeaponsMap() {
@@ -333,22 +325,10 @@ Void Private_SendXmlRpcCallback(Text _CallbackName, CSmPlayer _Player, Integer _
  *
  */
 Void Private_SendFinishedRun(CSmPlayer _Player, Integer _Run, Ident _GoalId) {
+    if (!MapAttr::IsLeaderboardEnabled() || !Settings::GetEnableRecords()) return;
+
     Private_SendXmlRpcCallback("OnFinish", _Player, _Run, _GoalId);
-    if (MapAttr::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
-        declare netwrite _LastRun for UIManager.GetUI(_Player) = -1;
-        declare netwrite _RespawnCount for UIManager.GetUI(_Player) = 0;
-        declare netwrite Integer[] _LastCPTimes for UIManager.GetUI(_Player);
-
-        _LastRun = Player::getLastRun(_Player);
-        _RespawnCount = Player::getRespawnCount(_Player);
-
-        declare lastCpTime = 0;
-        _LastCPTimes.clear();
-        foreach (time in Player::getLastCPTimes(_Player)) {
-            _LastCPTimes.add(time - lastCpTime);
-            lastCpTime = time;
-        }
-    }
+    PlayerFinished::NotifyPlayerFinished(_Player);
 }
 
 /////////////////////////////////////////////////////////////////
@@ -886,7 +866,7 @@ Void Private_HandleCheckpoint(CSmPlayer _Player, Ident _CheckpointId) {
  * Returns: True if the player captured a goal
  */
 Boolean HandleCapture(CSmPlayer _Player) {
-    if (Player::hasDevMode(_Player)) return False;
+    if (Player::hasDevMode(_Player) || Player::getBanStatus(_Player).IsPresent) return False;
 
     declare HasCapturedGoal = False;
 

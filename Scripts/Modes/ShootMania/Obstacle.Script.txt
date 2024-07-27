@@ -41,6 +41,11 @@
 
 #Include "Libs/ahmad3/UI/AntiDevMode.Script.txt" as AntiDevMode
 #Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialog
+#Include "Libs/ahmad3/UI/CachedRequests.Script.txt" as CachReqs
+#Include "Libs/ahmad3/UI/InitPb.Script.txt" as InitPb
+#Include "Libs/ahmad3/UI/PlayerFinished.Script.txt" as PlayerFinished
+#Include "Libs/ahmad3/UI/UpdateAuth.Script.txt" as UpdateAuth
+#Include "Libs/ahmad3/UI/UpdatePlayer.Script.txt" as UpdatePlayer
 
 #Include "Libs/smokegun/Items.Script.txt" as Items
 #Include "Libs/smokegun/ObstacleRecords.Script.txt" as API
@@ -51,7 +56,6 @@
 
 #Include "Libs/smokegun/Score.Script.txt" as ObsScores
 
-#Include "Libs/ahmad3/UI/MlAuth.Script.txt" as MlAuth
 #Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 #Include "Libs/ahmad3/MapAttributes.Script.txt" as MapAttr
@@ -259,8 +263,6 @@ if (Settings::GetEventHandle() == "" || Settings::GetEventEdition() <= 0) {
         log("--- END ---");
     } else {
         Net_EventRoutePrefix = "event/" ^ Settings::GetEventHandle() ^ "/" ^ Settings::GetEventEdition() ^ "/";
-        MedalsWidget::Init();
-        EventsUI::Init();
     }
 }
 
@@ -270,6 +272,11 @@ if (Settings::GetEventHandle() == "" || Settings::GetEventEdition() <= 0) {
 ***
 
 CreateUI();
+
+EventsUI::Init();
+if (ObsEvents::HasEventLoaded()) {
+    MedalsWidget::Init();
+}
 
 Dynamics::UseDynamics();
 
@@ -366,31 +373,6 @@ foreach (Event in UIManager.PendingEvents) {
     if (Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent) {
         --- Campaign_Match_Yield ---
         switch(Event.CustomEventType) {
-            case "player:finished": {
-                declare API::K_HasFinishedResponse Res;
-                Res.fromjson(Event.CustomEventData[0]);
-
-                declare Player = SM::GetPlayer(Res.login);
-                declare PName = Player.User.Name;
-                declare NewTime = TL::TimeToText(Res.new, True);
-                declare OldTime = TL::TimeToText(Res.old, True);
-                declare DiffTime = TL::TimeToText(ML::Abs(Res.new - Res.old), True);
-                declare CurrentRank = Obstacle::OrdinalSuffix(Res.current_rank);
-
-                if (Res.has_improved) {
-                    declare netwrite Integer Net_RecordsUpdated for Teams[0];
-                    Net_RecordsUpdated = Now;
-                    if (S_BestNewRecordMsg != "") {
-                        UIManager.UIAll.SendChat(TL::Compose(S_BestNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime));
-                    }
-                } else if (Player != Null) {
-                    declare Text Txt;
-                    if (S_WorseNewRecordMsg != "") {
-                        Txt = TL::Compose(S_WorseNewRecordMsg, PName, NewTime, CurrentRank, OldTime, DiffTime);
-                    }
-                    UIManager.GetUI(Player).SendChat(Txt);
-                }
-            }
             case "jump_request": {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 declare CP = TL::ToInteger(Event.CustomEventData[1]);
@@ -445,6 +427,10 @@ foreach (Event in UIManager.PendingEvents) {
                 CPTimes::ResetLayer(Player, Obstacle::GetCheckpointsTotal());
             }
             default: {
+                CachReqs::HandleCustomEvent(Event);
+                InitPb::HandleCustomEvent(Event);
+                PlayerFinished::HandleCustomEvent(Event);
+                UpdateAuth::HandleCustomEvent(Event);
                 EventsUI::HandleCustomEvent(Event);
                 Dialog::HandleCustomEvent(Event);
                 AntiDevMode::HandleCustomEvent(Event);
@@ -832,6 +818,11 @@ Void CreateUI() {
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
     Layers::Create("AntiDevMode", AntiDevMode::GetLayer());
 
+    Layers::Create("CachReqs", CachReqs::GetLayer());
+    Layers::Create("InitPb", InitPb::GetLayer());
+    Layers::Create("UpdateAuth", UpdateAuth::GetLayer());
+    Layers::Create("UpdatePlayer", UpdatePlayer::GetLayer());
+
     --- Campaign_CreateUI ---
 
     Layers::Create("Markers");
@@ -839,8 +830,8 @@ Void CreateUI() {
     Layers::Create("Items", Items::CreateLayerItems());
 
     if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords) {
-        Layers::Create("Auth", MlAuth::GetLayer());
-        Layers::Attach("Auth");
+        Layers::Create("PlayerFinished", PlayerFinished::GetLayer());
+        Layers::Attach("PlayerFinished");
 
         if (Settings::GetEnableRecords()) {
             if (G_IsCampaign)
@@ -879,6 +870,11 @@ Void CreateUI() {
         Layers::Attach("SurvivalRanking");
     }
 
+    Layers::Attach("CachReqs");
+    Layers::Attach("InitPb");
+    Layers::Attach("UpdateAuth");
+    Layers::Attach("UpdatePlayer");
+
     //Layers::AttachReplay("SpecKeys");
     CustomUI::Build();
     CustomUI::Attach();
@@ -904,12 +900,17 @@ Void DestroyUI(Boolean _Hard) {
     Layers::Detach("SurvivalRanking");
     Layers::Detach("AntiDevMode");
 
+    Layers::Detach("UpdatePlayer");
+    Layers::Detach("InitPb");
+    Layers::Detach("CachReqs");
+
     //Layers::DetachReplay("SpecKeys");
     CustomUI::Unload();
 
     if (_Hard) {
         Layers::Detach("Markers");
-        Layers::Detach("Auth");
+        Layers::Detach("PlayerFinished");
+        Layers::Detach("UpdateAuth");
         UIManager.UILayerDestroyAll();
     }
 }

@@ -722,9 +722,9 @@ Void Private_InitLoadingMapDialogLoop(Text _MapName) {
 Void Private_LoadingMapDialogLoop() {
 	if (!G_LoadingMap) return;
 
-	declare Boolean __MlAuth_LoadingDialogPlayingMap for LocalUser = False;
-	if (__MlAuth_LoadingDialogPlayingMap) {
-		__MlAuth_LoadingDialogPlayingMap = False;
+	declare Boolean LoadingDialogPlayingMap for LocalUser = False;
+	if (LoadingDialogPlayingMap) {
+		LoadingDialogPlayingMap = False;
 		G_LoadingMap = False;
 		UI::CloseDialog(G_LoadingMapDialog);
 		return;

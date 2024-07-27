@@ -53,6 +53,13 @@ Boolean HasEventLoaded() {
     return G_EventLoaded;
 }
 
+Text PrefixEventRoute(Text _Rest) {
+    if (HasEventLoaded()) {
+        return "event/" ^ G_EventHandle ^ "/" ^ G_EventEdition ^ "/" ^ _Rest;
+    }
+    return _Rest;
+}
+
 Boolean EventHasCurrentMap(Text _EventHandle, Integer _EventEdition) {
     if (!EventAPI::EventHasContent(_EventHandle)
         || !EventAPI::GetEvent(_EventHandle).EditionsDetails.existskey(_EventEdition))

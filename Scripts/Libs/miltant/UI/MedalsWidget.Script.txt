@@ -4,6 +4,7 @@
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 #Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
+#Include "Libs/ahmad3/RequestManager.Script.Txt" as ReqMgr
 
 /*********************************************
     CONSTANTS
@@ -13,16 +14,20 @@
 #Const  ScriptName  "RecordsWidget.Script.txt"
 
 Void Init() {
-    if (ObsEvents::HasFailed()) return;
+    if (ObsEvents::HasFailed() || !ObsEvents::HasEventLoaded()) return;
 
     declare netwrite Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
     declare netwrite Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
+
+    Net_MedalsTimesPerMap.clear();
 
     foreach (Category in ObsEvents::CurrentEdition().categories) {
         foreach (Map in Category.maps) {
             Net_MedalsTimesPerMap[Map.map_uid] = [Map.bronze_time, Map.silver_time, Map.gold_time, Map.champion_time];
         }
     }
+
+    log("medals " ^ Net_MedalsTimesPerMap);
 
     Net_MedalsTimesPerMapUpdated = Now;
 }
@@ -89,19 +94,29 @@ Text GetLayer() {
         Text nickname;
         Integer time;
     }
-    
+
     #Struct K_Response {
         K_RankedRecord[] response;
     }
 
+    {{{ReqMgr::ML_Preproc("ReqMgr")}}}
     {{{Ban::ML_Preproc("BanMgr")}}}
     {{{ErrMgr::ML_Preproc("ErrMgr", "BanMgr")}}}
 
+    {{{ReqMgr::ML_Content("ReqMgr")}}}
     {{{Ban::ML_Content("BanMgr")}}}
     {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 
     declare Integer[][Text] G_MedalsTimesPerMap;
-    declare CHttpRequest G_Req;
+    declare Ident G_ReqId;
+    declare Integer G_PendingReqId;
+
+    declare CSmPlayer G_LocalPlayer;
+    declare Integer[Text] G_CampaignRecords;
+    declare Integer G_CurrentPlayerRank;
+
+    declare CMlFrame G_Frame_Widget;
+    declare CMlFrame G_Frame_Records;
 
     Integer GetMedal(Integer Medal) {
         if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
@@ -121,28 +136,160 @@ Text GetLayer() {
         return Map.MapInfo.TMObjective_AuthorTime;
     }
 
-    Void UpdateRecords(Text _Login) {
-        declare params = "?mapId="^Map.Id^"&playerId="^_Login;
-        declare netread Text Net_EventRoutePrefix for Teams[0];
-        declare url = "{{{Constants::C_HostUrl}}}" ^ Net_EventRoutePrefix ^ "overview" ^ params;
-        G_Req = Http.CreateGet(url, True, "Accept: application/json");
+    Void UpdateUI(K_Response _Response) {
+        declare PlayerRank = -1;
+        foreach (I => Record in _Response.response) {
+            if (Record.login == G_LocalPlayer.User.Login) {
+                G_CampaignRecords[Map.MapInfo.MapUid] = Record.time;
+                G_CurrentPlayerRank = I + 1;
+                PlayerRank = I;
+                break;
+            }
+        }
+        if (PlayerRank == -1) {
+            G_CampaignRecords[Map.MapInfo.MapUid] = 0;
+            G_CurrentPlayerRank = _Response.response.count + 2;
+        }
+
+        // medals to display
+        declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
+        // non-null ranks to display
+        declare Integer[] Ranks;
+        if (_Response.response.count > 0) {
+            Ranks.add(0);
+
+            if (PlayerRank < 3 || PlayerRank == -1) {
+                if (_Response.response.count > 1)
+                    Ranks.add(1);
+                if (_Response.response.count > 2)
+                    Ranks.add(2);
+            } else {
+                Ranks.add(PlayerRank - 1);
+                Ranks.add(PlayerRank);
+            }
+        }
+
+        declare CurrentHeight = 0.;
+        declare CurrentMedal = Medals.count - 1;
+        declare CurrentTime = Medals[0] + 1;
+
+        foreach (I => Rank in Ranks) {
+            CurrentTime = _Response.response[Rank].time;
+            
+            // displays medals before the current rank
+            while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
+                declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
+                declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
+
+                Frame.RelativePosition_V3.Y = CurrentHeight;
+                timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+                CurrentHeight -= 5.;
+                CurrentMedal -= 1;
+            }
+
+            // displays the current rank
+            declare frame <=> (G_Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
+            declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
+            declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
+            declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
+
+            frame.RelativePosition_V3.Y = CurrentHeight;
+            CurrentHeight -= 4.;
+            if (I < Ranks.count) {
+                rankLabel.SetText(""^_Response.response[Rank].rank);
+                nameLabel.SetText(_Response.response[Rank].nickname);
+                timeLabel.SetText(TL::TimeToText(_Response.response[Rank].time, True));
+            }
+        }
+
+        // displays medals after the last rank
+        while (CurrentMedal >= 0) {
+            declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
+            declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
+
+            Frame.RelativePosition_V3.Y = CurrentHeight;
+            timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+            CurrentHeight -= 5.;
+            CurrentMedal -= 1;
+        }
+
+        // hides unused ranks
+        for (I, Ranks.count, 2) {
+            declare frame <=> (G_Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
+            declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
+            declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
+            declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
+
+            frame.RelativePosition_V3.Y = CurrentHeight;
+            CurrentHeight -= 4.;
+            
+            rankLabel.SetText("");
+            nameLabel.SetText("---");
+            timeLabel.SetText("--:--:--");
+        }
+
     }
 
-    /**
-     * See the same function definition in "Libs/smokegun/UI/RecordsWidget.Script.txt".
-     */
-    Void WaitForStaggeredReqsToLoad() {
-        declare Boolean StaggeredReqsLoaded for LocalUser = False;
-        wait(StaggeredReqsLoaded);
-        StaggeredReqsLoaded = False;
+    Void UpdateRecords(Text _Login) {
+        declare Text Params = "?mapId="^Map.Id^"&playerId=" ^ _Login;
+        declare netread Text Net_EventRoutePrefix for Teams[0] = "";
+        declare Text Route = Net_EventRoutePrefix ^ "overview" ^ Params;
+
+        declare Ident ReqId = ReqMgr_MakeGet(ReqMgr_K_GetRequest {
+            Route = Route,
+            UseCache = False,
+            Headers = ReqMgr_DefaultHeaders()
+        });
+        
+        if (ReqId == NullId) {
+            G_PendingReqId = ReqMgr_LastPendingReqId();
+        } else {
+            G_ReqId = ReqId;
+        }
+    }
+
+    Void LoopUpdateRecords() {
+        if (G_ReqId == NullId && G_PendingReqId == -1) return;
+
+        if (G_PendingReqId >= 0) {
+            declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingReqId);
+            if (ReqId == NullId) {
+                return;
+            } else {
+                G_ReqId = ReqId;
+                G_PendingReqId = -1;
+            }
+        }
+
+        declare CHttpRequest Req <=> Http.Requests[G_ReqId];
+        if (!Req.IsCompleted) return;
+        G_ReqId = NullId;
+
+        if (Req.StatusCode == 200) {
+            declare K_Response Res;
+            Res.fromjson(Req.Result);
+            UpdateUI(Res);
+        } else {
+            ErrMgr_Handle(Req.StatusCode, Req.Result);
+            G_Frame_Records.Hide();
+        }
+
+        Http.Destroy(Req);
+    }
+
+    Boolean HasSentCachedReqs() {
+        declare netread Boolean Net_CachReqs_HasSentCachedReqs for UI = False;
+        return Net_CachReqs_HasSentCachedReqs;
     }
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
-        WaitForStaggeredReqsToLoad();
-        wait(InputPlayer != Null);
+        wait(InputPlayer != Null && HasSentCachedReqs());
+
+        G_PendingReqId = -1;
 
 		declare Integer[Text] CampaignRecords for LocalUser;
+        G_CampaignRecords = CampaignRecords;
 
         declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
         declare netread Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
@@ -153,6 +300,7 @@ Text GetLayer() {
         declare netread Net_CpProgress for InputPlayer = -1;
         declare netread Net_Time1 for InputPlayer = 0;
         declare Integer CurrentPlayerRank for LocalUser = 0;
+        G_CurrentPlayerRank = CurrentPlayerRank;
         declare netread Net_RecordsUpdated for Teams[0] = -1;
         declare LastUpdate = -1;
         declare Running = False;
@@ -160,19 +308,19 @@ Text GetLayer() {
         declare LastPlayerLogin = InputPlayer.User.Login;
         declare UpdateUI = False;
 
-        declare Frame_Widget <=> (Page.GetFirstChild("Frame_Medals_Records") as CMlFrame);
-        declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
+        G_Frame_Widget <=> (Page.GetFirstChild("Frame_Medals_Records") as CMlFrame);
+        G_Frame_Records <=> (G_Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
 
         while (True) {
             yield;
 
-            declare LocalPlayer <=> InputPlayer;
-            if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
-            if (LocalPlayer == Null) continue;
+            G_LocalPlayer <=> InputPlayer;
+            if (GUIPlayer != Null) G_LocalPlayer <=> GUIPlayer;
+            if (G_LocalPlayer == Null) continue;
 
-            if (LocalPlayer.User.Login != LastPlayerLogin) {
+            if (G_LocalPlayer.User.Login != LastPlayerLogin) {
                 LastUpdate = -1;
-                LastPlayerLogin = LocalPlayer.User.Login;
+                LastPlayerLogin = G_LocalPlayer.User.Login;
             }
 
             if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
@@ -181,16 +329,16 @@ Text GetLayer() {
             }
 
             if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
-                if (Frame_Widget.Visible)
-                    Frame_Widget.Hide();
-            } else if (!Frame_Widget.Visible) {
-                Frame_Widget.Show();
+                if (G_Frame_Widget.Visible)
+                    G_Frame_Widget.Hide();
+            } else if (!G_Frame_Widget.Visible) {
+                G_Frame_Widget.Show();
             }
 
             if (Net_RecordsUpdated != LastUpdate) {
                 log("Records updated " ^ LastUpdate ^ " -> " ^ Net_RecordsUpdated ^ " (running: " ^ Running ^ ")");
                 LastUpdate = Net_RecordsUpdated;
-                UpdateRecords(LocalPlayer.User.Login);
+                UpdateRecords(G_LocalPlayer.User.Login);
                 Running = False;
             }
 
@@ -198,115 +346,7 @@ Text GetLayer() {
                 Running = True;
             }
 
-            if (G_Req != Null && G_Req.IsCompleted) {
-                if (G_Req.StatusCode == 200)
-                    UpdateUI = True;
-                else {
-                    declare err = ErrMgr_Handle(G_Req.StatusCode, G_Req.Result);
-                    UI.SendChat(err.err.message);
-                    Http.Destroy(G_Req);
-                    G_Req = Null;
-                }
-            }
-
-            if (UpdateUI) {
-                UpdateUI = False;
-                declare K_Response response;
-                response.fromjson(G_Req.Result);
-                Http.Destroy(G_Req);
-                G_Req = Null;
-
-                declare PlayerRank = -1;
-                foreach (I => Record in response.response) {
-                    if (Record.login == LocalPlayer.User.Login) {
-                        CampaignRecords[Map.MapInfo.MapUid] = Record.time;
-                        CurrentPlayerRank = I + 1;
-                        PlayerRank = I;
-                        break;
-                    }
-                }
-                if (PlayerRank == -1) {
-                    CampaignRecords[Map.MapInfo.MapUid] = 0;
-                    CurrentPlayerRank = response.response.count + 2;
-                }
-
-                // medals to display
-                declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
-                // non-null ranks to display
-                declare Integer[] Ranks;
-                if (response.response.count > 0) {
-                    Ranks.add(0);
-
-                    if (PlayerRank < 3 || PlayerRank == -1) {
-                        if (response.response.count > 1)
-                            Ranks.add(1);
-                        if (response.response.count > 2)
-                            Ranks.add(2);
-                    } else {
-                        Ranks.add(PlayerRank - 1);
-                        Ranks.add(PlayerRank);
-                    }
-                }
-
-                declare CurrentHeight = 0.;
-                declare CurrentMedal = Medals.count - 1;
-                declare CurrentTime = Medals[0] + 1;
-
-                foreach (I => Rank in Ranks) {
-                    CurrentTime = response.response[Rank].time;
-                    
-                    // displays medals before the current rank
-                    while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
-                        declare Frame <=> (Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
-                        declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
-
-                        Frame.RelativePosition_V3.Y = CurrentHeight;
-                        timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
-                        CurrentHeight -= 5.;
-                        CurrentMedal -= 1;
-                    }
-
-                    // displays the current rank
-                    declare frame <=> (Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
-                    declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
-                    declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
-                    declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
-
-                    frame.RelativePosition_V3.Y = CurrentHeight;
-                    CurrentHeight -= 4.;
-                    if (I < Ranks.count) {
-                        rankLabel.SetText(""^response.response[Rank].rank);
-                        nameLabel.SetText(response.response[Rank].nickname);
-                        timeLabel.SetText(TL::TimeToText(response.response[Rank].time, True));
-                    }
-                }
-
-                // displays medals after the last rank
-                while (CurrentMedal >= 0) {
-                    declare Frame <=> (Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
-                    declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
-
-                    Frame.RelativePosition_V3.Y = CurrentHeight;
-                    timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
-                    CurrentHeight -= 5.;
-                    CurrentMedal -= 1;
-                }
-
-                // hides unused ranks
-                for (I, Ranks.count, 2) {
-                    declare frame <=> (Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
-                    declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
-                    declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
-                    declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
-
-                    frame.RelativePosition_V3.Y = CurrentHeight;
-                    CurrentHeight -= 4.;
-                    
-                    rankLabel.SetText("");
-                    nameLabel.SetText("---");
-                    timeLabel.SetText("--:--:--");
-                }
-            }
+            LoopUpdateRecords();
 
             foreach (Event in PendingEvents) {
                switch (Event.Type) {

@@ -101,7 +101,6 @@ Void Load() {
 	Credits::Load();
 
 	Home::Load();
-	Windows::Load(Home::GetName());
 
     JoinDialog::Load();
 	G_ReqCreateServer = False;

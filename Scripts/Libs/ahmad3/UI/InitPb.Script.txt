@@ -1,0 +1,207 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   Initializes the CP times of the player with their PB
+ ***********************************************/
+
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+#Include "Libs/ahmad3/UI/UpdateAuth.Script.txt" as UpdateAuth
+
+#Include "Libs/smokegun/Tools.Script.txt" as Tools
+#Include "Libs/miltant/Randomizer.Script.txt" as RNG
+#Include "Libs/smokegun/Player.Script.txt" as Player
+#Include "Libs/smokegun/ObstacleLib.Script.txt" as Obstacle
+#Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
+
+#Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-26"
+#Const ScriptName "InitPb.Script.txt"
+
+#Const C_Ev_PbInit "playerpb:init"
+
+/*********************************************
+  TYPES
+ *********************************************/
+
+#Struct K_PbCpTimeItem {
+    Integer cp_num;
+    Integer time;
+}
+
+#Struct K_PbRes {
+    Integer rs_count;
+    K_PbCpTimeItem[] cps_times;
+}
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Void HandleCustomEvent(CUIConfigEvent _Event) {
+    assert(_Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent);
+
+    if (_Event.CustomEventType != C_Ev_PbInit) return;
+
+    declare Text PbRes = _Event.CustomEventData[0];
+    declare K_PbRes Res;
+    Res.fromjson(PbRes);
+
+    if (Res.cps_times.count == 0) return;
+
+    declare CSmPlayer Player <=> GetPlayer(_Event.UI);
+
+    declare Integer[Ident] CpTimes;
+    declare Time = 0;
+    
+    foreach (PbCpTime in Res.cps_times) {
+        Time += PbCpTime.time;
+        foreach (Landmark in MapLandmarks) {
+            if (Tools::IsCheckpoint(Landmark) && RNG::GetOrder(Landmark) == PbCpTime.cp_num + 1) {
+                CpTimes[Landmark.Id] = Time;
+                break;
+            }
+        }
+    }
+
+    Player::InitPlayer(Player);
+    Player::setRespawnCount(Player, Res.rs_count);
+    Obstacle::UpdatePlayerRsCounterColumn(Player);
+    Player::setRespawnCount(Player, 0);
+    Player::setBestRun(Player, Time);
+    Player::setBestCPTimes(Player, CpTimes);
+    CPTimes::UpdateLayer(Player);
+    Obstacle::UpdatePlayerBestTimeColumn(Player);
+
+    Player::setHasInitPb(Player, True);
+}
+
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:InitCpTimes">
+    <script><![CDATA[
+
+{{{ReqMgr::ML_Preproc("ReqMgr")}}}
+{{{ReqMgr::ML_Content("ReqMgr")}}}
+{{{UpdateAuth::ML_Content("Auth")}}}
+
+declare Text G_PbRoute;
+
+///////////////////// ML Update
+
+declare Integer G_AuthUpdated;
+
+declare Ident G_InitPbReq;
+declare Integer G_PendingInitPbReq;
+declare Boolean G_NeedAuth;
+
+Void InitPbReq() {
+    declare Ident ReqId = ReqMgr_MakeGet(ReqMgr_K_GetRequest {
+        Route = G_PbRoute ^ "?map_uid=" ^ Map.Id,
+        UseCache = False,
+        Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
+    });
+
+    if (ReqId == NullId) {
+        G_PendingInitPbReq = ReqMgr_LastPendingReqId();
+    } else {
+        G_InitPbReq = ReqId;
+    }
+}
+
+Void LoopInitPbReq() {
+    if (G_InitPbReq == NullId && G_PendingInitPbReq == -1) return;
+    
+    if (G_PendingInitPbReq >= 0) {
+        declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingInitPbReq);
+        if (ReqId == NullId) {
+            return;
+        } else {
+            G_InitPbReq = ReqId;
+            G_PendingInitPbReq = -1;
+        }
+    }
+
+    declare CHttpRequest Req <=> Http.Requests[G_InitPbReq];
+    if (!Req.IsCompleted) return;
+    G_InitPbReq = NullId;
+
+    switch (Req.StatusCode) {
+        case 200: {
+            SendCustomEvent({{{dump(C_Ev_PbInit)}}}, [Req.Result]);
+        }
+        case 401: {
+            Auth_NotifyNeedUpdate();
+            G_NeedAuth = True;
+        }
+    }
+
+    Http.Destroy(Req);
+}
+
+Void InitAuthUpdated() {
+    declare netread Integer Net_AuthUpdated for UI = -1;
+    G_AuthUpdated = Net_AuthUpdated;
+}
+
+Boolean AuthUpdated() {
+    declare netread Integer Net_AuthUpdated for UI = -1;
+    if (G_AuthUpdated != Net_AuthUpdated) {
+        G_AuthUpdated = Net_AuthUpdated;
+        return True;
+    }
+    return False;
+}
+
+Boolean HasSentCachedReqs() {
+    declare netread Boolean Net_CachReqs_HasSentCachedReqs for UI = False;
+    return Net_CachReqs_HasSentCachedReqs;
+}
+
+main() {
+    G_PendingInitPbReq = -1;
+    G_PbRoute = {{{dump(ObsEvents::PrefixEventRoute("player/pb"))}}};
+    InitAuthUpdated();
+
+    wait(HasSentCachedReqs());
+    InitPbReq();
+
+    while (True) {
+        yield;
+
+        LoopInitPbReq();
+
+        if (G_NeedAuth && AuthUpdated()) {
+            G_NeedAuth = False;
+            InitPbReq();
+        }
+    }
+}
+
+    ]]></script>
+</manialink>
+    """;
+}

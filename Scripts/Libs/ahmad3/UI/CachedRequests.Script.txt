@@ -1,0 +1,325 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   Manages the cached requests of the player
+ ***********************************************/
+
+#Include "TextLib" as TL
+#Include "TimeLib" as TiL
+
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+#Include "Libs/ahmad3/Utils.Script.txt" as Utils
+#Include "Libs/smokegun/Constants.Script.txt" as Constants
+
+#Include "Libs/smokegun/Player.Script.txt" as Player
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-25"
+#Const ScriptName "CachedRequests.Script.txt"
+
+#Const C_Ev_SaveCache "cachreqs:save"
+#Const C_Ev_CachedReqsSent "cachreqs:sent"
+
+/*********************************************
+  TYPES
+ *********************************************/
+
+#Struct K_CachedReq {
+    Text Route;
+    Integer Tstp;
+    Text Body;
+}
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+K_CachedReq Private_DefaultCachReq() {
+    return K_CachedReq {
+        Route = "",
+        Tstp = 0,
+        Body = ""
+    };
+}
+
+Text Private_ML_DefaultCachReq() {
+    return """//!
+K_CachedReq {
+    Route = "",
+    Tstp = 0,
+    Body = ""
+}
+    """;
+}
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+K_CachedReq SaveCacheFor(CUIConfig _UI, Text _Body, Text _Route) {
+    declare K_CachedReq Out = K_CachedReq {
+        Route = _Route,
+        Tstp = TL::ToInteger(TiL::GetCurrent()),
+        Body = _Body
+    };
+
+    declare netwrite Integer Net_CachReqs_SaveCacheUpdate for _UI = -1;
+    declare netwrite K_CachedReq Net_CachReqs_SaveCacheBody for _UI = Private_DefaultCachReq();
+    Net_CachReqs_SaveCacheBody = Out;
+    Net_CachReqs_SaveCacheUpdate = Now;
+
+    return Out;
+}
+
+Void RemoveCache(CUIConfig _UI, K_CachedReq _CachReq) {
+    declare netwrite Integer Net_CachReqs_RemoveCacheUpdate for _UI = -1;
+    declare netwrite K_CachedReq Net_CachReqs_RemoveCacheBody for _UI = Private_DefaultCachReq();
+
+    Net_CachReqs_RemoveCacheBody = _CachReq;
+    Net_CachReqs_RemoveCacheUpdate = Now;
+}
+
+Void HandleCustomEvent(CUIConfigEvent _Event) {
+    assert(
+        _Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent,
+        "param _Event must be a custom event"
+    );
+    
+    switch (_Event.CustomEventType) {
+        case C_Ev_SaveCache: {
+            declare Text Body = _Event.CustomEventData[0];
+            declare Text Route = _Event.CustomEventData[1];
+            SaveCacheFor(_Event.UI, Body, Route);
+        }
+
+        case C_Ev_CachedReqsSent: {
+            declare netwrite Boolean Net_CachReqs_HasSentCachedReqs for _Event.UI = False;
+            Net_CachReqs_HasSentCachedReqs = True;
+        }
+    }
+}
+
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:CachedRequests">
+    <script><![CDATA[
+
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+
+#Struct K_CachedReq {
+    Text Route;
+    Integer Tstp;
+    Text Body;
+}
+
+{{{ReqMgr::ML_Preproc("ReqMgr")}}}
+{{{ReqMgr::ML_Content("ReqMgr")}}}
+{{{Utils::ML_FindCharIndex("Utils", "TL")}}}
+
+////////// ML Updates
+
+declare Integer G_SaveCacheUpdate;
+declare Integer G_RemoveCacheUpdate;
+
+declare Boolean G_InitTrySendCached;
+
+declare Integer[Integer] G_PendingStaggeredReqs;
+declare Ident[Integer] G_StaggeredReqs;
+declare K_CachedReq[Integer] G_IndexedCachedReqs;
+
+K_CachedReq[] GetCache() {
+	declare persistent Text ObsStore_ReqCache for LocalUser = "";
+	declare Integer VersIndex = Utils_FindCharIndex(ObsStore_ReqCache, "[");
+	if (VersIndex == -1) return [];
+	declare Text ReqCache = TL::SubText(ObsStore_ReqCache, VersIndex, TL::Length(ObsStore_ReqCache) - VersIndex);
+    // FIXME: do we really have to give up here?
+	// if ("{{{Constants::C_Version_ReqCache}}}" != Version)
+	//	return [];
+	declare K_CachedReq[] StaggeredReqs;
+	StaggeredReqs.fromjson(ReqCache);
+	return StaggeredReqs;
+}
+
+Void SaveCache(K_CachedReq[] _Cache) {
+    declare persistent Text ObsStore_ReqCache for LocalUser = "";
+    ObsStore_ReqCache = "{{{Constants::C_Version_ReqCache}}}" ^ _Cache.tojson();
+}
+
+Void SaveCache(K_CachedReq _CachReq) {
+    log("Saving to cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
+    declare K_CachedReq[] Cache = GetCache();
+    Cache.add(_CachReq);
+    SaveCache(Cache);
+}
+
+Void RemoveCache(K_CachedReq _CachReq) {
+    log("Removing from cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
+    declare K_CachedReq[] Cache = GetCache();
+    declare Integer IdxToRemove = -1;
+    foreach (Idx => Cached in Cache) {
+        if (Cached == _CachReq) {
+            IdxToRemove = Idx;
+            break;
+        }
+    }
+    if (IdxToRemove < 0) return;
+    Cache.removekey(IdxToRemove);
+    SaveCache(Cache);
+}
+
+Void InitTrySendCached() {
+    G_InitTrySendCached = True;
+
+    declare K_CachedReq[] CachedReqs = GetCache();
+    log("Trying to send the " ^ CachedReqs.count ^ " cached request(s)");
+
+    foreach (Idx => Req in CachedReqs) {
+        G_IndexedCachedReqs[Idx] = Req;
+    }
+
+    foreach (Idx => Req in G_IndexedCachedReqs) {
+        declare Ident ReqId = ReqMgr_MakePost(ReqMgr_K_PostRequest {
+            Route = "staggered/" ^ Req.Route,
+            Body = "{\"req_tstp\":" ^ Req.Tstp ^ ",\"body\":" ^ Req.Body ^ "}",
+            Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
+        });
+        if (ReqId == NullId) {
+            G_PendingStaggeredReqs[Idx] = ReqMgr_LastPendingReqId();
+        } else {
+            G_StaggeredReqs[Idx] = ReqId;
+        }
+    }
+}
+
+Void LoopTrySendCached() {
+    if (!G_InitTrySendCached) return;
+
+    declare Integer[] PendingReqsToRemove;
+
+    foreach (Idx => PendingReqId in G_PendingStaggeredReqs) {
+        declare Ident ReqId = ReqMgr_MakePendingReq(PendingReqId);
+        if (ReqId == NullId) {
+            continue;
+        } else {
+            PendingReqsToRemove.add(Idx);
+            G_StaggeredReqs[Idx] = ReqId;
+        }
+    }
+
+    foreach (ToRemove in PendingReqsToRemove) {
+        G_PendingStaggeredReqs.removekey(ToRemove);
+    }
+
+    declare Integer[] ReqsToRemove;
+    declare Integer[] CachedReqsToRemove;
+
+    foreach (Idx => ReqId in G_StaggeredReqs) {
+        declare CHttpRequest Req <=> Http.Requests[ReqId];
+        if (!Req.IsCompleted) continue;
+        ReqsToRemove.add(Idx);
+        if (Req.StatusCode == 200) {
+            CachedReqsToRemove.add(Idx);
+        }
+        Http.Destroy(Req);
+    }
+
+    foreach (ToRemove in ReqsToRemove) {
+        G_StaggeredReqs.removekey(ToRemove);
+    }
+
+    foreach (ToRemove in CachedReqsToRemove) {
+        G_IndexedCachedReqs.removekey(ToRemove);
+    }
+
+    if (G_StaggeredReqs.count == 0 && G_PendingStaggeredReqs.count == 0) {
+        // There's no more staggered request to send, we stop the loop
+        G_InitTrySendCached = False;
+
+        // Save the remaining cache
+        declare K_CachedReq[] CachedReqs = [];
+        foreach (Remaining in G_IndexedCachedReqs) {
+            CachedReqs.add(Remaining);
+        }
+        SaveCache(CachedReqs);
+        SendCustomEvent({{{dump(C_Ev_CachedReqsSent)}}}, []);
+    }
+}
+
+Void InitSaveCacheUpdate() {
+    declare netread Net_CachReqs_SaveCacheUpdate for UI = -1;
+    G_SaveCacheUpdate = Net_CachReqs_SaveCacheUpdate;
+}
+
+Boolean SaveCacheUpdate() {
+    declare netread Net_CachReqs_SaveCacheUpdate for UI = -1;
+    if (G_SaveCacheUpdate != Net_CachReqs_SaveCacheUpdate) {
+        G_SaveCacheUpdate = Net_CachReqs_SaveCacheUpdate;
+        return True;
+    }
+    return False;
+}
+
+Void InitRemoveCacheUpdate() {
+    declare netread Net_CachReqs_RemoveCacheUpdate for UI = -1;
+    G_RemoveCacheUpdate = Net_CachReqs_RemoveCacheUpdate;
+}
+
+Boolean RemoveCacheUpdate() {
+    declare netread Net_CachReqs_RemoveCacheUpdate for UI = -1;
+    if (G_RemoveCacheUpdate != Net_CachReqs_RemoveCacheUpdate) {
+        G_RemoveCacheUpdate = Net_CachReqs_RemoveCacheUpdate;
+        return True;
+    }
+    return False;
+}
+
+main() {
+    InitSaveCacheUpdate();
+    InitRemoveCacheUpdate();
+    InitTrySendCached();
+
+    declare netread K_CachedReq Net_CachReqs_SaveCacheBody for UI = {{{Private_ML_DefaultCachReq()}}};
+    declare netread K_CachedReq Net_CachReqs_RemoveCacheBody for UI = {{{Private_ML_DefaultCachReq()}}};
+
+    while (True) {
+        yield;
+
+        if (SaveCacheUpdate()) {
+            SaveCache(Net_CachReqs_SaveCacheBody);
+        }
+
+        if (RemoveCacheUpdate()) {
+            RemoveCache(Net_CachReqs_RemoveCacheBody);
+        }
+
+        LoopTrySendCached();
+    }
+}
+
+    ]]></script>
+</manialink>
+    """;
+}

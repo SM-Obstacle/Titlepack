@@ -61,7 +61,10 @@ Void Private_UpdateSelectedEvent(Text _EventHandle, Integer _EventEdition, CUICo
  * @param _EventEdition the event edition of the event to select.
  */
 Void Private_UpdateSelectedEvent(Text _EventHandle, Integer _EventEdition) {
-    Private_UpdateSelectedEvent(_EventHandle, _EventEdition, UIManager.UIAll);
+    foreach (Player in AllPlayers) {
+        declare CUIConfig UI <=> UIManager.GetUI(Player);
+        Private_UpdateSelectedEvent(_EventHandle, _EventEdition, UI);
+    }
 }
 
 /**

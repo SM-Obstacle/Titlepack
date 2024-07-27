@@ -9,9 +9,9 @@ Integer FindCharIndex(Text _Haystack, Text _ToFind) {
     return -1;
 }
 
-Text ML_FindCharIndex(Text _FuncPrefix, Text _TextLibLabel) {
+Text ML_FindCharIndex(Text _ModName, Text _TextLibLabel) {
     return """//!
-Integer {{{_FuncPrefix}}}FindCharIndex(Text _Haystack, Text _ToFind) {
+Integer {{{_ModName}}}_FindCharIndex(Text _Haystack, Text _ToFind) {
     for (I, 0, {{{_TextLibLabel}}}::Length(_Haystack)) {
         if ({{{_TextLibLabel}}}::SubText(_Haystack, I, 1) == _ToFind) {
             return I;

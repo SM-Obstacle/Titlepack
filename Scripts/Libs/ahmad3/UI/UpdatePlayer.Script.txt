@@ -1,0 +1,158 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   Update the player info in the API
+ ***********************************************/
+
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+#Include "Libs/ahmad3/UI/UpdateAuth.Script.txt" as UpdateAuth
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
+#Include "Libs/ahmad3/Ban.Script.txt" as Ban
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-25"
+#Const ScriptName "UpdatePlayer.Script.txt"
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:UpdatePlayer">
+    <script><![CDATA[
+
+#Include "TextLib" as TL
+
+#Struct K_PlayerUpdateBody {
+    Text login;
+    Text name;
+    Text zone_path;
+}
+
+{{{Ban::ML_Preproc("Ban")}}}
+{{{ReqMgr::ML_Preproc("ReqMgr")}}}
+{{{ErrMgr::ML_Preproc("ErrMgr", "Ban")}}}
+{{{ReqMgr::ML_Content("ReqMgr")}}}
+{{{Ban::ML_Content("Ban")}}}
+{{{ErrMgr::ML_Content("ErrMgr", "TL", "Ban")}}}
+{{{UpdateAuth::ML_Content("UserAuth")}}}
+
+////////////// ML Update
+declare Integer G_AuthUpdated;
+
+declare Boolean G_InitPlayerUpdate;
+declare Ident G_PlayerUpdateReq;
+declare Boolean G_PlayerUpdateReqIsPending;
+declare Integer G_PendingPlayerUpdateReqId;
+declare Boolean G_PlayerUpdateNeedsAuthUpdate;
+
+Void InitPlayerUpdate() {
+    G_InitPlayerUpdate = True;
+    declare K_PlayerUpdateBody Body = K_PlayerUpdateBody {
+        login = LocalUser.Login,
+        name = LocalUser.Name,
+        zone_path = LocalUser.ZonePath
+    };
+
+    declare Ident ReqId = ReqMgr_MakePost(ReqMgr_K_PostRequest {
+        Route = "player/update",
+        Body = Body.tojson(),
+        Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
+    });
+
+    if (ReqId == NullId) {
+        G_PlayerUpdateReqIsPending = True;
+        G_PendingPlayerUpdateReqId = ReqMgr_LastPendingReqId();
+    } else {
+        G_PlayerUpdateReqIsPending = False;
+        G_PlayerUpdateReq = ReqId;
+    }
+}
+
+Void LoopPlayerUpdate() {
+    if (!G_InitPlayerUpdate) return;
+
+    if (G_PlayerUpdateReqIsPending) {
+        declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingPlayerUpdateReqId);
+        if (ReqId == NullId) {
+            return;
+        } else {
+            G_PlayerUpdateReqIsPending = False;
+            G_PlayerUpdateReq = ReqId;
+        }
+    }
+
+    declare CHttpRequest Req <=> Http.Requests[G_PlayerUpdateReq];
+    if (!Req.IsCompleted) return;
+    G_InitPlayerUpdate = False;
+
+    if (Req.StatusCode == 401) {
+        G_PlayerUpdateNeedsAuthUpdate = True;
+        UserAuth_NotifyNeedUpdate();
+    } else if (Req.StatusCode != 200) {
+        declare ErrMgr_K_Error Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
+        SendCustomEvent("ban:update", [LocalUser.Login, Err.Ban.tojson()]);
+    }
+
+    Http.Destroy(Req);
+}
+
+Void InitAuthUpdated() {
+    declare netread Integer Net_AuthUpdated for UI = -1;
+    G_AuthUpdated = Net_AuthUpdated;
+}
+
+Boolean AuthUpdated() {
+    declare netread Integer Net_AuthUpdated for UI = -1;
+    if (G_AuthUpdated != Net_AuthUpdated) {
+        G_AuthUpdated = Net_AuthUpdated;
+        return True;
+    }
+    return False;
+}
+
+main() {
+    InitAuthUpdated();
+    InitPlayerUpdate();
+    
+    declare Boolean WaitingForAuthUpdate;
+
+    while (True) {
+        yield;
+
+        LoopPlayerUpdate();
+
+        if (G_PlayerUpdateNeedsAuthUpdate && AuthUpdated()) {
+            InitPlayerUpdate();
+            G_PlayerUpdateNeedsAuthUpdate = False;
+        }
+    }
+}
+
+    ]]></script>
+</manialink>
+    """;
+}

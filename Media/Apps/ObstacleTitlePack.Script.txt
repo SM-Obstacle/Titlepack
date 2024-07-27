@@ -29,7 +29,7 @@ main() {
 
 	while(True) {
 		yield;
-		
+
 		GreetPlayer::Loop();
 		UI::Loop();
 		ObsStore::Loop();

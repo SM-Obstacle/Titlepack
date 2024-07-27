@@ -1,0 +1,41 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   Reports errors to the API
+ ***********************************************/
+
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-26"
+#Const ScriptName "ErrorReport.Script.txt"
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Void Report(CSmPlayer _Player, ErrMgr::K_Error _Err) {
+    // TODO: report error
+}

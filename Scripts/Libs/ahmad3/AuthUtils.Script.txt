@@ -45,11 +45,11 @@ Void SetUserToken(Text _Token, CUser _User) {
 /**
  * Returns the content to be placed in a Manialink script in order to use this module.
  *
- * The exported functions are:
- * - `Text <_ModName>_GetUserToken();`
- * - `Void <_ModName>_SetUserToken(Text _Token);`
+ * Let's consider `_ModName` = "AuthUtils", the exported functions are:
+ * - `Text AuthUtils_GetUserToken();`
+ * - `Void AuthUtils_SetUserToken(Text _Token);`
  *
- * @return The generated manialink.
+ * @return The generated manialink fragment.
  */
 Text ML_Content(Text _ModName) {
     return """//!

@@ -6,6 +6,7 @@
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 #Include "Libs/ahmad3/Events.Script.txt" as Events
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 
 /*********************************************
     CONSTANTS
@@ -58,11 +59,15 @@ Text Private_GetSmallRecords() {
             <frameinstance modelid="small_record" pos="0 -52" id="record13" hidden="1"/>
             <frameinstance modelid="small_record" pos="0 -56" id="record14" hidden="1"/>
         </frame>
+        <frame id="Frame_Error" hidden="1" pos="0 -{{{QuadHeight / 2}}}">
+            <label text="Error" textcolor="f20" halign="center" valign="center2" />
+        </frame>
     </frame>
     <framemodel id="small_record">
         <label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" text="1." textfont="OswaldMono"/>
         <label id="name" pos="-14 0" size="20 4" halign="left" valign="center2" textsize="1" text="mon super pseudo" textfont="Oswald"/>
         <label id="time" pos="20 0" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" text="00:00:01" textfont="OswaldMono"/>
+        <quad halign="center" valign="center" size="44 3.5" id="background" bgcolor="f20f2022" hidden="1" />
     </framemodel>
 </frame>
     """;
@@ -77,9 +82,6 @@ Text GetLayer() {
 <script><!--
     #Include "TextLib" as TL
 
-    {{{Ban::ML_Preproc("BanMgr")}}}
-    {{{ErrMgr::ML_Preproc("ErrMgr", "BanMgr")}}}
-
     #Struct K_RankedRecord {
         Integer rank;
         Text login;
@@ -91,140 +93,143 @@ Text GetLayer() {
         K_RankedRecord[] response;
     }
 
+    {{{ReqMgr::ML_Preproc("ReqMgr")}}}
+    {{{Ban::ML_Preproc("BanMgr")}}}
+    {{{ErrMgr::ML_Preproc("ErrMgr", "BanMgr")}}}
+
+    {{{ReqMgr::ML_Content("ReqMgr")}}}
     {{{Ban::ML_Content("BanMgr")}}}
     {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
 
-    /**
-     * The pending requests
-     */
-    declare Text[] G_PendingReqs;
-    /**
-     * The current GET `/overview` request
-     */
-    declare CHttpRequest G_Req;
+    declare Ident G_ReqId;
+    declare Integer G_PendingReqId;
 
-    /**
-     * Tries to send the GET request with the provided URL.
-     * 
-     * @param _Url the URL for the GET request
-     * @return `True` if the request cannot be sent immediately, `False` otherwise
-     */
-    Boolean TrySendReq(Text _Url) {
-        if (Http.SlotsAvailable > 0) {
-            G_Req = Http.CreateGet(_Url, True, "Accept: application/json");
-            return False;
+    declare CMlFrame G_Frame_Records;
+    declare CMlFrame G_Frame_Widget;
+    declare CMlFrame G_Frame_Error;
+
+    declare CSmPlayer G_LocalPlayer;
+
+    Void UpdateUI(K_Response _Response) {
+        declare netread Boolean Net_HasWrongLbLine for G_LocalPlayer = False;
+        declare HasLocalPlayerFinished = False;
+        foreach (Idx => Control in G_Frame_Records.Controls) {
+            declare frame <=> (Control as CMlFrame);
+            declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
+            declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
+            declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
+            declare bgQuad <=> (frame.GetFirstChild("background") as CMlQuad);
+            bgQuad.Hide();
+
+            if (_Response.response.existskey(Idx)) {
+                rankLabel.SetText(""^_Response.response[Idx].rank);
+                nameLabel.SetText(_Response.response[Idx].nickname);
+                timeLabel.SetText(TL::TimeToText(_Response.response[Idx].time, True));
+
+                if (_Response.response[Idx].login == G_LocalPlayer.User.Login) {
+                    HasLocalPlayerFinished = True;
+                    if (Net_HasWrongLbLine) bgQuad.Show();
+                }
+
+                Control.Show();
+            } else if (!HasLocalPlayerFinished && Idx == G_Frame_Records.Controls.count - 1) {
+                rankLabel.SetText("");
+                nameLabel.SetText(G_LocalPlayer.User.Name);
+                timeLabel.SetText("--:--:--");
+                Control.Show();
+                if (Net_HasWrongLbLine) bgQuad.Show();
+            } else {
+                Control.Hide();
+            }
         }
-        G_PendingReqs.add(_Url);
-        return True;
     }
 
     Void UpdateRecords(Text _Login) {
-        declare params = "?mapId="^Map.Id^"&playerId="^_Login;
-        declare netread Text Net_EventRoutePrefix for Teams[0];
-        declare url = "{{{Constants::C_HostUrl}}}" ^ Net_EventRoutePrefix ^ "overview"^params;
-        TrySendReq(url);
+        declare Text Params = "?mapId=" ^ Map.Id ^ "&playerId=" ^ _Login;
+        declare netread Text Net_EventRoutePrefix for Teams[0] = "";
+        declare Text Route = Net_EventRoutePrefix ^ "overview" ^ Params;
+
+        declare Ident ReqId = ReqMgr_MakeGet(ReqMgr_K_GetRequest {
+            Route = Route,
+            UseCache = False,
+            Headers = ReqMgr_DefaultHeaders()
+        });
+
+        if (ReqId == NullId) {
+            G_PendingReqId = ReqMgr_LastPendingReqId();
+        } else {
+            G_ReqId = ReqId;
+        }
     }
 
-    /**
-     * Attempts to send the pending requests.
-     */
-    Void SendPendingReqs() {
-        declare Text[] Rest;
-        foreach (PendingReq in G_PendingReqs) {
-            // If the request can't be sent immediately
-            if (TrySendReq(PendingReq)) {
-                Rest.add(PendingReq);
+    Void LoopUpdateRecords() {
+        if (G_ReqId == NullId && G_PendingReqId == -1) return;
+
+        if (G_PendingReqId >= 0) {
+            declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingReqId);
+            if (ReqId == NullId) {
+                return;
+            } else {
+                G_ReqId = ReqId;
+                G_PendingReqId = -1;
             }
         }
-        G_PendingReqs = Rest;
+
+        declare CHttpRequest Req <=> Http.Requests[G_ReqId];
+        if (!Req.IsCompleted) return;
+        G_ReqId = NullId;
+
+        if (Req.StatusCode == 200) {
+            declare K_Response Res;
+            Res.fromjson(Req.Result);
+            UpdateUI(Res);
+            G_Frame_Error.Hide();
+        } else {
+            ErrMgr_Handle(Req.StatusCode, Req.Result);
+            G_Frame_Error.Show();
+            G_Frame_Records.Hide();
+        }
+
+        Http.Destroy(Req);
     }
 
-    /**
-     * Waits for the cached requests of the player to be - tried to be - sent.
-     * 
-     * We do this because the player may have made 2 records on the same map
-     * with a better time on the second run, which hasn't been saved immediately.
-     * If we don't wait, the second staggered request won't have time to be sent before
-     * we fetch the leaderboard, so the latter won't be the correct final version.
-     */
-    Void WaitForStaggeredReqsToLoad() {
-        declare Boolean StaggeredReqsLoaded for LocalUser = False;
-        wait(StaggeredReqsLoaded);
-        StaggeredReqsLoaded = False;
+    Boolean HasSentCachedReqs() {
+        declare netread Boolean Net_CachReqs_HasSentCachedReqs for UI = False;
+        return Net_CachReqs_HasSentCachedReqs;
     }
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
-        WaitForStaggeredReqsToLoad();
-        wait(InputPlayer != Null && Page != Null);
+        wait(InputPlayer != Null && Page != Null && HasSentCachedReqs());
+
+        G_PendingReqId = -1;
 
         declare LastPlayerLogin = "";
 
-        declare Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
-        declare Frame_Records <=> (Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
+        G_Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
+        G_Frame_Records <=> (G_Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
+        G_Frame_Error <=> (Page.GetFirstChild("Frame_Error") as CMlFrame);
         declare netread Net_RecordsUpdated for Teams[0] = -1;
         declare LastUpdate = Net_RecordsUpdated;
 
         while (True) {
             yield;
 
-            declare LocalPlayer <=> InputPlayer;
-            if (GUIPlayer != Null) LocalPlayer <=> GUIPlayer;
-            if (LocalPlayer == Null) continue;
+            G_LocalPlayer <=> InputPlayer;
+            if (GUIPlayer != Null) G_LocalPlayer <=> GUIPlayer;
+            if (G_LocalPlayer == Null) continue;
 
-            if (LocalPlayer.User.Login != LastPlayerLogin) {
+            if (G_LocalPlayer.User.Login != LastPlayerLogin) {
                 LastUpdate = -1;
-                LastPlayerLogin = LocalPlayer.User.Login;
+                LastPlayerLogin = G_LocalPlayer.User.Login;
             }
 
-            if (Net_RecordsUpdated != LastUpdate && Frame_Widget.Visible) {
-                log("RecordsWidget: Updating records");
-                UpdateRecords(LocalPlayer.User.Login);
+            if (Net_RecordsUpdated != LastUpdate && G_Frame_Widget.Visible) {
                 LastUpdate = Net_RecordsUpdated;
+                UpdateRecords(G_LocalPlayer.User.Login);
             }
 
-            if (G_Req != Null && G_Req.IsCompleted) {
-                log("RecordsWidget: Request completed");
-                log("RecordsWidget: Status code: " ^ G_Req.StatusCode);
-                if (G_Req.StatusCode != 200) {
-                    declare err = ErrMgr_Handle(G_Req.StatusCode, G_Req.Result);
-                    UI.SendChat(err.Err.message);
-                    Http.Destroy(G_Req);
-                    G_Req = Null;
-                    continue;
-                }
-                declare K_Response response;
-                response.fromjson(G_Req.Result);
-
-                declare HasLocalPlayerFinished = False;
-                foreach (Idx => Control in Frame_Records.Controls) {
-                    declare frame <=> (Control as CMlFrame);
-                    declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
-                    declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
-                    declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
-
-                    if (response.response.existskey(Idx)) {
-                        rankLabel.SetText(""^response.response[Idx].rank);
-                        nameLabel.SetText(response.response[Idx].nickname);
-                        timeLabel.SetText(TL::TimeToText(response.response[Idx].time, True));
-
-                        if (response.response[Idx].login == LocalPlayer.User.Login)
-                            HasLocalPlayerFinished = True;
-
-                        Control.Show();
-                    } else if (!HasLocalPlayerFinished && Idx == Frame_Records.Controls.count - 1) {
-                        rankLabel.SetText("");
-                        nameLabel.SetText(LocalPlayer.User.Name);
-                        timeLabel.SetText("--:--:--");
-                        Control.Show();
-                    } else {
-                        Control.Hide();
-                    }
-                }
-
-                Http.Destroy(G_Req);
-                G_Req = Null;
-            }
+            LoopUpdateRecords();
 
             foreach (Event in PendingEvents) {
                switch (Event.Type) {
@@ -233,8 +238,6 @@ Text GetLayer() {
                     }
                 }
             }
-
-            SendPendingReqs();
 
             {{{CustomUI::InjectMLLoop()}}}
         }

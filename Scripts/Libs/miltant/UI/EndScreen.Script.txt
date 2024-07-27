@@ -6,13 +6,13 @@
 #Const  Version     "2023-29-06"
 #Const  ScriptName  "EndScreen.Script.txt"
 
-Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition, Boolean _LastMap) {
+Text GetLayer(Boolean _WithNextMapButton, Boolean _LastMap) {
 	declare Text CampaignTitle;
 	declare Text CampaignSubtitle;
 	declare Text BannerImgUrl;
 
-	if (!ObsEvents::HasFailed() && ObsEvents::Current().EditionsDetails.existskey(_SelectedEdition)) {
-		declare CurrentEvent = ObsEvents::Current().EditionsDetails[_SelectedEdition];
+	if (!ObsEvents::HasFailed()) {
+		declare CurrentEvent = ObsEvents::CurrentEdition();
 		CampaignTitle = CurrentEvent.name;
 		CampaignSubtitle = CurrentEvent.subtitle;
 		BannerImgUrl = CurrentEvent.banner2_img_url;
@@ -57,7 +57,7 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition, Boolean _Las
 	
     return """
 <manialink version="3" name="Obstacle:EndScreen">
-<frame pos="-48.5 62">
+<frame pos="-48.5 62" id="Frame_Main" hidden="1">
 	<frame>
 		<label pos="4.33 -7.5" size="85.8 8.91" text="$s{{{CampaignTitle}}}" textprefix="$t" textfont="lato" textsize="8.5" textcolor="fff"/>
 		<label pos="5.17 -16.67" size="47.4 4.77" text="$s{{{CampaignSubtitle}}}" textprefix="$t" textfont="lato" textsize="5" textcolor="fff"/>
@@ -134,11 +134,16 @@ Text GetLayer(Boolean _WithNextMapButton, Integer _SelectedEdition, Boolean _Las
 
 	{{{Styles::GetDeclareGlobals()}}}
 
-
-		
 	main() {
 		{{{Styles::GetInitFrameMenus()}}}
         wait(InputPlayer != Null && Page != Null);
+
+		// This waits for any potential dialog happening when finishing a map to end.
+		declare CMlFrame MainFrame <=> (Page.GetFirstChild("Frame_Main") as CMlFrame);
+		MainFrame.Hide();
+		declare netread Boolean Net_PendingFinish for UI = False;
+		wait(!Net_PendingFinish);
+		MainFrame.Show();
 
         declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
         declare netread Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;

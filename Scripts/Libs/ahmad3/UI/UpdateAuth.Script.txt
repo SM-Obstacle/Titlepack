@@ -1,0 +1,369 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   UI layer used to update the player token
+ ***********************************************/
+
+#Include "Libs/ahmad3/InGameDialog.Script.txt" as Dlg
+#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+
+#Include "Libs/smokegun/Constants.Script.txt" as Constants
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-25"
+#Const ScriptName "UpdateAuth.Script.txt"
+
+#Const C_Ev_TokenUpdated "obstoken:update:done"
+#Const C_Ev_TokenUpdateFailed "obstoken:update:failed"
+#Const C_Ev_AuthUpdateSkipped "obstoken:update:skipped"
+#Const C_Ev_AuthUpdateIgnored "obstoken:update:ignored"
+#Const C_Ev_NeedToken "obstoken:needed"
+
+#Const C_AuthDialogMsg """We are about to refresh your personal tokens.
+
+This procedure will open your browser to the ManiaPlanet's login page.
+You will only have to authenticate with the same account as the one
+you use in game."""
+
+#Const C_AuthMessage_UpdatePlayer """Hey there! To continue to enjoy Obstacle,
+we need you to authenticate with your ManiaPlanet account.
+"""
+
+#Const C_AuthMessage_PlayerFinished """Hey! Before you finish and save your record,
+we need you to authenticate with your ManiaPlanet account.
+Do not skip this step, or your run will be lost! Don't worry, it's fast!
+"""
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+/**
+ * Contains the list of UI config that failed to update the user token.
+ *
+ * These are flagged to avoid them to always try to update the token if it failed the first time,
+ * because it will probably fail the second time too.
+ */
+declare Ident[] G_FailedTokenUpdates;
+
+declare Ident[] G_PendingAuthUpdates;
+
+declare Ident[] G_SkippedAuthUpdates;
+
+declare Ident[] G_IgnoredAuthUpdates;
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Void Private_NotifyAuthIgnored(CUIConfig _UI) {
+    declare netwrite Integer Net_AuthIgnored for _UI = -1;
+    Net_AuthIgnored = Now;
+}
+
+Void Private_NotifyNeedToken(CUIConfig _UI, Boolean _OnFinish) {
+    // Ignore if the target UI is already updating or already failed
+    if (G_PendingAuthUpdates.exists(_UI.Id) || G_FailedTokenUpdates.exists(_UI.Id)) return;
+
+    // If the player ignored the auth, notify it to the requesting layer
+    if (G_IgnoredAuthUpdates.exists(_UI.Id)) {
+        Private_NotifyAuthIgnored(_UI);
+        return;
+    }
+
+    declare netwrite Integer Net_NeedsTokenUpdate for _UI = -1;
+    declare netwrite Boolean Net_NeedsTokenUpdateOnFinished for _UI = False;
+    Net_NeedsTokenUpdateOnFinished = _OnFinish;
+    Net_NeedsTokenUpdate = Now;
+
+    G_PendingAuthUpdates.add(_UI.Id);
+}
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Void Init() {
+    // Resets everything except the ignored updates
+    G_FailedTokenUpdates = [];
+    G_PendingAuthUpdates = [];
+    G_SkippedAuthUpdates = [];
+}
+
+Void HandleCustomEvent(CUIConfigEvent _Event) {
+    assert(
+        _Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent,
+        "the _Event param must be a custom event"
+    );
+
+    switch (_Event.CustomEventType) {
+        case C_Ev_TokenUpdated: {
+            G_PendingAuthUpdates.remove(_Event.UI.Id);
+            declare netwrite Integer Net_AuthUpdated for _Event.UI = -1;
+            Net_AuthUpdated = Now;
+        }
+
+        case C_Ev_TokenUpdateFailed: {
+            if (!G_FailedTokenUpdates.exists(_Event.UI.Id)) {
+                G_FailedTokenUpdates.add(_Event.UI.Id);
+            }
+        }
+
+        case C_Ev_AuthUpdateSkipped: {
+            G_PendingAuthUpdates.remove(_Event.UI.Id);
+            G_SkippedAuthUpdates.add(_Event.UI.Id);
+        }
+
+        case C_Ev_AuthUpdateIgnored: {
+            G_PendingAuthUpdates.remove(_Event.UI.Id);
+            G_SkippedAuthUpdates.remove(_Event.UI.Id);
+            G_IgnoredAuthUpdates.add(_Event.UI.Id);
+            Private_NotifyAuthIgnored(_Event.UI);
+        }
+
+        case C_Ev_NeedToken: {
+            declare Boolean OnFinish = False;
+            if (_Event.CustomEventData[0] == "True") {
+                OnFinish = True;
+            }
+            Private_NotifyNeedToken(_Event.UI, OnFinish);
+        }
+    }
+}
+
+Text ML_Content(Text _ModName) {
+    return """//!
+Void {{{_ModName}}}_NotifyNeedUpdate(Boolean _OnFinish) { 
+    SendCustomEvent({{{dump(C_Ev_NeedToken)}}}, [_OnFinish ^ ""]);
+}
+
+Void {{{_ModName}}}_NotifyNeedUpdate() {
+    {{{_ModName}}}_NotifyNeedUpdate(False);
+}
+    """;
+}
+
+/**
+ * Returns the manialink page of the layer.
+ */
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:UpdateAuth">
+    <script><![CDATA[
+
+#Struct K_GetTokenBody {
+    Text login;
+    Text state;
+    Text redirect_uri;
+}
+
+#Struct K_GetTokenResponse {
+    Text token;
+}
+
+{{{Dlg::ML_Preproc("Dlg")}}}
+{{{ReqMgr::ML_Preproc("ReqMgr")}}}
+
+{{{Dlg::ML_Content("Dlg", "UpdateAuth")}}}
+{{{AuthUtils::ML_Content("AuthUtils")}}}
+{{{ReqMgr::ML_Content("ReqMgr")}}}
+
+declare Integer G_NeedsTokenUpdate;
+
+////////// Used for the auth dialog
+
+declare Boolean G_InitUpdateToken;
+declare Integer G_AuthDialogId;
+declare Integer G_Tries;
+
+////////// Used for the token update request
+
+declare Boolean G_InitUpdateTokenReq;
+declare Ident G_UpdateTokenReq;
+declare Text G_State;
+
+declare Boolean G_UpdateTokenReqIsPending;
+declare Integer G_PendingUpdateTokenReqId;
+
+Void InitUpdateToken(Boolean _OnFinished) {
+    G_InitUpdateToken = True;
+    declare Text Msg = {{{dump(dump(dump(C_AuthDialogMsg)))}}};
+
+    if (_OnFinished) {
+        Msg = {{{dump(dump(dump(C_AuthMessage_PlayerFinished)))}}} ^ Msg;
+    } else {
+        Msg = {{{dump(dump(dump(C_AuthMessage_UpdatePlayer)))}}} ^ Msg;
+    }
+
+    declare Text SkipBtnLabel = "Skip";
+    declare Text SkipBtnId = "Skip_Button";
+    if (G_Tries > 0) {
+        SkipBtnLabel = "Ignore";
+        SkipBtnId = "Ignore_Button";
+    }
+
+    G_AuthDialogId = Dlg_NewDialog(Dlg_K_Dialog {
+        Title = "Authentication",
+        Msg = Msg,
+        AllowClose = False,
+        Buttons = [
+            Dlg_K_Button {
+                MlId = "OK_Button",
+                Label = "Fine",
+                Success = True
+            },
+            Dlg_K_Button {
+                MlId = SkipBtnId,
+                Label = SkipBtnLabel,
+                Success = False
+            }
+        ]
+    });
+}
+
+Void OpenLoginPage() {
+    declare Text Link = {{{dump(Constants::C_MP_Link)}}}
+        ^ "client_id=" ^ {{{dump(Constants::C_MP_App_Id)}}}
+        ^ "&redirect_uri=" ^ {{{dump(Constants::C_MP_Redirect)}}}
+        ^ "&state=" ^ G_State
+        ^ "&scope=basic";
+
+    OpenLink(Link, CMlScriptIngame::LinkType::ExternalBrowser);
+}
+
+Void InitUpdateTokenReq() {
+    G_InitUpdateTokenReq = True;
+
+    G_State = LocalUser.Login ^ Now;
+
+    declare K_GetTokenBody Body = K_GetTokenBody {
+        login = LocalUser.Login,
+        state = G_State,
+        redirect_uri = {{{dump(Constants::C_MP_Redirect)}}}
+    };
+
+    declare Ident ReqId = ReqMgr_MakePost(ReqMgr_K_PostRequest {
+        Route = "player/get_token",
+        Body = Body.tojson(),
+        Headers = ReqMgr_DefaultHeaders()
+    });
+
+    if (ReqId == NullId) {
+        G_UpdateTokenReqIsPending = True;
+        G_PendingUpdateTokenReqId = ReqMgr_LastPendingReqId();
+    } else {
+        G_UpdateTokenReqIsPending = False;
+        G_UpdateTokenReq = ReqId;
+        OpenLoginPage();
+    }
+}
+
+Void LoopUpdateToken() {
+    if (!G_InitUpdateToken) return;
+
+    declare Dlg_K_DialogPromptResult TokenDialog = Dlg_PromptDialog(G_AuthDialogId);
+    if (!TokenDialog.Over) return;
+
+    Dlg_CloseDialog(G_AuthDialogId);
+    G_InitUpdateToken = False;
+    if (TokenDialog.Success) {
+        InitUpdateTokenReq();
+    } else {
+        G_Tries += 1;
+        declare Text CustomEvent;
+        if (G_Tries >= 2) {
+            CustomEvent = {{{dump(C_Ev_AuthUpdateIgnored)}}};
+        } else {
+            CustomEvent = {{{dump(C_Ev_AuthUpdateSkipped)}}};
+        }
+        SendCustomEvent(CustomEvent, []);
+    }
+}
+
+Void LoopUpdateTokenReq() {
+    if (!G_InitUpdateTokenReq) return;
+
+    if (G_UpdateTokenReqIsPending) {
+        declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingUpdateTokenReqId);
+        if (ReqId == NullId) {
+            return;
+        } else {
+            G_UpdateTokenReqIsPending = False;
+            G_UpdateTokenReq = ReqId;
+            OpenLoginPage();
+        }
+    }
+
+    declare CHttpRequest Req <=> Http.Requests[G_UpdateTokenReq];
+    if (!Req.IsCompleted) return;
+    G_InitUpdateTokenReq = False;
+
+    if (Req.StatusCode == 200) {
+        declare K_GetTokenResponse Res;
+        Res.fromjson(Req.Result);
+        AuthUtils_SetUserToken(Res.token);
+        SendCustomEvent({{{dump(C_Ev_TokenUpdated)}}}, []);
+    } else {
+        SendCustomEvent({{{dump(C_Ev_TokenUpdateFailed)}}}, []);
+    }
+
+    Http.Destroy(Req);
+}
+
+Void InitNeedsTokenUpdate() {
+    declare netread Integer Net_NeedsTokenUpdate for UI = -1;
+    G_NeedsTokenUpdate = Net_NeedsTokenUpdate;
+}
+
+Boolean NeedsTokenUpdate() {
+    declare netread Integer Net_NeedsTokenUpdate for UI = -1;
+    if (G_NeedsTokenUpdate != Net_NeedsTokenUpdate && !IsSpectator) {
+        G_NeedsTokenUpdate = Net_NeedsTokenUpdate;
+        return True;
+    }
+    return False;
+}
+
+main() {
+    InitNeedsTokenUpdate();
+    declare netread Boolean Net_NeedsTokenUpdateOnFinished for UI = False;
+
+    while (True) {
+        yield;
+
+        if (NeedsTokenUpdate()) {
+            InitUpdateToken(Net_NeedsTokenUpdateOnFinished);
+        }
+
+        LoopUpdateToken();
+        LoopUpdateTokenReq();
+    }
+}
+
+    ]]></script>
+</manialink>
+    """;
+}

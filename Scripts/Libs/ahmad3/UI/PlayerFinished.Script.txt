@@ -1,0 +1,448 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   HTTP logic when the player finishes
+ ***********************************************/
+
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+
+#Include "Libs/ahmad3/UI/CachedRequests.Script.txt" as CachReqs
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+#Include "Libs/ahmad3/UI/UpdateAuth.Script.txt" as UpdateAuth
+
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrReport
+
+#Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
+
+#Include "Libs/smokegun/Settings.Script.txt" as Settings
+#Include "Libs/smokegun/Player.Script.txt" as Player
+#Include "Libs/miltant/RunFlags.Script.txt" as RunFlags
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-25"
+#Const ScriptName "PlayerFinished.Script.txt"
+
+#Const C_Ev_ReqFailedToSend "player:finish:err"
+#Const C_Ev_ApproveCache "player:finish:cached"
+#Const C_Ev_PlayerFinished "player:finish"
+
+/*********************************************
+  TYPES
+ *********************************************/
+
+#Struct K_HasFinishedResponse {
+    Boolean has_improved;
+    Text login;
+    Integer old;
+    Integer new;
+    Integer current_rank;
+}
+
+#Struct K_PlayerFinishedBody {
+    Integer time;
+    Integer respawn_count;
+    Text login;
+    Text map_uid;
+    Integer flags;
+    Integer[] cps;
+}
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+declare CachReqs::K_CachedReq[][Ident] G_FinishCachedReqs;
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Text Private_OrdinalSuffix(Integer _Rank) {
+    declare Text[Integer] Suffixes = [1 => "st", 2 => "nd", 3 => "rd"];
+    declare Suff = "th";
+    // Avoids 11, 12 and 13 to be taken into account
+    if (20 < _Rank % 100 || _Rank % 100 < 10) {
+        Suff = Suffixes.get(_Rank % 10, "th");
+    }
+    return TL::ToText(_Rank) ^ Suff;
+}
+
+Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult) {
+    declare CSmPlayer Player <=> GetPlayer(_UI);
+    declare ErrMgr::K_Error Err = ErrMgr::Handle(_StatusCode, _ReqResult);
+    ErrReport::Report(Player, Err);
+    Player::setHasWrongLbLine(Player, True);
+}
+
+Void Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
+    if (!G_FinishCachedReqs.existskey(_UI.Id)) return;
+    declare Integer IdxToRemove = -1;
+    foreach (Idx => Cached in G_FinishCachedReqs[_UI.Id]) {
+        if (Cached == CachReqs::K_CachedReq {
+            Route = ObsEvents::PrefixEventRoute("player/finished"),
+            Tstp = _Tstp,
+            Body = _Body
+        }) {
+            IdxToRemove = Idx;
+            break;
+        }
+    }
+
+    if (IdxToRemove < 0) return; 
+    G_FinishCachedReqs[_UI.Id].removekey(IdxToRemove);
+}
+
+Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Body) {
+    declare K_HasFinishedResponse Res;
+    Res.fromjson(_Response);
+
+    Private_RemoveCached(_UI, _Tstp, _Body);
+
+    declare CSmPlayer Player <=> GetPlayer(_UI);
+
+    Player::setHasWrongLbLine(Player, False);
+
+    declare Text NewTime = TL::TimeToText(Res.new, True);
+    declare Text OldTime = TL::TimeToText(Res.old, True);
+    declare Text DiffTime = TL::TimeToText(ML::Abs(Res.new - Res.old), True);
+    declare Text CurrentRank = Private_OrdinalSuffix(Res.current_rank);
+
+    if (Res.has_improved) {
+        declare netwrite Integer Net_RecordsUpdated for Teams[0] = -1;
+        Net_RecordsUpdated = Now;
+        if (Settings::GetBestNewRecordMsg() != "") {
+            UIManager.UIAll.SendChat(TL::Compose(
+                Settings::GetBestNewRecordMsg(),
+                Player.User.Name,
+                NewTime,
+                CurrentRank,
+                OldTime,
+                DiffTime
+            ));
+        }
+    } else if (Settings::GetWorseNewRecordMsg() != "") {
+        _UI.SendChat(TL::Compose(
+            Settings::GetWorseNewRecordMsg(),
+            Player.User.Name,
+            NewTime,
+            CurrentRank,
+            OldTime,
+            DiffTime
+        ));
+    }
+
+    declare netwrite Boolean Net_PendingFinish for _UI = True;
+    Net_PendingFinish = False;
+}
+
+Void Private_HandleCacheApprove(CUIConfig _UI, Integer _Tstp, Text _Body) {
+    log("Approving cache save for " ^ _Tstp);
+    declare CSmPlayer Player <=> GetPlayer(_UI);
+    Player::setHasWrongLbLine(Player, True);
+    Private_RemoveCached(_UI, _Tstp, _Body);
+    declare netwrite Boolean Net_PendingFinish for _UI = True;
+    Net_PendingFinish = False;
+}
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Void HandleCustomEvent(CUIConfigEvent _Event) {
+    assert(_Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent, "_Event must be a custom event");
+
+    switch (_Event.CustomEventType) {
+        case C_Ev_ReqFailedToSend: {
+            declare Integer StatusCode = TL::ToInteger(_Event.CustomEventData[0]);
+            declare Text Result = _Event.CustomEventData[1];
+            Private_HandleFinishErr(_Event.UI, StatusCode, Result);
+        }
+
+        case C_Ev_PlayerFinished: {
+            declare Text Response = _Event.CustomEventData[0];
+            declare Integer Tstp = TL::ToInteger(_Event.CustomEventData[1]);
+            declare Text Body = _Event.CustomEventData[2];
+            Private_HandleFinish(_Event.UI, Response, Tstp, Body);
+        }
+
+        case C_Ev_ApproveCache: {
+            declare Integer Tstp = TL::ToInteger(_Event.CustomEventData[0]);
+            declare Text Body = _Event.CustomEventData[1];
+            Private_HandleCacheApprove(_Event.UI, Tstp, Body);
+        }
+    }
+}
+
+Void NotifyPlayerFinished(CSmPlayer _Player) {
+    declare CUIConfig UI <=> UIManager.GetUI(_Player);
+
+    // This prevents other dialogs (like the campaign's EndScreen) to show up on top
+    // of the auth dialog when finishing a map.
+    declare netwrite Boolean Net_PendingFinish for UI = False;
+    Net_PendingFinish = True;
+
+    declare Integer[] CpTimes = [];
+    declare Integer LastCpTime = 0;
+    foreach (Time in Player::getLastCPTimes(_Player)) {
+        CpTimes.add(Time - LastCpTime);
+        LastCpTime = Time;
+    }
+
+    declare K_PlayerFinishedBody Body = K_PlayerFinishedBody {
+        time = Player::getLastRun(_Player),
+        respawn_count = Player::getRespawnCount(_Player),
+        login = _Player.User.Login,
+        map_uid = Map.Id ^ "",
+        flags = RunFlags::GetFlagsSum(
+            Player::usedRSBug(_Player),
+            Player::usedAltGlitch(_Player),
+            Player::usedPvPWeapons(_Player),
+            Player::usedPvPCollisions(_Player),
+            Player::usedSpeedHack(_Player)
+        ),
+        cps = CpTimes
+    };
+
+    declare Text JsonBody = Body.tojson();
+
+    declare CachReqs::K_CachedReq Cached = CachReqs::SaveCacheFor(
+        UI,
+        JsonBody,
+        ObsEvents::PrefixEventRoute("player/finish")
+    );
+    if (!G_FinishCachedReqs.existskey(UI.Id)) {
+        G_FinishCachedReqs[UI.Id] = [];
+    }
+    G_FinishCachedReqs[UI.Id].add(Cached);
+
+    declare netwrite Integer Net_PF_Update for UI = -1;
+    declare netwrite Integer Net_PF_Tstp for UI = -1;
+    declare netwrite Text Net_PF_Body for UI = "";
+
+    Net_PF_Body = JsonBody;
+    Net_PF_Tstp = Cached.Tstp;
+    Net_PF_Update = Now;
+}
+
+Text GetLayer() {
+    return """
+<manialink version="3" name="Obstacle:PlayerFinished">
+    <script><![CDATA[
+
+#Struct K_FinishReq {
+    Integer Tstp;
+    Text Body;
+}
+
+{{{ReqMgr::ML_Preproc("ReqMgr")}}}
+
+{{{ReqMgr::ML_Content("ReqMgr")}}}
+{{{UpdateAuth::ML_Content("UserAuth")}}}
+
+declare Text G_PlayerFinishedRoute;
+
+/////////////// ML Update
+declare Integer G_Update;
+declare Integer G_AuthUpdated;
+declare Integer G_AuthIgnoredUpdate;
+
+declare Integer G_CurrentReqIdx;
+declare K_FinishReq[Integer] G_AllFinishes;
+declare Integer[] G_WaitingForAuth;
+declare Integer[Integer] G_PendingPlayerFinishedReqs;
+declare Ident[Integer] G_PlayerFinishedReqs;
+
+declare Boolean G_AuthIgnored;
+
+Void ApproveCached(K_FinishReq _Req) {
+    SendCustomEvent({{{dump(C_Ev_ApproveCache)}}}, [_Req.Tstp ^ "", _Req.Body]);
+}
+
+Void InitPlayerFinish(K_FinishReq _Req) {
+    if (G_AuthIgnored) {
+        ApproveCached(_Req);
+        return;
+    }
+
+    G_CurrentReqIdx += 1;
+    G_AllFinishes[G_CurrentReqIdx] = _Req;
+
+    declare Ident ReqId = ReqMgr_MakePost(ReqMgr_K_PostRequest {
+        Route = G_PlayerFinishedRoute,
+        Body = _Req.Body,
+        Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
+    });
+
+    if (ReqId == NullId) {
+        G_PendingPlayerFinishedReqs[G_CurrentReqIdx] = ReqMgr_LastPendingReqId();
+    } else {
+        G_PlayerFinishedReqs[G_CurrentReqIdx] = ReqId;
+    }
+}
+
+Void LoopPlayerFinished() {
+    if (G_PendingPlayerFinishedReqs.count == 0 && G_PlayerFinishedReqs.count == 0) return;
+
+    declare Integer[] PendingReqsToRemove = [];
+    foreach (Idx => PendingReqId in G_PendingPlayerFinishedReqs) {
+        declare Ident ReqId = ReqMgr_MakePendingReq(PendingReqId);
+        if (ReqId == NullId) {
+            continue;
+        } else {
+            G_PlayerFinishedReqs[Idx] = ReqId;
+            PendingReqsToRemove.add(Idx);
+        }
+    }
+
+    foreach (Idx in PendingReqsToRemove) {
+        G_PendingPlayerFinishedReqs.removekey(Idx);
+    }
+
+    declare Integer[] ReqsToRemove = [];
+    foreach (Idx => ReqId in G_PlayerFinishedReqs) {
+        declare CHttpRequest Req <=> Http.Requests[ReqId];
+        if (!Req.IsCompleted) continue;
+
+        switch (Req.StatusCode) {
+            case 200: {
+                declare K_FinishReq Finish = G_AllFinishes[Idx];
+                SendCustomEvent({{{dump(C_Ev_PlayerFinished)}}}, [Req.Result, Finish.Tstp ^ "", Finish.Body]);
+                G_AllFinishes.removekey(Idx);
+            }
+            case 401: {
+                UserAuth_NotifyNeedUpdate(True);
+                G_WaitingForAuth.add(Idx);
+            }
+            default: {
+                ApproveCached(G_AllFinishes[Idx]);
+                G_AllFinishes.removekey(Idx);
+                SendCustomEvent({{{dump(C_Ev_ReqFailedToSend)}}}, [Req.StatusCode ^ "", Req.Result]);
+            }
+        }
+
+        ReqsToRemove.add(Idx);
+        Http.Destroy(Req);
+    }
+
+    foreach (Idx in ReqsToRemove) {
+        G_PlayerFinishedReqs.removekey(Idx);
+    }
+}
+
+Void SendWaitingForAuthReqs() {
+    foreach (Idx in G_WaitingForAuth) {
+        InitPlayerFinish(G_AllFinishes[Idx]);
+    }
+    G_WaitingForAuth.clear();
+}
+
+Void ApproveCacheForWaitingAuthReqs() {
+    foreach (Idx in G_WaitingForAuth) {
+        ApproveCached(G_AllFinishes[Idx]);
+    }
+    G_WaitingForAuth.clear();
+}
+
+Void InitUpdate() {
+    declare netread Integer Net_PF_Update for UI = -1;
+    G_Update = Net_PF_Update;
+}
+
+Boolean Updated() {
+    declare netread Integer Net_PF_Update for UI = -1;
+    if (G_Update != Net_PF_Update) {
+        G_Update = Net_PF_Update;
+        return True;
+    }
+    return False;
+}
+
+Void InitAuthUpdated() {
+    declare netread Integer Net_AuthUpdated for UI = -1;
+    G_AuthUpdated = Net_AuthUpdated;
+}
+
+Boolean AuthUpdated() {
+    declare netread Integer Net_AuthUpdated for UI = -1;
+    if (G_AuthUpdated != Net_AuthUpdated) {
+        G_AuthUpdated = Net_AuthUpdated;
+        return True;
+    }
+    return False;
+}
+
+Void InitAuthIgnored() {
+    declare netread Integer Net_AuthIgnored for UI = -1;
+    G_AuthIgnoredUpdate = Net_AuthIgnored;
+}
+
+Boolean AuthIgnored() {
+    declare netread Integer Net_AuthIgnored for UI = -1;
+    if (G_AuthIgnoredUpdate != Net_AuthIgnored) {
+        G_AuthIgnoredUpdate = Net_AuthIgnored;
+        return True;
+    }
+    return False;
+}
+
+main() {
+    G_PlayerFinishedRoute = {{{dump(ObsEvents::PrefixEventRoute("player/finished"))}}};
+
+    InitUpdate();
+    InitAuthUpdated();
+    InitAuthIgnored();
+
+    declare netread Text Net_PF_Body for UI = "";
+    declare netread Integer Net_PF_Tstp for UI = -1;
+
+    while (True) {
+        yield;
+
+        if (Updated()) {
+            InitPlayerFinish(K_FinishReq {
+                Tstp = Net_PF_Tstp,
+                Body = Net_PF_Body
+            });
+        }
+
+        if (AuthUpdated()) {
+            SendWaitingForAuthReqs();
+        }
+
+        if (G_WaitingForAuth.count > 0 && AuthIgnored()) {
+            G_AuthIgnored = True;
+            ApproveCacheForWaitingAuthReqs();
+        }
+
+        LoopPlayerFinished();
+    }
+}
+
+    ]]></script>
+</manialink>
+    """;
+}

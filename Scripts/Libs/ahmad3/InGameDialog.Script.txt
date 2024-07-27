@@ -139,6 +139,11 @@ declare K_Dialog[Integer][Ident] G_PendingDialogs;
  */
 declare Integer[Ident] G_ShownDialogIds;
 
+/**
+ * Associates each player UI config ID to the name of the layer of the dialog.
+ */
+declare Text[Ident] G_DialogLayers;
+
 /*********************************************
   FUNCTIONS
  *********************************************/
@@ -304,9 +309,10 @@ main() {
  * @param _Dialog The content of the dialog.
  */
 Void Private_AttachDialogFor(CUIConfig _UI, Integer _DialogId, K_Dialog _Dialog) {
-    Layers::Create("InGameDialog", Private_GetLayer(_DialogId, _Dialog));
+    G_DialogLayers[_UI.Id] = "InGameDialog__" ^ _UI.Id;
+    Layers::Create(G_DialogLayers[_UI.Id], Private_GetLayer(_DialogId, _Dialog));
     declare CSmPlayer Player <=> GetPlayer(_UI);
-    Layers::Attach("InGameDialog", Player);
+    Layers::Attach(G_DialogLayers[_UI.Id], Player);
     G_ShownDialogIds[_UI.Id] = _DialogId;
 }
 
@@ -325,6 +331,8 @@ Void Private_HandleNewDialog(CUIConfig _UI, Text _PageId, K_Dialog _Dialog) {
     // Push to the pending dialogs of the client.
     if (!G_PendingDialogs.existskey(_UI.Id)) {
         G_PendingDialogs[_UI.Id] = [];
+    }
+    if (!G_LastDialogIds.existskey(_UI.Id)) {
         G_LastDialogIds[_UI.Id] = 0;
     }
     G_LastDialogIds[_UI.Id] += 1;
@@ -362,7 +370,6 @@ Void Private_HandleCloseDialog(CUIConfig _UI, Integer _DialogId) {
         // This was the last dialog to show to the client,
         // so we remove everything related to it.
 
-        G_LastDialogIds.removekey(_UI.Id);
         G_PendingDialogs.removekey(_UI.Id);
         G_ShownDialogIds.removekey(_UI.Id);
 
@@ -427,7 +434,6 @@ Void Init() {
         declare netwrite Integer[Integer] Net_Dlg_PromptDialogUpdates for UI = [];
         Net_Dlg_PromptDialogUpdates = [];
     }
-    Layers::Detach("InGameDialog");
 }
 
 /**
@@ -475,7 +481,10 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
         ////////////
         case C_Ev_DialogScriptFinish: {
             declare CSmPlayer Player <=> GetPlayer(_Event.UI);
-            Layers::Detach("InGameDialog", Player);
+            Layers::Detach(G_DialogLayers[_Event.UI.Id], Player);
+            G_DialogLayers.removekey(_Event.UI.Id);
+            declare netwrite Boolean Net_PendingFinish for _Event.UI = True;
+            Net_PendingFinish = False;
         }
     }
 }
@@ -560,6 +569,8 @@ Void {{{_ModName}}}_CloseDialog(Integer _DialogId) {
 Integer {{{_ModName}}}_NewDialog({{{_ModName}}}_K_Dialog _Dialog) {
     SendCustomEvent({{{dump(C_Ev_NewDialog)}}}, ["{{{_MlPage}}}", _Dialog.tojson()]);
 
+    declare Boolean InGameDialogActive for LocalUser = False;
+    InGameDialogActive = True;
     declare netread Integer[Text] Net_Dlg_LastDialogIds for UI = [];
     wait(Net_Dlg_LastDialogIds.existskey("{{{_MlPage}}}")
         && Net_Dlg_LastDialogIds["{{{_MlPage}}}"] != {{{_ModName}}}_G_LastDialogId);

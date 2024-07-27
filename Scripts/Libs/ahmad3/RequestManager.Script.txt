@@ -1,0 +1,322 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   Request manager, to manage requests in a CMlScriptIngame context
+ ***********************************************/
+
+#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
+#Include "Libs/smokegun/Constants.Script.txt" as Constants
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-07-25"
+#Const ScriptName "RequestManager.Script.txt"
+
+/*********************************************
+  TYPES
+ *********************************************/
+
+#Struct K_GetRequest {
+    Text Route;
+    Boolean UseCache;
+    Text[Text] Headers;
+}
+
+#Struct K_PostRequest {
+    Text Route;
+    Text Body;
+    Text[Text] Headers;
+}
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+declare K_GetRequest[Integer] G_PendingGetReqs;
+declare K_PostRequest[Integer] G_PendingPostReqs;
+declare Integer G_LastPendingReqId;
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Void Private_AssertSlotsAvailable() {
+    assert(Http.SlotsAvailable > 0, "there must be a slot available for the request to perform");
+}
+
+Text Private_BuildHeaders(Text[Text] _Headers) {
+    declare Text Out = "";
+    foreach (HeaderName => Value in _Headers) {
+        Out ^= HeaderName ^ ": " ^ Value ^ "\n";
+    }
+    return Out;
+}
+
+Ident Private_MakePostImpl(K_PostRequest _Request) {
+    Private_AssertSlotsAvailable();
+
+    declare CHttpRequest Req = Http.CreatePost(
+        Constants::C_HostUrl ^ _Request.Route,
+        _Request.Body,
+        Private_BuildHeaders(_Request.Headers)
+    );
+
+    return Req.Id;
+}
+
+Ident Private_MakeGetImpl(K_GetRequest _Request) {
+    Private_AssertSlotsAvailable();
+
+    declare CHttpRequest Req = Http.CreateGet(
+        Constants::C_HostUrl ^ _Request.Route,
+        _Request.UseCache,
+        Private_BuildHeaders(_Request.Headers)
+    );
+
+    return Req.Id;
+}
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Text[Text] DefaultHeaders() {
+    return [
+        "Content-Type" => "application/json",
+        "Accept" => "application/json"
+    ];
+}
+
+Text[Text] AuthHeaders(CUser _User) {
+    declare Text Token = AuthUtils::GetUserToken(_User);
+    return [
+        "PlayerLogin" => _User.Login,
+        "Authorization" => Token
+    ];
+}
+
+Text[Text] MergeHeaders(Text[Text] _A, Text[Text] _B) {
+    declare Text[Text] Out = _A;
+    foreach (HeaderName => Value in _B) {
+        Out[HeaderName] = Value;
+    }
+    return Out;
+}
+
+Text[Text] DefaultHeadersWith(Text[Text] _Others) {
+    return MergeHeaders(DefaultHeaders(), _Others);
+}
+
+Integer LastPendingReqId() {
+    return G_LastPendingReqId;
+}
+
+Ident MakePost(K_PostRequest _Request) {
+    if (Http.SlotsAvailable > 0) {
+        return Private_MakePostImpl(_Request);
+    }
+
+    G_LastPendingReqId += 1;
+    G_PendingPostReqs[G_LastPendingReqId] = _Request;
+
+    return NullId;
+}
+
+Ident MakeGet(K_GetRequest _Request) {
+    if (Http.SlotsAvailable > 0) {
+        return Private_MakeGetImpl(_Request);
+    }
+
+    G_LastPendingReqId += 1;
+    G_PendingGetReqs[G_LastPendingReqId] = _Request;
+
+    return NullId;
+}
+
+Ident MakePendingReq(Integer _PendingReqId) {
+    assert(
+        G_PendingPostReqs.existskey(_PendingReqId)
+            || G_PendingGetReqs.existskey(_PendingReqId),
+        "the param _PendingReqId must be the ID of a pending request"
+    );
+
+    if (G_PendingPostReqs.existskey(_PendingReqId)) {
+        declare K_PostRequest PendingReq =
+            G_PendingPostReqs[_PendingReqId];
+        if (Http.SlotsAvailable > 0) {
+            G_PendingPostReqs.removekey(_PendingReqId);
+            return Private_MakePostImpl(PendingReq);
+        }
+    } else {
+        declare K_GetRequest PendingReq =
+            G_PendingGetReqs[_PendingReqId];
+        if (Http.SlotsAvailable > 0) {
+            G_PendingGetReqs.removekey(_PendingReqId);
+            return Private_MakeGetImpl(PendingReq);
+        }
+    }
+
+    return NullId;
+}
+
+Text ML_Preproc(Text _ModName) {
+    return """//!
+#Struct {{{_ModName}}}_K_GetRequest {
+    Text Route;
+    Boolean UseCache;
+    Text[Text] Headers;
+}
+
+#Struct {{{_ModName}}}_K_PostRequest {
+    Text Route;
+    Text Body;
+    Text[Text] Headers;
+}
+    """;
+}
+
+Text ML_Content(Text _ModName) {
+    return """//!
+{{{AuthUtils::ML_Content(_ModName ^ "_AuthUtils")}}}
+
+declare {{{_ModName}}}_K_GetRequest[Integer] {{{_ModName}}}_Private_G_PendingGetReqs;
+declare {{{_ModName}}}_K_PostRequest[Integer] {{{_ModName}}}_Private_G_PendingPostReqs;
+declare Integer {{{_ModName}}}_Private_G_LastPendingReqId;
+
+Text {{{_ModName}}}_Private_BuildHeaders(Text[Text] _Headers) {
+    declare Text Out = "";
+    foreach (HeaderName => Value in _Headers) {
+        Out ^= HeaderName ^ ": " ^ Value ^ "\n";
+    }
+    return Out;
+}
+
+Void {{{_ModName}}}_Private_AssertSlotsAvailable() {
+    assert(Http.SlotsAvailable > 0, "there must be a slot available for the request to perform");
+}
+
+Ident {{{_ModName}}}_Private_MakePostImpl({{{_ModName}}}_K_PostRequest _Request) {
+    {{{_ModName}}}_Private_AssertSlotsAvailable();
+
+    declare CHttpRequest Req = Http.CreatePost(
+        {{{dump(Constants::C_HostUrl)}}} ^ _Request.Route,
+        _Request.Body,
+        {{{_ModName}}}_Private_BuildHeaders(_Request.Headers)
+    );
+
+    return Req.Id;
+}
+
+Ident {{{_ModName}}}_Private_MakeGetImpl({{{_ModName}}}_K_GetRequest _Request) {
+    {{{_ModName}}}_Private_AssertSlotsAvailable();
+
+    declare CHttpRequest Req = Http.CreateGet(
+        {{{dump(Constants::C_HostUrl)}}} ^ _Request.Route,
+        _Request.UseCache,
+        {{{_ModName}}}_Private_BuildHeaders(_Request.Headers)
+    );
+
+    return Req.Id;
+}
+
+Text[Text] {{{_ModName}}}_DefaultHeaders() {
+    return [
+        "Content-Type" => "application/json",
+        "Accept" => "application/json"
+    ];
+}
+
+Text[Text] {{{_ModName}}}_AuthHeaders() {
+    declare Text Token = {{{_ModName}}}_AuthUtils_GetUserToken();
+    return [
+        "PlayerLogin" => LocalUser.Login,
+        "Authorization" => Token
+    ];
+}
+
+Text[Text] {{{_ModName}}}_MergeHeaders(Text[Text] _A, Text[Text] _B) {
+    declare Text[Text] Out = _A;
+    foreach (HeaderName => Value in _B) {
+        Out[HeaderName] = Value;
+    }
+    return Out;
+}
+
+Text[Text] {{{_ModName}}}_DefaultHeadersWith(Text[Text] _Others) {
+    return {{{_ModName}}}_MergeHeaders({{{_ModName}}}_DefaultHeaders(), _Others);
+}
+
+Integer {{{_ModName}}}_LastPendingReqId() {
+    return {{{_ModName}}}_Private_G_LastPendingReqId;
+}
+
+Ident {{{_ModName}}}_MakePost({{{_ModName}}}_K_PostRequest _Request) {
+    if (Http.SlotsAvailable > 0) {
+        return {{{_ModName}}}_Private_MakePostImpl(_Request);
+    }
+
+    {{{_ModName}}}_Private_G_LastPendingReqId += 1;
+    {{{_ModName}}}_Private_G_PendingPostReqs[{{{_ModName}}}_Private_G_LastPendingReqId] = _Request;
+
+    return NullId;
+}
+
+Ident {{{_ModName}}}_MakeGet({{{_ModName}}}_K_GetRequest _Request) {
+    if (Http.SlotsAvailable > 0) {
+        return {{{_ModName}}}_Private_MakeGetImpl(_Request);
+    }
+
+    {{{_ModName}}}_Private_G_LastPendingReqId += 1;
+    {{{_ModName}}}_Private_G_PendingGetReqs[{{{_ModName}}}_Private_G_LastPendingReqId] = _Request;
+
+    return NullId;
+}
+
+Ident {{{_ModName}}}_MakePendingReq(Integer _PendingReqId) {
+    assert(
+        {{{_ModName}}}_Private_G_PendingPostReqs.existskey(_PendingReqId)
+            || {{{_ModName}}}_Private_G_PendingGetReqs.existskey(_PendingReqId),
+        "the param _PendingReqId must be the ID of a pending request"
+    );
+
+    if ({{{_ModName}}}_Private_G_PendingPostReqs.existskey(_PendingReqId)) {
+        declare {{{_ModName}}}_K_PostRequest PendingReq =
+            {{{_ModName}}}_Private_G_PendingPostReqs[_PendingReqId];
+        if (Http.SlotsAvailable > 0) {
+            {{{_ModName}}}_Private_G_PendingPostReqs.removekey(_PendingReqId);
+            return {{{_ModName}}}_Private_MakePostImpl(PendingReq);
+        }
+    } else {
+        declare {{{_ModName}}}_K_GetRequest PendingReq =
+            {{{_ModName}}}_Private_G_PendingGetReqs[_PendingReqId];
+        if (Http.SlotsAvailable > 0) {
+            {{{_ModName}}}_Private_G_PendingGetReqs.removekey(_PendingReqId);
+            return {{{_ModName}}}_Private_MakeGetImpl(PendingReq);
+        }
+    }
+
+    return NullId;
+}
+    """;
+}
