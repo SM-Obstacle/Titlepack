@@ -158,16 +158,39 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
 
 Text Private_GetWidget() {
     return """
+<framemodel id="Row">
+</framemodel>
 <frame id="Frame_EventsUI" hidden="1">
-    <frame id="Frame_Heading">
-		<quad pos="0 40" z-index="-1" size="220 0.5" bgcolor="000000AA" halign="center"/>
+    <frame pos="-97.5 35" id="FrameActives_Events">
+		<label pos="42.5 -6" size="85 12" halign="center" valign="center" text="Active events" textfont="light" textsize="4"/>
+		<frameinstance modelid="Row" data-event="lol_cup" data-edition="2" data-title="LoL Cup #2"/>
+		<quad pos="0 -21.17" size="100 0.33" bgcolor="000" valign="center"/>
+		<quad pos="0 -12" size="85 55" bgcolor="0003"/>
     </frame>
-    <frame pos="0 35" id="Frame_Events">
+    <frame pos="5 35" id="Frame_SelectedEvent">
+		<label pos="50 -6" size="100 12" halign="center" valign="center" text="Selected" textfont="light" textsize="4"/>
+		<label pos="3 -17" size="94 9" valign="center2" text="LoL Cup #2" textfont="light" textsize="4"/>
 
+		<label pos="83.4 -24.67" size="33.17 6.83"  halign="center" valign="center2" text="lol_cup/2" textfont="light" textsize="2"/>
+		<quad pos="0 -21.17" size="100 0.33" bgcolor="000" valign="center"/>
+		<quad pos="66.83 -21.17" size="0.33 6.83" bgcolor="000"/>
+		<quad pos="66.83 -28" size="33.17 0.33" bgcolor="000" valign="center"/>
+
+		<label pos="3 -24.67" size="63" textprefix="By: " text="Atria Triss" textfont="light" textsize="2"/>
+		<label pos="3 -29.67" size="63" textprefix="Began at: " text="17:07:2024 01:14" textfont="light" textsize="2"/>
+		<label pos="3 -34.67" size="63" textprefix="Ends at: " text="17:07:2024 01:14" textfont="light" textsize="2"/>
+		<label pos="3 -39.67" size="63" text="See the scores" textfont="light" textsize="2" url="https://obstacle.titlepack.io/..."/>
+
+		<quad pos="0 -12" size="100 55" bgcolor="0003"/>
     </frame>
-	<frame id="Frame_Background">
-		<quad z-index="-1" size="220 100" bgcolor="000000FF" halign="center" valign="center"  opacity="0.5" pos="0 0"/>
-		<quad pos="0 40" z-index="-1" size="220 85" bgcolor="000000AA" halign="center" valign="top"/>
+	<frame id="Frame_Deco">
+		<quad pos="-110" size="0.5 100" bgcolor="000" valign="center"/>
+		<quad pos="109.5" size="0.5 100" bgcolor="000" valign="center"/>
+		<quad pos="0 50" size="220 0.5" bgcolor="000" halign="center" valign="center"/>
+		<label pos="0 43.5" size="220 13" text="EVENTS MANAGER" halign="center" valign="center2" textsize="9" style="TextTitle3Header" textfont="light"/>
+		<quad pos="0 37" size="220 0.5" bgcolor="000" halign="center" valign="center"/>
+		<quad pos="0 -50" size="220 0.5" bgcolor="000" halign="center" valign="center"/>
+		<quad pos="0 50" size="220 100" bgcolor="242424" halign="center" opacity="0" image="file://Media/Images/EventsUI.png"/>
 	</frame>
 </frame>
 """;
