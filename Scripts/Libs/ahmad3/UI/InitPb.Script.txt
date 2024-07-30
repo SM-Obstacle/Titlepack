@@ -183,7 +183,7 @@ Boolean HasSentCachedReqs() {
 
 main() {
     G_PendingInitPbReq = -1;
-    G_PbRoute = {{{dump(ObsEvents::PrefixEventRoute("player/pb"))}}};
+    G_PbRoute = {{{dump(ObsEvents::PrefixRoute("player/pb"))}}};
     InitAuthUpdated();
 
     wait(HasSentCachedReqs());

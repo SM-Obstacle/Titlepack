@@ -146,8 +146,7 @@ Text GetLayer() {
 
     Void UpdateRecords(Text _Login) {
         declare Text Params = "?mapId=" ^ Map.Id ^ "&playerId=" ^ _Login;
-        declare netread Text Net_EventRoutePrefix for Teams[0] = "";
-        declare Text Route = Net_EventRoutePrefix ^ "overview" ^ Params;
+        declare Text Route = {{{dump(Events::PrefixRoute("overview"))}}} ^ Params;
 
         declare Ident ReqId = ReqMgr_MakeGet(ReqMgr_K_GetRequest {
             Route = Route,

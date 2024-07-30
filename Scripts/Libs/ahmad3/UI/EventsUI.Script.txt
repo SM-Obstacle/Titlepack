@@ -1,5 +1,7 @@
 #Include "Libs/smokegun/Settings.Script.txt" as Settings
 #Include "Libs/ahmad3/Events.Script.txt" as Events
+#Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
+#Include "Libs/smokegun/Constants.Script.txt" as Constants
 
 #Include "TextLib" as TL
 
@@ -9,13 +11,53 @@
 #Const C_CE_SelectEvent "obsevents:select_event"
 #Const C_CE_ToggleSwitchToEvent "obsevents:toggle_switch_to_event"
 
+#Const C_ML_QuitButtonFrame "Frame_QuitEventButton"
+#Const C_ML_LockViewId "Frame_LockView"
+#Const C_ML_VoteBtnFrame "Frame_VoteBtn"
+#Const C_ML_VoteBtnLabel "Label_VoteBtn"
+#Const C_ML_VoteBtnBg "Quad_VoteBtn"
+#Const C_ML_ActiveEventBg "Quad_ActiveEventBg"
+#Const C_ML_ActiveEventRowHandle "Label_ActiveEventRowHandle"
+#Const C_ML_ActiveEventRowEdition "Label_ActiveEventRowEdition"
+#Const C_ML_ActiveEventRowName "Label_ActiveEventRowName"
+#Const C_ML_ActiveEventRowX "ActiveEvent_Row"
+#Const C_ML_SelectedEventFrame "Frame_SelectedEvent"
+#Const C_ML_SelectedEventName "Label_SelectedEventName"
+#Const C_ML_SelectedEventStartDate "Label_SelectedEventStartD"
+#Const C_ML_SelectedEventEndDate "Label_SelectedEventEndD"
+#Const C_ML_SelectedEventAuthor "Label_SelectedEventAuthor"
+#Const C_ML_SelectedEventIds "Label_SelectedEventIds"
+#Const C_ML_SelectedEventUrl "Label_SelectedEventUrl"
+
+#Const C_ML_BorderSize 0.5
+#Const C_ML_Size <220., 100.>
+#Const C_ML_HeadingSize <220., 12.>
+#Const C_ML_FooterSize <220., 12.>
+#Const C_ML_SectionWidth 100.
+#Const C_ML_ActiveEventRowHeight 6.
+#Const C_ML_ActiveEventAmount 10
+#Const C_ML_ActiveEventRowHandleWidth 40.
+#Const C_ML_LockViewFlex 0.33
+#Const C_ML_VoteBtnBorderSize 1
+#Const C_ML_BtnOpacity 0.3125
+#Const C_ML_SelectedEventTitleHeight 5.
+#Const C_ML_EventInfoRowHeight 5.
+#Const C_ML_SelectedEventBtnHeight 10.
+
 /**
  * Represents the data of an event in the UI.
  */
-#Struct K_Event {
+#Struct K_EventRow {
     Text Handle;
     Integer Edition;
     Text Name;
+}
+
+#Struct K_Event {
+    K_EventRow Row;
+    Text[] Authors;
+    Text StartDate;
+    Text EndDate;
 }
 
 /**
@@ -23,6 +65,8 @@
  * The keys are the logins of the players, and the values are the selected events.
  */
 declare Text[Text] G_VotingToSwitchEvent;
+
+declare Integer G_PlayerAmount;
 
 /**
  * Checks if the provided event is currently running in the mode.
@@ -43,15 +87,40 @@ Boolean Private_IsEventRunning(Text _EventHandle, Integer _EventEdition) {
  * @param _UI the UI to update.
  */
 Void Private_UpdateSelectedEvent(Text _EventHandle, Integer _EventEdition, CUIConfig _UI) {
-    declare netwrite Text Net_EventsUI_SelectedEvent for _UI;
+    declare Types::K_EventEditionDetails Event = Events::GetEvents()[_EventHandle].EditionsDetails[_EventEdition];
+    declare Text EventName = Event.name;
+    if (Event.subtitle != "") {
+        EventName ^= " " ^ Event.subtitle;
+    }
+
+    declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI;
     declare netwrite Boolean Net_EventsUI_SelectedEventIsValid for _UI;
     declare netwrite Boolean Net_EventsUI_SelectedEventIsRunning for _UI;
     declare netwrite Integer Net_EventsUI_SelectedEventUpdate for _UI;
 
-    Net_EventsUI_SelectedEvent = _EventHandle ^ _EventEdition;
-    Net_EventsUI_SelectedEventIsValid = !Events::EventHasCurrentMap(_EventHandle, _EventEdition);
+    Net_EventsUI_SelectedEvent = K_Event {
+        Row = K_EventRow {
+            Handle = _EventHandle,
+            Edition = _EventEdition,
+            Name = EventName
+        },
+        Authors = Event.authors,
+        StartDate = Event.start_date,
+        EndDate = Event.end_date
+    };
+    Net_EventsUI_SelectedEventIsValid = Events::EventHasCurrentMap(_EventHandle, _EventEdition);
     Net_EventsUI_SelectedEventIsRunning = Private_IsEventRunning(_EventHandle, _EventEdition);
+    log("event is running: " ^ Net_EventsUI_SelectedEventIsRunning);
     Net_EventsUI_SelectedEventUpdate = Now;
+}
+
+Void Private_UnselectAll() {
+    foreach (Player in AllPlayers) {
+        declare CUIConfig UI <=> UIManager.GetUI(Player);
+
+        declare netwrite Integer Net_EventsUI_SelectedEventUpdate for UI = -1;
+        Net_EventsUI_SelectedEventUpdate = -1;
+    }
 }
 
 /**
@@ -101,17 +170,18 @@ Void Private_ToggleSwitchToEventFor(
  */
 Void UpdateActiveEvents() {
     declare Events = Events::GetEvents();
-    declare netwrite K_Event[] Net_EventsUI_Events for Teams[0];
+    declare netwrite K_EventRow[] Net_EventsUI_Events for Teams[0] = [];
 
     // Clear the array then fill it with the `Events` lib data
     Net_EventsUI_Events = [];
     foreach (EventHandle => Event in Events) {
         foreach (Edition in Event.EditionsDetails) {
             declare Text EventName = Edition.name;
-            if (TL::Length(Edition.subtitle) > 0)
-                EventName ^= Edition.subtitle;
+            if (TL::Length(Edition.subtitle) > 0) {
+                EventName ^= " " ^ Edition.subtitle;
+            }
 
-            Net_EventsUI_Events.add(K_Event {
+            Net_EventsUI_Events.add(K_EventRow {
                 Handle = EventHandle,
                 Edition = Edition.id,
                 Name = EventName
@@ -123,7 +193,7 @@ Void UpdateActiveEvents() {
         }
     }
 
-    declare netwrite Integer Net_EventsUI_EventsUpdate for Teams[0];
+    declare netwrite Integer Net_EventsUI_EventsUpdate for Teams[0] = -1;
     Net_EventsUI_EventsUpdate = Now;
 }
 
@@ -131,9 +201,7 @@ Void UpdateActiveEvents() {
  * Initializes the UIs of everyone.
  */
 Void Init() {
-    declare netwrite Boolean Net_EventsUI_LockView for Teams[0];
-    Net_EventsUI_LockView = Settings::GetLockEventsUI();
-
+    // Private_UnselectAll();
     UpdateActiveEvents();
 }
 
@@ -146,6 +214,7 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
 
             Private_UpdateSelectedEvent(EventHandle, EventEdition, _Event.UI);
         }
+
         case C_CE_ToggleSwitchToEvent: {
             declare Text UserLogin = _Event.CustomEventData[0];
             declare Text EventHandle = _Event.CustomEventData[1];
@@ -156,56 +225,407 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
     }
 }
 
-Text Private_GetWidget() {
+Void Yield() {
+    if (Players.count != G_PlayerAmount) {
+        G_PlayerAmount = Players.count;
+        declare netwrite Integer Net_EventsUI_PlayerAmount for Teams[0] = 0;
+        Net_EventsUI_PlayerAmount = G_PlayerAmount;
+    }
+}
+
+Boolean Private_ViewIsLocked() {
+    return Settings::GetLockEventsUI();
+}
+
+Text Private_GetVoteBtn(Vec2 _Size, Boolean _Locked) {
+    declare Text BtnText = "";
+    declare Text QuadScriptEventsAttr = "scriptevents=\"1\"";
+    if (_Locked) {
+        BtnText = "You cannot vote.";
+        QuadScriptEventsAttr = "";
+    }
+
     return """
-<framemodel id="Row">
-</framemodel>
+<quad
+    z-index="-1"
+    id="{{{C_ML_VoteBtnBg}}}"
+    valign="center"
+    halign="center"
+    bgcolor="FFF"
+    opacity="{{{C_ML_BtnOpacity}}}"
+    size="{{{_Size.X}}} {{{_Size.Y}}}"
+    data-hover-opacity="{{{C_ML_BtnOpacity * 1.3}}}"
+    {{{QuadScriptEventsAttr}}}
+/>
+<label
+    id="{{{C_ML_VoteBtnLabel}}}"
+    text="{{{BtnText}}}"
+    halign="center"
+    valign="center2"
+/>
+    """;
+}
+
+Text Private_GetFooter() {
+    // The server owner locked the events manager UI
+    if (Private_ViewIsLocked()) {
+        return """
+<!-- The locked view UI -->
+<frame pos="{{{-C_ML_FooterSize.X / 2 + C_ML_FooterSize.X * C_ML_LockViewFlex / 2}}} 0">
+    <label text="🔒 This view is locked." halign="center" valign="center2" />
+</frame>
+<!-- The button wrapper -->
+<frame id="{{{C_ML_VoteBtnFrame}}}" pos="{{{C_ML_FooterSize.X / 2 - C_ML_FooterSize.X * (1 - C_ML_LockViewFlex) / 2}}}">
+    {{{Private_GetVoteBtn(
+        <
+            C_ML_FooterSize.X * (1 - C_ML_LockViewFlex) - C_ML_VoteBtnBorderSize * 2,
+            C_ML_FooterSize.Y - C_ML_VoteBtnBorderSize * 2
+        >,
+        True
+    )}}}
+</frame>
+        """;
+    }
+
+    return """
+<frame id="{{{C_ML_VoteBtnFrame}}}" hidden="1">
+    {{{Private_GetVoteBtn(
+        <
+            C_ML_FooterSize.X - C_ML_VoteBtnBorderSize * 2,
+            C_ML_FooterSize.Y - C_ML_VoteBtnBorderSize * 2
+        >,
+        False
+    )}}}
+</frame>
+    """;
+}
+
+Text Private_GetActiveEventRows(Text _ModelId) {
+    declare Text Out = "";
+    for (Idx, 0, C_ML_ActiveEventAmount - 1) {
+        Out ^= """<frameinstance
+            modelid="{{{_ModelId}}}"
+            id="{{{C_ML_ActiveEventRowX}}}{{{Idx}}}"
+            pos="0 {{{-C_ML_ActiveEventRowHeight * Idx}}}"
+        />""";
+    }
+    return Out;
+}
+
+Text Private_GetWidget() {
+    // Used by the script to check if an event can be processed or not
+    declare Text LockNode = "";
+    if (Private_ViewIsLocked()) {
+        LockNode = """<frame id="{{{C_ML_LockViewId}}}"></frame>""";
+    }
+
+    declare Text Footer = """
+<!-- Background -->
+<quad
+    bgcolor="FFF2"
+    size="{{{C_ML_FooterSize.X}}} {{{C_ML_FooterSize.Y}}}"
+    halign="center"
+    valign="center"
+/>
+{{{Private_GetFooter()}}}
+    """;
+
+    declare Real SectionHeight = C_ML_ActiveEventRowHeight * C_ML_ActiveEventAmount;
+
+    // The gap between a section and the heading
+    declare Real SectionVGap = (C_ML_Size.Y - C_ML_HeadingSize.Y - C_ML_FooterSize.Y - SectionHeight) / 4;
+
+    return """
 <frame id="Frame_EventsUI" hidden="1">
-    <frame pos="-97.5 35" id="FrameActives_Events">
-		<label pos="42.5 -6" size="85 12" halign="center" valign="center" text="Active events" textfont="light" textsize="4"/>
-		<frameinstance modelid="Row" data-event="lol_cup" data-edition="2" data-title="LoL Cup #2"/>
-		<quad pos="0 -21.17" size="100 0.33" bgcolor="000" valign="center"/>
-		<quad pos="0 -12" size="85 55" bgcolor="0003"/>
+    {{{LockNode}}}
+
+    <!-- Background -->
+    <quad
+        z-index="-1"
+        halign="center"
+        valign="center"
+        size="{{{C_ML_Size.X}}} {{{C_ML_Size.Y}}}"
+        bgcolor="000000CC"
+    />
+
+    <!-- Heading -->
+    <frame pos="0 {{{C_ML_Size.Y / 2 - C_ML_HeadingSize.Y / 2}}}">
+        <!-- Background -->
+        <quad
+            bgcolor="FFF2"
+            size="{{{C_ML_HeadingSize.X}}} {{{C_ML_HeadingSize.Y}}}"
+            halign="center"
+            valign="center"
+        />
+        <label
+            text="Events manager"
+            pos="0 {{{-C_ML_BorderSize}}}"
+            halign="center"
+            valign="center2"
+            textcolor="FFFFFFFF"
+            textalign="center"
+            textfont="Oswald"
+            textsize="9"
+            style="TextTitle3"
+            textemboss="1"
+        />
     </frame>
-    <frame pos="5 35" id="Frame_SelectedEvent">
-		<label pos="50 -6" size="100 12" halign="center" valign="center" text="Selected" textfont="light" textsize="4"/>
-		<label pos="3 -17" size="94 9" valign="center2" text="LoL Cup #2" textfont="light" textsize="4"/>
 
-		<label pos="83.4 -24.67" size="33.17 6.83"  halign="center" valign="center2" text="lol_cup/2" textfont="light" textsize="2"/>
-		<quad pos="0 -21.17" size="100 0.33" bgcolor="000" valign="center"/>
-		<quad pos="66.83 -21.17" size="0.33 6.83" bgcolor="000"/>
-		<quad pos="66.83 -28" size="33.17 0.33" bgcolor="000" valign="center"/>
+    <!-- Content -->
+    <frame>
+        <!-- Active events -->
+        <frame pos="{{{-C_ML_Size.X / 4}}} {{{-SectionVGap / 2}}}">
+            <framemodel id="Row">
+                <frame pos="0 {{{-C_ML_ActiveEventRowHeight / 2}}}">
+                    <!-- Background -->
+                    <quad
+                        z-index="-1"
+                        bgcolor="000" opacity="{{{C_ML_BtnOpacity}}}"
+                        id="{{{C_ML_ActiveEventBg}}}"
+                        size="{{{C_ML_SectionWidth - C_ML_BorderSize}}} {{{C_ML_ActiveEventRowHeight - C_ML_BorderSize}}}"
+                        valign="center" halign="center"
+                        scriptevents="1"
+                    />
 
-		<label pos="3 -24.67" size="63" textprefix="By: " text="Atria Triss" textfont="light" textsize="2"/>
-		<label pos="3 -29.67" size="63" textprefix="Began at: " text="17:07:2024 01:14" textfont="light" textsize="2"/>
-		<label pos="3 -34.67" size="63" textprefix="Ends at: " text="17:07:2024 01:14" textfont="light" textsize="2"/>
-		<label pos="3 -39.67" size="63" text="See the scores" textfont="light" textsize="2" url="https://obstacle.titlepack.io/..."/>
+                    <frame pos="{{{-C_ML_SectionWidth / 2}}} 0">
+                        <label
+                            id="{{{C_ML_ActiveEventRowHandle}}}"
+                            text="<event_handle>"
+                            pos="{{{C_ML_BorderSize * 2}}} 0"
+                            halign="left"
+                            valign="center2"
+                        />
+                    </frame>
+                    <frame pos="{{{-C_ML_SectionWidth / 2 + C_ML_ActiveEventRowHandleWidth}}} 0">
+                        <label
+                            id="{{{C_ML_ActiveEventRowEdition}}}"
+                            text="X"
+                            halign="left"
+                            valign="center2"
+                        />
+                    </frame>
+                    <frame pos="{{{C_ML_SectionWidth / 2}}} 0">
+                        <label
+                            id="{{{C_ML_ActiveEventRowName}}}"
+                            text="<event_name>"
+                            pos="{{{-C_ML_BorderSize * 2}}} 0"
+                            halign="right"
+                            valign="center2"
+                        />
+                    </frame>
+                </frame>
+            </framemodel>
 
-		<quad pos="0 -12" size="100 55" bgcolor="0003"/>
+            <!-- Heading -->
+            <frame pos="0 {{{C_ML_Size.Y / 2 - C_ML_HeadingSize.Y - SectionVGap}}}">
+                <label text="Active events" halign="center" valign="center2" />
+            </frame>
+
+            <!-- Table -->
+            <frame pos="0 {{{SectionHeight / 2}}}">
+                {{{Private_GetActiveEventRows("Row")}}}
+            </frame>
+
+            <!-- Background -->
+            <quad
+                bgcolor="FFF1"
+                halign="center"
+                valign="center"
+                size="{{{C_ML_SectionWidth}}} {{{SectionHeight}}}"
+            />
+        </frame>
+
+        <!-- Selected event -->
+        <frame
+            id="{{{C_ML_SelectedEventFrame}}}"
+            pos="{{{C_ML_Size.X / 4}}} {{{-SectionVGap / 2}}}"
+            hidden="1"
+        >
+            <!-- Heading -->
+            <frame pos="0 {{{C_ML_Size.Y / 2 - C_ML_HeadingSize.Y - SectionVGap}}}">
+                <label text="Selected event" halign="center" valign="center2" />
+            </frame>
+
+            <!-- Background -->
+            <quad
+                bgcolor="FFF1"
+                halign="center"
+                valign="center"
+                size="{{{C_ML_SectionWidth}}} {{{SectionHeight}}}"
+            />
+
+            <!-- Title -->
+            <frame pos="0 {{{SectionHeight / 2 - C_ML_SelectedEventTitleHeight / 2}}}">
+                <label
+                    id="{{{C_ML_SelectedEventName}}}"
+                    text="LoL Cup #2"
+                    halign="left"
+                    valign="center2"
+                    size="{{{C_ML_SectionWidth - C_ML_BorderSize * 2}}} {{{C_ML_SelectedEventTitleHeight}}}"
+                    pos="{{{-C_ML_SectionWidth / 2 + C_ML_BorderSize}}} {{{-C_ML_BorderSize}}}"
+                />
+
+                <!-- Background -->
+                <quad
+                    bgcolor="FFF2"
+                    size="{{{C_ML_SectionWidth}}} {{{C_ML_SelectedEventTitleHeight + C_ML_BorderSize * 2}}}"
+                    pos="0 {{{-C_ML_BorderSize}}}"
+                    valign="center"
+                    halign="center"
+                />
+            </frame>
+
+            <!-- Event IDs -->
+            <frame
+                pos="{{{C_ML_SectionWidth / 2 - C_ML_BorderSize}}} {{{SectionHeight / 2 - C_ML_SelectedEventTitleHeight - C_ML_BorderSize * 3}}}"
+            >
+                <label
+                    id="{{{C_ML_SelectedEventIds}}}"
+                    text="lol_cup/2"
+                    halign="right"
+                    valign="top"
+                    size="{{{C_ML_SectionWidth}}} {{{C_ML_SelectedEventTitleHeight / 2}}}"
+                />
+            </frame>
+
+            <!-- Event info -->
+            <frame pos="{{{-C_ML_SectionWidth / 2 + C_ML_BorderSize}}} {{{SectionHeight / 2 - C_ML_SelectedEventTitleHeight * 2 - C_ML_BorderSize * 3}}}">
+                <label
+                    id="{{{C_ML_SelectedEventAuthor}}}"
+                    text="Atria Triss"
+                    textprefix="By: "
+                    halign="left"
+                    valign="center2"
+                    size="{{{C_ML_SectionWidth}}} {{{C_ML_EventInfoRowHeight}}}"
+                    pos="0 {{{-C_ML_EventInfoRowHeight * 0}}}"
+                />
+                <label
+                    id="{{{C_ML_SelectedEventStartDate}}}"
+                    text="17/07/2024 01:14"
+                    textprefix="Began at: "
+                    halign="left"
+                    valign="center2"
+                    pos="0 {{{-C_ML_EventInfoRowHeight * 1}}}"
+                />
+                <label
+                    id="{{{C_ML_SelectedEventEndDate}}}"
+                    text="17/07/2024 05:14"
+                    textprefix="Ends at: "
+                    halign="left"
+                    valign="center2"
+                    pos="0 {{{-C_ML_EventInfoRowHeight * 2}}}"
+                />
+                <label
+                    id="{{{C_ML_SelectedEventUrl}}}"
+                    text="$l[{{{Constants::C_WebsiteUrl}}}/event/campaign/2]See the scores"
+                    halign="left"
+                    valign="center2"
+                    pos="0 {{{-C_ML_EventInfoRowHeight * 3}}}"
+                />
+            </frame>
+
+            <!-- Quit vote button -->
+            <frame
+                id="{{{C_ML_QuitButtonFrame}}}"
+                pos="0 {{{-SectionHeight / 2 + C_ML_SelectedEventBtnHeight / 2}}}"
+                hidden="1"
+            >
+                <!-- Background -->
+                <quad
+                    bgcolor="FFF2"
+                    halign="center"
+                    valign="center"
+                    size="{{{C_ML_SectionWidth - C_ML_BorderSize * 2}}} {{{C_ML_SelectedEventBtnHeight - C_ML_BorderSize * 2}}}"
+                />
+
+                <label
+                    text="Quit this event"
+                    valign="center2"
+                    halign="center"
+                />
+            </frame>
+        </frame>
     </frame>
-	<frame id="Frame_Deco">
-		<quad pos="-110" size="0.5 100" bgcolor="000" valign="center"/>
-		<quad pos="109.5" size="0.5 100" bgcolor="000" valign="center"/>
-		<quad pos="0 50" size="220 0.5" bgcolor="000" halign="center" valign="center"/>
-		<label pos="0 43.5" size="220 13" text="EVENTS MANAGER" halign="center" valign="center2" textsize="9" style="TextTitle3Header" textfont="light"/>
-		<quad pos="0 37" size="220 0.5" bgcolor="000" halign="center" valign="center"/>
-		<quad pos="0 -50" size="220 0.5" bgcolor="000" halign="center" valign="center"/>
-		<quad pos="0 50" size="220 100" bgcolor="242424" halign="center" opacity="0" image="file://Media/Images/EventsUI.png"/>
-	</frame>
+
+    <!-- Footer -->
+    <frame pos="0 {{{C_ML_FooterSize.Y / 2 - C_ML_Size.Y / 2}}}">
+        {{{Footer}}}
+    </frame>
 </frame>
 """;
 }
 
 Text GetLayer() {
+    // Used by the script when we select an event to show the quit button
+    declare Text ShowQuitBtn = "G_SelectedEventQuitBtnFrame.Show();";
+    if (Private_ViewIsLocked()) {
+        ShowQuitBtn = "";
+    }
+
     return """
 <manialink version="3" name="Obstacle:EventsUI">
     <frame>{{{Private_GetWidget()}}}</frame>
     <script><![CDATA[
 
-// declare K_Event[] G_Events;
-declare Text G_SelectedEvent;
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "ColorLib" as CL
+
+#Struct K_EventRow {
+    Text Handle;
+    Integer Edition;
+    Text Name;
+}
+
+#Struct K_Event {
+    K_EventRow Row;
+    Text[] Authors;
+    Text StartDate;
+    Text EndDate;
+}
+
+declare K_EventRow[] G_Events;
+
+declare K_Event G_SelectedEvent;
+declare Boolean G_SelectedEventIsValid;
+declare Boolean G_SelectedEventIsRunning;
+
+declare Integer G_VoteBtnAmount;
+declare Integer G_TotalPlayers;
 
 declare Boolean G_LockView;
+
+declare CMlFrame G_SelectedEventFrame;
+declare CMlFrame G_SelectedEventQuitBtnFrame;
+declare CMlLabel G_SelectedEventName;
+declare CMlLabel G_SelectedEventStartDate;
+declare CMlLabel G_SelectedEventEndDate;
+declare CMlLabel G_SelectedEventAuthor;
+declare CMlLabel G_SelectedEventIds;
+declare CMlLabel G_SelectedEventUrl;
+
+declare CMlFrame G_VoteBtnFrame;
+declare CMlLabel G_VoteBtnLabel;
+declare CMlQuad G_VoteBtnBg;
+
+CMlLabel GetLabel(Text _Id) {
+    return (Page.GetFirstChild(_Id) as CMlLabel);
+}
+
+Void InitUIVars() {
+    G_VoteBtnFrame <=> (Page.GetFirstChild("{{{C_ML_VoteBtnFrame}}}") as CMlFrame);
+    G_VoteBtnLabel <=> GetLabel("{{{C_ML_VoteBtnLabel}}}");
+    G_VoteBtnBg <=> (Page.GetFirstChild("{{{C_ML_VoteBtnBg}}}") as CMlQuad);
+
+    G_SelectedEventFrame <=> (Page.GetFirstChild("{{{C_ML_SelectedEventFrame}}}") as CMlFrame);
+    G_SelectedEventQuitBtnFrame <=> (Page.GetFirstChild("{{{C_ML_QuitButtonFrame}}}") as CMlFrame);
+    G_SelectedEventName <=> GetLabel("{{{C_ML_SelectedEventName}}}");
+    G_SelectedEventStartDate <=> GetLabel("{{{C_ML_SelectedEventStartDate}}}");
+    G_SelectedEventEndDate <=> GetLabel("{{{C_ML_SelectedEventEndDate}}}");
+    G_SelectedEventAuthor <=> GetLabel("{{{C_ML_SelectedEventAuthor}}}");
+    G_SelectedEventIds <=> GetLabel("{{{C_ML_SelectedEventIds}}}");
+    G_SelectedEventUrl <=> GetLabel("{{{C_ML_SelectedEventUrl}}}");
+}
 
 Void UpdateFrameTab(CUIConfig _UI, CMlPage _Page, Text _TabKey, Text _FrameTabId)
 {
@@ -245,54 +665,194 @@ Void HandleSwitchBtnClick(Text _EventHandle, Integer _EventEdition) {
 }
 
 Void UpdateEventList() {
-    // declare netread Net_EventsUI_Events for Teams[0];
-    // G_Events = Net_EventsUI_Events;
-    
-    // TODO: edit the UI for event list update
+    declare netread K_EventRow[] Net_EventsUI_Events for Teams[0];
+    G_Events = Net_EventsUI_Events;
+
+    foreach (Idx => Event in G_Events.slice(0, ML::Max(G_Events.count, {{{C_ML_ActiveEventAmount}}}))) {
+        declare CMlFrame RowFrame <=> (Page.GetFirstChild({{{dump(C_ML_ActiveEventRowX)}}} ^ Idx) as CMlFrame);
+        declare CMlLabel LabelHandle <=> (RowFrame.GetFirstChild({{{dump(C_ML_ActiveEventRowHandle)}}}) as CMlLabel);
+        declare CMlLabel LabelEdition <=> (RowFrame.GetFirstChild({{{dump(C_ML_ActiveEventRowEdition)}}}) as CMlLabel);
+        declare CMlLabel LabelName <=> (RowFrame.GetFirstChild({{{dump(C_ML_ActiveEventRowName)}}}) as CMlLabel);
+
+        LabelHandle.SetText(Event.Handle);
+        LabelEdition.SetText(Event.Edition ^ "");
+        LabelName.SetText(Event.Name);
+        RowFrame.Show();
+    }
+
+    for (Idx, ML::Max(G_Events.count, 0), {{{C_ML_ActiveEventAmount - 1}}}) {
+        declare CMlFrame RowFrame <=> (Page.GetFirstChild({{{dump(C_ML_ActiveEventRowX)}}} ^ Idx) as CMlFrame);
+        RowFrame.Hide();
+    }
 }
 
 Void UpdateSelectedEvent() {
-    declare netread Text Net_EventsUI_SelectedEvent for UI;
-    G_SelectedEvent = Net_EventsUI_SelectedEvent;
+    declare netread K_Event Net_EventsUI_SelectedEvent for UI;
+    declare netread Boolean Net_EventsUI_SelectedEventIsValid for UI = False;
+    declare netread Boolean Net_EventsUI_SelectedEventIsRunning for UI = False;
+    declare netread Integer Net_EventsUI_SelectedEventVoteAmount for UI = 0;
 
-    // TODO: edit the UI for selected event and switch btn
+    G_SelectedEvent = Net_EventsUI_SelectedEvent;
+    G_SelectedEventIsValid = Net_EventsUI_SelectedEventIsValid;
+    G_SelectedEventIsRunning = Net_EventsUI_SelectedEventIsRunning;
 }
 
-Void CheckLockView() {
-    declare netread Boolean Net_EventsUI_LockView for Teams[0];
-    G_LockView = Net_EventsUI_LockView;
-    if (G_LockView) {
-        // TODO: show the frame of the lock text.
+Void UpdateSelectedEventUI() {
+    G_SelectedEventName.SetText(G_SelectedEvent.Row.Name);
+    G_SelectedEventIds.SetText(G_SelectedEvent.Row.Handle ^ "/" ^ G_SelectedEvent.Row.Edition);
+    G_SelectedEventStartDate.SetText(G_SelectedEvent.StartDate);
+    G_SelectedEventUrl.SetText(
+        "$l[{{{Constants::C_WebsiteUrl}}}/event/"
+        ^ G_SelectedEvent.Row.Handle
+        ^ "/"
+        ^ G_SelectedEvent.Row.Edition
+        ^ "]See the scores"
+    );
+
+    if (G_SelectedEvent.EndDate == "") {
+        G_SelectedEventEndDate.Hide();
     } else {
-        // TODO: hide the frame of the lock text, but it should be already hidden at this point.
+        G_SelectedEventEndDate.SetText(G_SelectedEvent.EndDate);
+        G_SelectedEventEndDate.Show();
     }
+
+    if (G_SelectedEvent.Authors.count == 0) {
+        G_SelectedEventAuthor.Hide();
+    } else {
+        declare Text AuthorsTxt = "";
+
+        foreach (Idx => Author in G_SelectedEvent.Authors) {
+            AuthorsTxt ^= "$<" ^ Author ^ "$>";
+            if (Idx < G_SelectedEvent.Authors.count - 1) AuthorsTxt ^= ", ";
+        }
+
+        G_SelectedEventAuthor.SetText(AuthorsTxt);
+        G_SelectedEventAuthor.Show();
+    }
+
+    if (G_SelectedEventIsValid) {
+        G_VoteBtnLabel.SetText(G_VoteBtnAmount ^ "/" ^ G_TotalPlayers ^ " player(s) voted for a switch to " ^ G_SelectedEvent.Row.Name);
+        G_VoteBtnBg.BgColor = CL::HexToRgb("3E1");
+        // TODO: show votes
+    } else {
+        G_VoteBtnBg.BgColor = CL::HexToRgb("F10");
+        G_VoteBtnLabel.SetText("This event cannot be played on this map.");
+    }
+
+    if (G_SelectedEventIsRunning) {
+        {{{ShowQuitBtn}}}
+        G_VoteBtnBg.BgColor = CL::HexToRgb("03F");
+        G_VoteBtnLabel.SetText("Playing " ^ G_SelectedEvent.Row.Name);
+    } else {
+        G_SelectedEventQuitBtnFrame.Hide();
+    }
+
+    G_SelectedEventFrame.Show();
+    G_VoteBtnFrame.Show();
+}
+
+Void HandleClick(CMlQuad _Quad) {
+    switch (_Quad.ControlId) {
+        case {{{dump(C_ML_ActiveEventBg)}}}: {
+            declare Text FrameId = _Quad.Parent.Parent.ControlId;
+            declare Integer Idx = TL::ToInteger(
+                TL::SubString(FrameId, TL::Length({{{dump(C_ML_ActiveEventRowX)}}}), TL::Length(FrameId))
+            );
+            declare K_EventRow Selected = G_Events[Idx];
+            SelectEvent(Selected.Handle, Selected.Edition);
+        }
+    }
+}
+
+declare Integer G_EventsUpdate;
+
+Void InitEventsUpdater() {
+    declare netread Integer Net_EventsUI_EventsUpdate for Teams[0] = -1;
+    G_EventsUpdate = Net_EventsUI_EventsUpdate;
+}
+
+Boolean EventsUpdated() {
+    declare netread Integer Net_EventsUI_EventsUpdate for Teams[0] = -1;
+    if (G_EventsUpdate != Net_EventsUI_EventsUpdate) {
+        G_EventsUpdate = Net_EventsUI_EventsUpdate;
+        return True;
+    }
+    return False;
+}
+
+declare Integer G_SelectedEventUpdate;
+
+Void InitSelectedEventUpdater() {
+    declare netread Integer Net_EventsUI_SelectedEventUpdate for UI = -1;
+    G_SelectedEventUpdate = Net_EventsUI_SelectedEventUpdate;
+}
+
+Boolean SelectedEventUpdated() {
+    declare netread Integer Net_EventsUI_SelectedEventUpdate for UI = -1;
+    if (G_SelectedEventUpdate != Net_EventsUI_SelectedEventUpdate) {
+        G_SelectedEventUpdate = Net_EventsUI_SelectedEventUpdate;
+        return True;
+    }
+    return False;
 }
 
 main() {
     wait(Page != Null);
 
-    declare netread Integer Net_EventsUI_EventsUpdate for Teams[0];
-    declare Integer EventsUpdate;
+    InitEventsUpdater();
+    InitSelectedEventUpdater();
 
-    declare netread Integer Net_EventsUI_SelectedEventUpdate for UI;
-    declare Integer SelectedEventUpdate;
+    InitUIVars();
 
-    CheckLockView();
+    declare CMlControl LockViewFrame <=> Page.GetFirstChild({{{dump(C_ML_LockViewId)}}});
+    declare Boolean HasLockedView = LockViewFrame != Null;
+
+    declare netread Integer Net_EventsUI_PlayerAmount for Teams[0] = 1;
+    G_TotalPlayers = Net_EventsUI_PlayerAmount;
 
     while (True) {
         yield;
 
-        if (EventsUpdate != Net_EventsUI_EventsUpdate) {
-            EventsUpdate = Net_EventsUI_EventsUpdate;
+        if (EventsUpdated()) {
             UpdateEventList();
         }
 
-        if (SelectedEventUpdate != Net_EventsUI_SelectedEventUpdate) {
-            SelectedEventUpdate = Net_EventsUI_SelectedEventUpdate;
+        if (SelectedEventUpdated()) {
             UpdateSelectedEvent();
+            UpdateSelectedEventUI();
+        }
+
+        if (Net_EventsUI_PlayerAmount != G_TotalPlayers) {
+            G_TotalPlayers = Net_EventsUI_PlayerAmount;
         }
 
         UpdateFrameTab(UI, Page, "EventsUI", "Frame_EventsUI");
+
+        foreach (Event in PendingEvents) {
+            if (!(Event.Control is CMlQuad) || HasLockedView) {
+                continue;
+            }
+
+            declare CMlQuad Quad <=> (Event.Control as CMlQuad);
+
+            switch (Event.Type)  {
+                case CMlScriptEvent::Type::MouseOver: {
+                    if (Quad.DataAttributeExists("hover-opacity")) {
+                        Quad.Opacity = TL::ToReal(Quad.DataAttributeGet("hover-opacity"));
+                    } else {
+                        Quad.Opacity = 1.;
+                    }
+                }
+
+                case CMlScriptEvent::Type::MouseOut: {
+                    Quad.Opacity = {{{C_ML_BtnOpacity}}};
+                }
+
+                case CMlScriptEvent::Type::MouseClick: {
+                    HandleClick(Quad);
+                }
+            }
+        }
     }
 }
 

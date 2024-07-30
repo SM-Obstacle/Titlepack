@@ -238,7 +238,6 @@ Obstacle::LoadActions();
 ***Match_InitMap***
 ***
 Dialog::Init();
-ObsEvents::Init();
 
 // This needs to be called before PrepareMap to have the right settings
 UpdateSettings();
@@ -247,23 +246,15 @@ declare PrevTimeLimit = -1;
 declare LastUpdate = -1;
 declare NextLowTimeMessage = 0;
 
-declare netwrite Text Net_EventRoutePrefix for Teams[0];
-if (Settings::GetEventHandle() == "" || Settings::GetEventEdition() <= 0) {
-    Net_EventRoutePrefix = "";
-} else {
-    ObsEvents::LoadEdition();
-    if (ObsEvents::HasFailed()) {
-        ObsEvents::ClearSelectedEvent(True);
-        Net_EventRoutePrefix = "";
+ObsEvents::Init();
+if (ObsEvents::HasFailed()) {
+    ObsEvents::ClearSelectedEvent(True);
 
-        log("--- EVENT INIT FAIL ---");
-        log("event loading has failed, cancelling its use");
-        log("reason: " ^ ObsEvents::GetFailReason());
-        log("event handle: `" ^ ObsEvents::GetLastEventHandle() ^ "`, edition id: " ^ ObsEvents::GetLastEventEdition());
-        log("--- END ---");
-    } else {
-        Net_EventRoutePrefix = "event/" ^ Settings::GetEventHandle() ^ "/" ^ Settings::GetEventEdition() ^ "/";
-    }
+    log("--- EVENT INIT FAIL ---");
+    log("event loading has failed, cancelling its use");
+    log("reason: " ^ ObsEvents::GetFailReason());
+    log("event handle: `" ^ ObsEvents::GetLastEventHandle() ^ "`, edition id: " ^ ObsEvents::GetLastEventEdition());
+    log("--- END ---");
 }
 
 ***
@@ -365,6 +356,7 @@ Net_MapStartTime = TimeLib::GetCurrent();
 
 ***Match_Yield***
 ***
+EventsUI::Yield();
 SpectatorCount::Yield();
 SpecList::Yield();
 NextMapVote::Yield(S_NextMapVotingRatio);

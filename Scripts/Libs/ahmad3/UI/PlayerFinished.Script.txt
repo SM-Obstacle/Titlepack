@@ -89,7 +89,7 @@ Void Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
     declare Integer IdxToRemove = -1;
     foreach (Idx => Cached in G_FinishCachedReqs[_UI.Id]) {
         if (Cached == CachReqs::K_CachedReq {
-            Route = ObsEvents::PrefixEventRoute("player/finished"),
+            Route = ObsEvents::PrefixRoute("player/finished"),
             Tstp = _Tstp,
             Body = _Body
         }) {
@@ -232,7 +232,7 @@ Void NotifyPlayerFinished(CSmPlayer _Player) {
     declare CachReqs::K_CachedReq Cached = CachReqs::SaveCacheFor(
         UI,
         JsonBody,
-        ObsEvents::PrefixEventRoute("player/finish")
+        ObsEvents::PrefixRoute("player/finish")
     );
     if (!G_FinishCachedReqs.existskey(UI.Id)) {
         G_FinishCachedReqs[UI.Id] = [];
@@ -410,7 +410,7 @@ Boolean AuthIgnored() {
 }
 
 main() {
-    G_PlayerFinishedRoute = {{{dump(ObsEvents::PrefixEventRoute("player/finished"))}}};
+    G_PlayerFinishedRoute = {{{dump(ObsEvents::PrefixRoute("player/finished"))}}};
 
     InitUpdate();
     InitAuthUpdated();

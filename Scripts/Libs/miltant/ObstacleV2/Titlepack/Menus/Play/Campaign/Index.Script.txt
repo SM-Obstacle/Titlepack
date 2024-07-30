@@ -780,12 +780,14 @@ Void Loop() {
 		G_PendingPlayingMaps[0].removekey(0);
 
 		declare Boolean IsLastMap = G_PendingPlayingMaps.count == 1 && G_PendingPlayingMaps[0].count == 0;
+		declare Boolean LockEventsUI = True;
 
 		Private_InitLoadingMapDialogLoop(NextMap.MapName);
 
 		wait(TitleControl.IsReady);
 		TitleControl.PlayMap(NextMap.MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
 		<mode_script_settings>
+		 	<setting name="S_LockEventsUI" value="{{{LockEventsUI}}}" type="boolean" />
 			<setting name="S_EventHandle" value="campaign" type="text" />
 			<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />
 			<setting name="S_LastMap" value="{{{IsLastMap}}}" type="boolean" />

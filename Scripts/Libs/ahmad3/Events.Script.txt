@@ -1,4 +1,3 @@
-#Include "Libs/smokegun/Constants.Script.txt" as C
 #Include "Libs/ahmad3/InnerEventAPI.Script.txt" as EventAPI
 #Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
 
@@ -14,6 +13,33 @@ declare Integer G_EventEdition;
 declare Boolean G_ForceClear;
 declare Text G_LastEventHandle;
 declare Integer G_LastEventEdition;
+
+Void Private_LoadEdition() {
+    // We first load the event
+    EventAPI::LoadEvent(G_EventHandle);
+    while (True) {
+        yield;
+        EventAPI::Loop();
+        if (EventAPI::GetEvents().existskey(G_EventHandle) || EventAPI::HasFailed()) {
+            break;
+        }
+    }
+
+    // Then we load the edition
+    EventAPI::LoadEdition(G_EventHandle, G_EventEdition);
+    while (True) {
+        yield;
+        EventAPI::Loop();
+        if (EventAPI::EventHasContent(G_EventHandle) || EventAPI::HasFailed()) {
+            break;
+        }
+    }
+
+    if (!EventAPI::HasFailed()) {
+        G_Event = EventAPI::GetEvent(G_EventHandle).EditionsDetails[G_EventEdition];
+        G_EventLoaded = True;
+    }
+}
 
 Text GetEventHandle() {
     return G_EventHandle;
@@ -53,7 +79,7 @@ Boolean HasEventLoaded() {
     return G_EventLoaded;
 }
 
-Text PrefixEventRoute(Text _Rest) {
+Text PrefixRoute(Text _Rest) {
     if (HasEventLoaded()) {
         return "event/" ^ G_EventHandle ^ "/" ^ G_EventEdition ^ "/" ^ _Rest;
     }
@@ -81,9 +107,7 @@ Boolean EventHasCurrentMap(Text _EventHandle, Integer _EventEdition) {
 }
 
 Boolean HasFailed() {
-    return EventAPI::HasFailed()
-        || G_Event.expired
-        || !EventHasCurrentMap(G_EventHandle, G_EventEdition);
+    return EventAPI::HasFailed() || G_Event.expired;
 }
 Text GetFailReason() {
     if (G_Event.expired) {
@@ -107,39 +131,14 @@ Void Init() {
     G_EventEdition = -1;
     G_ForceClear = False;
     EventAPI::Init();
+
+    if (G_EventHandle != "" && G_EventEdition != -1) {
+        Private_LoadEdition();
+    }
 }
 
 Types::K_Event[Text] GetEvents() {
     return EventAPI::GetEvents();
-}
-
-Void LoadEdition() {
-    EventAPI::Init();
-
-    // We first load the event
-    EventAPI::LoadEvent(G_EventHandle);
-    while (True) {
-        yield;
-        EventAPI::Loop();
-        if (EventAPI::GetEvents().existskey(G_EventHandle) || EventAPI::HasFailed()) {
-            break;
-        }
-    }
-
-    // Then we load the edition
-    EventAPI::LoadEdition(G_EventHandle, G_EventEdition);
-    while (True) {
-        yield;
-        EventAPI::Loop();
-        if (EventAPI::EventHasContent(G_EventHandle) || EventAPI::HasFailed()) {
-            break;
-        }
-    }
-
-    if (!EventAPI::HasFailed()) {
-        G_Event = EventAPI::GetEvent(G_EventHandle).EditionsDetails[G_EventEdition];
-        G_EventLoaded = True;
-    }
 }
 
 Boolean Loop() {
