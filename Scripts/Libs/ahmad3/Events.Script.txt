@@ -65,6 +65,7 @@ Void ClearSelectedEvent(Boolean _Force) {
     G_LastEventEdition = G_EventEdition;
     G_EventHandle = "";
     G_EventEdition = -1;
+    G_EventLoaded = False;
 }
 
 Void ClearSelectedEvent() {

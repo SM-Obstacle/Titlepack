@@ -15,9 +15,11 @@
 
 #Const C_CE_SelectEvent "obsevents:select_event"
 #Const C_CE_ToggleSwitchToEvent "obsevents:toggle_switch_to_event"
+#Const C_CE_QuitEvent "obsevents:quit"
 
 #Const C_ML_QuitButtonFrame "Frame_QuitEventButton"
 #Const C_ML_QuitBtnBg "Quad_QuitEventButton"
+#Const C_ML_QuitBtnLabel "Label_QuitBtn"
 #Const C_ML_LockViewId "Frame_LockView"
 #Const C_ML_VoteBtnFrame "Frame_VoteBtn"
 #Const C_ML_VoteBtnLabel "Label_VoteBtn"
@@ -59,6 +61,10 @@
     Text Name;
 }
 
+#Struct K_OptEventRow {
+    K_EventRow[] Event;
+}
+
 #Struct K_Event {
     K_EventRow Row;
     Text[] Authors;
@@ -75,9 +81,11 @@
  * The array containing the votes of each player.
  * The keys are the IDs of the UI configs of the players, and the values are the selected events.
  */
-declare K_Event[Ident] G_VotingToSwitchEvent;
+declare K_OptEventRow[Ident] G_VotingToSwitchEvent;
 
 declare K_VoteInfo[K_EventRow] G_Votes;
+
+declare K_VoteInfo G_QuitEventVote;
 
 declare Integer G_PlayerAmount;
 
@@ -98,26 +106,59 @@ declare Boolean G_RequestRestart;
  *
  * The content of this is meaningless if [`G_RequestRestart`] is false.
  */
-declare K_EventRow G_NextEvent;
+declare K_OptEventRow G_NextEvent;
+declare K_OptEventRow G_PlayedEvent;
 
 declare Boolean G_IsCampaign;
 declare Boolean G_EnableRecords;
 
+Boolean Private_OptEventRow_IsPresent(K_OptEventRow _Event) {
+    return _Event.Event.count > 0;
+}
+
+K_EventRow Private_OptEventRow_Get(K_OptEventRow _Event) {
+    assert(Private_OptEventRow_IsPresent(_Event), "OptEventRow must be present before calling Get method");
+    return _Event.Event[0];
+}
+
+K_OptEventRow Private_OptEventRow_Of(K_EventRow _Event) {
+    return K_OptEventRow {
+        Event = [_Event]
+    };
+}
+
+K_OptEventRow Private_OptEventRow_Empty() {
+    return K_OptEventRow { Event = [] };
+}
+
 Boolean Private_CmpEvents(K_EventRow _A, K_EventRow _B) {
     return _A.Handle == _B.Handle && _A.Edition == _B.Edition;
+}
+
+Boolean Private_CmpEvents(K_OptEventRow _A, K_OptEventRow _B) {
+    // Return either they're both present with the same value or both null
+    return Private_OptEventRow_IsPresent(_A) && Private_OptEventRow_IsPresent(_B)
+        && Private_CmpEvents(Private_OptEventRow_Get(_A), Private_OptEventRow_Get(_B))
+        || !Private_OptEventRow_IsPresent(_A) && !Private_OptEventRow_IsPresent(_B);
 }
 
 Boolean Private_CmpEvents(K_Event _A, K_Event _B) {
     return Private_CmpEvents(_A.Row, _B.Row);
 }
 
-Void Private_BeginRestartRequest(K_EventRow _Event) {
+Void Private_BeginRestartRequest(K_OptEventRow _Event) {
+    Message::SendStatusMessage(_("Voting has forced a restart of the current Map."), 5000, 1);
+    if (Private_OptEventRow_IsPresent(_Event)) {
+        declare K_EventRow Event = Private_OptEventRow_Get(_Event);
+        Message::SendBigMessage("Switching to " ^ Event.Name ^ "...", 5000, 1);
+    } else {
+        declare K_EventRow OldEvent = Private_OptEventRow_Get(G_PlayedEvent);
+        Message::SendBigMessage("Quitting " ^ OldEvent.Name ^ "...", 5000, 1);
+    }
     G_RequestRestart = True;
     G_NextEvent = _Event;
     G_PreviousEndTime = EndTime;
     EndTime = Now + Settings::GetTimeBeforeSwitchEvent();
-    Message::SendStatusMessage(_("Voting has forced a restart of the current Map."), 5000, 1);
-    Message::SendBigMessage("Switching to " ^ _Event.Name ^ "...", 5000, 1);
 }
 
 Void Private_CancelRestartRequest() {
@@ -138,6 +179,25 @@ Boolean Private_IsEventRunning(Text _EventHandle, Integer _EventEdition) {
     return Events::HasEventLoaded()
         && Events::GetEventHandle() == _EventHandle
         && Events::GetEventEdition() == _EventEdition;
+}
+
+Void Private_UpdateSelectedEventOf(CUIConfig _UI) {
+    declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI;
+    declare Text EventHandle = Net_EventsUI_SelectedEvent.Row.Handle;
+    declare Integer EventEdition = Net_EventsUI_SelectedEvent.Row.Edition;
+
+    declare netwrite Boolean Net_EventsUI_SelectedEventIsValid for _UI;
+    declare netwrite Boolean Net_EventsUI_SelectedEventIsRunning for _UI;
+    declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for _UI;
+    declare netwrite Integer Net_EventsUI_SelectedEventUpdate for _UI;
+
+    Net_EventsUI_SelectedEventIsValid = Events::EventHasCurrentMap(EventHandle, EventEdition);
+    Net_EventsUI_SelectedEventIsRunning = Private_IsEventRunning(EventHandle, EventEdition);
+    Net_EventsUI_SelectedEventVote = G_Votes.get(Net_EventsUI_SelectedEvent.Row, K_VoteInfo {
+        Amount = 0,
+        Remaining = G_PlayerAmount
+    });
+    Net_EventsUI_SelectedEventUpdate = Now;
 }
 
 /**
@@ -166,19 +226,9 @@ Void Private_UpdateSelectedEvent(Text _EventHandle, Integer _EventEdition, CUICo
     };
 
     declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI;
-    declare netwrite Boolean Net_EventsUI_SelectedEventIsValid for _UI;
-    declare netwrite Boolean Net_EventsUI_SelectedEventIsRunning for _UI;
-    declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for _UI;
-    declare netwrite Integer Net_EventsUI_SelectedEventUpdate for _UI;
-
     Net_EventsUI_SelectedEvent = SelectedEvent;
-    Net_EventsUI_SelectedEventIsValid = Events::EventHasCurrentMap(_EventHandle, _EventEdition);
-    Net_EventsUI_SelectedEventIsRunning = Private_IsEventRunning(_EventHandle, _EventEdition);
-    Net_EventsUI_SelectedEventVote = G_Votes.get(SelectedEvent.Row, K_VoteInfo {
-        Amount = 0,
-        Remaining = G_PlayerAmount
-    });
-    Net_EventsUI_SelectedEventUpdate = Now;
+
+    Private_UpdateSelectedEventOf(_UI);
 }
 
 Void Private_UnselectAll() {
@@ -208,13 +258,11 @@ K_Event Private_GetSelectedEventOf(CUIConfig _UI) {
     return Net_EventsUI_SelectedEvent;
 }
 
-Void Private_CalcRemainingVotes(K_EventRow _Event) {
-    declare Integer Amount = G_Votes[_Event].Amount;
+Integer Private_GetRemainingVotesOf(K_VoteInfo _Vote, K_OptEventRow _Event) {
+    declare Integer Amount = _Vote.Amount;
     declare Integer Remaining = ML::CeilingInteger(G_PlayerAmount * Settings::GetSwitchEventVotingRatio())
         - Amount;
     
-    G_Votes[_Event].Remaining = Remaining;
-
     if (Amount > 0
         && Remaining <= 0
         && (EndTime == -1 || EndTime - 15000 > Now)
@@ -226,6 +274,15 @@ Void Private_CalcRemainingVotes(K_EventRow _Event) {
     ) {
         Private_CancelRestartRequest();
     }
+
+    return Remaining;
+}
+
+Void Private_CalcRemainingVotes(K_EventRow _Event) {
+    G_Votes[_Event].Remaining = Private_GetRemainingVotesOf(
+        G_Votes[_Event],
+        Private_OptEventRow_Of(_Event)
+    );
 }
 
 Void Private_IncreaseVotes(K_EventRow _Event) {
@@ -241,34 +298,38 @@ Void Private_DecreaseVotes(K_EventRow _Event) {
     G_Votes[_Event].Amount = ML::Max(0, G_Votes[_Event].Amount - 1);
 }
 
+Boolean Private_CannotVote(CUIConfig _UI, K_Event _SelectedEvent) {
+    declare CSmPlayer Player <=> GetPlayer(_UI);
+    if (Player.RequestsSpectate || Spectators.exists(Player)) return True;
+    if (_SelectedEvent.Row.Handle == "") return True;
+    return False;
+}
+
 /**
  * Toggles the vote of switch to an event for the provided user UI config.
  *
  * @param _UI the associated UI that triggered this.
  */
 Void Private_ToggleSwitchToEventFor(CUIConfig _UI) {
-    declare CSmPlayer Player <=> GetPlayer(_UI);
-    if (Player.RequestsSpectate || Spectators.exists(Player)) return;
-
     declare K_Event SelectedEvent = Private_GetSelectedEventOf(_UI);
-    if (SelectedEvent.Row.Handle == "") return;
+    if (Private_CannotVote(_UI, SelectedEvent)) return;
 
     declare Text EventHandle = SelectedEvent.Row.Handle;
     declare Integer EventEdition = SelectedEvent.Row.Edition;
 
     if (!Events::EventHasCurrentMap(EventHandle, EventEdition)) {
-        // Make sure that the selected event is playable for the current map,
-        // and that it is not already being played.
+        // Make sure that the selected event is playable for the current map.
         return;
     }
 
     if (G_VotingToSwitchEvent.existskey(_UI.Id)
-        && Private_CmpEvents(G_VotingToSwitchEvent[_UI.Id], SelectedEvent)
+        && Private_OptEventRow_IsPresent(G_VotingToSwitchEvent[_UI.Id])
+        && Private_CmpEvents(Private_OptEventRow_Get(G_VotingToSwitchEvent[_UI.Id]), SelectedEvent.Row)
     ) {
         G_VotingToSwitchEvent.removekey(_UI.Id);
         Private_DecreaseVotes(SelectedEvent.Row);
     } else if (!Private_IsEventRunning(EventHandle, EventEdition)) {
-        G_VotingToSwitchEvent[_UI.Id] = SelectedEvent;
+        G_VotingToSwitchEvent[_UI.Id] = Private_OptEventRow_Of(SelectedEvent.Row);
         Private_IncreaseVotes(SelectedEvent.Row);
     }
 
@@ -277,6 +338,41 @@ Void Private_ToggleSwitchToEventFor(CUIConfig _UI) {
     // Notify the UI of the vote change
     declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for _UI;
     Net_EventsUI_SelectedEventVote = G_Votes[SelectedEvent.Row];
+}
+
+Void Private_IncreaseQuitVotes() {
+    G_QuitEventVote.Amount = ML::Min(G_PlayerAmount, G_QuitEventVote.Amount + 1);
+}
+
+Void Private_DecreaseQuitVotes() {
+    G_QuitEventVote.Amount = ML::Max(0, G_QuitEventVote.Amount - 1);
+}
+
+Void Private_CalcRemainingQuitVotes() {
+    G_QuitEventVote.Remaining = Private_GetRemainingVotesOf(G_QuitEventVote, Private_OptEventRow_Empty());
+}
+
+Void Private_HandeQuitEventFor(CUIConfig _UI) {
+    declare K_Event SelectedEvent = Private_GetSelectedEventOf(_UI);
+    if (Private_CannotVote(_UI, SelectedEvent)) return;
+
+    declare Text EventHandle = SelectedEvent.Row.Handle;
+    declare Integer EventEdition = SelectedEvent.Row.Edition;
+
+    if (!Private_IsEventRunning(EventHandle, EventEdition)) return;
+
+    if (G_VotingToSwitchEvent.existskey(_UI.Id)) {
+        G_VotingToSwitchEvent.removekey(_UI.Id);
+        Private_DecreaseQuitVotes();
+    } else {
+        G_VotingToSwitchEvent[_UI.Id] = Private_OptEventRow_Empty();
+        Private_IncreaseQuitVotes();
+    }
+
+    Private_CalcRemainingQuitVotes();
+
+    declare netwrite K_VoteInfo Net_EventsUI_QuitEventVote for _UI;
+    Net_EventsUI_QuitEventVote = G_QuitEventVote;
 }
 
 /**
@@ -336,6 +432,10 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
         case C_CE_ToggleSwitchToEvent: {
             Private_ToggleSwitchToEventFor(_Event.UI);
         }
+
+        case C_CE_QuitEvent: {
+            Private_HandeQuitEventFor(_Event.UI);
+        }
     }
 }
 
@@ -358,21 +458,82 @@ Void Loop(Boolean _IsCampaign, Boolean _EnableRecords) {
 Void RestartMap() {
     Private_CancelRestartRequest();
 
-    Events::SetEventHandle(G_NextEvent.Handle);
-    Events::SetEventEdition(G_NextEvent.Edition);
-    Events::Init();
+    if (Private_OptEventRow_IsPresent(G_NextEvent)) {
+        // The players voted for a switch to an event
+
+        // Play the event
+        declare K_EventRow Event = Private_OptEventRow_Get(G_NextEvent);
+        Events::SetEventHandle(Event.Handle);
+        Events::SetEventEdition(Event.Edition);
+        Events::Init();
+
+        // Remove the votes of the player who voted for this event
+
+        declare Ident[] VotesToRemove = [];
+
+        foreach (Id => VotedEvent in G_VotingToSwitchEvent) {
+            if (Private_OptEventRow_IsPresent(VotedEvent)
+                && Private_CmpEvents(Private_OptEventRow_Get(VotedEvent), Event)
+            ) {
+                VotesToRemove.add(Id);
+            }
+        }
+
+        foreach (Id in VotesToRemove) {
+            G_VotingToSwitchEvent.removekey(Id);
+        }
+
+        // Reset the vote amount to quit the current event and to switch to this event
+
+        G_QuitEventVote.Amount = 0;
+        G_Votes[Event].Amount = 0;
+        Private_CalcRemainingQuitVotes();
+        foreach (Player in AllPlayers) {
+            declare CUIConfig UI <=> UIManager.GetUI(Player);
+
+            declare netwrite K_VoteInfo Net_EventsUI_QuitEventVote for UI;
+            Net_EventsUI_QuitEventVote = G_QuitEventVote;
+
+            declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for UI;
+            Net_EventsUI_SelectedEventVote = G_Votes[Event];
+        }
+    } else {
+        // The players voted for quitting the current event
+
+        Events::ClearSelectedEvent();
+
+        // Remove the votes of the player who voted to quit
+
+        declare Ident[] VotesToRemove = [];
+
+        foreach (Id => VotedEvent in G_VotingToSwitchEvent) {
+            if (Private_OptEventRow_IsPresent(VotedEvent)) continue;
+            VotesToRemove.add(Id);
+        }
+
+        foreach (Id in VotesToRemove) {
+            G_VotingToSwitchEvent.removekey(Id);
+        }
+
+        foreach (Player in AllPlayers) {
+            declare CUIConfig UI <=> UIManager.GetUI(Player);
+            Private_UpdateSelectedEventOf(UI);
+        }
+    }
+
+    G_PlayedEvent = G_NextEvent;
 
     UIMgr::DestroyUI(True);
     UIMgr::CreateUI(G_IsCampaign, G_EnableRecords);
 
-    // Respawn all the players
+    // Reset all the players
     foreach (Player in Players) {
         Player::setInitialized(Player, False);
         Player::InitPlayer(Player);
         Obstacle::ObsRespawnPlayer(Player, True);
     }
 
-    // This will select the played event to the players
+    // This will select the played event (if present) to the players
     UpdateActiveEvents();
 }
 
@@ -686,6 +847,7 @@ Text Private_GetWidget() {
                 />
 
                 <label
+                    id="{{{C_ML_QuitBtnLabel}}}"
                     text="Quit this event"
                     valign="center2"
                     halign="center"
@@ -747,6 +909,7 @@ declare Boolean G_SelectedEventIsValid;
 declare Boolean G_SelectedEventIsRunning;
 
 declare K_VoteInfo G_Vote;
+declare K_VoteInfo G_QuitEventVote;
 declare Integer G_TotalPlayers;
 
 declare Boolean G_LockView;
@@ -764,6 +927,8 @@ declare CMlFrame G_VoteBtnFrame;
 declare CMlLabel G_VoteBtnLabel;
 declare CMlQuad G_VoteBtnBg;
 
+declare CMlLabel G_QuitVoteBtnLabel;
+
 CMlLabel GetLabel(Text _Id) {
     return (Page.GetFirstChild(_Id) as CMlLabel);
 }
@@ -772,6 +937,8 @@ Void InitUIVars() {
     G_VoteBtnFrame <=> (Page.GetFirstChild("{{{C_ML_VoteBtnFrame}}}") as CMlFrame);
     G_VoteBtnLabel <=> GetLabel("{{{C_ML_VoteBtnLabel}}}");
     G_VoteBtnBg <=> (Page.GetFirstChild("{{{C_ML_VoteBtnBg}}}") as CMlQuad);
+
+    G_QuitVoteBtnLabel <=> GetLabel("{{{C_ML_QuitBtnLabel}}}");
 
     G_SelectedEventFrame <=> (Page.GetFirstChild("{{{C_ML_SelectedEventFrame}}}") as CMlFrame);
     G_SelectedEventQuitBtnFrame <=> (Page.GetFirstChild("{{{C_ML_QuitButtonFrame}}}") as CMlFrame);
@@ -820,6 +987,10 @@ Void HandleSwitchBtnClick() {
     SendCustomEvent({{{dump(C_CE_ToggleSwitchToEvent)}}}, []);
 }
 
+Void HandleQuitBtnClick() {
+    SendCustomEvent({{{dump(C_CE_QuitEvent)}}}, []);
+}
+
 Void UpdateEventList() {
     declare netread K_EventRow[] Net_EventsUI_Events for Teams[0];
     G_Events = Net_EventsUI_Events;
@@ -856,9 +1027,21 @@ Void UpdateSelectedEvent() {
 
 Void UpdateVoteBtnUI() {
     declare Text Txt = "%1/%2 player(s) voted for a switch to %3 (%4 needed)";
-    G_VoteBtnLabel.SetText(TL::Compose(Txt, G_Vote.Amount ^ "", G_TotalPlayers ^ "", G_SelectedEvent.Row.Name, G_Vote.Remaining ^ "")); }
+    G_VoteBtnLabel.SetText(TL::Compose(Txt, G_Vote.Amount ^ "", G_TotalPlayers ^ "", G_SelectedEvent.Row.Name, G_Vote.Remaining ^ ""));
+}
+
+Void UpdateQuitEventVoteBtnUI() {
+    declare Text Txt = "%1/%2 player(s) voted to quit (%3 needed)";
+    G_QuitVoteBtnLabel.SetText(TL::Compose(Txt, G_QuitEventVote.Amount ^ "", G_TotalPlayers ^ "", G_QuitEventVote.Remaining ^ ""));
+}
 
 Void UpdateSelectedEventUI() {
+    if (G_SelectedEvent.Row.Handle == "" && G_SelectedEvent.Row.Edition == -1) {
+        G_SelectedEventFrame.Hide();
+        G_VoteBtnFrame.Hide();
+        return;
+    }
+
     G_SelectedEventName.SetText(G_SelectedEvent.Row.Name);
     G_SelectedEventIds.SetText(G_SelectedEvent.Row.Handle ^ "/" ^ G_SelectedEvent.Row.Edition);
     G_SelectedEventStartDate.SetText(G_SelectedEvent.StartDate);
@@ -901,6 +1084,7 @@ Void UpdateSelectedEventUI() {
         G_VoteBtnBg.BgColor = CL::HexToRgb("03F");
         G_VoteBtnBg.DataAttributeSet("disabled", "1");
         G_VoteBtnLabel.SetText("Playing " ^ G_SelectedEvent.Row.Name);
+        UpdateQuitEventVoteBtnUI();
     } else {
         G_SelectedEventQuitBtnFrame.Hide();
     }
@@ -921,7 +1105,7 @@ Void HandleClick(CMlQuad _Quad) {
         }
 
         case {{{dump(C_ML_QuitBtnBg)}}}: {
-            // TODO: handle quit event vote
+            HandleQuitBtnClick();
         }
 
         case {{{dump(C_ML_VoteBtnBg)}}}: {
@@ -979,6 +1163,9 @@ main() {
     declare netread K_VoteInfo Net_EventsUI_SelectedEventVote for UI;
     G_Vote = Net_EventsUI_SelectedEventVote;
 
+    declare netread K_VoteInfo Net_EventsUI_QuitEventVote for UI;
+    G_QuitEventVote = Net_EventsUI_QuitEventVote;
+
     while (True) {
         yield;
 
@@ -999,6 +1186,12 @@ main() {
         if (G_Vote != Net_EventsUI_SelectedEventVote) {
             G_Vote = Net_EventsUI_SelectedEventVote;
             UpdateVoteBtnUI();
+        }
+
+        if (G_QuitEventVote != Net_EventsUI_QuitEventVote) {
+            G_QuitEventVote = Net_EventsUI_QuitEventVote;
+            log("update quit btn");
+            UpdateQuitEventVoteBtnUI();
         }
 
         UpdateFrameTab(UI, Page, "EventsUI", "Frame_EventsUI");
