@@ -147,13 +147,14 @@ Boolean Private_CmpEvents(K_Event _A, K_Event _B) {
 }
 
 Void Private_BeginRestartRequest(K_OptEventRow _Event) {
-    Message::SendStatusMessage(_("Voting has forced a restart of the current Map."), 5000, 1);
+    declare Integer MessageTime = Settings::GetTimeBeforeSwitchEvent();
+    Message::SendStatusMessage(_("Voting has forced a restart of the current Map."), MessageTime, 1);
     if (Private_OptEventRow_IsPresent(_Event)) {
         declare K_EventRow Event = Private_OptEventRow_Get(_Event);
-        Message::SendBigMessage("Switching to " ^ Event.Name ^ "...", 5000, 1);
+        Message::SendBigMessage("Switching to " ^ Event.Name ^ "...", MessageTime, 1);
     } else {
         declare K_EventRow OldEvent = Private_OptEventRow_Get(G_PlayedEvent);
-        Message::SendBigMessage("Quitting " ^ OldEvent.Name ^ "...", 5000, 1);
+        Message::SendBigMessage("Quitting " ^ OldEvent.Name ^ "...", MessageTime, 1);
     }
     G_RequestRestart = True;
     G_NextEvent = _Event;
