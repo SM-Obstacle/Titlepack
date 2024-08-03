@@ -54,6 +54,7 @@
     Text banner2_img_url;
     Integer mx_id;
     Boolean expired;
+    Text[] original_map_uids;
     K_EventEditionContentCategory[] categories;
 }
 
@@ -126,6 +127,7 @@ Text ML_Preproc(Text _Prefix) {
     Text banner2_img_url;
     Integer mx_id;
     Boolean expired;
+    Text[] original_map_uids;
     K_EventEditionContentCategory[] categories;
 }
 

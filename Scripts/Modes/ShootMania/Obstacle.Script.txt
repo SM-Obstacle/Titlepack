@@ -61,6 +61,8 @@
 #Include "Libs/ahmad3/MapAttributes.Script.txt" as MapAttr
 #Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
 
+#Include "Libs/ahmad3/ObsUIMgr.Script.txt" as UIMgr
+
 // ---------------------------------- //
 // Settings
 // ---------------------------------- //
@@ -71,8 +73,6 @@
 #Setting S_ForceInvisibleSkin True as "Force invisible skin"
 #Setting S_EnablePlayerHighlight False as "Highlight players"
 
-#Setting S_SwitchEventVotingRatio 0.7 as "<hidden>"
-#Setting S_LockEventsUI False as "<hidden>"
 #Setting S_NextMapVotingRatio 0.7 as "<hidden>"
 #Setting S_FullAmmoSpawn True as "<hidden>"
 #Setting S_LegacyRespawn False as "<hidden>"
@@ -86,6 +86,9 @@
 
 #Setting S_EventHandle "" as "Event handle"
 #Setting S_EventEdition -1 as "Event edition (Integer)"
+#Setting S_TimeBeforeSwitchEvent 5000 as "Time before switching event (Integer in milliseconds)"
+#Setting S_SwitchEventVotingRatio 0.7 as "<hidden>"
+#Setting S_LockEventsUI False as "<hidden>"
 
 #Setting S_ScriptEnvironment "production"
 
@@ -239,7 +242,8 @@ Obstacle::LoadActions();
 ***
 Dialog::Init();
 
-// This needs to be called before PrepareMap to have the right settings
+// This needs to be called before PrepareMap to have the right settings.
+// It also updates the event ids for ObsEvents, used to load the event later.
 UpdateSettings();
 
 declare PrevTimeLimit = -1;
@@ -323,12 +327,6 @@ if (Obstacle::IsRandomizerMap()) {
     }
 
     Layers::Detach("Records");
-} else if (MapAttr::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
-    if (G_IsCampaign)
-        Layers::Create("Records", MedalsWidget::GetLayer());
-    else
-        Layers::Create("Records", RecordsWidget::GetLayer());
-    Layers::Attach("Records");
 }
 
 UIManager.UIAll.MarkersXML = Markers::GetXML();
@@ -356,7 +354,6 @@ Net_MapStartTime = TimeLib::GetCurrent();
 
 ***Match_Yield***
 ***
-EventsUI::Yield();
 SpectatorCount::Yield();
 SpecList::Yield();
 NextMapVote::Yield(S_NextMapVotingRatio);
@@ -442,6 +439,8 @@ if (ObsEvents::Loop()) {
     EventsUI::UpdateActiveEvents();
 }
 
+EventsUI::Loop(G_IsCampaign, G_EnableRecords);
+
 if (LastUpdate + C_SettingsUpdateInterval < Now) {
     LastUpdate = Now;
     UpdateSettings();
@@ -461,8 +460,12 @@ if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRec
 }
 
 if (EndTime > 0 && Now > EndTime) {
-    Message::SendBigMessage(_("Time limit reached"),    2000, 3, CUIConfig::EUISound::Silence, 0);
-    MB_Private_StopMatch();
+    if (EventsUI::RequestedRestart()) {
+        EventsUI::RestartMap();
+    } else {
+        Message::SendBigMessage(_("Time limit reached"),    2000, 3, CUIConfig::EUISound::Silence, 0);
+        MB_Private_StopMatch();
+    }
 }
 
 if ((EndTime - StartTime) > 60000 && Now > EndTime - 300500 && Now < EndTime - 290000 && Now > NextLowTimeMessage) {
@@ -799,110 +802,27 @@ Void DoNothing(){}
 
 Void CreateUI() {
     CustomUI::Load();
-    
-    Layers::Create("Chrono", Chrono::GetLayer());
-    Layers::Create("JumpBack", JumpBack::GetLayer());
-    Layers::Create("TimeDiff", TimeDiff::GetLayer());
-    Layers::Create("CpProgress", CpProgress::GetLayer());
-    Layers::Create("CPTimes", CPTimes::GetLayer());
-    Layers::Create("EventsUI", EventsUI::GetLayer());
-    //Layers::Create("KeysSettings", KeysSettings::GetLayer());
-    Layers::Create("SpecKeys", SpecKeys::GetLayer());
-    Layers::Create("AntiDevMode", AntiDevMode::GetLayer());
 
-    Layers::Create("CachReqs", CachReqs::GetLayer());
-    Layers::Create("InitPb", InitPb::GetLayer());
-    Layers::Create("UpdateAuth", UpdateAuth::GetLayer());
-    Layers::Create("UpdatePlayer", UpdatePlayer::GetLayer());
+    Layers::Create("EventsUI", EventsUI::GetLayer());
+    Layers::Attach("EventsUI");
+    Layers::Create("Markers");
+    Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
+    Layers::Attach("Markers");
 
     --- Campaign_CreateUI ---
 
-    Layers::Create("Markers");
-    Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
-    Layers::Create("Items", Items::CreateLayerItems());
+    UIMgr::CreateUI(G_IsCampaign, G_EnableRecords);
 
-    if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords) {
-        Layers::Create("PlayerFinished", PlayerFinished::GetLayer());
-        Layers::Attach("PlayerFinished");
-
-        if (Settings::GetEnableRecords()) {
-            if (G_IsCampaign)
-                Layers::Create("Records", MedalsWidget::GetLayer());
-            else
-                Layers::Create("Records", RecordsWidget::GetLayer());
-            Layers::Attach("Records");
-        }
-    }
-
-    Layers::Attach("Chrono");
-    Layers::Attach("JumpBack");
-    Layers::Attach("TimeDiff");
-    Layers::Attach("CpProgress");
-    Layers::Attach("CPTimes");
-    Layers::Attach("EventsUI");
-    //Layers::Attach("KeysSettings");
-    Layers::Attach("Items");
-    Layers::Attach("Markers");
-    Layers::Attach("SpecKeys");
-    Layers::Attach("AntiDevMode");
-    
-    Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(G_IsCampaign));
-    Layers::Create("NextMapVote", NextMapVote::GetLayer(S_NextMapVotingRatio));
-    Layers::Attach("RespawnBehavior");
-    Layers::Attach("NextMapVote");
-    Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
-    Layers::Create("SpecList", SpecList::GetLayer());
-    Layers::Create("Glitches", Glitches::GetLayer());
-    Layers::Attach("SpectatorCount");
-    Layers::Attach("SpecList");
-    Layers::Attach("Glitches");
-
-    if (!G_IsCampaign) {
-        Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
-        Layers::Attach("SurvivalRanking");
-    }
-
-    Layers::Attach("CachReqs");
-    Layers::Attach("InitPb");
-    Layers::Attach("UpdateAuth");
-    Layers::Attach("UpdatePlayer");
-
-    //Layers::AttachReplay("SpecKeys");
     CustomUI::Build();
     CustomUI::Attach();
 }
 
 Void DestroyUI(Boolean _Hard) {
-    Layers::Detach("Chrono");
-    Layers::Detach("Glitches");
-    Layers::Detach("JumpBack");
-    Layers::Detach("TimeDiff");
-    Layers::Detach("CpProgress");
-    Layers::Detach("CPTimes");
     Layers::Detach("EventsUI");
-    //Layers::Detach("KeysSettings");
-    Layers::Detach("Items");
-    Layers::Detach("Records");
-
-    Layers::Detach("SpectatorCount");
-    Layers::Detach("SpecList");
-    Layers::Detach("NextMapVote");
-    Layers::Detach("RespawnBehavior");
-    Layers::Detach("SpecKeys");
-    Layers::Detach("SurvivalRanking");
-    Layers::Detach("AntiDevMode");
-
-    Layers::Detach("UpdatePlayer");
-    Layers::Detach("InitPb");
-    Layers::Detach("CachReqs");
-
-    //Layers::DetachReplay("SpecKeys");
     CustomUI::Unload();
-
+    UIMgr::DestroyUI(_Hard);
     if (_Hard) {
         Layers::Detach("Markers");
-        Layers::Detach("PlayerFinished");
-        Layers::Detach("UpdateAuth");
         UIManager.UILayerDestroyAll();
     }
 }
@@ -1028,5 +948,9 @@ Void UpdateSettings() {
 
     if (S_LockEventsUI != Settings::GetLockEventsUI()) {
         Settings::SetLockEventsUI(S_LockEventsUI);
+    }
+
+    if (S_TimeBeforeSwitchEvent != Settings::GetTimeBeforeSwitchEvent()) {
+        Settings::SetTimeBeforeSwitchEvent(S_TimeBeforeSwitchEvent);
     }
 }

@@ -3,7 +3,7 @@ model = {
 		'TimeLimit', 'ScoreMode', 'RoundLimit', 'MinPlayers',
 		'PointLimit', 'PointsMax', 'PointsMin', 'PointsDeduced',
 		'RoundCooldown', 'WarmupRounds', 'WarmupRoundsTime', 'MinTimeLeft',
-		'MaxTimeLeft', 'CheckpointMarkersCount', 'EventEdition'],
+		'MaxTimeLeft', 'CheckpointMarkersCount', 'EventEdition', 'TimeBeforeSwitchEvent'],
 	'Booleans': [
 		'FastRespawn', 'AllowJump', 'EnableRecords', 'LegacyRespawn',
 		'FullAmmoSpawn', 'PointDistribution', 'ForceInvisibleSkin', 'EnablePlayerHighlight',

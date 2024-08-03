@@ -1,0 +1,159 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   Utility functions for creating and destroying the UI
+ ***********************************************/
+
+#Include "Libs/Nadeo/Layers2.Script.txt" as Layers
+#Include "Libs/smokegun/Settings.Script.txt" as Settings
+#Include "Libs/ahmad3/MapAttributes.Script.txt" as MapAttr
+
+/////// Layers
+
+#Include "Libs/smokegun/UI/Chrono.Script.txt" as Chrono
+#Include "Libs/miltant/UI/JumpBack.Script.txt" as JumpBack
+#Include "Libs/smokegun/UI/TimeDiff.Script.txt" as TimeDiff
+#Include "Libs/smokegun/UI/CpProgress.Script.txt" as CpProgress
+#Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
+#Include "Libs/smokegun/UI/SpecKeys.Script.txt" as SpecKeys
+#Include "Libs/ahmad3/UI/AntiDevMode.Script.txt" as AntiDevMode
+#Include "Libs/ahmad3/UI/CachedRequests.Script.txt" as CachReqs
+#Include "Libs/ahmad3/UI/InitPb.Script.txt" as InitPb
+#Include "Libs/ahmad3/UI/UpdateAuth.Script.txt" as UpdateAuth
+#Include "Libs/ahmad3/UI/UpdatePlayer.Script.txt" as UpdatePlayer
+#Include "Libs/smokegun/Items.Script.txt" as Items
+#Include "Libs/ahmad3/UI/PlayerFinished.Script.txt" as PlayerFinished
+#Include "Libs/miltant/UI/MedalsWidget.Script.txt" as MedalsWidget
+#Include "Libs/smokegun/UI/RecordsWidget.Script.txt" as RecordsWidget
+#Include "Libs/smokegun/UI/NextMapVote.Script.txt" as NextMapVote
+#Include "Libs/smokegun/UI/RespawnBehavior.Script.txt" as RespawnBehavior
+#Include "Libs/smokegun/UI/SpectatorCount.Script.txt" as SpectatorCount
+#Include "Libs/ahmad3/UI/SpecList.Script.txt" as SpecList
+#Include "Libs/miltant/UI/Glitches.Script.txt" as Glitches
+#Include "Libs/smokegun/UI/SurvivalRanking.Script.txt" as SurvivalRanking
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-08-03"
+#Const ScriptName "ObsUIMgr.Script.txt"
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Void CreateUI(Boolean _IsCampaign, Boolean _EnableRecords) {
+    Layers::Create("Chrono", Chrono::GetLayer());
+    Layers::Create("JumpBack", JumpBack::GetLayer());
+    Layers::Create("TimeDiff", TimeDiff::GetLayer());
+    Layers::Create("CpProgress", CpProgress::GetLayer());
+    Layers::Create("CPTimes", CPTimes::GetLayer());
+    //Layers::Create("KeysSettings", KeysSettings::GetLayer());
+    Layers::Create("SpecKeys", SpecKeys::GetLayer());
+    Layers::Create("AntiDevMode", AntiDevMode::GetLayer());
+
+    Layers::Create("CachReqs", CachReqs::GetLayer());
+    Layers::Create("InitPb", InitPb::GetLayer());
+    Layers::Create("UpdateAuth", UpdateAuth::GetLayer());
+    Layers::Create("UpdatePlayer", UpdatePlayer::GetLayer());
+
+    Layers::Create("Items", Items::CreateLayerItems());
+
+    if (MapAttr::IsLeaderboardEnabled() && _EnableRecords) {
+        Layers::Create("PlayerFinished", PlayerFinished::GetLayer());
+        Layers::Attach("PlayerFinished");
+
+        if (Settings::GetEnableRecords()) {
+            if (_IsCampaign) {
+                Layers::Create("Records", MedalsWidget::GetLayer());
+            } else {
+                Layers::Create("Records", RecordsWidget::GetLayer());
+            }
+            Layers::Attach("Records");
+        }
+    }
+
+    Layers::Attach("Chrono");
+    Layers::Attach("JumpBack");
+    Layers::Attach("TimeDiff");
+    Layers::Attach("CpProgress");
+    Layers::Attach("CPTimes");
+    //Layers::Attach("KeysSettings");
+    Layers::Attach("Items");
+    Layers::Attach("SpecKeys");
+    Layers::Attach("AntiDevMode");
+
+    Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(_IsCampaign));
+    Layers::Create("NextMapVote", NextMapVote::GetLayer(Settings::GetNextMapVotingRatio()));
+    Layers::Attach("RespawnBehavior");
+    Layers::Attach("NextMapVote");
+    Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
+    Layers::Create("SpecList", SpecList::GetLayer());
+    Layers::Create("Glitches", Glitches::GetLayer());
+    Layers::Attach("SpectatorCount");
+    Layers::Attach("SpecList");
+    Layers::Attach("Glitches");
+
+    if (!_IsCampaign) {
+        Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
+        Layers::Attach("SurvivalRanking");
+    }
+
+    Layers::Attach("CachReqs");
+    Layers::Attach("InitPb");
+    Layers::Attach("UpdateAuth");
+    Layers::Attach("UpdatePlayer");
+
+    //Layers::AttachReplay("SpecKeys");
+}
+
+Void DestroyUI(Boolean _Hard) {
+    Layers::Detach("Chrono");
+    Layers::Detach("Glitches");
+    Layers::Detach("JumpBack");
+    Layers::Detach("TimeDiff");
+    Layers::Detach("CpProgress");
+    Layers::Detach("CPTimes");
+    //Layers::Detach("KeysSettings");
+    Layers::Detach("Items");
+    Layers::Detach("Records");
+
+    Layers::Detach("SpectatorCount");
+    Layers::Detach("SpecList");
+    Layers::Detach("NextMapVote");
+    Layers::Detach("RespawnBehavior");
+    Layers::Detach("SpecKeys");
+    Layers::Detach("SurvivalRanking");
+    Layers::Detach("AntiDevMode");
+
+    Layers::Detach("UpdatePlayer");
+    Layers::Detach("InitPb");
+    Layers::Detach("PlayerFinished");
+
+    //Layers::DetachReplay("SpecKeys");
+
+    if (_Hard) {
+        Layers::Detach("CachReqs");
+        Layers::Detach("UpdateAuth");
+    }
+}

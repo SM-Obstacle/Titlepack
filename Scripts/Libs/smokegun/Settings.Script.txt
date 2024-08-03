@@ -16,6 +16,7 @@ declare Integer G_MinTimeLeft;
 declare Integer G_MaxTimeLeft;	
 declare Integer G_CheckpointMarkersCount;	
 declare Integer G_EventEdition;	
+declare Integer G_TimeBeforeSwitchEvent;	
 
 declare Boolean G_FastRespawn;	
 declare Boolean G_AllowJump;	
@@ -156,6 +157,14 @@ Integer GetEventEdition() {
 
 Void SetEventEdition(Integer _Value) {
 	G_EventEdition = _Value;
+}
+
+Integer GetTimeBeforeSwitchEvent() {
+	return G_TimeBeforeSwitchEvent;
+}
+
+Void SetTimeBeforeSwitchEvent(Integer _Value) {
+	G_TimeBeforeSwitchEvent = _Value;
 }
 
 

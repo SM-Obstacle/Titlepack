@@ -103,6 +103,13 @@ Boolean EventHasCurrentMap(Text _EventHandle, Integer _EventEdition) {
             }
         }
     }
+
+    foreach (MapUid in ThisEvent.original_map_uids) {
+        if (MapUid == Map.Id ^ "") {
+            return True;
+        }
+    }
+
     return False;
 }
 
@@ -127,8 +134,6 @@ Void Init() {
     G_EventLoaded = False;
     G_LastEventHandle = "";
     G_LastEventEdition = -1;
-    G_EventHandle = "";
-    G_EventEdition = -1;
     G_ForceClear = False;
     EventAPI::Init();
 
