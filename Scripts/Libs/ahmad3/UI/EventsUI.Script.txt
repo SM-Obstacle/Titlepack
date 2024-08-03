@@ -337,9 +337,14 @@ Void Private_ToggleSwitchToEventFor(CUIConfig _UI) {
 
     Private_CalcRemainingVotes(SelectedEvent.Row);
 
-    // Notify the UI of the vote change
-    declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for _UI;
-    Net_EventsUI_SelectedEventVote = G_Votes[SelectedEvent.Row];
+    // Notify the UIs of the vote change
+    foreach (Player in AllPlayers) {
+        declare CUIConfig UI <=> UIManager.GetUI(Player);
+        declare netwrite K_Event Net_EventsUI_SelectedEvent for UI;
+        if (!Private_CmpEvents(Net_EventsUI_SelectedEvent, SelectedEvent)) continue;
+        declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for UI;
+        Net_EventsUI_SelectedEventVote = G_Votes[SelectedEvent.Row];
+    }
 }
 
 Void Private_IncreaseQuitVotes() {
@@ -373,8 +378,14 @@ Void Private_HandeQuitEventFor(CUIConfig _UI) {
 
     Private_CalcRemainingQuitVotes();
 
-    declare netwrite K_VoteInfo Net_EventsUI_QuitEventVote for _UI;
-    Net_EventsUI_QuitEventVote = G_QuitEventVote;
+    // Notify the UIs of the quit vote change
+    foreach (Player in AllPlayers) {
+        declare CUIConfig UI <=> UIManager.GetUI(Player);
+        declare netwrite K_Event Net_EventsUI_SelectedEvent for UI;
+        if (!Private_CmpEvents(Net_EventsUI_SelectedEvent, SelectedEvent)) continue;
+        declare netwrite K_VoteInfo Net_EventsUI_QuitEventVote for UI;
+        Net_EventsUI_QuitEventVote = G_QuitEventVote;
+    }
 }
 
 /**
