@@ -262,7 +262,7 @@ Integer Private_GetRemainingVotesOf(K_VoteInfo _Vote, K_OptEventRow _Event) {
     declare Integer Amount = _Vote.Amount;
     declare Integer Remaining = ML::CeilingInteger(G_PlayerAmount * Settings::GetSwitchEventVotingRatio())
         - Amount;
-    
+
     if (Amount > 0
         && Remaining <= 0
         && (EndTime == -1 || EndTime - 15000 > Now)
@@ -286,10 +286,12 @@ Void Private_CalcRemainingVotes(K_EventRow _Event) {
 }
 
 Void Private_IncreaseVotes(K_EventRow _Event) {
-    G_Votes[_Event] = K_VoteInfo {
-        Amount = 0,
-        Remaining = G_PlayerAmount
-    };
+    if (!G_Votes.existskey(_Event)) {
+        G_Votes[_Event] = K_VoteInfo {
+            Amount = 0,
+            Remaining = G_PlayerAmount
+        };
+    }
 
     G_Votes[_Event].Amount = ML::Min(G_PlayerAmount, G_Votes[_Event].Amount + 1);
 }
@@ -444,6 +446,50 @@ Void Loop(Boolean _IsCampaign, Boolean _EnableRecords) {
         G_PlayerAmount = Players.count;
         declare netwrite Integer Net_EventsUI_PlayerAmount for Teams[0] = 0;
         Net_EventsUI_PlayerAmount = G_PlayerAmount;
+
+        // Remove the votes of the missing players
+
+        declare Ident[] VotesToRemove;
+
+        foreach (Id => Event in G_VotingToSwitchEvent) {
+            declare Boolean Found = False;
+
+            foreach (Player in Players) {
+                declare CUIConfig UI <=> UIManager.GetUI(Player);
+                if (Id == UI.Id) {
+                    Found = True;
+                    break;
+                }
+            }
+
+            if (Found) continue;
+
+            if (Private_OptEventRow_IsPresent(Event)) {
+                Private_DecreaseVotes(Private_OptEventRow_Get(Event));
+            } else {
+                Private_DecreaseQuitVotes();
+            }
+
+            VotesToRemove.add(Id);
+        }
+
+        foreach (Id in VotesToRemove) {
+            G_VotingToSwitchEvent.removekey(Id);
+        }
+
+        Private_CalcRemainingQuitVotes();
+        foreach (Event => Vote in G_Votes) {
+            Private_CalcRemainingVotes(Event);
+        }
+
+        // Players who voted for an event then went spectator need their selected event vote amount
+        // to be updated, so we update their UIs.
+
+        foreach (Player in AllPlayers) {
+            if (!Player.RequestsSpectate || !Spectators.exists(Player)) continue;
+            declare CUIConfig UI <=> UIManager.GetUI(Player);
+            Private_UpdateSelectedEventOf(UI);
+        }
     }
 
     if (G_IsCampaign != _IsCampaign) {
@@ -465,7 +511,7 @@ Void RestartMap() {
         declare K_EventRow Event = Private_OptEventRow_Get(G_NextEvent);
         Events::SetEventHandle(Event.Handle);
         Events::SetEventEdition(Event.Edition);
-        Events::Init();
+        Events::LoadEdition();
 
         // Remove the votes of the player who voted for this event
 

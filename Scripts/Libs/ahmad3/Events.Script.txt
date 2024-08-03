@@ -14,7 +14,7 @@ declare Boolean G_ForceClear;
 declare Text G_LastEventHandle;
 declare Integer G_LastEventEdition;
 
-Void Private_LoadEdition() {
+Void LoadEdition() {
     // We first load the event
     EventAPI::LoadEvent(G_EventHandle);
     while (True) {
@@ -139,7 +139,7 @@ Void Init() {
     EventAPI::Init();
 
     if (G_EventHandle != "" && G_EventEdition != -1) {
-        Private_LoadEdition();
+        LoadEdition();
     }
 }
 

@@ -86,7 +86,7 @@
 
 #Setting S_EventHandle "" as "Event handle"
 #Setting S_EventEdition -1 as "Event edition (Integer)"
-#Setting S_TimeBeforeSwitchEvent 5000 as "Time before switching event (Integer in milliseconds)"
+#Setting S_TimeBeforeSwitchEvent 15000 as "Time before switching event (Integer in milliseconds)"
 #Setting S_SwitchEventVotingRatio 0.7 as "<hidden>"
 #Setting S_LockEventsUI False as "<hidden>"
 
