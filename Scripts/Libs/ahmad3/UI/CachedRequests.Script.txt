@@ -12,8 +12,6 @@
 #Include "Libs/ahmad3/Utils.Script.txt" as Utils
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
-#Include "Libs/smokegun/Player.Script.txt" as Player
-
 /*********************************************
   CONSTANTS
  *********************************************/
@@ -42,24 +40,6 @@
 //// Private
 ////////////////////
 
-K_CachedReq Private_DefaultCachReq() {
-    return K_CachedReq {
-        Route = "",
-        Tstp = 0,
-        Body = ""
-    };
-}
-
-Text Private_ML_DefaultCachReq() {
-    return """//!
-K_CachedReq {
-    Route = "",
-    Tstp = 0,
-    Body = ""
-}
-    """;
-}
-
 ////////////////////
 //// Public
 ////////////////////
@@ -86,7 +66,7 @@ K_CachedReq SaveCacheFor(CUIConfig _UI, Text _Body, Text _Route) {
     };
 
     declare netwrite Integer Net_CachReqs_SaveCacheUpdate for _UI = -1;
-    declare netwrite K_CachedReq Net_CachReqs_SaveCacheBody for _UI = Private_DefaultCachReq();
+    declare netwrite K_CachedReq Net_CachReqs_SaveCacheBody for _UI;
     Net_CachReqs_SaveCacheBody = Out;
     Net_CachReqs_SaveCacheUpdate = Now;
 
@@ -95,7 +75,7 @@ K_CachedReq SaveCacheFor(CUIConfig _UI, Text _Body, Text _Route) {
 
 Void RemoveCache(CUIConfig _UI, K_CachedReq _CachReq) {
     declare netwrite Integer Net_CachReqs_RemoveCacheUpdate for _UI = -1;
-    declare netwrite K_CachedReq Net_CachReqs_RemoveCacheBody for _UI = Private_DefaultCachReq();
+    declare netwrite K_CachedReq Net_CachReqs_RemoveCacheBody for _UI;
 
     Net_CachReqs_RemoveCacheBody = _CachReq;
     Net_CachReqs_RemoveCacheUpdate = Now;
@@ -168,7 +148,7 @@ Void SaveCache(K_CachedReq[] _Cache) {
     ObsStore_ReqCache = "{{{Constants::C_Version_ReqCache}}}" ^ _Cache.tojson();
 }
 
-Void SaveCache(K_CachedReq _CachReq) {
+Void SaveCacheSingle(K_CachedReq _CachReq) {
     log("Saving to cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
     declare K_CachedReq[] Cache = GetCache();
     Cache.add(_CachReq);
@@ -301,14 +281,14 @@ main() {
     InitRemoveCacheUpdate();
     InitTrySendCached();
 
-    declare netread K_CachedReq Net_CachReqs_SaveCacheBody for UI = {{{Private_ML_DefaultCachReq()}}};
-    declare netread K_CachedReq Net_CachReqs_RemoveCacheBody for UI = {{{Private_ML_DefaultCachReq()}}};
+    declare netread K_CachedReq Net_CachReqs_SaveCacheBody for UI;
+    declare netread K_CachedReq Net_CachReqs_RemoveCacheBody for UI;
 
     while (True) {
         yield;
 
         if (SaveCacheUpdate()) {
-            SaveCache(Net_CachReqs_SaveCacheBody);
+            SaveCacheSingle(Net_CachReqs_SaveCacheBody);
         }
 
         if (RemoveCacheUpdate()) {

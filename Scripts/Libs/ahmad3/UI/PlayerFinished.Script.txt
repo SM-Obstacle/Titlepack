@@ -87,12 +87,15 @@ Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult
 Void Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
     if (!G_FinishCachedReqs.existskey(_UI.Id)) return;
     declare Integer IdxToRemove = -1;
+
+    declare CachReqs::K_CachedReq CachedReq = CachReqs::K_CachedReq {
+        Route = ObsEvents::PrefixRoute("player/finished"),
+        Tstp = _Tstp,
+        Body = _Body
+    };
+
     foreach (Idx => Cached in G_FinishCachedReqs[_UI.Id]) {
-        if (Cached == CachReqs::K_CachedReq {
-            Route = ObsEvents::PrefixRoute("player/finished"),
-            Tstp = _Tstp,
-            Body = _Body
-        }) {
+        if (Cached == CachedReq) {
             IdxToRemove = Idx;
             break;
         }
@@ -100,6 +103,7 @@ Void Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
 
     if (IdxToRemove < 0) return; 
     G_FinishCachedReqs[_UI.Id].removekey(IdxToRemove);
+    CachReqs::RemoveCache(_UI, CachedReq);
 }
 
 Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Body) {
@@ -232,7 +236,7 @@ Void NotifyPlayerFinished(CSmPlayer _Player) {
     declare CachReqs::K_CachedReq Cached = CachReqs::SaveCacheFor(
         UI,
         JsonBody,
-        ObsEvents::PrefixRoute("player/finish")
+        ObsEvents::PrefixRoute("player/finished")
     );
     if (!G_FinishCachedReqs.existskey(UI.Id)) {
         G_FinishCachedReqs[UI.Id] = [];
