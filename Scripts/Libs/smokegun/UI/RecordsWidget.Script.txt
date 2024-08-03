@@ -23,8 +23,9 @@ Text Private_GetSmallRecords() {
     if (Events::HasEventLoaded()) {
         declare CurrentEdition = Events::CurrentEdition();
         declare Text EventName = CurrentEdition.name;
-        if (TL::Length(CurrentEdition.subtitle) > 0)
+        if (TL::Length(CurrentEdition.subtitle) > 0) {
             EventName ^= " " ^ CurrentEdition.subtitle;
+        }
 
         QuadHeight = 71.;
         LabelEvent = """
@@ -233,7 +234,7 @@ Text GetLayer() {
             foreach (Event in PendingEvents) {
                switch (Event.Type) {
                     case CMlScriptEvent::Type::MouseClick: {
-                        OpenLink("{{{Constants::C_WebsiteUrl}}}/map/"^Map.Id,  CMlScript::LinkType::ExternalBrowser);
+                        OpenLink({{{dump(Constants::C_WebsiteUrl ^ "/" ^ Events::PrefixRoute("map/"))}}} ^ Map.Id, CMlScript::LinkType::ExternalBrowser);
                     }
                 }
             }

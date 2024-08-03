@@ -348,7 +348,7 @@ Text GetLayer() {
             foreach (Event in PendingEvents) {
                switch (Event.Type) {
                     case CMlScriptEvent::Type::MouseClick: {
-                        OpenLink("{{{Constants::C_WebsiteUrl}}}/map/"^Map.Id,  CMlScript::LinkType::ExternalBrowser);
+                        OpenLink({{{dump(Constants::C_WebsiteUrl ^ "/" ^ ObsEvents::PrefixRoute("map/"))}}} ^ Map.Id,  CMlScript::LinkType::ExternalBrowser);
                     }
                 }
             }
