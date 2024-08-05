@@ -51,7 +51,7 @@
 #Const C_Request_EventHandle 6
 #Const C_Request_EventHandleEdition 7
 
-#Const C_Version_EventsCache        "0.1.0"
+#Const C_Version_EventsCache        "0.1.1"
 #Const C_Version_ReqCache           "0.1.0"
 
 #Const C_UnauthorizedStatusCode 401

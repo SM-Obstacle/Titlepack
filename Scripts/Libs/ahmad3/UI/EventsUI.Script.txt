@@ -68,8 +68,8 @@
 #Struct K_Event {
     K_EventRow Row;
     Text[] Authors;
-    Text StartDate;
-    Text EndDate;
+    Integer StartDate;
+    Integer EndDate;
 }
 
 #Struct K_VoteInfo {
@@ -940,6 +940,7 @@ Text GetLayer() {
 
 #Include "MathLib" as ML
 #Include "TextLib" as TL
+#Include "TimeLib" as TiL
 #Include "ColorLib" as CL
 
 #Struct K_EventRow {
@@ -951,8 +952,8 @@ Text GetLayer() {
 #Struct K_Event {
     K_EventRow Row;
     Text[] Authors;
-    Text StartDate;
-    Text EndDate;
+    Integer StartDate;
+    Integer EndDate;
 }
 
 #Struct K_VoteInfo {
@@ -1102,14 +1103,14 @@ Void UpdateSelectedEventUI() {
 
     G_SelectedEventName.SetText(G_SelectedEvent.Row.Name);
     G_SelectedEventIds.SetText(G_SelectedEvent.Row.Handle ^ "/" ^ G_SelectedEvent.Row.Edition);
-    G_SelectedEventStartDate.SetText(G_SelectedEvent.StartDate);
+    G_SelectedEventStartDate.SetText(TiL::FormatDate(G_SelectedEvent.StartDate ^ "", TiL::EDateFormats::RelativeShort));
     declare Text UrlText = "$l[{{{Constants::C_WebsiteUrl}}}/event/%1/%2]See the scores";
     G_SelectedEventUrl.SetText(TL::Compose(UrlText, G_SelectedEvent.Row.Handle, G_SelectedEvent.Row.Edition ^ ""));
 
-    if (G_SelectedEvent.EndDate == "") {
+    if (G_SelectedEvent.EndDate == -1) {
         G_SelectedEventEndDate.Hide();
     } else {
-        G_SelectedEventEndDate.SetText(G_SelectedEvent.EndDate);
+        G_SelectedEventEndDate.SetText(TiL::FormatDate(G_SelectedEvent.EndDate ^ "", TiL::EDateFormats::RelativeShort));
         G_SelectedEventEndDate.Show();
     }
 

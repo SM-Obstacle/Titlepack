@@ -48,8 +48,8 @@
     Text name;
     Text subtitle;
     Text[] authors;
-    Text start_date;
-    Text end_date;
+    Integer start_date;
+    Integer end_date;
     Text banner_img_url;
     Text banner2_img_url;
     Integer mx_id;
@@ -121,8 +121,8 @@ Text ML_Preproc(Text _Prefix) {
     Text name;
     Text subtitle;
     Text[] authors;
-    Text start_date;
-    Text end_date;
+    Integer start_date;
+    Integer end_date;
     Text banner_img_url;
     Text banner2_img_url;
     Integer mx_id;
