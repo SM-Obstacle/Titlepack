@@ -20,7 +20,6 @@
 #Const C_ML_QuitButtonFrame "Frame_QuitEventButton"
 #Const C_ML_QuitBtnBg "Quad_QuitEventButton"
 #Const C_ML_QuitBtnLabel "Label_QuitBtn"
-#Const C_ML_LockViewId "Frame_LockView"
 #Const C_ML_VoteBtnFrame "Frame_VoteBtn"
 #Const C_ML_VoteBtnLabel "Label_VoteBtn"
 #Const C_ML_VoteBtnBg "Quad_VoteBtn"
@@ -675,12 +674,6 @@ Text Private_GetActiveEventRows(Text _ModelId) {
 }
 
 Text Private_GetWidget() {
-    // Used by the script to check if an event can be processed or not
-    declare Text LockNode = "";
-    if (Private_ViewIsLocked()) {
-        LockNode = """<frame id="{{{C_ML_LockViewId}}}"></frame>""";
-    }
-
     declare Text Footer = """
 <!-- Background -->
 <quad
@@ -699,8 +692,6 @@ Text Private_GetWidget() {
 
     return """
 <frame id="Frame_EventsUI" hidden="1">
-    {{{LockNode}}}
-
     <!-- Background -->
     <quad
         z-index="-1"
@@ -1213,8 +1204,7 @@ main() {
 
     InitUIVars();
 
-    declare CMlControl LockViewFrame <=> Page.GetFirstChild({{{dump(C_ML_LockViewId)}}});
-    declare Boolean HasLockedView = LockViewFrame != Null;
+    declare Boolean HasLockedView = {{{Private_ViewIsLocked()}}};
 
     declare netread Integer Net_EventsUI_PlayerAmount for Teams[0] = 1;
     G_TotalPlayers = Net_EventsUI_PlayerAmount;
