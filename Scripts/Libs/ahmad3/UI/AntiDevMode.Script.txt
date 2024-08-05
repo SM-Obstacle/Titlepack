@@ -92,7 +92,6 @@ Void TriggerAntiDevMode() {
     Dlg_NewDialog(Dlg_K_Dialog {
         Title = "Warning",
         Msg = {{{dump(dump(dump(C_AntiDevModeMsg)))}}},
-        AllowClose = False,
         Buttons = []
     });
 

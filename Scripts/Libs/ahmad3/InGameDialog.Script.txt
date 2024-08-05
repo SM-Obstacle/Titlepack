@@ -91,9 +91,9 @@
      */
     Text Msg;
     /**
-     * Do we allow the close by clicking outside of the dialog?
+     * Do we close when the clicked button is success?
      */
-    Boolean AllowClose;
+    Boolean CloseOnSuccess;
     /**
      * The submit buttons of the dialog.
      */
@@ -120,6 +120,12 @@
     Text[] MlId;
 }
 
+#Struct Private_K_PendingDialog {
+    Integer PreviousDialogId;
+    K_Dialog Dialog;
+    Integer NextDialogId;
+}
+
 /*********************************************
   GLOBALES
  *********************************************/
@@ -132,17 +138,12 @@ declare Integer[Ident] G_LastDialogIds;
 /**
  * Associates each player UI config ID to an array associating dialog IDs to their content.
  */
-declare K_Dialog[Integer][Ident] G_PendingDialogs;
+declare Private_K_PendingDialog[Integer][Ident] G_PendingDialogs;
 
 /**
  * Associates each player UI config ID to the ID of the shown dialog.
  */
 declare Integer[Ident] G_ShownDialogIds;
-
-/**
- * Associates each player UI config ID to the name of the layer of the dialog.
- */
-declare Text[Ident] G_DialogLayers;
 
 /*********************************************
   FUNCTIONS
@@ -151,6 +152,10 @@ declare Text[Ident] G_DialogLayers;
 ////////////////////
 //// Private
 ////////////////////
+
+Text Private_GetLayerId(CUIConfig _UI) {
+    return "InGameDialog__" ^ _UI.Id;
+}
 
 /**
  * Returns the manialink version of the previous types.
@@ -166,7 +171,7 @@ Text Private_ML_K_Dialog(Text _ModName) {
 #Struct {{{_ModName}}}_K_Dialog {
     Text Title;
     Text Msg;
-    Boolean AllowClose;
+    Boolean CloseOnSuccess;
     {{{_ModName}}}_K_Button[] Buttons;
 }
 
@@ -309,10 +314,16 @@ main() {
  * @param _Dialog The content of the dialog.
  */
 Void Private_AttachDialogFor(CUIConfig _UI, Integer _DialogId, K_Dialog _Dialog) {
-    G_DialogLayers[_UI.Id] = "InGameDialog__" ^ _UI.Id;
-    Layers::Create(G_DialogLayers[_UI.Id], Private_GetLayer(_DialogId, _Dialog));
+    if (G_ShownDialogIds.existskey(_UI.Id) && G_ShownDialogIds[_UI.Id] == _DialogId) return;
+    declare Text LayerId = Private_GetLayerId(_UI);
+
+    if (Layers::Exists(LayerId)) {
+        Layers::Get(LayerId).ManialinkPage = Private_GetLayer(_DialogId, _Dialog);
+    } else {
+        Layers::Create(LayerId, Private_GetLayer(_DialogId, _Dialog));
+    }
     declare CSmPlayer Player <=> GetPlayer(_UI);
-    Layers::Attach(G_DialogLayers[_UI.Id], Player);
+    Layers::Attach(LayerId, Player);
     G_ShownDialogIds[_UI.Id] = _DialogId;
 }
 
@@ -328,6 +339,12 @@ Void Private_HandleNewDialog(CUIConfig _UI, Text _PageId, K_Dialog _Dialog) {
     declare netwrite Boolean Net_InGameDialog_ActiveDialog for _UI = False;
     Net_InGameDialog_ActiveDialog = True;
 
+    declare Private_K_PendingDialog Dialog = Private_K_PendingDialog {
+        PreviousDialogId = -1,
+        Dialog = _Dialog,
+        NextDialogId = -1
+    };
+
     // Push to the pending dialogs of the client.
     if (!G_PendingDialogs.existskey(_UI.Id)) {
         G_PendingDialogs[_UI.Id] = [];
@@ -335,17 +352,24 @@ Void Private_HandleNewDialog(CUIConfig _UI, Text _PageId, K_Dialog _Dialog) {
     if (!G_LastDialogIds.existskey(_UI.Id)) {
         G_LastDialogIds[_UI.Id] = 0;
     }
-    G_LastDialogIds[_UI.Id] += 1;
-    declare Integer DialogId = G_LastDialogIds[_UI.Id];
-    G_PendingDialogs[_UI.Id][DialogId] = _Dialog;
+    declare Integer DialogId = G_LastDialogIds[_UI.Id] + 1;
+    if (G_PendingDialogs[_UI.Id].existskey(G_LastDialogIds[_UI.Id])) {
+        // Update the previous dialog's next dialog ID
+        G_PendingDialogs[_UI.Id][G_LastDialogIds[_UI.Id]].NextDialogId = DialogId;
+        Dialog.PreviousDialogId = G_LastDialogIds[_UI.Id];
+    }
+    G_PendingDialogs[_UI.Id][DialogId] = Dialog;
 
     // Return the dialog ID to the requesting manialink page.
     declare netwrite Integer[Text] Net_Dlg_LastDialogIds for _UI = [];
     Net_Dlg_LastDialogIds[_PageId] = DialogId;
 
-    if (!G_ShownDialogIds.existskey(_UI.Id)) {
+    if (Dialog.PreviousDialogId == -1) {
+        // Attach the UI layer if it's the first dialog
         Private_AttachDialogFor(_UI, DialogId, _Dialog);
     }
+
+    G_LastDialogIds[_UI.Id] = DialogId;
 }
 
 /**
@@ -357,16 +381,16 @@ Void Private_HandleNewDialog(CUIConfig _UI, Text _PageId, K_Dialog _Dialog) {
  * @param _DialogId The ID of the dialog to close.
  */
 Void Private_HandleCloseDialog(CUIConfig _UI, Integer _DialogId) {
-    // Skip if the id of the current shown dialog of the client doesn't match.
-    if (!G_ShownDialogIds.existskey(_UI.Id)
-        || G_ShownDialogIds[_UI.Id] != _DialogId)
-    {
-        return;
-    }
+    // Skip if the dialog isn't in the pending list
+    if (!G_PendingDialogs.existskey(_UI.Id) || !G_PendingDialogs[_UI.Id].existskey(_DialogId)) return;
 
+    declare Private_K_PendingDialog LastDialog = G_PendingDialogs[_UI.Id][_DialogId];
     G_PendingDialogs[_UI.Id].removekey(_DialogId);
 
-    if (G_LastDialogIds[_UI.Id] == _DialogId) {
+    declare Integer CurrentPreviousDialogId = LastDialog.PreviousDialogId;
+    declare Integer CurrentNextDialogId = LastDialog.NextDialogId;
+
+    if (CurrentPreviousDialogId == -1 && CurrentNextDialogId == -1) {
         // This was the last dialog to show to the client,
         // so we remove everything related to it.
 
@@ -379,10 +403,21 @@ Void Private_HandleCloseDialog(CUIConfig _UI, Integer _DialogId) {
     } else {
         // There are other pending dialogs for the client.
 
-        declare Integer NextDialogId = _DialogId + 1;
-        G_ShownDialogIds[_UI.Id] = NextDialogId;
-        declare K_Dialog NextDialog = G_PendingDialogs[_UI.Id][NextDialogId];
-        
+        declare Integer NextDialogId;
+        if (CurrentPreviousDialogId == -1) {
+            NextDialogId = CurrentNextDialogId;
+        } else {
+            NextDialogId = CurrentPreviousDialogId;
+        }
+
+        if (G_PendingDialogs[_UI.Id].existskey(CurrentPreviousDialogId)) {
+            G_PendingDialogs[_UI.Id][CurrentPreviousDialogId].NextDialogId = CurrentNextDialogId;
+        }
+        if (G_PendingDialogs[_UI.Id].existskey(CurrentNextDialogId)) {
+            G_PendingDialogs[_UI.Id][CurrentNextDialogId].PreviousDialogId = CurrentPreviousDialogId;
+        }
+
+        declare K_Dialog NextDialog = G_PendingDialogs[_UI.Id][NextDialogId].Dialog;
         Private_AttachDialogFor(_UI, NextDialogId, NextDialog);
     }
 }
@@ -398,6 +433,11 @@ Void Private_HandleCloseDialog(CUIConfig _UI, Integer _DialogId) {
 Void Private_HandleButtonClicked(
     CUIConfig _UI, Integer _DialogId, Text _ButtonId, Boolean _Success
 ) {
+    declare K_Dialog CurrentDialog = G_PendingDialogs[_UI.Id][_DialogId].Dialog;
+    if (_Success && CurrentDialog.CloseOnSuccess) {
+        Private_HandleCloseDialog(_UI, _DialogId);
+    }
+
     declare netwrite Text[Integer] Net_Dlg_PromptDialogResults
         for _UI = [];
     declare netwrite Integer[Integer] Net_Dlg_PromptDialogUpdates
@@ -481,8 +521,7 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
         ////////////
         case C_Ev_DialogScriptFinish: {
             declare CSmPlayer Player <=> GetPlayer(_Event.UI);
-            Layers::Detach(G_DialogLayers[_Event.UI.Id], Player);
-            G_DialogLayers.removekey(_Event.UI.Id);
+            Layers::Detach(Private_GetLayerId(_Event.UI), Player);
             declare netwrite Boolean Net_PendingFinish for _Event.UI = True;
             Net_PendingFinish = False;
         }

@@ -228,7 +228,6 @@ Void InitUpdateToken(Boolean _OnFinished) {
     G_AuthDialogId = Dlg_NewDialog(Dlg_K_Dialog {
         Title = "Authentication",
         Msg = Msg,
-        AllowClose = False,
         Buttons = [
             Dlg_K_Button {
                 MlId = "OK_Button",
@@ -237,8 +236,7 @@ Void InitUpdateToken(Boolean _OnFinished) {
             },
             Dlg_K_Button {
                 MlId = SkipBtnId,
-                Label = SkipBtnLabel,
-                Success = False
+                Label = SkipBtnLabel
             }
         ]
     });
