@@ -24,11 +24,7 @@
  */
 Text GetUserToken(CUser _User) {
     declare persistent Text ObsStore_UserToken for _User = "";
-    declare persistent Text[Text] ObsStore_UserTokens for _User = [];
-    if (!ObsStore_UserTokens.existskey(_User.Login)) {
-        ObsStore_UserTokens[_User.Login] = ObsStore_UserToken;
-    }
-    return ObsStore_UserTokens[_User.Login];
+    return ObsStore_UserToken;
 }
 
 /**
@@ -38,8 +34,8 @@ Text GetUserToken(CUser _User) {
  * @param _User The user. This must always be `LocalUser` to allow access to the persistent storage.
  */
 Void SetUserToken(Text _Token, CUser _User) {
-    declare persistent Text[Text] ObsStore_UserTokens for _User = [];
-    ObsStore_UserTokens[_User.Login] = _Token;
+    declare persistent Text ObsStore_UserToken for _User = "";
+    ObsStore_UserToken = _Token;
 }
 
 /**
@@ -55,16 +51,12 @@ Text ML_Content(Text _ModName) {
     return """//!
 Text {{{_ModName}}}_GetUserToken() {
     declare persistent Text ObsStore_UserToken for LocalUser = "";
-    declare persistent Text[Text] ObsStore_UserTokens for LocalUser = [];
-    if (!ObsStore_UserTokens.existskey(LocalUser.Login)) {
-        ObsStore_UserTokens[LocalUser.Login] = ObsStore_UserToken;
-    }
-    return ObsStore_UserTokens[LocalUser.Login];
+    return ObsStore_UserToken;
 }
 
 Void {{{_ModName}}}_SetUserToken(Text _Token) {
-    declare persistent Text[Text] ObsStore_UserTokens for LocalUser = [];
-    ObsStore_UserTokens[LocalUser.Login] = _Token;
+    declare persistent Text ObsStore_UserToken for LocalUser = "";
+    ObsStore_UserToken = _Token;
 }
     """;
 }
