@@ -42,6 +42,7 @@
     Integer old;
     Integer new;
     Integer current_rank;
+    Integer old_rank;
 }
 
 #Struct K_PlayerFinishedBody {
@@ -66,6 +67,18 @@ declare CachReqs::K_CachedReq[][Ident] G_FinishCachedReqs;
 ////////////////////
 //// Private
 ////////////////////
+
+// This prevents other dialogs (like the campaign's EndScreen) to show up on top
+// of the auth dialog when finishing a map.
+Void Private_LockFinishFor(CUIConfig _UI) {
+    declare netwrite Boolean Net_PendingFinish for _UI = False;
+    Net_PendingFinish = True;
+}
+
+Void Private_ReleaseFinishFor(CUIConfig _UI) {
+    declare netwrite Boolean Net_PendingFinish for _UI = True;
+    Net_PendingFinish = False;
+}
 
 Text Private_OrdinalSuffix(Integer _Rank) {
     declare Text[Integer] Suffixes = [1 => "st", 2 => "nd", 3 => "rd"];
@@ -145,8 +158,21 @@ Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Bo
         ));
     }
 
-    declare netwrite Boolean Net_PendingFinish for _UI = True;
-    Net_PendingFinish = False;
+    declare netwrite Integer Net_NewGoal for Player = -1;
+    declare netwrite Integer Net_PF_Rank for Player = -1;
+    declare netwrite Integer Net_PF_OldRank for Player = -1;
+    declare netwrite Integer Net_PF_Time for Player = -1;
+    declare netwrite Integer Net_PF_OldTime for Player = -1;
+    declare netwrite Boolean Net_PF_HasImproved for Player = False;
+
+    Net_PF_Rank = Res.current_rank;
+    Net_PF_OldRank = Res.old_rank;
+    Net_PF_OldTime = Res.old;
+    Net_PF_Time = Res.new;
+    Net_PF_HasImproved = Res.has_improved;
+    Net_NewGoal = Now;
+
+    Private_ReleaseFinishFor(_UI);
 }
 
 Void Private_HandleCacheApprove(CUIConfig _UI, Integer _Tstp, Text _Body) {
@@ -154,8 +180,7 @@ Void Private_HandleCacheApprove(CUIConfig _UI, Integer _Tstp, Text _Body) {
     declare CSmPlayer Player <=> GetPlayer(_UI);
     Player::setHasWrongLbLine(Player, True);
     Private_RemoveCached(_UI, _Tstp, _Body);
-    declare netwrite Boolean Net_PendingFinish for _UI = True;
-    Net_PendingFinish = False;
+    Private_ReleaseFinishFor(_UI);
 }
 
 ////////////////////
@@ -204,10 +229,7 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
 Void NotifyPlayerFinished(CSmPlayer _Player) {
     declare CUIConfig UI <=> UIManager.GetUI(_Player);
 
-    // This prevents other dialogs (like the campaign's EndScreen) to show up on top
-    // of the auth dialog when finishing a map.
-    declare netwrite Boolean Net_PendingFinish for UI = False;
-    Net_PendingFinish = True;
+    Private_LockFinishFor(UI);
 
     declare Integer[] CpTimes = [];
     declare Integer LastCpTime = 0;

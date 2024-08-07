@@ -502,9 +502,6 @@ Text Build() {
 		declare Label_Leaderboards = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
 		declare Label_Feedback = (Page.GetFirstChild("Label_Feedback") as CMlLabel);
 
-		declare Integer[Text] CampaignRecords for LocalUser;
-		declare Boolean CampaignRecordsUpdated for LocalUser = False;
-
 		declare K_Event P_CampaignEvent for Page;
 		declare Integer P_SelectedEdition for Page = -1;
 		declare Integer P_SelectedMapI for Page = -1;

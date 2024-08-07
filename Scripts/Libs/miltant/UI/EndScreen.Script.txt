@@ -1,5 +1,3 @@
-#Include "TextLib" as TL
-
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
 
@@ -158,19 +156,15 @@ Text GetLayer(Boolean _WithNextMapButton, Boolean _LastMap) {
 		declare Frame_Record = (Page.GetFirstChild("Frame_Record") as CMlFrame);
 		declare Quad_Medal_C = (Frame_Record.GetFirstChild("Quad_Medal_3") as CMlQuad);
 
-		declare Text CampaignEvent for Teams[0];
-		declare Integer[Text] CampaignRecords for LocalUser;
-		declare Boolean CampaignRecordsUpdated for LocalUser = False;
-		declare Integer LastRank = 0;
-		declare Integer CurrentPlayerRank for LocalUser = 0;
-		declare netread Net_Time1 for InputPlayer = 0;
-		declare netread Net_NewGoal for InputPlayer = 0;
-		declare NewGoal = 0;
-		
-		// Notify the MlAuth manialink that we're in the end screen
-		// so that it doesn't show any error popup.
-		declare Boolean __MlAuth_EndScreenVisible for LocalUser;
-		__MlAuth_EndScreenVisible = True;
+		declare netread Integer Net_PF_Rank for InputPlayer = -1;
+		declare netread Integer Net_PF_OldRank for InputPlayer = -1;
+		declare netread Integer Net_PF_Time for InputPlayer = -1;
+		declare netread Integer Net_PF_OldTime for InputPlayer = -1;
+		declare netread Boolean Net_PF_HasImproved for InputPlayer = False;
+
+		declare netread Integer Net_NewGoal for InputPlayer = -1;
+		declare Integer NewGoal = -1;
+
 		{{{NotifyFinishedMapToTP}}}
 		
 		while (True) {
@@ -183,15 +177,6 @@ Text GetLayer(Boolean _WithNextMapButton, Boolean _LastMap) {
                 G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
                 MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
             }
-
-			declare RerenderUI = False;
-			if (LastRank != CurrentPlayerRank) {
-				RerenderUI = True;
-			}
-
-			if (Net_NewGoal != NewGoal) {
-				RerenderUI = True;
-			}
 
 			foreach (Event in PendingEvents) {
 				{{{Styles::GetEventLoopActiveItem("campaign_action")}}}
@@ -210,45 +195,41 @@ Text GetLayer(Boolean _WithNextMapButton, Boolean _LastMap) {
 				}
 			}
 
-			if (RerenderUI && CampaignRecords.existskey(Map.MapInfo.MapUid)) {
+			if (Net_NewGoal != NewGoal) {
 				NewGoal = Net_NewGoal;
-				declare Diff = "";
 
-				if (CampaignRecords[Map.MapInfo.MapUid] == 0 || CampaignRecords[Map.MapInfo.MapUid] > Net_Time1) {
-					Frame_Record.RelativePosition_V3.Y = 0.;
-					Label_PB.Opacity = 1.;
-
-					if (CampaignRecords[Map.MapInfo.MapUid] !=0) {
-						Diff = " ($0f0" ^ (Net_Time1 - CampaignRecords[Map.MapInfo.MapUid]) / 1000. ^ "$z)";
-					}
-					CampaignRecords[Map.MapInfo.MapUid] = Net_Time1;
-					CampaignRecordsUpdated = True;
-				} else {
-					Frame_Record.RelativePosition_V3.Y = 7.;
-					Label_PB.Opacity = 0.;
-
-					if (CampaignRecords[Map.MapInfo.MapUid] < Net_Time1) {
-						Diff = " ($f00+" ^ (Net_Time1 - CampaignRecords[Map.MapInfo.MapUid]) / 1000. ^ "$z)";
-					} else {
-						Diff = " (±0.00)";
-					}
-				}
-
-				declare RankDiff = "";
-				if (LastRank != CurrentPlayerRank) {
-					if (LastRank != 0)
-						RankDiff = " ($0f0" ^ (CurrentPlayerRank - LastRank) ^ "$z)";
-					LastRank = CurrentPlayerRank;
+				declare Text RankDiff = "";
+				if (Net_PF_HasImproved && Net_PF_OldRank > 0) {
+					RankDiff = " ($0f0" ^ (Net_PF_Rank - Net_PF_OldRank) ^ "$z)";
 				} else {
 					RankDiff = " (+0)";
 				}
 			
-				Label_Rank.Value = "Rank " ^ CurrentPlayerRank ^ RankDiff;
-				Label_Time.Value = TL::TimeToText(Net_Time1, True) ^ Diff;
+				Label_Rank.Value = "Rank " ^ Net_PF_Rank ^ RankDiff;
+
+				declare Text TimeDiff = "";
+
+				if (Net_PF_HasImproved) {
+					Frame_Record.RelativePosition_V3.Y = 0.;
+					Label_PB.Opacity = 1.;
+
+					TimeDiff = " ($0f0" ^ TL::TimeToText(Net_PF_Time - Net_PF_OldTime, True) ^ "$z)";
+				} else {
+					Frame_Record.RelativePosition_V3.Y = 7.;
+					Label_PB.Opacity = 0.;
+
+					if (Net_PF_OldTime < Net_PF_Time) {
+						TimeDiff = " ($f00+" ^ TL::TimeToText(Net_PF_Time - Net_PF_OldTime, True) ^ "$z)";
+					} else {
+						TimeDiff = " (±0.00)";
+					}
+				}
+
+				Label_Time.Value = TL::TimeToText(Net_PF_Time, True) ^ TimeDiff;
 	
 				for (I, 0, 3) {
 					declare Quad_Medal = (Frame_Record.GetFirstChild("Quad_Medal_" ^ I) as CMlQuad);
-					Quad_Medal.Visible = Net_Time1 <= GetMedal(I);
+					Quad_Medal.Visible = Net_PF_Time <= GetMedal(I);
 				}
 				if (Quad_Medal_C.Visible) {
 					for (I, 0, 2) {
