@@ -466,12 +466,23 @@ Void MB_Private_CancelMatchOnLadder() {
 /// Play the intro sequence
 Void MB_Private_IntroSequence() {
 	declare PrevUISequence = UIManager.UIAll.UISequence;
+	declare CUILayer Layer <=> UIManager.UILayerCreate();
+	Layer.ManialinkPage = """
+<manialink version="3">
+	<script><![CDATA[
+		ClientUI.UISequence = CUIConfig::EUISequence::None;
+	]]></script>
+</manialink>
+	""";
+	UIManager.UIAll.UILayers.add(Layer);
 	UIManager.UIAll.UISequence = CUIConfig::EUISequence::Intro;
 	while (MB_Private_MapIsRunning() && !UIManager.UIAll.UISequenceIsCompleted) {
 		MB_Private_Yield();
 		+++MB_Private_IntroSequenceYield+++
 	}
 	UIManager.UIAll.UISequence = PrevUISequence;
+	UIManager.UIAll.UILayers.removekey(Layer.Id);
+	UIManager.UILayerDestroy(Layer);
 }
 
 // ---------------------------------- //
