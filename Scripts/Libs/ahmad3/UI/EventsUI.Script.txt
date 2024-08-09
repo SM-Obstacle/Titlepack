@@ -5,7 +5,6 @@
 #Include "Libs/miltant/Nadeo_Fork/Message.Script.txt" as Message
 #Include "Libs/smokegun/ObstacleLib.Script.txt" as Obstacle
 #Include "Libs/smokegun/Player.Script.txt" as Player
-#Include "Libs/ahmad3/ObsUIMgr.Script.txt" as UIMgr
 
 #Include "TextLib" as TL
 #Include "MathLib" as ML
@@ -107,9 +106,6 @@ declare Boolean G_RequestRestart;
  */
 declare K_OptEventRow G_NextEvent;
 declare K_OptEventRow G_PlayedEvent;
-
-declare Boolean G_IsCampaign;
-declare Boolean G_EnableRecords;
 
 Boolean Private_OptEventRow_IsPresent(K_OptEventRow _Event) {
     return _Event.Event.count > 0;
@@ -452,7 +448,7 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
     }
 }
 
-Void Loop(Boolean _IsCampaign, Boolean _EnableRecords) {
+Void Loop() {
     if (Players.count != G_PlayerAmount) {
         G_PlayerAmount = Players.count;
         declare netwrite Integer Net_EventsUI_PlayerAmount for Teams[0] = 0;
@@ -502,17 +498,9 @@ Void Loop(Boolean _IsCampaign, Boolean _EnableRecords) {
             Private_UpdateSelectedEventOf(UI);
         }
     }
-
-    if (G_IsCampaign != _IsCampaign) {
-        G_IsCampaign = _IsCampaign;
-    }
-
-    if (G_EnableRecords != _EnableRecords) {
-        G_EnableRecords = _EnableRecords;
-    }
 }
 
-Void RestartMap() {
+Void BeginRestartMap() {
     Private_CancelRestartRequest();
 
     if (Private_OptEventRow_IsPresent(G_NextEvent)) {
@@ -579,10 +567,9 @@ Void RestartMap() {
     }
 
     G_PlayedEvent = G_NextEvent;
+}
 
-    UIMgr::DestroyUI(True);
-    UIMgr::CreateUI(G_IsCampaign, G_EnableRecords);
-
+Void EndRestartMap() {
     // Reset all the players
     foreach (Player in Players) {
         Player::setInitialized(Player, False);
@@ -1239,7 +1226,6 @@ main() {
 
         if (G_QuitEventVote != Net_EventsUI_QuitEventVote) {
             G_QuitEventVote = Net_EventsUI_QuitEventVote;
-            log("update quit btn");
             UpdateQuitEventVoteBtnUI();
         }
 

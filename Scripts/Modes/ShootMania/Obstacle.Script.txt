@@ -61,8 +61,6 @@
 #Include "Libs/ahmad3/MapAttributes.Script.txt" as MapAttr
 #Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
 
-#Include "Libs/ahmad3/ObsUIMgr.Script.txt" as UIMgr
-
 // ---------------------------------- //
 // Settings
 // ---------------------------------- //
@@ -439,7 +437,7 @@ if (ObsEvents::Loop()) {
     EventsUI::UpdateActiveEvents();
 }
 
-EventsUI::Loop(G_IsCampaign, G_EnableRecords);
+EventsUI::Loop();
 
 if (LastUpdate + C_SettingsUpdateInterval < Now) {
     LastUpdate = Now;
@@ -461,7 +459,10 @@ if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRec
 
 if (EndTime > 0 && Now > EndTime) {
     if (EventsUI::RequestedRestart()) {
-        EventsUI::RestartMap();
+        EventsUI::BeginRestartMap();
+        DestroyUI(False);
+        CreateUI();
+        EventsUI::EndRestartMap();
     } else {
         Message::SendBigMessage(_("Time limit reached"),    2000, 3, CUIConfig::EUISound::Silence, 0);
         MB_Private_StopMatch();
@@ -805,13 +806,76 @@ Void CreateUI() {
 
     Layers::Create("EventsUI", EventsUI::GetLayer());
     Layers::Attach("EventsUI");
-    Layers::Create("Markers");
-    Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
+    if (!Layers::Exists("Markers")) {
+        Layers::Create("Markers");
+        Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
+    }
     Layers::Attach("Markers");
 
     --- Campaign_CreateUI ---
 
-    UIMgr::CreateUI(G_IsCampaign, G_EnableRecords);
+    Layers::Create("Chrono", Chrono::GetLayer());
+    Layers::Create("JumpBack", JumpBack::GetLayer());
+    Layers::Create("TimeDiff", TimeDiff::GetLayer());
+    Layers::Create("CpProgress", CpProgress::GetLayer());
+    Layers::Create("CPTimes", CPTimes::GetLayer());
+    //Layers::Create("KeysSettings", KeysSettings::GetLayer());
+    Layers::Create("SpecKeys", SpecKeys::GetLayer());
+    Layers::Create("AntiDevMode", AntiDevMode::GetLayer());
+
+    Layers::Create("CachReqs", CachReqs::GetLayer());
+    Layers::Create("InitPb", InitPb::GetLayer());
+    Layers::Create("UpdateAuth", UpdateAuth::GetLayer());
+    Layers::Create("UpdatePlayer", UpdatePlayer::GetLayer());
+
+    Layers::Create("Items", Items::CreateLayerItems());
+
+    if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords) {
+        Layers::Create("PlayerFinished", PlayerFinished::GetLayer());
+        Layers::Attach("PlayerFinished");
+
+        if (Settings::GetEnableRecords()) {
+            if (G_IsCampaign) {
+                Layers::Create("Records", MedalsWidget::GetLayer());
+            } else {
+                Layers::Create("Records", RecordsWidget::GetLayer());
+            }
+            Layers::Attach("Records");
+        }
+    }
+
+    Layers::Attach("Chrono");
+    Layers::Attach("JumpBack");
+    Layers::Attach("TimeDiff");
+    Layers::Attach("CpProgress");
+    Layers::Attach("CPTimes");
+    //Layers::Attach("KeysSettings");
+    Layers::Attach("Items");
+    Layers::Attach("SpecKeys");
+    Layers::Attach("AntiDevMode");
+
+    Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(G_IsCampaign));
+    Layers::Create("NextMapVote", NextMapVote::GetLayer(Settings::GetNextMapVotingRatio()));
+    Layers::Attach("RespawnBehavior");
+    Layers::Attach("NextMapVote");
+    Layers::Create("SpectatorCount", SpectatorCount::GetLayer());
+    Layers::Create("SpecList", SpecList::GetLayer());
+    Layers::Create("Glitches", Glitches::GetLayer());
+    Layers::Attach("SpectatorCount");
+    Layers::Attach("SpecList");
+    Layers::Attach("Glitches");
+
+    if (!G_IsCampaign) {
+        Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
+        Layers::Attach("SurvivalRanking");
+    }
+
+    Layers::Attach("CachReqs");
+    Layers::Attach("InitPb");
+    Layers::Attach("UpdateAuth");
+    Layers::Attach("UpdatePlayer");
+
+    //Layers::AttachReplay("SpecKeys");
 
     CustomUI::Build();
     CustomUI::Attach();
@@ -819,9 +883,35 @@ Void CreateUI() {
 
 Void DestroyUI(Boolean _Hard) {
     Layers::Detach("EventsUI");
+    Layers::Detach("Chrono");
+    Layers::Detach("Glitches");
+    Layers::Detach("JumpBack");
+    Layers::Detach("TimeDiff");
+    Layers::Detach("CpProgress");
+    Layers::Detach("CPTimes");
+    //Layers::Detach("KeysSettings");
+    Layers::Detach("Items");
+    Layers::Detach("Records");
+
+    Layers::Detach("SpectatorCount");
+    Layers::Detach("SpecList");
+    Layers::Detach("NextMapVote");
+    Layers::Detach("RespawnBehavior");
+    Layers::Detach("SpecKeys");
+    Layers::Detach("SurvivalRanking");
+    Layers::Detach("AntiDevMode");
+
+    Layers::Detach("UpdatePlayer");
+    Layers::Detach("InitPb");
+    Layers::Detach("PlayerFinished");
+
+    //Layers::DetachReplay("SpecKeys");
+
     CustomUI::Unload();
-    UIMgr::DestroyUI(_Hard);
+
     if (_Hard) {
+        Layers::Detach("CachReqs");
+        Layers::Detach("UpdateAuth");
         Layers::Detach("Markers");
         UIManager.UILayerDestroyAll();
     }
