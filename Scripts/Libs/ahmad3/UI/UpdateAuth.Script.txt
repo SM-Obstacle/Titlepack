@@ -27,17 +27,12 @@
 #Const C_AuthDialogMsg """We are about to refresh your personal tokens.
 
 This procedure will open your browser to the ManiaPlanet's login page.
-You will only have to authenticate with the same account as the one
-you use in game."""
+You will only have to authenticate with the same account as the one you use in game."""
 
-#Const C_AuthMessage_UpdatePlayer """Hey there! To continue to enjoy Obstacle,
-we need you to authenticate with your ManiaPlanet account.
-"""
+#Const C_AuthMessage_UpdatePlayer """Hey there! To continue to enjoy Obstacle, we need you to authenticate with your ManiaPlanet account."""
 
-#Const C_AuthMessage_PlayerFinished """Hey! Before you finish and save your record,
-we need you to authenticate with your ManiaPlanet account.
-Do not skip this step, or your run will be lost! Don't worry, it's fast!
-"""
+#Const C_AuthMessage_PlayerFinished """Hey! Before you finish and save your record, we need you to authenticate with your ManiaPlanet account.
+Do not skip this step, or your run will be lost! Don't worry, it's fast!"""
 
 /*********************************************
   GLOBALES

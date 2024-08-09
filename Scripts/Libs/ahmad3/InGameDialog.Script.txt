@@ -257,10 +257,10 @@ Text Private_GetLayer(Integer _DialogId, K_Dialog _Dialog) {
                 maxline="1" valign="top" textemboss="1"
             />
 
-            <frame pos="-48 25">
+            <frame pos="-48 0">
                 <label
                     id="Label_ModalMsg" size="96 4" text="{{{_Dialog.Msg}}}"
-                    halign="left" valign="center" textsize="1.4"
+                    halign="left" valign="center" textsize="1.4" autonewline="1" maxline="16"
                 />
             </frame>
 

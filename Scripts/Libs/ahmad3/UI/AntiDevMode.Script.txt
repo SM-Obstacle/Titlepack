@@ -17,14 +17,12 @@
 
 #Const C_Ev_AntiDevMode "antidevmode:trigger"
 
-#Const C_AntiDevModeMsg """It looks like you have Openplanet with developer mode enabled.
-This may offer you a number of features that could be contrary to fair play.
+#Const C_AntiDevModeMsg """It looks like you have Openplanet with developer mode enabled. This may offer you a number of features that could be contrary to fair play.
 It is why we do not authorize it in our mode.
 
 Please disable the developer mode for the plugins signature.
 
-If you think this is an error, please mention the developers
-(i.e. @miltant or @ahmadbky) on Discord.
+If you think this is an error, please mention the developers (i.e. @miltant or @ahmadbky) on Discord.
 
 Thank you."""
 
