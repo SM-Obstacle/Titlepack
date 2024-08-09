@@ -460,8 +460,7 @@ if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRec
 if (EndTime > 0 && Now > EndTime) {
     if (EventsUI::RequestedRestart()) {
         EventsUI::BeginRestartMap();
-        DestroyUI(False);
-        CreateUI();
+        CreateUI(False);
         EventsUI::EndRestartMap();
     } else {
         Message::SendBigMessage(_("Time limit reached"),    2000, 3, CUIConfig::EUISound::Silence, 0);
@@ -801,14 +800,17 @@ DestroyUI();
 // ---------------------------------- //
 Void DoNothing(){}
 
-Void CreateUI() {
+Void CreateUI(Boolean _Replace) {
     CustomUI::Load();
 
     Layers::Create("EventsUI", EventsUI::GetLayer());
     Layers::Attach("EventsUI");
-    if (!Layers::Exists("Markers")) {
+    if (_Replace) {
         Layers::Create("Markers");
         Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
+
+        Layers::Create("UpdateAuth", UpdateAuth::GetLayer());
+        Layers::Create("CachReqs", CachReqs::GetLayer());
     }
     Layers::Attach("Markers");
 
@@ -823,9 +825,7 @@ Void CreateUI() {
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
     Layers::Create("AntiDevMode", AntiDevMode::GetLayer());
 
-    Layers::Create("CachReqs", CachReqs::GetLayer());
     Layers::Create("InitPb", InitPb::GetLayer());
-    Layers::Create("UpdateAuth", UpdateAuth::GetLayer());
     Layers::Create("UpdatePlayer", UpdatePlayer::GetLayer());
 
     Layers::Create("Items", Items::CreateLayerItems());
@@ -879,6 +879,10 @@ Void CreateUI() {
 
     CustomUI::Build();
     CustomUI::Attach();
+}
+
+Void CreateUI() {
+    CreateUI(True);
 }
 
 Void DestroyUI(Boolean _Hard) {

@@ -24,7 +24,9 @@
 #Const C_Ev_AuthUpdateIgnored "obstoken:update:ignored"
 #Const C_Ev_NeedToken "obstoken:needed"
 
-#Const C_AuthDialogMsg """We are about to refresh your personal tokens.
+#Const C_AuthDialogMsg """
+
+We are about to refresh your personal tokens.
 
 This procedure will open your browser to the ManiaPlanet's login page.
 You will only have to authenticate with the same account as the one you use in game."""

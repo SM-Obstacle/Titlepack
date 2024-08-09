@@ -300,12 +300,16 @@ main() {
                 }
                 case CMlScriptEvent::Type::MouseOver: {
                     if (Event.ControlId == "Quad_Button") {
-                        Event.Control.Size *= 1.1;
+                        declare CMlLabel Label <=> (Event.Control.Parent.GetFirstChild("Label_Button") as CMlLabel);
+                        AnimMgr.Add(Event.Control, "<elem size=\"16.5 6.6\" />", 75, CAnimManager::EAnimManagerEasing::CubicIn);
+                        AnimMgr.Add(Label, "<elem size=\"16.5 6.6\" />", 75, CAnimManager::EAnimManagerEasing::CubicIn);
                     }
                 }
                 case CMlScriptEvent::Type::MouseOut: {
                     if (Event.ControlId == "Quad_Button") {
-                        Event.Control.Size *= (1/1.1);
+                        declare CMlLabel Label <=> (Event.Control.Parent.GetFirstChild("Label_Button") as CMlLabel);
+                        AnimMgr.Add(Event.Control, "<elem size=\"15 6\" />", 75, CAnimManager::EAnimManagerEasing::CubicOut);
+                        AnimMgr.Add(Label, "<elem size=\"15 6\" />", 75, CAnimManager::EAnimManagerEasing::CubicOut);
                     }
                 }
             }
@@ -411,6 +415,14 @@ Void Private_HandleCloseDialog(CUIConfig _UI, Integer _DialogId) {
 
     declare Private_K_PendingDialog LastDialog = G_PendingDialogs[_UI.Id][_DialogId];
     G_PendingDialogs[_UI.Id].removekey(_DialogId);
+
+    // Remove the dialog ID if it's the last dialog ID of the page.
+    // This is important because if the page reloads, it resets its memory, so when it will request
+    // a new dialog, the page will get the previous dialog ID because it waits for a different dialog ID.
+    declare netwrite Integer[Text] Net_Dlg_LastDialogIds for _UI = [];
+    if (Net_Dlg_LastDialogIds.existskey(LastDialog.PageId) && Net_Dlg_LastDialogIds[LastDialog.PageId] == _DialogId) {
+        Net_Dlg_LastDialogIds.removekey(LastDialog.PageId);
+    }
 
     declare Integer CurrentPreviousDialogId = LastDialog.PreviousDialogId;
     declare Integer CurrentNextDialogId = LastDialog.NextDialogId;
@@ -680,8 +692,6 @@ Void {{{_ModName}}}_CloseDialog(Integer _DialogId) {
 Integer {{{_ModName}}}_NewDialog({{{_ModName}}}_K_Dialog _Dialog) {
     SendCustomEvent({{{dump(C_Ev_NewDialog)}}}, ["{{{_MlPage}}}", _Dialog.tojson()]);
 
-    declare Boolean InGameDialogActive for LocalUser = False;
-    InGameDialogActive = True;
     declare netread Integer[Text] Net_Dlg_LastDialogIds for UI = [];
     wait(Net_Dlg_LastDialogIds.existskey("{{{_MlPage}}}")
         && Net_Dlg_LastDialogIds["{{{_MlPage}}}"] != {{{_ModName}}}_G_LastDialogId);
