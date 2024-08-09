@@ -349,6 +349,29 @@ main() {
     InitNeedsTokenUpdate();
     declare netread Boolean Net_NeedsTokenUpdateOnFinished for UI = False;
 
+    Dlg_NewDialog(Dlg_K_Dialog {
+        Title = "Bonsoir",
+        Msg = "Bonsoir",
+        CloseOnSuccess = True,
+        Buttons = [
+            Dlg_K_Button {
+                Label = "bonsoir",
+                Success = True
+            }
+        ]
+    });
+    Dlg_NewDialog(Dlg_K_Dialog {
+        Title = "Bonjour",
+        Msg = "Bonjour",
+        CloseOnSuccess = True,
+        Buttons = [
+            Dlg_K_Button {
+                Label = "bonjour",
+                Success = True
+            }
+        ]
+    });
+
     while (True) {
         yield;
 

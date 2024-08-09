@@ -240,6 +240,30 @@ Obstacle::LoadActions();
 ***
 Dialog::Init();
 
+declare Integer DialogId = Dialog::NewDialog(Dialog::K_Dialog {
+    Title = "Oui",
+    Msg = "Salut",
+    CloseOnSuccess = True,
+    Buttons = [
+        Dialog::K_Button {
+            Label = "Oui",
+            Success = True
+        }
+    ]
+});
+
+while (True) {
+    yield;
+    Dialog::Yield();
+
+    declare Dialog::K_DialogPromptResult[Ident] Results = Dialog::PromptDialog(DialogId);
+    declare Boolean Break = True;
+    foreach (Result in Results) {
+        if (!Result.Over) Break = False;
+    }
+    if (Break) break;
+}
+
 // This needs to be called before PrepareMap to have the right settings.
 // It also updates the event ids for ObsEvents, used to load the event later.
 UpdateSettings();
@@ -355,6 +379,7 @@ Net_MapStartTime = TimeLib::GetCurrent();
 SpectatorCount::Yield();
 SpecList::Yield();
 NextMapVote::Yield(S_NextMapVotingRatio);
+Dialog::Yield();
 
 foreach (Event in UIManager.PendingEvents) {
     if (Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent) {
@@ -419,7 +444,6 @@ foreach (Event in UIManager.PendingEvents) {
                 PlayerFinished::HandleCustomEvent(Event);
                 UpdateAuth::HandleCustomEvent(Event);
                 EventsUI::HandleCustomEvent(Event);
-                Dialog::HandleCustomEvent(Event);
                 AntiDevMode::HandleCustomEvent(Event);
             }
         }
