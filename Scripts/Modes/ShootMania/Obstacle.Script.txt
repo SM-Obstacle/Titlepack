@@ -240,30 +240,6 @@ Obstacle::LoadActions();
 ***
 Dialog::Init();
 
-declare Integer DialogId = Dialog::NewDialog(Dialog::K_Dialog {
-    Title = "Oui",
-    Msg = "Salut",
-    CloseOnSuccess = True,
-    Buttons = [
-        Dialog::K_Button {
-            Label = "Oui",
-            Success = True
-        }
-    ]
-});
-
-while (True) {
-    yield;
-    Dialog::Yield();
-
-    declare Dialog::K_DialogPromptResult[Ident] Results = Dialog::PromptDialog(DialogId);
-    declare Boolean Break = True;
-    foreach (Result in Results) {
-        if (!Result.Over) Break = False;
-    }
-    if (Break) break;
-}
-
 // This needs to be called before PrepareMap to have the right settings.
 // It also updates the event ids for ObsEvents, used to load the event later.
 UpdateSettings();
