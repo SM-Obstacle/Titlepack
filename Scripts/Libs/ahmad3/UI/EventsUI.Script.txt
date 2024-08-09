@@ -178,14 +178,14 @@ Boolean Private_IsEventRunning(Text _EventHandle, Integer _EventEdition) {
 }
 
 Void Private_UpdateSelectedEventOf(CUIConfig _UI) {
-    declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI;
+    declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI = K_Event {};
     declare Text EventHandle = Net_EventsUI_SelectedEvent.Row.Handle;
     declare Integer EventEdition = Net_EventsUI_SelectedEvent.Row.Edition;
 
-    declare netwrite Boolean Net_EventsUI_SelectedEventIsValid for _UI;
-    declare netwrite Boolean Net_EventsUI_SelectedEventIsRunning for _UI;
-    declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for _UI;
-    declare netwrite Integer Net_EventsUI_SelectedEventUpdate for _UI;
+    declare netwrite Boolean Net_EventsUI_SelectedEventIsValid for _UI = False;
+    declare netwrite Boolean Net_EventsUI_SelectedEventIsRunning for _UI = False;
+    declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for _UI = K_VoteInfo {};
+    declare netwrite Integer Net_EventsUI_SelectedEventUpdate for _UI = -1;
 
     Net_EventsUI_SelectedEventIsValid = Events::EventHasCurrentMap(EventHandle, EventEdition);
     Net_EventsUI_SelectedEventIsRunning = Private_IsEventRunning(EventHandle, EventEdition);
@@ -221,7 +221,7 @@ Void Private_UpdateSelectedEvent(Text _EventHandle, Integer _EventEdition, CUICo
         EndDate = Event.end_date
     };
 
-    declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI;
+    declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI = K_Event {};
     Net_EventsUI_SelectedEvent = SelectedEvent;
 
     Private_UpdateSelectedEventOf(_UI);
@@ -250,7 +250,7 @@ Void Private_UpdateSelectedEvent(Text _EventHandle, Integer _EventEdition) {
 }
 
 K_Event Private_GetSelectedEventOf(CUIConfig _UI) {
-    declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI;
+    declare netwrite K_Event Net_EventsUI_SelectedEvent for _UI = K_Event {};
     return Net_EventsUI_SelectedEvent;
 }
 
@@ -336,9 +336,9 @@ Void Private_ToggleSwitchToEventFor(CUIConfig _UI) {
     // Notify the UIs of the vote change
     foreach (Player in AllPlayers) {
         declare CUIConfig UI <=> UIManager.GetUI(Player);
-        declare netwrite K_Event Net_EventsUI_SelectedEvent for UI;
+        declare netwrite K_Event Net_EventsUI_SelectedEvent for UI = K_Event {};
         if (!Private_CmpEvents(Net_EventsUI_SelectedEvent, SelectedEvent)) continue;
-        declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for UI;
+        declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for UI = K_VoteInfo {};
         Net_EventsUI_SelectedEventVote = G_Votes[SelectedEvent.Row];
     }
 }
@@ -377,9 +377,9 @@ Void Private_HandeQuitEventFor(CUIConfig _UI) {
     // Notify the UIs of the quit vote change
     foreach (Player in AllPlayers) {
         declare CUIConfig UI <=> UIManager.GetUI(Player);
-        declare netwrite K_Event Net_EventsUI_SelectedEvent for UI;
+        declare netwrite K_Event Net_EventsUI_SelectedEvent for UI = K_Event {};
         if (!Private_CmpEvents(Net_EventsUI_SelectedEvent, SelectedEvent)) continue;
-        declare netwrite K_VoteInfo Net_EventsUI_QuitEventVote for UI;
+        declare netwrite K_VoteInfo Net_EventsUI_QuitEventVote for UI = K_VoteInfo {};
         Net_EventsUI_QuitEventVote = G_QuitEventVote;
     }
 }
@@ -536,10 +536,10 @@ Void BeginRestartMap() {
         foreach (Player in AllPlayers) {
             declare CUIConfig UI <=> UIManager.GetUI(Player);
 
-            declare netwrite K_VoteInfo Net_EventsUI_QuitEventVote for UI;
+            declare netwrite K_VoteInfo Net_EventsUI_QuitEventVote for UI = K_VoteInfo {};
             Net_EventsUI_QuitEventVote = G_QuitEventVote;
 
-            declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for UI;
+            declare netwrite K_VoteInfo Net_EventsUI_SelectedEventVote for UI = K_VoteInfo {};
             Net_EventsUI_SelectedEventVote = G_Votes[Event];
         }
     } else {
