@@ -127,6 +127,11 @@
     Integer NextDialogId;
 }
 
+#Struct Private_K_ActiveDialog {
+    K_Dialog Dialog;
+    Ident[] AlreadyShownTo;
+}
+
 /*********************************************
   GLOBALES
  *********************************************/
@@ -148,6 +153,8 @@ declare Private_K_PendingDialog[Integer][Ident] G_PendingDialogs;
  */
 declare Integer[Ident] G_ShownDialogIds;
 
+declare Private_K_ActiveDialog[Integer] G_ActiveDialogs;
+
 /*********************************************
   FUNCTIONS
  *********************************************/
@@ -155,6 +162,19 @@ declare Integer[Ident] G_ShownDialogIds;
 ////////////////////
 //// Private
 ////////////////////
+
+Void Private_PushToActiveDialogs(K_Dialog _Dialog, Integer _DialogId) {
+    G_ActiveDialogs[_DialogId] = Private_K_ActiveDialog { Dialog = _Dialog };
+}
+
+Void Private_MarkDialogShownTo(Integer _DialogId, CUIConfig _UI) {
+    if (!G_ActiveDialogs.existskey(_DialogId) || G_ActiveDialogs[_DialogId].AlreadyShownTo.exists(_UI.Id)) return;
+    G_ActiveDialogs[_DialogId].AlreadyShownTo.add(_UI.Id);
+}
+
+Void Private_RemoveFromActiveDialogs(Integer _DialogId) {
+    G_ActiveDialogs.removekey(_DialogId);
+}
 
 Integer Private_GetLastDialogIdOf(CUIConfig _UI, Text _PageId) {
     assert(G_PendingDialogs.existskey(_UI.Id), "the UI must have initialized its pending dialogs array");
@@ -275,6 +295,8 @@ main() {
     wait(Page != Null);
 
     declare netread Boolean Net_InGameDialog_ActiveDialog for UI = True;
+    declare netread Integer Net_MapStartUpdate for Teams[0] = -1;
+    declare Integer MapStartUpdate = Net_MapStartUpdate;
 
     ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
 
@@ -285,6 +307,8 @@ main() {
         if (ClientUI.UISequence != CUIConfig::EUISequence::UIInteraction) {
             ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
         }
+
+        if (Net_MapStartUpdate != MapStartUpdate) break;
 
         foreach (Event in PendingEvents) {
             switch (Event.Type) {
@@ -513,12 +537,24 @@ Void Init() {
     }
 }
 
+Void ShowActiveDialogsTo(CSmPlayer _Player) {
+    declare CUIConfig UI <=> UIManager.GetUI(_Player);
+    foreach (DialogId => ActiveDialog in G_ActiveDialogs) {
+        if (ActiveDialog.AlreadyShownTo.exists(UI.Id)) continue;
+        Private_HandleNewDialogWithId(UI, "", ActiveDialog.Dialog, DialogId);
+        Private_MarkDialogShownTo(DialogId, UI);
+    }
+}
+
 Integer NewDialog(K_Dialog _Dialog) {
     declare Integer DialogId = G_LastDialogId + 1;
+
+    Private_PushToActiveDialogs(_Dialog, DialogId);
 
     foreach (Player in AllPlayers) {
         declare CUIConfig UI <=> UIManager.GetUI(Player);
         Private_HandleNewDialogWithId(UI, "", _Dialog, DialogId);
+        Private_MarkDialogShownTo(DialogId, UI);
     }
 
     G_LastDialogId = DialogId;
@@ -530,6 +566,8 @@ Void CloseDialog(Integer _DialogId) {
         declare CUIConfig UI <=> UIManager.GetUI(Player);
         Private_HandleCloseDialog(UI, _DialogId);
     }
+
+    Private_RemoveFromActiveDialogs(_DialogId);
 }
 
 K_DialogPromptResult[Ident] PromptDialog(Integer _DialogId) {

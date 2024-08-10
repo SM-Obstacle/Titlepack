@@ -39,9 +39,60 @@
     K_PbCpTimeItem[] cps_times;
 }
 
+#Struct K_PendingPbInit {
+    Integer RsCount;
+    Integer BestRun;
+    Integer[Ident] CpTimes;
+}
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+declare K_PendingPbInit[Ident] G_PendingPbInits;
+
 /*********************************************
   FUNCTIONS
  *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Void Private_AddPendingPbInit(CUIConfig _UI, K_PendingPbInit _Params) {
+    G_PendingPbInits[_UI.Id] = _Params;
+}
+
+Void Private_YieldPendingPbInits() {
+    declare Ident[] ToRemove = [];
+
+    foreach (UIId => Params in G_PendingPbInits) {
+        if (!UIManager.UI.existskey(UIId)) {
+            ToRemove.add(UIId);
+            continue;
+        }
+
+        declare CSmPlayer Player <=> GetPlayer(UIManager.UI[UIId]);
+        if (Player == Null) continue;
+
+        Player::InitPlayer(Player);
+        Player::setRespawnCount(Player, Params.RsCount);
+        Obstacle::UpdatePlayerRsCounterColumn(Player);
+        Player::setRespawnCount(Player, 0);
+        Player::setBestRun(Player, Params.BestRun);
+        Player::setBestCPTimes(Player, Params.CpTimes);
+        CPTimes::UpdateLayer(Player);
+        Obstacle::UpdatePlayerBestTimeColumn(Player);
+
+        Player::setHasInitPb(Player, True);
+
+        ToRemove.add(UIId);
+    }
+
+    foreach (UIId in ToRemove) {
+        G_PendingPbInits.removekey(UIId);
+    }
+}
 
 ////////////////////
 //// Public
@@ -61,42 +112,41 @@ Text GetScriptName() {
     return ScriptName;
 }
 
-Void HandleCustomEvent(CUIConfigEvent _Event) {
-    assert(_Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent);
+Void Yield() {
+    foreach (Event in UIManager.PendingEvents) {
+        if (Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent
+            || Event.CustomEventType != C_Ev_PbInit
+        ) {
+            continue;
+        }
 
-    if (_Event.CustomEventType != C_Ev_PbInit) return;
+        declare Text PbRes = Event.CustomEventData[0];
+        declare K_PbRes Res;
+        Res.fromjson(PbRes);
 
-    declare Text PbRes = _Event.CustomEventData[0];
-    declare K_PbRes Res;
-    Res.fromjson(PbRes);
+        if (Res.cps_times.count == 0) return;
 
-    if (Res.cps_times.count == 0) return;
-
-    declare CSmPlayer Player <=> GetPlayer(_Event.UI);
-
-    declare Integer[Ident] CpTimes;
-    declare Time = 0;
-    
-    foreach (PbCpTime in Res.cps_times) {
-        Time += PbCpTime.time;
-        foreach (Landmark in MapLandmarks) {
-            if (Tools::IsCheckpoint(Landmark) && RNG::GetOrder(Landmark) == PbCpTime.cp_num + 1) {
-                CpTimes[Landmark.Id] = Time;
-                break;
+        declare Integer[Ident] CpTimes;
+        declare Time = 0;
+        
+        foreach (PbCpTime in Res.cps_times) {
+            Time += PbCpTime.time;
+            foreach (Landmark in MapLandmarks) {
+                if (Tools::IsCheckpoint(Landmark) && RNG::GetOrder(Landmark) == PbCpTime.cp_num + 1) {
+                    CpTimes[Landmark.Id] = Time;
+                    break;
+                }
             }
         }
+
+        Private_AddPendingPbInit(Event.UI, K_PendingPbInit {
+            RsCount = Res.rs_count,
+            BestRun = Time,
+            CpTimes = CpTimes
+        });
     }
 
-    Player::InitPlayer(Player);
-    Player::setRespawnCount(Player, Res.rs_count);
-    Obstacle::UpdatePlayerRsCounterColumn(Player);
-    Player::setRespawnCount(Player, 0);
-    Player::setBestRun(Player, Time);
-    Player::setBestCPTimes(Player, CpTimes);
-    CPTimes::UpdateLayer(Player);
-    Obstacle::UpdatePlayerBestTimeColumn(Player);
-
-    Player::setHasInitPb(Player, True);
+    Private_YieldPendingPbInits();
 }
 
 Text GetLayer() {

@@ -54,6 +54,10 @@
     Integer[] cps;
 }
 
+#Struct K_OptCachedReq {
+    CachReqs::K_CachedReq[] Content;
+}
+
 /*********************************************
   GLOBALES
  *********************************************/
@@ -67,6 +71,25 @@ declare CachReqs::K_CachedReq[][Ident] G_FinishCachedReqs;
 ////////////////////
 //// Private
 ////////////////////
+
+K_OptCachedReq Private_OptCachedReq_Empty() {
+    return K_OptCachedReq {};
+}
+
+K_OptCachedReq Private_OptCachedReq_Of(CachReqs::K_CachedReq _CachedReq) {
+    return K_OptCachedReq {
+        Content = [_CachedReq]
+    };
+}
+
+Boolean Private_OptCachedReq_IsPresent(K_OptCachedReq _Opt) {
+    return _Opt.Content.count > 0;
+}
+
+CachReqs::K_CachedReq Private_OptCachedReq_Get(K_OptCachedReq _Opt) {
+    assert(Private_OptCachedReq_IsPresent(_Opt), "optional must be present");
+    return _Opt.Content[0];
+}
 
 // This prevents other dialogs (like the campaign's EndScreen) to show up on top
 // of the auth dialog when finishing a map.
@@ -97,8 +120,8 @@ Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult
     Player::setHasWrongLbLine(Player, True);
 }
 
-Void Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
-    if (!G_FinishCachedReqs.existskey(_UI.Id)) return;
+K_OptCachedReq Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
+    if (!G_FinishCachedReqs.existskey(_UI.Id)) return Private_OptCachedReq_Empty();
     declare Integer IdxToRemove = -1;
 
     declare CachReqs::K_CachedReq CachedReq = CachReqs::K_CachedReq {
@@ -114,16 +137,20 @@ Void Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
         }
     }
 
-    if (IdxToRemove < 0) return; 
+    if (IdxToRemove < 0) return Private_OptCachedReq_Empty(); 
     G_FinishCachedReqs[_UI.Id].removekey(IdxToRemove);
-    CachReqs::RemoveCache(_UI, CachedReq);
+
+    return Private_OptCachedReq_Of(CachedReq);
 }
 
 Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Body) {
     declare K_HasFinishedResponse Res;
     Res.fromjson(_Response);
 
-    Private_RemoveCached(_UI, _Tstp, _Body);
+    declare K_OptCachedReq Cached = Private_RemoveCached(_UI, _Tstp, _Body);
+    if (Private_OptCachedReq_IsPresent(Cached)) {
+        CachReqs::RemoveCache(_UI, Private_OptCachedReq_Get(Cached));
+    }
 
     declare CSmPlayer Player <=> GetPlayer(_UI);
 

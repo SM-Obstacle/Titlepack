@@ -238,6 +238,9 @@ Obstacle::LoadActions();
 
 ***Match_InitMap***
 ***
+declare netwrite Integer Net_MapStartUpdate for Teams[0] = -1;
+Net_MapStartUpdate = Now;
+
 Dialog::Init();
 
 // This needs to be called before PrepareMap to have the right settings.
@@ -355,6 +358,7 @@ Net_MapStartTime = TimeLib::GetCurrent();
 SpectatorCount::Yield();
 SpecList::Yield();
 NextMapVote::Yield(S_NextMapVotingRatio);
+InitPb::Yield();
 Dialog::Yield();
 
 foreach (Event in UIManager.PendingEvents) {
@@ -416,7 +420,6 @@ foreach (Event in UIManager.PendingEvents) {
             }
             default: {
                 CachReqs::HandleCustomEvent(Event);
-                InitPb::HandleCustomEvent(Event);
                 PlayerFinished::HandleCustomEvent(Event);
                 UpdateAuth::HandleCustomEvent(Event);
                 EventsUI::HandleCustomEvent(Event);

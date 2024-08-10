@@ -11,6 +11,7 @@
 #Include "Libs/miltant/Nadeo_Fork/Log.Script.txt" as Log
 
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
+#Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialogs
 
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 

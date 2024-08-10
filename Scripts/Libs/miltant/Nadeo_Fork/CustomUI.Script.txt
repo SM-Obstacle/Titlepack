@@ -294,7 +294,10 @@
 	 LibCustomUI_OffsetClick = <0., 0.>;
 	 LibCustomUI_Containment = [90., 160., -90., -160.];
 	 ClientUI.UISequence = CUIConfig::EUISequence::None;
-	 
+
+	 declare netread Integer Net_MapStartUpdate for Teams[0] = -1;
+     declare Integer MapStartUpdate = Net_MapStartUpdate;
+
 	 while (True) {
 		 yield;
 
@@ -323,6 +326,10 @@
 		 // Force the UIInteraction sequence if another manialink page removed it
 		 if (ClientUI.UISequence != CUIConfig::EUISequence::UIInteraction) {
 			ClientUI.UISequence = CUIConfig::EUISequence::UIInteraction;
+		 }
+
+		 if (Net_MapStartUpdate != MapStartUpdate) {
+			break;
 		 }
 		 
 		 foreach (Event in PendingEvents) {

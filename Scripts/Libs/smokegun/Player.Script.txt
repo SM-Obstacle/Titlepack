@@ -15,6 +15,8 @@
 
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
+#Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialogs
+
 /*********************************************
   CONSTANTS
  *********************************************/
@@ -437,6 +439,8 @@ Ident loadLastLegitPosition(CSmPlayer _Player) {
 // Declare player's variable
 Void InitPlayer(CSmPlayer _Player) {
     if (_Player == Null || isInitialized(_Player)) return;
+
+    Dialogs::ShowActiveDialogsTo(_Player);
 
     setHasWrongLbLine(_Player, False);
     setHasInitPb(_Player, False);
