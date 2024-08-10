@@ -50,7 +50,7 @@ Boolean EventHasContent(Text _EventHandle) {
     if (!G_Events.existskey(_EventHandle) || G_PendingEvents.exists(_EventHandle)) return False;
     declare Types::K_Event Event = G_Events[_EventHandle];
     // If this event is not pending, at least count its editions amount to be sure it's fully loaded
-    return !G_HasFailed && Event.EditionsDetails.count > 0;
+    return !G_HasFailed && Event.Editions.count > 0 && Event.EditionsDetails.count > 0;
 }
 
 Types::K_Event[Text] GetEvents() {
@@ -202,8 +202,6 @@ Boolean Loop() {
     }
 
     if (G_EventRequestLoaded) {
-        G_EventRequestLoaded = False;
-
         foreach (Req in G_PendingEventHandleReqs) {
             // If this happens, it's because the request to `/event` didn't return
             // an event with the `Handle` event handle. This means that the event is

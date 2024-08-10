@@ -78,7 +78,9 @@ Void Private_UpdateEventsCache() {
 
 Void Loop() {
     Private_UpdateAuthHeaders();
-    if (Inner::Loop()) {
-        Private_UpdateEventsCache();
-    }
+    // FIXME: this is too heavy
+    Inner::Loop();
+//  if (Inner::Loop()) {
+//      Private_UpdateEventsCache();
+//  }
 }
