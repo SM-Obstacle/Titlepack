@@ -173,7 +173,7 @@ Boolean Loop() {
             case C::C_Request_EventHandle: {
                 declare Types::K_EventEdition[] EventEditions;
                 EventEditions.fromjson(Request.Result);
-                
+
                 declare Text Handle = TL::Split("/", ReqAttr.Route)[1];
 
                 G_PendingEventHandleReqs.add(K_PendingEventHandleReq {
@@ -210,7 +210,6 @@ Boolean Loop() {
             // not playable, because it doesn't exist, has expired, or is not yet released.
             if (!G_Events.existskey(Req.Handle)) {
                 PendingEventsToDelete.add(Req.Handle);
-                ReqToDelete.add(Req.ReqId);
                 G_HasFailed = True;
                 G_Failure.Err.message = "Event was not found or has expired (handle: `" ^ Req.Handle ^ "`)";
                 continue;
@@ -221,6 +220,8 @@ Boolean Loop() {
             }
             PendingEventsToDelete.add(Req.Handle);
         }
+
+        G_PendingEventHandleReqs.clear();
     }
 
     foreach (ReqId in ReqToDelete) {
