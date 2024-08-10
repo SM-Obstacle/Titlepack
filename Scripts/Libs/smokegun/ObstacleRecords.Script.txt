@@ -173,8 +173,26 @@ Void Loop()
                 }
             }
         } else {
-            declare err = ErrMgr::Handle(request.StatusCode, request.Result);
-            UIManager.UIAll.SendChat(err.Err.message);
+            declare ErrMgr::K_Error Err = ErrMgr::Handle(request.StatusCode, request.Result);
+            if (Err.Err.type == ErrMgr::C_Err_Maintenance) {
+                Dialogs::NewDialog(Dialogs::K_Dialog {
+                    Title = "Maintenance",
+                    Msg = """The API is currently in a maintenance mode, so records won't be saved immediately.
+
+You can still play as usual, you don't need to alert any admin of your missing records.
+
+Thank you.""",
+                    CloseOnSuccess = True,
+                    Buttons = [
+                        Dialogs::K_Button {
+                            Label = "OK",
+                            Success = True
+                        }
+                    ]
+                });
+            } else {
+                UIManager.UIAll.SendChat(Err.Err.message);
+            }
         }
 
         ToDelete.add(reqId);

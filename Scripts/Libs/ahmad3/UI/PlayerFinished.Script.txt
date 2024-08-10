@@ -203,7 +203,6 @@ Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Bo
 }
 
 Void Private_HandleCacheApprove(CUIConfig _UI, Integer _Tstp, Text _Body) {
-    log("Approving cache save for " ^ _Tstp);
     declare CSmPlayer Player <=> GetPlayer(_UI);
     Player::setHasWrongLbLine(Player, True);
     Private_RemoveCached(_UI, _Tstp, _Body);

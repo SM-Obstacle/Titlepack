@@ -83,7 +83,10 @@ Boolean Private_IsJson(Text _Text) {
 }
 
 K_Error Handle(Integer _StatusCode, Text _ReqResult) {
-    declare K_ErrorResponse Res;
+    declare K_ErrorResponse Res = K_ErrorResponse {
+        type = C_Err_Unknown,
+        message = "Unknown error (Got a non-JSON request result):\n" ^ _ReqResult
+    };
     if (Private_IsJson(_ReqResult) && !Res.fromjson(_ReqResult)) {
         declare Ban::K_BannedPlayerResponse Ban;
         if (_StatusCode == C_HttpErr_Forbidden && Ban.fromjson(_ReqResult)) {
@@ -101,11 +104,6 @@ K_Error Handle(Integer _StatusCode, Text _ReqResult) {
             request_id = "Unknown",
             type = C_Err_Unknown,
             message = "Unknown error (JSON object not respecting error structure):\n" ^ _ReqResult
-        };
-    } else {
-        Res = K_ErrorResponse {
-            type = C_Err_Unknown,
-            message = "Unknown error (Got a non-JSON request result):\n" ^ _ReqResult
         };
     }
 
@@ -203,7 +201,10 @@ Boolean {{{_ModName}}}_Private_IsJson(Text _Text) {
 }
 
 {{{_ModName}}}_K_Error {{{_ModName}}}_Handle(Integer _StatusCode, Text _ReqResult) {
-    declare {{{_ModName}}}_K_ErrorResponse Res;
+    declare {{{_ModName}}}_K_ErrorResponse Res = {{{_ModName}}}_K_ErrorResponse {
+        type = {{{_ModName}}}_C_Err_Unknown,
+        message = "Unknown error (Got a non-JSON request result):\n" ^ _ReqResult
+    };
     if ({{{_ModName}}}_Private_IsJson(_ReqResult) && !Res.fromjson(_ReqResult)) {
         declare {{{_BanMgr}}}_K_BannedPlayerResponse Ban;
         if (_StatusCode == {{{_ModName}}}_C_HttpErr_Forbidden && Ban.fromjson(_ReqResult)) {
@@ -220,11 +221,6 @@ Boolean {{{_ModName}}}_Private_IsJson(Text _Text) {
             request_id = "Unknown",
             type = {{{_ModName}}}_C_Err_Unknown,
             message = "Unknown error (JSON object not respecting error structure):\n" ^ _ReqResult
-        };
-    } else {
-        Res = {{{_ModName}}}_K_ErrorResponse {
-            type = {{{_ModName}}}_C_Err_Unknown,
-            message = "Unknown error (Got a non-JSON request result):\n" ^ _ReqResult
         };
     }
 
