@@ -426,6 +426,19 @@ Void Init() {
     G_VotingToSwitchEvent = [];
     G_Votes = [];
     G_RequestRestart = False;
+
+    if (Events::HasEventLoaded()) {
+        declare Text EventName = Events::CurrentEdition().name;
+        if (Events::CurrentEdition().subtitle != "") {
+            EventName ^= " " ^ Events::CurrentEdition().subtitle;
+        }
+
+        G_PlayedEvent = Private_OptEventRow_Of(K_EventRow {
+            Handle = Events::GetEventHandle(),
+            Edition = Events::GetEventEdition(),
+            Name = EventName
+        });
+    }
 }
 
 Void HandleCustomEvent(CUIConfigEvent _Event) {
