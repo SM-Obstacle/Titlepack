@@ -9,6 +9,12 @@
     Text Route;
 }
 
+#Struct K_PendingEventHandleReq {
+    Ident ReqId;
+    Text Handle;
+    Types::K_EventEdition[] EventEditions;
+}
+
 declare Text[] G_PendingEvents;
 declare Integer[Text] G_PendingLoadingEditions;
 declare K_RequestAttr[Ident] G_PendingRequests;
@@ -18,6 +24,9 @@ declare Boolean G_HasFailed;
 declare Err::K_Error G_Failure;
 
 declare Text G_AuthHeaders;
+
+declare Boolean G_EventRequestLoaded;
+declare K_PendingEventHandleReq[] G_PendingEventHandleReqs;
 
 Boolean HasFailed() {
     return G_HasFailed;
@@ -129,6 +138,7 @@ Void Init() {
     G_PendingEvents = [];
     G_PendingLoadingEditions = [];
     G_PendingRequests = [];
+    G_EventRequestLoaded = False;
     Private_InitRequest("event", C::C_Request_Event);
 }
 
@@ -156,6 +166,7 @@ Boolean Loop() {
                 declare Types::K_EventResponse[] Events;
                 Events.fromjson(Request.Result);
                 Private_InitEventEditions(Events);
+                G_EventRequestLoaded = True;
             }
 
             // The /event/<handle> request
@@ -165,21 +176,11 @@ Boolean Loop() {
                 
                 declare Text Handle = TL::Split("/", ReqAttr.Route)[1];
 
-                // If this happens, it's because the request to `/event` didn't return
-                // an event with the `Handle` event handle. This means that the event is
-                // not playable, because it doesn't exist, has expired, or is not yet released.
-                if (!G_Events.existskey(Handle)) {
-                    PendingEventsToDelete.add(Handle);
-                    ReqToDelete.add(ReqId);
-                    G_HasFailed = True;
-                    G_Failure.Err.message = "Event was not found or has expired";
-                    continue;
-                }
-
-                foreach (Edition in EventEditions) {
-                    G_Events[Handle].Editions[Edition.id] = Edition;
-                }
-                PendingEventsToDelete.add(Handle);
+                G_PendingEventHandleReqs.add(K_PendingEventHandleReq {
+                    ReqId = ReqId,
+                    Handle = Handle,
+                    EventEditions = EventEditions
+                });
             }
 
             // The /event/<handle>/<edition> request
@@ -198,6 +199,28 @@ Boolean Loop() {
         }
 
         ReqToDelete.add(ReqId);
+    }
+
+    if (G_EventRequestLoaded) {
+        G_EventRequestLoaded = False;
+
+        foreach (Req in G_PendingEventHandleReqs) {
+            // If this happens, it's because the request to `/event` didn't return
+            // an event with the `Handle` event handle. This means that the event is
+            // not playable, because it doesn't exist, has expired, or is not yet released.
+            if (!G_Events.existskey(Req.Handle)) {
+                PendingEventsToDelete.add(Req.Handle);
+                ReqToDelete.add(Req.ReqId);
+                G_HasFailed = True;
+                G_Failure.Err.message = "Event was not found or has expired (handle: `" ^ Req.Handle ^ "`)";
+                continue;
+            }
+
+            foreach (Edition in Req.EventEditions) {
+                G_Events[Req.Handle].Editions[Edition.id] = Edition;
+            }
+            PendingEventsToDelete.add(Req.Handle);
+        }
     }
 
     foreach (ReqId in ReqToDelete) {
