@@ -9,9 +9,15 @@
 ***
 G_EnableRecords = False;
 G_ForceInvisibleSkin = False;
-G_IsCampaign = True;
 
 log("mode is Obstacle Campaign");
+***
+
+***Obs_LoadHud***
+***
+UIManager.UIAll.OverlayHideCountdown = True;
+UIManager.UIAll.OverlayHideChrono = True;
+UIManager.UIAll.OverlayHideNotices = True;
 ***
 
 ***Match_AfterLoadMap***
@@ -36,6 +42,31 @@ switch (Event.CustomEventType) {
         if (ServerAdmin == Null) MB_Private_StopMatch();
     }
 }
+***
+
+***Obs_PlayerTookGoalRS***
+***
++++ Campaign_EndRound +++
+***
+
+***Obs_PlayerTookGoal***
+***
++++ Campaign_EndRound +++
+***
+
+***Obs_CreateRecordsLayer***
+***
+Layers::Create("Records", MedalsWidget::GetLayer());
+***
+
+***Obs_CreateSurvivalRankingLayer***
+***
+DoNothing();
+***
+
+***Obs_CreateRespawnBehaviorLayer***
+***
+Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(True));
 ***
 
 ***Campaign_EndRound***

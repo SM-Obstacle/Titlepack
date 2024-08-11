@@ -108,8 +108,6 @@ declare Boolean[Ident] G_PendingRS;
 declare Boolean G_LastUsePvPWeapons;
 declare Boolean G_LastUsePvPCollisions;
 
-declare Boolean G_IsCampaign;
-
 ***Match_LogVersions***
 ***
 Log::RegisterScript(ScriptName, Version);
@@ -128,7 +126,6 @@ UsePvPWeapons = S_PvPWeapons;
 UsePvPCollisions = S_PvPCollisions;
 G_LastUsePvPWeapons = S_PvPWeapons;
 G_LastUsePvPCollisions = S_PvPCollisions;
-G_IsCampaign = False;
 
 UIManager.UIAll.OverlayHide321Go = False;
 ***
@@ -164,6 +161,23 @@ ModeInfo::SetRules(ModeRules);
 ModeInfo::SetStatusMessage(_("Finish the map as fast as possible."));
 ***
 
+***Obs_LoadHud***
+***
+if (Hud.ScoresTable != Null) {
+    Hud.ScoresTable.Scores_Sort(CModulePlaygroundScoresTable::EScoreSortOrder::SMPoints);
+
+    Tabs::Load();
+    declare TabsLayer <=> Tabs::CreateTabPaneLayer(
+        [ "ScoresTab" => "Rankings"
+        , "CPTimes" => "Race"
+        , "EventsUI" => "Events"]
+    // , "KeysSettings" => "Inputs"]
+        , 15, 7, False);
+    TabsLayer.Type = CUILayer::EUILayerType::AltMenu;
+    UIManager.UIAll.UILayers.add(TabsLayer);
+}
+***
+
 ***Match_LoadHud***
 ***
 Hud_Load(C_HudModulePath);
@@ -176,25 +190,7 @@ foreach (Module in Hud.Modules) {
 }
 
 if (Hud != Null) {
-    if (G_IsCampaign) {
-        UIManager.UIAll.OverlayHideCountdown = True;
-        UIManager.UIAll.OverlayHideChrono == True;
-        UIManager.UIAll.OverlayHideNotices == True;
-    } else {
-        if (Hud.ScoresTable != Null) {
-            Hud.ScoresTable.Scores_Sort(CModulePlaygroundScoresTable::EScoreSortOrder::SMPoints);
-        
-            Tabs::Load();
-            declare TabsLayer <=> Tabs::CreateTabPaneLayer(
-                [ "ScoresTab" => "Rankings"
-                , "CPTimes" => "Race"
-                , "EventsUI" => "Events"]
-            // , "KeysSettings" => "Inputs"]
-                , 15, 7, False);
-            TabsLayer.Type = CUILayer::EUILayerType::AltMenu;
-            UIManager.UIAll.UILayers.add(TabsLayer);
-        }
-    }
+    --- Obs_LoadHud ---
 }
 ***
 
@@ -322,9 +318,6 @@ if (Obstacle::IsRandomizerMap()) {
     Layers::Detach("Records");
 }
 
-UIManager.UIAll.MarkersXML = Markers::GetXML();
-Layers::Update("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
-
 Items::Place();
 
 foreach (Player in AllPlayers) {
@@ -394,6 +387,33 @@ foreach (Event in UIManager.PendingEvents) {
         }
     }
 }
+***
+
+***Obs_PlayerTookGoalRS***
+***
+Obstacle::ObsRespawnPlayer(Player, RS.GiveUp);
+***
+
+***Obs_PlayerTookGoal***
+***
+Obstacle::ObsRespawnPlayer(Player, True);
+***
+
+***Obs_CreateRecordsLayer***
+***
+Layers::Create("Records", RecordsWidget::GetLayer());
+***
+
+
+***Obs_CreateSurvivalRankingLayer***
+***
+Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
+Layers::Attach("SurvivalRanking");
+***
+
+***Obs_CreateRespawnBehaviorLayer***
+***
+Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(False));
 ***
 
 ***Match_PlayLoop***
@@ -574,11 +594,7 @@ foreach (RS in PendingRespawns) {
             }
                         
             Events::Valid(CaptureToPerform);
-            if (G_IsCampaign) {
-                +++Campaign_EndRound+++
-            } else {
-                Obstacle::ObsRespawnPlayer(Player, RS.GiveUp);
-            }
+            --- Obs_PlayerTookGoalRS ---
         }
     } else if (Player::allowRSBug(Player)) {
         Obstacle::ObsRespawnPlayer(Player, RS.GiveUp);
@@ -601,12 +617,8 @@ foreach (Cap in PendingCaptures) {
     declare TookGoal = Obstacle::HandleCapture(Cap.Player);
 
     if (TookGoal) {
-            Events::Valid(Cap);
-        if (G_IsCampaign) {
-            +++Campaign_EndRound+++
-        } else {
-            Obstacle::ObsRespawnPlayer(Player, True);
-        }
+        Events::Valid(Cap);
+        --- Obs_PlayerTookGoal ---
     }
 }
 
@@ -774,8 +786,9 @@ Void CreateUI(Boolean _Replace) {
     Layers::Create("EventsUI", EventsUI::GetLayer());
     Layers::Attach("EventsUI");
     if (_Replace) {
-        Layers::Create("Markers");
+        Layers::Create("Markers", Markers::GetLayer(S_CheckpointMarkersCount));
         Layers::SetType("Markers", CUILayer::EUILayerType::Markers);
+        UIManager.UIAll.MarkersXML = Markers::GetXML();
 
         Layers::Create("UpdateAuth", UpdateAuth::GetLayer());
         Layers::Create("CachReqs", CachReqs::GetLayer());
@@ -803,11 +816,7 @@ Void CreateUI(Boolean _Replace) {
         Layers::Create("InitPb", InitPb::GetLayer());
         Layers::Attach("InitPb");
 
-        if (G_IsCampaign) {
-            Layers::Create("Records", MedalsWidget::GetLayer());
-        } else {
-            Layers::Create("Records", RecordsWidget::GetLayer());
-        }
+        --- Obs_CreateRecordsLayer ---
         Layers::Attach("Records");
     }
 
@@ -821,7 +830,7 @@ Void CreateUI(Boolean _Replace) {
     Layers::Attach("SpecKeys");
     Layers::Attach("AntiDevMode");
 
-    Layers::Create("RespawnBehavior", RespawnBehavior::GetLayer(G_IsCampaign));
+    --- Obs_CreateRespawnBehaviorLayer ---
     Layers::Create("NextMapVote", NextMapVote::GetLayer(Settings::GetNextMapVotingRatio()));
     Layers::Attach("RespawnBehavior");
     Layers::Attach("NextMapVote");
@@ -832,10 +841,7 @@ Void CreateUI(Boolean _Replace) {
     Layers::Attach("SpecList");
     Layers::Attach("Glitches");
 
-    if (!G_IsCampaign) {
-        Layers::Create("SurvivalRanking", SurvivalRanking::GetLayer());
-        Layers::Attach("SurvivalRanking");
-    }
+    --- Obs_CreateSurvivalRankingLayer ---
 
     Layers::Attach("CachReqs");
     Layers::Attach("UpdateAuth");
