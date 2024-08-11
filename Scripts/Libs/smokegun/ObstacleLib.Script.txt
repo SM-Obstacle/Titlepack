@@ -21,7 +21,7 @@
 #Include "Libs/smokegun/Tools.Script.txt" as Tools
 #Include "Libs/miltant/Randomizer.Script.txt" as RNG
 #Include "Libs/smokegun/Weapons.Script.txt" as Weapons
-#Include "Libs/smokegun/ObstacleRecords.Script.txt" as API
+#Include "Libs/ahmad3/UpdateMap.Script.txt" as UpdateMap
 
 #Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
 
@@ -279,8 +279,8 @@ Boolean PrepareMap(Text ModeName) {
         UIManager.UIAll.SendChat("$f00WARNING: This is an old map, please disable fast respawn in the settings if some cps are made with poles!");
     }
 
-    if (MapAttr::IsLeaderboardEnabled() && Settings::GetEnableRecords()) {
-        API::ReplaceOrCreateMap(G_CheckpointsTotal);
+    if (Settings::GetEnableRecords()) {
+        UpdateMap::Init(GetCheckpointsTotal());
     }
 
     return True;
@@ -325,7 +325,7 @@ Void Private_SendXmlRpcCallback(Text _CallbackName, CSmPlayer _Player, Integer _
  *
  */
 Void Private_SendFinishedRun(CSmPlayer _Player, Integer _Run, Ident _GoalId) {
-    if (!MapAttr::IsLeaderboardEnabled() || !Settings::GetEnableRecords()) return;
+    if (!Settings::GetEnableRecords()) return;
 
     Private_SendXmlRpcCallback("OnFinish", _Player, _Run, _GoalId);
     PlayerFinished::NotifyPlayerFinished(_Player);

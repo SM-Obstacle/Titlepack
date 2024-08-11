@@ -48,7 +48,6 @@
 #Include "Libs/ahmad3/UI/UpdatePlayer.Script.txt" as UpdatePlayer
 
 #Include "Libs/smokegun/Items.Script.txt" as Items
-#Include "Libs/smokegun/ObstacleRecords.Script.txt" as API
 #Include "Libs/smokegun/Weapons.Script.txt" as Weapons
 #Include "Libs/smokegun/Settings.Script.txt" as Settings
 #Include "Libs/smokegun/Tools.Script.txt" as Tools
@@ -103,7 +102,6 @@
 declare Ident   G_InvisibleSkinId;
 declare Ident   G_ObstacleModelId;
 declare Boolean G_ForceInvisibleSkin;
-declare Boolean G_EnableRecords;
 declare Ident   G_WayPointSpawn;
 declare Boolean[Ident] G_PendingRS;
 
@@ -222,16 +220,12 @@ ItemList_End();
 ***Match_StartServer***
 ***
 // ServerModeName is "" in the editor
-G_EnableRecords = ServerModeName != "";
+Settings::SetForceDisableRecords(ServerModeName == "");
 // ServerLogin is "" in local play
 G_ForceInvisibleSkin = !(ServerModeName == "" || ServerLogin == "");
 UpdateSettings();
 
 SM::SetupDefaultVisibility();
-
-if (Settings::GetEnableRecords()) {
-    API::Init();
-}
 
 Obstacle::LoadActions();
 ***
@@ -267,8 +261,6 @@ if (ObsEvents::HasFailed()) {
 ***Match_StartMap***
 ***
 
-CreateUI();
-
 EventsUI::Init();
 if (ObsEvents::HasEventLoaded()) {
     MedalsWidget::Init();
@@ -301,7 +293,7 @@ UseSameWallJump = Obstacle::IsSameWallJumpMap();
 SpawnInvulnerabilityDuration = Obstacle::InvulnerabilityDuration();
 
 
-G_EnableRecords = !Obstacle::IsRandomizerMap() && ServerModeName != "";
+Settings::SetForceDisableRecords(Settings::GetForceDisableRecords() || Obstacle::IsRandomizerMap() || ServerModeName == "");
 
 if (Obstacle::IsRandomizerMap()) {
     declare Text Seed = "";
@@ -351,6 +343,9 @@ if (S_TimeLimit > 0) {
 
 declare netwrite Text Net_MapStartTime for Teams[0];
 Net_MapStartTime = TimeLib::GetCurrent();
+
+CreateUI();
+
 ***
 
 ***Match_Yield***
@@ -424,10 +419,9 @@ if (Settings::GetForceInvisibleSkin()) {
     Obstacle::UpdatePlayersSkin(NullId);
 }
 
-if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords && Settings::GetEnableRecords()) {
+if (Settings::GetEnableRecords()) {
     Layers::Attach("Records");
-    API::Loop();
-} else if (MapAttr::IsLeaderboardEnabled() || G_EnableRecords || Settings::GetEnableRecords()){
+} else {
     Layers::Detach("Records");
 }
 
@@ -799,23 +793,22 @@ Void CreateUI(Boolean _Replace) {
     Layers::Create("SpecKeys", SpecKeys::GetLayer());
     Layers::Create("AntiDevMode", AntiDevMode::GetLayer());
 
-    Layers::Create("InitPb", InitPb::GetLayer());
     Layers::Create("UpdatePlayer", UpdatePlayer::GetLayer());
 
     Layers::Create("Items", Items::CreateLayerItems());
 
-    if (MapAttr::IsLeaderboardEnabled() && G_EnableRecords) {
+    if (Settings::GetEnableRecords()) {
         Layers::Create("PlayerFinished", PlayerFinished::GetLayer());
         Layers::Attach("PlayerFinished");
+        Layers::Create("InitPb", InitPb::GetLayer());
+        Layers::Attach("InitPb");
 
-        if (Settings::GetEnableRecords()) {
-            if (G_IsCampaign) {
-                Layers::Create("Records", MedalsWidget::GetLayer());
-            } else {
-                Layers::Create("Records", RecordsWidget::GetLayer());
-            }
-            Layers::Attach("Records");
+        if (G_IsCampaign) {
+            Layers::Create("Records", MedalsWidget::GetLayer());
+        } else {
+            Layers::Create("Records", RecordsWidget::GetLayer());
         }
+        Layers::Attach("Records");
     }
 
     Layers::Attach("Chrono");
@@ -845,7 +838,6 @@ Void CreateUI(Boolean _Replace) {
     }
 
     Layers::Attach("CachReqs");
-    Layers::Attach("InitPb");
     Layers::Attach("UpdateAuth");
     Layers::Attach("UpdatePlayer");
 
@@ -922,13 +914,8 @@ Void UpdateSettings() {
         Settings::SetAllowJump(S_AllowJump);
     }
 
-    if (S_EnableRecords != Settings::GetEnableRecords()) {
-        Settings::SetEnableRecords(S_EnableRecords);
-        if (!S_EnableRecords || !MapAttr::IsLeaderboardEnabled()) {
-            Layers::Detach("Records");
-        } else if (MapAttr::IsLeaderboardEnabled()) {
-            Layers::Attach("Records");
-        }
+    if (!Settings::GetForceDisableRecords() && (S_EnableRecords != Settings::GetEnableRecords() || MapAttr::IsLeaderboardEnabled() != Settings::GetEnableRecords())) {
+        Settings::SetEnableRecords(S_EnableRecords && MapAttr::IsLeaderboardEnabled());
     }
 
     if (S_NextMapVotingRatio != Settings::GetNextMapVotingRatio()) {

@@ -1,0 +1,122 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   Util functions used to make the request to the API to update the map info
+ ***********************************************/
+
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
+#Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialogs
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-08-11"
+#Const ScriptName "Libs/ahmad3/UpdateMap.Script.txt"
+
+/*********************************************
+  TYPES
+ *********************************************/
+
+#Struct K_UpdatePlayerBody {
+    Text login;
+    Text name;
+    Text zone_path;
+}
+
+#Struct K_UpdateMapBody {
+    Text name;
+    Text map_uid;
+    Integer cps_number;
+    K_UpdatePlayerBody author;
+}
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Void Private_UpdateMap(Integer _CpsNumber) {
+    declare K_UpdateMapBody Body = K_UpdateMapBody {
+        name = Map.MapName,
+        map_uid = ""^Map.Id,
+        cps_number = _CpsNumber,
+        author = K_UpdatePlayerBody {
+            login = Map.AuthorLogin,
+            name = Map.AuthorNickName,
+            zone_path = Map.AuthorZonePath
+        }
+    };
+
+    declare Ident ReqId = ReqMgr::MakePost(ReqMgr::K_PostRequest {
+        Route = "map/insert",
+        Body = Body.tojson(),
+        Headers = ReqMgr::DefaultHeaders()
+    });
+
+    declare Integer PendingReqId = ReqMgr::LastPendingReqId();
+
+    // Wait for the request to be sent
+    while (ReqId == NullId) {
+        yield;
+        ReqId = ReqMgr::MakePendingReq(PendingReqId);
+    }
+
+    declare CHttpRequest Req <=> Http.Requests[ReqId];
+    wait(Req.IsCompleted);
+
+    if (Req.StatusCode == 200) {
+        Http.Destroy(Req);
+        return;
+    }
+
+    declare ErrMgr::K_Error Err = ErrMgr::Handle(Req.StatusCode, Req.Result);
+    if (Err.Err.type == ErrMgr::C_Err_Maintenance) {
+        Dialogs::NewDialog(Dialogs::K_Dialog {
+            Title = "Maintenance",
+            Msg = """The API is currently in a maintenance mode, so records won't be saved immediately.
+
+You can still play as usual, you don't need to alert any admin of your missing records.
+
+Thank you.""",
+            CloseOnSuccess = True,
+            Buttons = [
+                Dialogs::K_Button {
+                    Label = "OK",
+                    Success = True
+                }
+            ]
+        });
+    } else {
+        UIManager.UIAll.SendChat(Err.Err.message);
+    }
+
+    Http.Destroy(Req);
+}
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Void Init(Integer _CpsNumber) {
+    Private_UpdateMap(_CpsNumber);
+}

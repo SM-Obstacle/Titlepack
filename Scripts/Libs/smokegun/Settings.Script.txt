@@ -29,6 +29,7 @@ declare Boolean G_EnablePlayerHighlight;
 declare Boolean G_ForcePvPWeapons;	
 declare Boolean G_ForcePvPCollisions;	
 declare Boolean G_LockEventsUI;	
+declare Boolean G_ForceDisableRecords;	
 
 declare Real G_NextMapVotingRatio;	
 declare Real G_SwitchEventVotingRatio;	
@@ -254,6 +255,14 @@ Boolean GetLockEventsUI() {
 
 Void SetLockEventsUI(Boolean _Value) {
 	G_LockEventsUI = _Value;
+}
+
+Boolean GetForceDisableRecords() {
+	return G_ForceDisableRecords;
+}
+
+Void SetForceDisableRecords(Boolean _Value) {
+	G_ForceDisableRecords = _Value;
 }
 
 
