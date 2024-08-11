@@ -276,7 +276,14 @@ Boolean RemoveCacheUpdate() {
     return False;
 }
 
+Void ClearEventsCache() {
+    declare persistent Text ObsStore_EventsCache2 for LocalUser = "";
+    ObsStore_EventsCache2 = "";
+}
+
 main() {
+    ClearEventsCache();
+
     InitSaveCacheUpdate();
     InitRemoveCacheUpdate();
     InitTrySendCached();
