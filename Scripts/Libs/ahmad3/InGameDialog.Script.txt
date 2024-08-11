@@ -155,6 +155,8 @@ declare Integer[Ident] G_ShownDialogIds;
 
 declare Private_K_ActiveDialog[Integer] G_ActiveDialogs;
 
+declare Integer[Ident] G_PendingAttachDialogs;
+
 /*********************************************
   FUNCTIONS
  *********************************************/
@@ -188,8 +190,12 @@ Integer Private_GetLastDialogIdOf(CUIConfig _UI, Text _PageId) {
     return MaxDialogId;
 }
 
+Text Private_GetLayerId(Ident UIId) {
+    return "InGameDialog__" ^ UIId;
+}
+
 Text Private_GetLayerId(CUIConfig _UI) {
-    return "InGameDialog__" ^ _UI.Id;
+    return Private_GetLayerId(_UI.Id);
 }
 
 /**
@@ -365,9 +371,30 @@ Void Private_AttachDialogFor(CUIConfig _UI, Integer _DialogId, K_Dialog _Dialog)
     } else {
         Layers::Create(LayerId, Private_GetLayer(_DialogId, _Dialog));
     }
-    declare CSmPlayer Player <=> GetPlayer(_UI);
-    Layers::Attach(LayerId, Player);
-    G_ShownDialogIds[_UI.Id] = _DialogId;
+
+    G_PendingAttachDialogs[_UI.Id] = _DialogId;
+}
+
+Void Private_LoopPendingAttachDialogs() {
+    declare Ident[] ToRemove = [];
+
+    foreach (UIId => DialogId in G_PendingAttachDialogs) {
+        if (!UIManager.UI.existskey(UIId)) {
+            ToRemove.add(UIId);
+            continue;
+        }
+
+        declare CSmPlayer Player <=> GetPlayer(UIManager.UI[UIId]);
+        if (Player == Null) continue;
+
+        Layers::Attach(Private_GetLayerId(UIId), Player);
+        G_ShownDialogIds[UIId] = DialogId;
+        ToRemove.add(UIId);
+    }
+
+    foreach (UIId in ToRemove) {
+        G_PendingAttachDialogs.removekey(UIId);
+    }
 }
 
 Void Private_HandleNewDialogWithId(CUIConfig _UI, Text _PageId, K_Dialog _Dialog, Integer _DialogId) {
@@ -524,6 +551,7 @@ Void Init() {
     G_PendingDialogs = [];
     G_LastDialogId = 0;
     G_ShownDialogIds = [];
+    G_PendingAttachDialogs = [];
     foreach (Idx => UI in UIManager.UI) {
         if (Idx == 0) continue;
         declare netwrite Integer[Text] Net_Dlg_LastDialogIds for UI = [];
@@ -607,6 +635,8 @@ K_DialogPromptResult[Ident] PromptDialog(Integer _DialogId) {
  * @param _Event The event.
  */
 Void Yield() {
+    Private_LoopPendingAttachDialogs();
+
     foreach (Event in UIManager.PendingEvents) {
         if (Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent) continue;
 

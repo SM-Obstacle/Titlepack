@@ -382,35 +382,6 @@ foreach (Event in UIManager.PendingEvents) {
                 ban.fromjson(Event.CustomEventData[1]);
                 Player::setBanned(Player, ban);
             }
-            case "cpstimes:init": {
-                declare API::K_PbResponse Res;
-                Res.fromjson(Event.CustomEventData[1]);
-                // Avoid setting best run if player hasn't saved any record yet
-                if (Res.cps_times.count == 0) continue;
-
-                declare Player = SM::GetPlayer(Event.CustomEventData[0]);
-                declare Integer[Ident] CpTimes;
-                declare Time = 0;
-                
-                foreach (PbCpTime in Res.cps_times) {
-                    Time += PbCpTime.time;
-                    foreach (Landmark in MapLandmarks) {
-                        if (Tools::IsCheckpoint(Landmark) && RNG::GetOrder(Landmark) == PbCpTime.cp_num + 1) {
-                            CpTimes[Landmark.Id] = Time;
-                            break;
-                        }
-                    }
-                }
-
-                Player::InitPlayer(Player);
-                Player::setRespawnCount(Player, Res.rs_count);
-                Obstacle::UpdatePlayerRsCounterColumn(Player);
-                Player::setRespawnCount(Player, 0);
-                Player::setBestRun(Player, Time);
-                Player::setBestCPTimes(Player, CpTimes);
-                CPTimes::UpdateLayer(Player);
-                Obstacle::UpdatePlayerBestTimeColumn(Player);
-            }
             case "cpstimes:reset": {
                 declare Player = SM::GetPlayer(Event.CustomEventData[0]);
                 Obstacle::UpdatePlayerRsCounterColumn(Player);
