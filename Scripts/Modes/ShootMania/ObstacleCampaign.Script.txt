@@ -7,7 +7,6 @@
 
 ***Match_InitServer***
 ***
-G_EnableRecords = False;
 G_ForceInvisibleSkin = False;
 
 log("mode is Obstacle Campaign");
