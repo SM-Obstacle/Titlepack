@@ -357,6 +357,7 @@ Net_MapStartTime = TimeLib::GetCurrent();
 ***
 SpectatorCount::Yield();
 SpecList::Yield();
+AntiDevMode::Yield();
 NextMapVote::Yield(S_NextMapVotingRatio);
 InitPb::Yield();
 Dialog::Yield();
@@ -423,7 +424,6 @@ foreach (Event in UIManager.PendingEvents) {
                 PlayerFinished::HandleCustomEvent(Event);
                 UpdateAuth::HandleCustomEvent(Event);
                 EventsUI::HandleCustomEvent(Event);
-                AntiDevMode::HandleCustomEvent(Event);
             }
         }
     }

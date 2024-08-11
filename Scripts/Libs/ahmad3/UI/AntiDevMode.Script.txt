@@ -27,8 +27,39 @@ If you think this is an error, please mention the developers (i.e. @miltant or @
 Thank you."""
 
 /*********************************************
+  GLOBALES
+ *********************************************/
+
+declare Ident[] G_PendingDevModes;
+
+/*********************************************
   FUNCTIONS
  *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Void Private_AddPendingDevMode(CUIConfig _UI) {
+    if (!G_PendingDevModes.exists(_UI.Id)) G_PendingDevModes.add(_UI.Id);
+}
+
+Void Private_ManagePendingDevModes() {
+    declare Ident[] ToRemove = [];
+
+    foreach (UIId in G_PendingDevModes) {
+        if (!UIManager.UI.existskey(UIId)) {
+            ToRemove.add(UIId);
+            continue;
+        }
+
+        declare CSmPlayer Player <=> GetPlayer(UIManager.UI[UIId]);
+        if (Player == Null) continue;
+
+        Player::setUseDevMode(Player, True);
+        ToRemove.add(UIId);
+    }
+}
 
 ////////////////////
 //// Public
@@ -48,12 +79,14 @@ Text GetScriptName() {
     return ScriptName;
 }
 
-Void HandleCustomEvent(CUIConfigEvent _Event) {
-    assert(_Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent);
-    if (_Event.CustomEventType != C_Ev_AntiDevMode) return;
+Void Yield() {
+    foreach (Event in UIManager.PendingEvents) {
+        if (Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent || Event.CustomEventType != C_Ev_AntiDevMode) continue;
 
-    declare CSmPlayer Player <=> GetPlayer(_Event.UI);
-    Player::setUseDevMode(Player, True);
+        Private_AddPendingDevMode(Event.UI);
+    }
+
+    Private_ManagePendingDevModes();
 }
 
 /**
