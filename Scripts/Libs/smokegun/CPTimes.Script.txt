@@ -24,6 +24,8 @@
     Integer Time;
 }
 
+declare Boolean G_Initialized;
+
 Text Private_GetWidget() {
     return """
 <frame id="Frame_CPTimes" hidden="1">
@@ -483,4 +485,14 @@ Void StartMap(Integer _CheckpointsNb) {
 
     declare netwrite Integer Net_CPTimesUpdated for Teams[0] = 0;
     Net_CPTimesUpdated = Now;
+
+    G_Initialized = True;
+}
+
+Void Init() {
+    G_Initialized = False;
+}
+
+Boolean IsInitialized() {
+    return G_Initialized;
 }

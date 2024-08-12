@@ -73,7 +73,7 @@ Void Private_YieldPendingPbInits() {
         }
 
         declare CSmPlayer Player <=> GetPlayer(UIManager.UI[UIId]);
-        if (Player == Null) continue;
+        if (Player == Null || !CPTimes::IsInitialized()) continue;
 
         Player::InitPlayer(Player);
         Player::setRespawnCount(Player, Params.RsCount);

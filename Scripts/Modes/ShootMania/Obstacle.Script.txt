@@ -257,6 +257,8 @@ if (ObsEvents::HasFailed()) {
 ***Match_StartMap***
 ***
 
+CPTimes::Init();
+
 EventsUI::Init();
 if (ObsEvents::HasEventLoaded()) {
     MedalsWidget::Init();
@@ -730,6 +732,7 @@ G_LastUsePvPWeapons = UsePvPWeapons;
 
 ***Match_EndMap***
 ***
+DestroyUI(False);
 EndTime = -1;
 
 Dynamics::Clear();
@@ -771,7 +774,6 @@ DoNothing();
 ***
 SpawnScreen::DestroyRules();
 SpawnScreen::DestroyMapInfo();
-DestroyUI();
 ***
 
 // ---------------------------------- //
