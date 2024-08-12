@@ -774,6 +774,7 @@ DoNothing();
 ***
 SpawnScreen::DestroyRules();
 SpawnScreen::DestroyMapInfo();
+DestroyUI();
 ***
 
 // ---------------------------------- //
