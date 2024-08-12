@@ -99,6 +99,11 @@ Thank you.""",
     Http.Destroy(Req);
 }
 
+Void Private_UpdateRecordsWidget() {
+    declare netwrite Integer Net_RecordsUpdated for Teams[0] = -1;
+    Net_RecordsUpdated = Now;
+}
+
 ////////////////////
 //// Public
 ////////////////////
@@ -119,4 +124,5 @@ Text GetScriptName() {
 
 Void Init(Integer _CpsNumber) {
     Private_UpdateMap(_CpsNumber);
+    Private_UpdateRecordsWidget();
 }

@@ -44,11 +44,17 @@
   FUNCTIONS
  *********************************************/
 
-Void setHasWrongLbLine(CSmPlayer _Player, Boolean _HasWrongLbLine) {
+Void setHasWrongLbLine(CSmPlayer _Player, Boolean _HasWrongLbLine, Boolean _NotifyAll) {
     declare netwrite Boolean Net_HasWrongLbLine for _Player = False;
     Net_HasWrongLbLine = _HasWrongLbLine;
-    declare netwrite Integer Net_RecordsUpdated for Teams[0] = -1;
-    Net_RecordsUpdated = Now;
+    if (_NotifyAll) {
+        declare netwrite Integer Net_RecordsUpdated for Teams[0] = -1;
+        Net_RecordsUpdated = Now;
+    }
+}
+
+Void setHasWrongLbLine(CSmPlayer _Player, Boolean _HasWrongLbLine) {
+    setHasWrongLbLine(_Player, _HasWrongLbLine, False);
 }
 
 Boolean hasWrongLbLine(CSmPlayer _Player) {

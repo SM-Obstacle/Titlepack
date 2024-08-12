@@ -117,7 +117,7 @@ Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult
     declare CSmPlayer Player <=> GetPlayer(_UI);
     declare ErrMgr::K_Error Err = ErrMgr::Handle(_StatusCode, _ReqResult);
     ErrReport::Report(Player, Err);
-    Player::setHasWrongLbLine(Player, True);
+    Player::setHasWrongLbLine(Player, True, True);
 }
 
 K_OptCachedReq Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
@@ -154,7 +154,7 @@ Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Bo
 
     declare CSmPlayer Player <=> GetPlayer(_UI);
 
-    Player::setHasWrongLbLine(Player, False);
+    Player::setHasWrongLbLine(Player, False, True);
 
     declare Text NewTime = TL::TimeToText(Res.new, True);
     declare Text OldTime = TL::TimeToText(Res.old, True);
@@ -204,7 +204,7 @@ Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Bo
 
 Void Private_HandleCacheApprove(CUIConfig _UI, Integer _Tstp, Text _Body) {
     declare CSmPlayer Player <=> GetPlayer(_UI);
-    Player::setHasWrongLbLine(Player, True);
+    Player::setHasWrongLbLine(Player, True, True);
     Private_RemoveCached(_UI, _Tstp, _Body);
     Private_ReleaseFinishFor(_UI);
 }
