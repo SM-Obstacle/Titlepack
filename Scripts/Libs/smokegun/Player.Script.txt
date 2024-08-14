@@ -44,6 +44,16 @@
   FUNCTIONS
  *********************************************/
 
+Void setTabsInitialized(CSmPlayer _Player, Boolean _TabsInit) {
+    declare Boolean TabsInitialized for _Player = False;
+    TabsInitialized = _TabsInit;
+}
+
+Boolean hasTabsInitialized(CSmPlayer _Player) {
+    declare Boolean TabsInitialized for _Player = False;
+    return TabsInitialized;
+}
+
 Void setHasWrongLbLine(CSmPlayer _Player, Boolean _HasWrongLbLine, Boolean _NotifyAll) {
     declare netwrite Boolean Net_HasWrongLbLine for _Player = False;
     Net_HasWrongLbLine = _HasWrongLbLine;

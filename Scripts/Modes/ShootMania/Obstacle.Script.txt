@@ -624,23 +624,30 @@ foreach (Cap in PendingCaptures) {
     }
 }
 
-foreach (Player in Players) {
-    if (Player::getBanStatus(Player).IsPresent && ServerAdmin != Null) {
-        ServerAdmin.Kick(Player.User, Player::getBanStatus(Player).Ban.ban.reason);
-    }
-
+foreach (Player in AllPlayers) {
     switch (Player.SpawnStatus) {
-
         case CSmPlayer::ESpawnStatus::NotSpawned: {
             if (!Player::isInitialized(Player)) {
                 Obstacle::NewPlayer(Player);
+            } else if (!Player::hasTabsInitialized(Player)) {
+                declare CUIConfig UI <=> UIManager.GetUI(Player);
+                Tabs::UseTabs(UI, "ScoresTable");
+                Player::setTabsInitialized(Player, True);
             }
 
             if (!Player.RequestsSpectate && ObsScores::PlayerShouldSpawn(Player)) {
                 Obstacle::ObsRespawnPlayer(Player);
             }
         }
+    }
+}
 
+foreach (Player in Players) {
+    if (Player::getBanStatus(Player).IsPresent && ServerAdmin != Null) {
+        ServerAdmin.Kick(Player.User, Player::getBanStatus(Player).Ban.ban.reason);
+    }
+
+    switch (Player.SpawnStatus) {
         case CSmPlayer::ESpawnStatus::Spawning: {
             if (Player.Position == <0., 0., 0.>) {
                 if (Player::getLastSpawnPosition(Player) != <0., 0., 0.>) {
