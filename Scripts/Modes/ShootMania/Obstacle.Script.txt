@@ -175,6 +175,13 @@ if (Hud.ScoresTable != Null) {
         , 15, 7, False);
     TabsLayer.Type = CUILayer::EUILayerType::AltMenu;
     UIManager.UIAll.UILayers.add(TabsLayer);
+
+    // If local play, hide some overlays
+    if (ServerLogin == "") {
+        UIManager.UIAll.OverlayHideCountdown = True;
+        UIManager.UIAll.OverlayHideChrono = True;
+        UIManager.UIAll.OverlayHideNotices = True;
+    }
 }
 ***
 
@@ -190,7 +197,7 @@ foreach (Module in Hud.Modules) {
 }
 
 if (Hud != Null) {
-    --- Obs_LoadHud ---
+    +++ Obs_LoadHud +++
 }
 ***
 

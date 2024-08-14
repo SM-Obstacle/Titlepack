@@ -12,13 +12,6 @@ G_ForceInvisibleSkin = False;
 log("mode is Obstacle Campaign");
 ***
 
-***Obs_LoadHud***
-***
-UIManager.UIAll.OverlayHideCountdown = True;
-UIManager.UIAll.OverlayHideChrono = True;
-UIManager.UIAll.OverlayHideNotices = True;
-***
-
 ***Match_AfterLoadMap***
 ***
 if (ServerAdmin == Null) {
