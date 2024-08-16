@@ -1,18 +1,19 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"	as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"				as Styles
-#Include "Libs/smokegun/Constants.Script.txt"							as Constants
 
 #Include "Libs/miltant/Nadeo_Fork/MP4/TPLagoon/Components/Multiplayer/ChannelInfoStructs.Script.txt"    as ChannelInfoStructs
 
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
 
 #Struct K_LatestnewsImageResponse {
 	Text img_url;
 	Text link;
 }
 
-declare Ident G_LatestNewsImgReq;
+declare Ident G_LatestNewsImgReqId;
 declare Integer G_PendingLatestNewsImgReq;
+declare ReqMgr::K_GetRequest G_LatestNewsImgReq;
 
 Text GetName() {
 	return "home";
@@ -123,41 +124,45 @@ Text Build(Text _NewsImgUrl, Text _NewsImgLink) {
 Void Load() {
 	G_PendingLatestNewsImgReq = -1;
 
-	declare Ident ReqId = ReqMgr::MakeGet(ReqMgr::K_GetRequest {
+	G_LatestNewsImgReq = ReqMgr::K_GetRequest {
 		Route = "latestnews_image",
 		UseCache = True,
 		Headers = ReqMgr::DefaultHeaders()
-	});
+	};
+
+	declare Ident ReqId = ReqMgr::Make(G_LatestNewsImgReq);
 
 	if (ReqId == NullId) {
 		G_PendingLatestNewsImgReq = ReqMgr::LastPendingReqId();
 	} else {
-		G_LatestNewsImgReq = ReqId;
+		G_LatestNewsImgReqId = ReqId;
 	}
 }
 
 Void LoopReq() {
-	if (G_LatestNewsImgReq == NullId && G_PendingLatestNewsImgReq == -1) return;
+	if (G_LatestNewsImgReqId == NullId && G_PendingLatestNewsImgReq == -1) return;
 
 	if (G_PendingLatestNewsImgReq >= 0) {
-		declare Ident ReqId = ReqMgr::MakePendingReq(G_PendingLatestNewsImgReq);
+		declare Ident ReqId = ReqMgr::MakePendingGet(G_PendingLatestNewsImgReq);
 		if (ReqId == NullId) return;
 		else {
-			G_LatestNewsImgReq = ReqId;
+			G_LatestNewsImgReqId = ReqId;
 			G_PendingLatestNewsImgReq = -1;
 		}
 	}
 
-	declare CHttpRequest Req <=> Http.Requests[G_LatestNewsImgReq];
+	declare CHttpRequest Req <=> Http.Requests[G_LatestNewsImgReqId];
 	if (!Req.IsCompleted) return;
 
 	declare K_LatestnewsImageResponse Res;
 	if (Req.StatusCode == 200) {
 		Res.fromjson(Req.Result);
+	} else {
+		ErrorReport::Report(G_LatestNewsImgReq.Route, "", LocalUser.Login, Req.Result, "GET");
 	}
 
 	Http.Destroy(Req);
-	G_LatestNewsImgReq = NullId;
+	G_LatestNewsImgReqId = NullId;
 
 	declare Windows::K_Window Window = Windows::K_Window {
 		Name = GetName(),

@@ -1,6 +1,7 @@
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrReport
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 #Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
@@ -16,7 +17,7 @@
 Void Init() {
     if (ObsEvents::HasFailed() || !ObsEvents::HasEventLoaded()) return;
 
-    declare netwrite Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
+    declare netwrite Integer[][Text] Net_MedalsTimesPerMap for Teams[0] = [];
     declare netwrite Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
 
     Net_MedalsTimesPerMap.clear();
@@ -104,10 +105,14 @@ Text GetLayer() {
     {{{ReqMgr::ML_Content("ReqMgr")}}}
     {{{Ban::ML_Content("BanMgr")}}}
     {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
+    {{{ErrReport::ML_Content("ErrReport")}}}
 
     declare Integer[][Text] G_MedalsTimesPerMap;
+
     declare Ident G_ReqId;
     declare Integer G_PendingReqId;
+    // The content of this is meaningless if `G_ReqId` is `NullId` or `G_PendingReqId` is -1.
+    declare ReqMgr_K_GetRequest G_Req;
 
     declare CSmPlayer G_LocalPlayer;
     declare Integer[Text] G_CampaignRecords;
@@ -229,19 +234,26 @@ Text GetLayer() {
     }
 
     Void UpdateRecords(Text _Login) {
+        if (G_ReqId != NullId && Http.Requests.existskey(G_ReqId)) {
+            Http.Destroy(Http.Requests[G_ReqId]);
+            G_ReqId = NullId;
+        }
+
         declare Text Params = "?mapId="^Map.Id^"&playerId=" ^ _Login;
         declare Text Route = {{{dump(ObsEvents::PrefixRoute("overview"))}}} ^ Params;
-
-        declare Ident ReqId = ReqMgr_MakeGet(ReqMgr_K_GetRequest {
+        G_Req = ReqMgr_K_GetRequest {
             Route = Route,
             UseCache = False,
             Headers = ReqMgr_DefaultHeaders()
-        });
-        
+        };
+
+        declare Ident ReqId = ReqMgr_Make(G_Req);
+
         if (ReqId == NullId) {
             G_PendingReqId = ReqMgr_LastPendingReqId();
         } else {
             G_ReqId = ReqId;
+            G_PendingReqId = -1;
         }
     }
 
@@ -249,7 +261,7 @@ Text GetLayer() {
         if (G_ReqId == NullId && G_PendingReqId == -1) return;
 
         if (G_PendingReqId >= 0) {
-            declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingReqId);
+            declare Ident ReqId = ReqMgr_MakePendingGet(G_PendingReqId);
             if (ReqId == NullId) {
                 return;
             } else {
@@ -267,8 +279,10 @@ Text GetLayer() {
             Res.fromjson(Req.Result);
             UpdateUI(Res);
         } else {
-            ErrMgr_Handle(Req.StatusCode, Req.Result);
-            G_Frame_Records.Hide();
+            declare ErrMgr_K_Err Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
+            if (Err.Err.type != ErrMgr_C_Err_Maintenance) {
+                ErrReport_Report(G_Req.Route, "", Req.Result, "GET");
+            }
         }
 
         Http.Destroy(Req);

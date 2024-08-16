@@ -1,0 +1,92 @@
+/************************************************
+ *   Obstacle Library
+ *   Author:     ahmad3
+ *
+ *   JSON utility functions
+ ***********************************************/
+
+#Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Impl
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+#Const Version "2024-08-15"
+#Const ScriptName "Libs/ahmad3/Utils/Json.Script.txt"
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Text Private_Field(Text _Key, Text _RawValue) {
+    return _Key ^ ":" ^ _RawValue;
+}
+
+Text Private_Join(Text[] _Content) {
+    if (_Content.count == 0) return "";
+
+    declare Text Out = _Content[0];
+    for (Idx, 1, _Content.count - 1) {
+        Out ^= "," ^ _Content[Idx];
+    }
+
+    return Out;
+}
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
+
+Text FlattenedField(Text _Key, Text _Flattened) {
+    return Private_Field(_Key, _Flattened);
+}
+
+Text Field(Text _Key, Text _Value) {
+    return Private_Field(_Key, Impl::GetText(_Value));
+}
+
+Text Field(Text _Key, Boolean _Value) {
+    return Private_Field(_Key, Impl::GetBoolean(_Value));
+}
+
+Text Field(Text _Key, Integer _Value) {
+    return Private_Field(_Key, Impl::GetInteger(_Value));
+}
+
+Text Field(Text _Key, Real _Value) {
+    return Private_Field(_Key, Impl::GetReal(_Value));
+}
+
+Text Field(Text _Key, Vec2 _Value) {
+    return Private_Field(_Key, Impl::GetVec2(_Value));
+}
+
+Text Field(Text _Key, Vec3 _Value) {
+    return Private_Field(_Key, Impl::GetVec3(_Value));
+}
+
+Text Object(Text[] _Fields) {
+    return "{" ^ Private_Join(_Fields) ^ "}";
+}
+
+Text Array(Text[] _Content) {
+    return "[" ^ Private_Join(_Content) ^ "]";
+}

@@ -113,19 +113,21 @@ Text Private_OrdinalSuffix(Integer _Rank) {
     return TL::ToText(_Rank) ^ Suff;
 }
 
-Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult) {
+Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult, Text _ReqBody, Text _Route) {
     declare CSmPlayer Player <=> GetPlayer(_UI);
     declare ErrMgr::K_Error Err = ErrMgr::Handle(_StatusCode, _ReqResult);
-    ErrReport::Report(Player, Err);
+    if (Err.Err.type != ErrMgr::C_Err_Maintenance) {
+        ErrReport::Report(_Route, _ReqBody, Player.User.Login, _ReqResult, "POST");
+    }
     Player::setHasWrongLbLine(Player, True, True);
 }
 
-K_OptCachedReq Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
+K_OptCachedReq Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body, Text _Route) {
     if (!G_FinishCachedReqs.existskey(_UI.Id)) return Private_OptCachedReq_Empty();
     declare Integer IdxToRemove = -1;
 
     declare CachReqs::K_CachedReq CachedReq = CachReqs::K_CachedReq {
-        Route = ObsEvents::PrefixRoute("player/finished"),
+        Route = _Route,
         Tstp = _Tstp,
         Body = _Body
     };
@@ -143,11 +145,11 @@ K_OptCachedReq Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body) {
     return Private_OptCachedReq_Of(CachedReq);
 }
 
-Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Body) {
+Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Body, Text _Route) {
     declare K_HasFinishedResponse Res;
     Res.fromjson(_Response);
 
-    declare K_OptCachedReq Cached = Private_RemoveCached(_UI, _Tstp, _Body);
+    declare K_OptCachedReq Cached = Private_RemoveCached(_UI, _Tstp, _Body, _Route);
     if (Private_OptCachedReq_IsPresent(Cached)) {
         CachReqs::RemoveCache(_UI, Private_OptCachedReq_Get(Cached));
     }
@@ -202,10 +204,10 @@ Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Bo
     Private_ReleaseFinishFor(_UI);
 }
 
-Void Private_HandleCacheApprove(CUIConfig _UI, Integer _Tstp, Text _Body) {
+Void Private_HandleCacheApprove(CUIConfig _UI, Integer _Tstp, Text _Body, Text _Route) {
     declare CSmPlayer Player <=> GetPlayer(_UI);
     Player::setHasWrongLbLine(Player, True, True);
-    Private_RemoveCached(_UI, _Tstp, _Body);
+    Private_RemoveCached(_UI, _Tstp, _Body, _Route);
     Private_ReleaseFinishFor(_UI);
 }
 
@@ -234,20 +236,24 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
         case C_Ev_ReqFailedToSend: {
             declare Integer StatusCode = TL::ToInteger(_Event.CustomEventData[0]);
             declare Text Result = _Event.CustomEventData[1];
-            Private_HandleFinishErr(_Event.UI, StatusCode, Result);
+            declare Text ReqBody = _Event.CustomEventData[2];
+            declare Text Route = _Event.CustomEventData[3];
+            Private_HandleFinishErr(_Event.UI, StatusCode, Result, ReqBody, Route);
         }
 
         case C_Ev_PlayerFinished: {
             declare Text Response = _Event.CustomEventData[0];
             declare Integer Tstp = TL::ToInteger(_Event.CustomEventData[1]);
             declare Text Body = _Event.CustomEventData[2];
-            Private_HandleFinish(_Event.UI, Response, Tstp, Body);
+            declare Text Route = _Event.CustomEventData[3];
+            Private_HandleFinish(_Event.UI, Response, Tstp, Body, Route);
         }
 
         case C_Ev_ApproveCache: {
             declare Integer Tstp = TL::ToInteger(_Event.CustomEventData[0]);
             declare Text Body = _Event.CustomEventData[1];
-            Private_HandleCacheApprove(_Event.UI, Tstp, Body);
+            declare Text Route = _Event.CustomEventData[2];
+            Private_HandleCacheApprove(_Event.UI, Tstp, Body, Route);
         }
     }
 }
@@ -331,7 +337,7 @@ declare Ident[Integer] G_PlayerFinishedReqs;
 declare Boolean G_AuthIgnored;
 
 Void ApproveCached(K_FinishReq _Req) {
-    SendCustomEvent({{{dump(C_Ev_ApproveCache)}}}, [_Req.Tstp ^ "", _Req.Body]);
+    SendCustomEvent({{{dump(C_Ev_ApproveCache)}}}, [_Req.Tstp ^ "", _Req.Body, G_PlayerFinishedRoute]);
 }
 
 Void InitPlayerFinish(K_FinishReq _Req) {
@@ -343,7 +349,7 @@ Void InitPlayerFinish(K_FinishReq _Req) {
     G_CurrentReqIdx += 1;
     G_AllFinishes[G_CurrentReqIdx] = _Req;
 
-    declare Ident ReqId = ReqMgr_MakePost(ReqMgr_K_PostRequest {
+    declare Ident ReqId = ReqMgr_Make(ReqMgr_K_PostRequest {
         Route = G_PlayerFinishedRoute,
         Body = _Req.Body,
         Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
@@ -361,7 +367,7 @@ Void LoopPlayerFinished() {
 
     declare Integer[] PendingReqsToRemove = [];
     foreach (Idx => PendingReqId in G_PendingPlayerFinishedReqs) {
-        declare Ident ReqId = ReqMgr_MakePendingReq(PendingReqId);
+        declare Ident ReqId = ReqMgr_MakePendingPost(PendingReqId);
         if (ReqId == NullId) {
             continue;
         } else {
@@ -382,7 +388,7 @@ Void LoopPlayerFinished() {
         switch (Req.StatusCode) {
             case 200: {
                 declare K_FinishReq Finish = G_AllFinishes[Idx];
-                SendCustomEvent({{{dump(C_Ev_PlayerFinished)}}}, [Req.Result, Finish.Tstp ^ "", Finish.Body]);
+                SendCustomEvent({{{dump(C_Ev_PlayerFinished)}}}, [Req.Result, Finish.Tstp ^ "", Finish.Body, G_PlayerFinishedRoute]);
                 G_AllFinishes.removekey(Idx);
             }
             case 401: {
@@ -391,8 +397,8 @@ Void LoopPlayerFinished() {
             }
             default: {
                 ApproveCached(G_AllFinishes[Idx]);
+                SendCustomEvent({{{dump(C_Ev_ReqFailedToSend)}}}, [Req.StatusCode ^ "", Req.Result, G_AllFinishes[Idx].Body, G_PlayerFinishedRoute]);
                 G_AllFinishes.removekey(Idx);
-                SendCustomEvent({{{dump(C_Ev_ReqFailedToSend)}}}, [Req.StatusCode ^ "", Req.Result]);
             }
         }
 

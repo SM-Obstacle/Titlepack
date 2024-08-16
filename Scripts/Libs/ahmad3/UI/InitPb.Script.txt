@@ -5,6 +5,7 @@
  *   Initializes the CP times of the player with their PB
  ***********************************************/
 
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 #Include "Libs/ahmad3/UI/UpdateAuth.Script.txt" as UpdateAuth
 
@@ -155,7 +156,9 @@ Text GetLayer() {
     <script><![CDATA[
 
 {{{ReqMgr::ML_Preproc("ReqMgr")}}}
+
 {{{ReqMgr::ML_Content("ReqMgr")}}}
+{{{ErrorReport::ML_Content("ErrReport")}}}
 {{{UpdateAuth::ML_Content("Auth")}}}
 
 declare Text G_PbRoute;
@@ -166,14 +169,17 @@ declare Integer G_AuthUpdated;
 
 declare Ident G_InitPbReq;
 declare Integer G_PendingInitPbReq;
+declare ReqMgr_K_GetRequest G_Req;
 declare Boolean G_NeedAuth;
 
 Void InitPbReq() {
-    declare Ident ReqId = ReqMgr_MakeGet(ReqMgr_K_GetRequest {
+    G_Req = ReqMgr_K_GetRequest {
         Route = G_PbRoute ^ "?map_uid=" ^ Map.Id,
         UseCache = False,
         Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
-    });
+    };
+
+    declare Ident ReqId = ReqMgr_Make(G_Req);
 
     if (ReqId == NullId) {
         G_PendingInitPbReq = ReqMgr_LastPendingReqId();
@@ -186,7 +192,7 @@ Void LoopInitPbReq() {
     if (G_InitPbReq == NullId && G_PendingInitPbReq == -1) return;
     
     if (G_PendingInitPbReq >= 0) {
-        declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingInitPbReq);
+        declare Ident ReqId = ReqMgr_MakePendingGet(G_PendingInitPbReq);
         if (ReqId == NullId) {
             return;
         } else {
@@ -206,6 +212,9 @@ Void LoopInitPbReq() {
         case 401: {
             Auth_NotifyNeedUpdate();
             G_NeedAuth = True;
+        }
+        default: {
+            ErrReport_Report(G_Req.Route, "", Req.Result, "GET");
         }
     }
 

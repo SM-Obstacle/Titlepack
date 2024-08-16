@@ -7,6 +7,8 @@
 
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrReport
+
 #Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialogs
 
 /*********************************************
@@ -53,9 +55,11 @@ Void Private_UpdateMap(Integer _CpsNumber) {
         }
     };
 
-    declare Ident ReqId = ReqMgr::MakePost(ReqMgr::K_PostRequest {
+    declare Text JsonBody = Body.tojson();
+
+    declare Ident ReqId = ReqMgr::Make(ReqMgr::K_PostRequest {
         Route = "map/insert",
-        Body = Body.tojson(),
+        Body = JsonBody,
         Headers = ReqMgr::DefaultHeaders()
     });
 
@@ -64,7 +68,7 @@ Void Private_UpdateMap(Integer _CpsNumber) {
     // Wait for the request to be sent
     while (ReqId == NullId) {
         yield;
-        ReqId = ReqMgr::MakePendingReq(PendingReqId);
+        ReqId = ReqMgr::MakePendingPost(PendingReqId);
     }
 
     declare CHttpRequest Req <=> Http.Requests[ReqId];
@@ -93,6 +97,7 @@ Thank you.""",
             ]
         });
     } else {
+        ErrReport::Report("/map/insert", JsonBody, Req.Result, "POST");
         UIManager.UIAll.SendChat(Err.Err.message);
     }
 

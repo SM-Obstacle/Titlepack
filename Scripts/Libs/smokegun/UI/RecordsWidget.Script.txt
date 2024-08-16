@@ -6,6 +6,7 @@
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 #Include "Libs/ahmad3/Events.Script.txt" as Events
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 
 /*********************************************
@@ -101,9 +102,11 @@ Text GetLayer() {
     {{{ReqMgr::ML_Content("ReqMgr")}}}
     {{{Ban::ML_Content("BanMgr")}}}
     {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
+    {{{ErrorReport::ML_Content("ErrReport")}}}
 
     declare Ident G_ReqId;
     declare Integer G_PendingReqId;
+    declare ReqMgr_K_GetRequest G_Req;
 
     declare CMlFrame G_Frame_Records;
     declare CMlFrame G_Frame_Widget;
@@ -146,19 +149,27 @@ Text GetLayer() {
     }
 
     Void UpdateRecords(Text _Login) {
+        if (G_ReqId != NullId && Http.Requests.existskey(G_ReqId)) {
+            Http.Destroy(Http.Requests[G_ReqId]);
+            G_ReqId = NullId;
+        }
+
         declare Text Params = "?mapId=" ^ Map.Id ^ "&playerId=" ^ _Login;
         declare Text Route = {{{dump(Events::PrefixRoute("overview"))}}} ^ Params;
 
-        declare Ident ReqId = ReqMgr_MakeGet(ReqMgr_K_GetRequest {
+        G_Req = ReqMgr_K_GetRequest {
             Route = Route,
             UseCache = False,
             Headers = ReqMgr_DefaultHeaders()
-        });
+        };
+
+        declare Ident ReqId = ReqMgr_Make(G_Req);
 
         if (ReqId == NullId) {
             G_PendingReqId = ReqMgr_LastPendingReqId();
         } else {
             G_ReqId = ReqId;
+            G_PendingReqId = -1;
         }
     }
 
@@ -166,7 +177,7 @@ Text GetLayer() {
         if (G_ReqId == NullId && G_PendingReqId == -1) return;
 
         if (G_PendingReqId >= 0) {
-            declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingReqId);
+            declare Ident ReqId = ReqMgr_MakePendingGet(G_PendingReqId);
             if (ReqId == NullId) {
                 return;
             } else {
@@ -184,8 +195,12 @@ Text GetLayer() {
             Res.fromjson(Req.Result);
             UpdateUI(Res);
             G_Frame_Error.Hide();
+            G_Frame_Records.Show();
         } else {
-            ErrMgr_Handle(Req.StatusCode, Req.Result);
+            declare ErrMgr_K_Error Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
+            if (Err.Err.type != ErrMgr_C_Err_Maintenance) {
+                ErrReport_Report(G_Req.Route, "", Req.Result, "GET");
+            }
             G_Frame_Error.Show();
             G_Frame_Records.Hide();
         }

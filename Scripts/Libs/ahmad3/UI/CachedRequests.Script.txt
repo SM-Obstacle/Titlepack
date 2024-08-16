@@ -9,6 +9,7 @@
 #Include "TimeLib" as TiL
 
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
 #Include "Libs/ahmad3/Utils.Script.txt" as Utils
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
@@ -116,8 +117,10 @@ Text GetLayer() {
 }
 
 {{{ReqMgr::ML_Preproc("ReqMgr")}}}
+
 {{{ReqMgr::ML_Content("ReqMgr")}}}
 {{{Utils::ML_FindCharIndex("Utils", "TL")}}}
+{{{ErrorReport::ML_Content("ErrReport")}}}
 
 ////////// ML Updates
 
@@ -181,7 +184,7 @@ Void InitTrySendCached() {
     }
 
     foreach (Idx => Req in G_IndexedCachedReqs) {
-        declare Ident ReqId = ReqMgr_MakePost(ReqMgr_K_PostRequest {
+        declare Ident ReqId = ReqMgr_Make(ReqMgr_K_PostRequest {
             Route = "staggered/" ^ Req.Route,
             Body = "{\"req_tstp\":" ^ Req.Tstp ^ ",\"body\":" ^ Req.Body ^ "}",
             Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
@@ -200,7 +203,7 @@ Void LoopTrySendCached() {
     declare Integer[] PendingReqsToRemove;
 
     foreach (Idx => PendingReqId in G_PendingStaggeredReqs) {
-        declare Ident ReqId = ReqMgr_MakePendingReq(PendingReqId);
+        declare Ident ReqId = ReqMgr_MakePendingPost(PendingReqId);
         if (ReqId == NullId) {
             continue;
         } else {
@@ -222,6 +225,13 @@ Void LoopTrySendCached() {
         ReqsToRemove.add(Idx);
         if (Req.StatusCode == 200) {
             CachedReqsToRemove.add(Idx);
+        } else {
+            ErrReport_Report(
+                "staggered/" ^ G_IndexedCachedReqs[Idx].Route,
+                G_IndexedCachedReqs[Idx].Body,
+                Req.Result,
+                "POST"
+            );
         }
         Http.Destroy(Req);
     }

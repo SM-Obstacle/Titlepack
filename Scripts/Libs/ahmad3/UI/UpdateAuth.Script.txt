@@ -8,6 +8,7 @@
 #Include "Libs/ahmad3/InGameDialog.Script.txt" as Dlg
 #Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrReport
 
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
@@ -187,6 +188,7 @@ Text GetLayer() {
 {{{Dlg::ML_Content("Dlg", "UpdateAuth")}}}
 {{{AuthUtils::ML_Content("AuthUtils")}}}
 {{{ReqMgr::ML_Content("ReqMgr")}}}
+{{{ErrReport::ML_Content("ErrReport")}}}
 
 declare Integer G_NeedsTokenUpdate;
 
@@ -201,6 +203,8 @@ declare Integer G_Tries;
 declare Boolean G_InitUpdateTokenReq;
 declare Ident G_UpdateTokenReq;
 declare Text G_State;
+
+declare ReqMgr_K_PostRequest G_Req;
 
 declare Boolean G_UpdateTokenReqIsPending;
 declare Integer G_PendingUpdateTokenReqId;
@@ -260,11 +264,13 @@ Void InitUpdateTokenReq() {
         redirect_uri = {{{dump(Constants::C_MP_Redirect)}}}
     };
 
-    declare Ident ReqId = ReqMgr_MakePost(ReqMgr_K_PostRequest {
+    G_Req = ReqMgr_K_PostRequest {
         Route = "player/get_token",
         Body = Body.tojson(),
         Headers = ReqMgr_DefaultHeaders()
-    });
+    };
+
+    declare Ident ReqId = ReqMgr_Make(G_Req);
 
     if (ReqId == NullId) {
         G_UpdateTokenReqIsPending = True;
@@ -302,7 +308,7 @@ Void LoopUpdateTokenReq() {
     if (!G_InitUpdateTokenReq) return;
 
     if (G_UpdateTokenReqIsPending) {
-        declare Ident ReqId = ReqMgr_MakePendingReq(G_PendingUpdateTokenReqId);
+        declare Ident ReqId = ReqMgr_MakePendingPost(G_PendingUpdateTokenReqId);
         if (ReqId == NullId) {
             return;
         } else {
@@ -323,6 +329,7 @@ Void LoopUpdateTokenReq() {
         SendCustomEvent({{{dump(C_Ev_TokenUpdated)}}}, []);
     } else {
         SendCustomEvent({{{dump(C_Ev_TokenUpdateFailed)}}}, []);
+        ErrReport_Report(G_Req.Route, G_Req.Body, Req.Result, "POST");
     }
 
     Http.Destroy(Req);

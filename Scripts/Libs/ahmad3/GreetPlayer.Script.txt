@@ -11,6 +11,8 @@
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
 #Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
@@ -79,6 +81,7 @@ declare Boolean G_PlayerUpdateFailed;
 declare Ban::K_OptBanishment G_PlayerUpdateOptBan;
 declare Boolean G_PlayerUpdateNeedsTokenUpdate;
 declare Boolean G_PendingPlayerUpdateReq;
+declare Text G_UpdateJsonBody;
 
 //////////////// Online test
 
@@ -400,6 +403,8 @@ Void Private_InitPlayerUpdateReq(Text _Token) {
         name = LocalUser.Name,
         zone_path = LocalUser.ZonePath
     };
+
+    G_UpdateJsonBody = Body.tojson();
     
     declare CHttpRequest Req = Http.CreatePost(
         Constants::C_HostUrl ^ "player/update",
@@ -446,6 +451,7 @@ Boolean Private_LoopPlayerUpdateReq() {
         default: {
             G_PlayerUpdateFailed = True;
             G_PlayerUpdateOptBan = ErrMgr::Handle(Req.StatusCode, Req.Result).Ban;
+            ErrorReport::Report("/player/update", G_UpdateJsonBody, LocalUser.Login, Req.Result, "POST");
             G_PlayerUpdateNeedsTokenUpdate = False;
         }
     }
@@ -604,4 +610,6 @@ Void Loop() {
 
     // This is noop if there's no ban dialog.
     Private_LoopBanDialog();
+
+    ErrorReport::Yield();
 }

@@ -1,7 +1,7 @@
 #Extends "Modes/ShootMania/Base/ModeShootMania.Script.txt"
 
 #Const CompatibleMapTypes "ObstacleArena,ObstacleTitleArena,ObstacleTitleArenaOld,TimeAttackArena,ObstacleBetaArena,Randomizer"
-#Const Version           "2.7.3"
+#Const Version           "2.7.4"
 #Const ScriptName        "Modes/ShootMania/Obstacle.Script.txt"
 
 
@@ -42,6 +42,7 @@
 #Include "Libs/ahmad3/UI/AntiDevMode.Script.txt" as AntiDevMode
 #Include "Libs/ahmad3/InGameDialog.Script.txt" as Dialog
 #Include "Libs/ahmad3/UI/CachedRequests.Script.txt" as CachReqs
+#Include "Libs/ahmad3/RequestManager.Script.txt" as RequestManager
 #Include "Libs/ahmad3/UI/InitPb.Script.txt" as InitPb
 #Include "Libs/ahmad3/UI/PlayerFinished.Script.txt" as PlayerFinished
 #Include "Libs/ahmad3/UI/UpdateAuth.Script.txt" as UpdateAuth
@@ -59,6 +60,8 @@
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 #Include "Libs/ahmad3/MapAttributes.Script.txt" as MapAttr
 #Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
+
+#Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
 
 // ---------------------------------- //
 // Settings
@@ -111,6 +114,7 @@ declare Boolean G_LastUsePvPCollisions;
 ***Match_LogVersions***
 ***
 Log::RegisterScript(ScriptName, Version);
+RequestManager::Load(Version);
 ***
 
 ***Match_Settings***
@@ -345,6 +349,7 @@ CreateUI();
 
 ***Match_Yield***
 ***
+ErrorReport::Yield();
 SpectatorCount::Yield();
 SpecList::Yield();
 AntiDevMode::Yield();
@@ -385,6 +390,7 @@ foreach (Event in UIManager.PendingEvents) {
                 PlayerFinished::HandleCustomEvent(Event);
                 UpdateAuth::HandleCustomEvent(Event);
                 EventsUI::HandleCustomEvent(Event);
+                ErrorReport::HandleCustomEvent(Event);
             }
         }
     }

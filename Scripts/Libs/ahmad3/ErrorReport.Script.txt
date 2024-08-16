@@ -5,7 +5,20 @@
  *   Reports errors to the API
  ***********************************************/
 
-#Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
+#Include "Libs/ahmad3/Utils/Json.Script.txt" as Json
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
+
+/*********************************************
+  TYPES
+ *********************************************/
+
+#Struct K_ErrorReportBody {
+    Text method;
+    Text route;
+    Text body;
+    Text player_login;
+    Text error;
+}
 
 /*********************************************
   CONSTANTS
@@ -14,9 +27,79 @@
 #Const Version "2024-07-26"
 #Const ScriptName "ErrorReport.Script.txt"
 
+#Const C_Ev_ErrReport "apierror:report"
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+declare Ident[] G_Reqs;
+declare Integer[] G_PendingReqs;
+
 /*********************************************
   FUNCTIONS
  *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Void Private_ReportImpl(Text _Route, Text _Body, Text _PlayerLogin, Text _RawError, Text _Method) {
+    declare K_ErrorReportBody Body = K_ErrorReportBody {
+        method = _Method,
+        route = _Route,
+        body = _Body,
+        player_login = _PlayerLogin,
+        error = _RawError
+    };
+
+    declare Ident ReqId = ReqMgr::Make(ReqMgr::K_PostRequest {
+        Route = "report",
+        Body = Body.tojson(),
+        Headers = ReqMgr::DefaultHeaders()
+    });
+
+    if (ReqId == NullId) {
+        G_PendingReqs.add(ReqMgr::LastPendingReqId());
+    } else {
+        G_Reqs.add(ReqId);
+    }
+}
+
+Void Private_HandlePendingReqs() {
+    declare Integer[] ToRemove;
+
+    foreach (PendingReqId in G_PendingReqs) {
+        declare Ident ReqId = ReqMgr::MakePendingPost(PendingReqId);
+        if (ReqId == NullId) continue;
+        G_Reqs.add(ReqId);
+        ToRemove.add(PendingReqId);
+    }
+
+    foreach (PendingReqId in ToRemove) {
+        G_PendingReqs.remove(PendingReqId);
+    }
+}
+
+Void Private_HandleReqs() {
+    if (G_Reqs.count == 0 && G_PendingReqs.count == 0) return;
+
+    Private_HandlePendingReqs();
+
+    declare Ident[] ToRemove;
+
+    foreach (ReqId in G_Reqs) {
+        declare CHttpRequest Req <=> Http.Requests[ReqId];
+        if (!Req.IsCompleted) continue;
+        ToRemove.add(ReqId);
+    }
+
+    foreach (ReqId in ToRemove) {
+        declare CHttpRequest Req <=> Http.Requests[ReqId];
+        Http.Destroy(Req);
+        G_Reqs.remove(ReqId);
+    }
+}
 
 ////////////////////
 //// Public
@@ -36,6 +119,34 @@ Text GetScriptName() {
     return ScriptName;
 }
 
-Void Report(CSmPlayer _Player, ErrMgr::K_Error _Err) {
-    // TODO: report error
+Void HandleCustomEvent(CUIConfigEvent _Event) {
+    if (_Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent || _Event.CustomEventType != C_Ev_ErrReport) return;
+
+    declare Text Route = _Event.CustomEventData[0];
+    declare Text Body = _Event.CustomEventData[1];
+    declare Text PlayerLogin = _Event.CustomEventData[2];
+    declare Text Error = _Event.CustomEventData[3];
+    declare Text Method = _Event.CustomEventData[4];
+
+    Private_ReportImpl(Route, Body, PlayerLogin, Error, Method);
+}
+
+Void Yield() {
+    Private_HandleReqs();
+}
+
+Void Report(Text _Route, Text _Body, Text _PlayerLogin, Text _RawError, Text _Method) {
+    Private_ReportImpl(_Route, _Body, _PlayerLogin, _RawError, _Method);
+}
+
+Void Report(Text _Route, Text _Body, Text _RawError, Text _Method) {
+    Report(_Route, _Body, "", _RawError, _Method);
+}
+
+Text ML_Content(Text _ModName) {
+    return """//!
+Void {{{_ModName}}}_Report(Text _Route, Text _Body, Text _RawErr, Text _Method) {
+    SendCustomEvent({{{dump(C_Ev_ErrReport)}}}, [_Route, _Body, LocalUser.Login, _RawErr, _Method]);
+}
+    """;
 }
