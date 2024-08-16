@@ -127,10 +127,7 @@ Text GetLayer() {
 declare Integer G_SaveCacheUpdate;
 declare Integer G_RemoveCacheUpdate;
 
-declare Boolean G_InitTrySendCached;
-
-declare Integer[Integer] G_PendingStaggeredReqs;
-declare Ident[Integer] G_StaggeredReqs;
+declare ReqMgr_K_PostReqId[Integer] G_StaggeredReqs;
 declare K_CachedReq[Integer] G_IndexedCachedReqs;
 
 K_CachedReq[] GetCache() {
@@ -174,55 +171,34 @@ Void RemoveCache(K_CachedReq _CachReq) {
 }
 
 Void InitTrySendCached() {
-    G_InitTrySendCached = True;
-
     declare K_CachedReq[] CachedReqs = GetCache();
-    log("Trying to send the " ^ CachedReqs.count ^ " cached request(s)");
+    log("Trying to send " ^ CachedReqs.count ^ " cached request(s)");
 
     foreach (Idx => Req in CachedReqs) {
         G_IndexedCachedReqs[Idx] = Req;
-    }
-
-    foreach (Idx => Req in G_IndexedCachedReqs) {
-        declare Ident ReqId = ReqMgr_Make(ReqMgr_K_PostRequest {
+        G_StaggeredReqs[Idx] = ReqMgr_Make(ReqMgr_K_PostRequest {
             Route = "staggered/" ^ Req.Route,
             Body = "{\"req_tstp\":" ^ Req.Tstp ^ ",\"body\":" ^ Req.Body ^ "}",
             Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
         });
-        if (ReqId == NullId) {
-            G_PendingStaggeredReqs[Idx] = ReqMgr_LastPendingReqId();
-        } else {
-            G_StaggeredReqs[Idx] = ReqId;
-        }
     }
 }
 
 Void LoopTrySendCached() {
-    if (!G_InitTrySendCached) return;
+    if (G_StaggeredReqs.count == 0) return;
 
-    declare Integer[] PendingReqsToRemove;
-
-    foreach (Idx => PendingReqId in G_PendingStaggeredReqs) {
-        declare Ident ReqId = ReqMgr_MakePendingPost(PendingReqId);
-        if (ReqId == NullId) {
-            continue;
-        } else {
-            PendingReqsToRemove.add(Idx);
-            G_StaggeredReqs[Idx] = ReqId;
-        }
-    }
-
-    foreach (ToRemove in PendingReqsToRemove) {
-        G_PendingStaggeredReqs.removekey(ToRemove);
-    }
-
-    declare Integer[] ReqsToRemove;
+    declare ReqMgr_K_PostReqId[Integer] UpdatedStaggeredReqs = G_StaggeredReqs;
     declare Integer[] CachedReqsToRemove;
 
     foreach (Idx => ReqId in G_StaggeredReqs) {
-        declare CHttpRequest Req <=> Http.Requests[ReqId];
+        if (ReqMgr_IsWaiting(ReqId)) {
+            UpdatedStaggeredReqs[Idx] = ReqMgr_MakePending(ReqId);
+            if (ReqMgr_IsWaiting(UpdatedStaggeredReqs[Idx])) continue;
+        }
+
+        declare CHttpRequest Req <=> ReqMgr_GetReq(ReqId);
         if (!Req.IsCompleted) continue;
-        ReqsToRemove.add(Idx);
+
         if (Req.StatusCode == 200) {
             CachedReqsToRemove.add(Idx);
         } else {
@@ -233,21 +209,18 @@ Void LoopTrySendCached() {
                 "POST"
             );
         }
+
         Http.Destroy(Req);
+        UpdatedStaggeredReqs.removekey(Idx);
     }
 
-    foreach (ToRemove in ReqsToRemove) {
-        G_StaggeredReqs.removekey(ToRemove);
-    }
+    G_StaggeredReqs = UpdatedStaggeredReqs;
 
     foreach (ToRemove in CachedReqsToRemove) {
         G_IndexedCachedReqs.removekey(ToRemove);
     }
 
-    if (G_StaggeredReqs.count == 0 && G_PendingStaggeredReqs.count == 0) {
-        // There's no more staggered request to send, we stop the loop
-        G_InitTrySendCached = False;
-
+    if (G_StaggeredReqs.count == 0) {
         // Save the remaining cache
         declare K_CachedReq[] CachedReqs = [];
         foreach (Remaining in G_IndexedCachedReqs) {

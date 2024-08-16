@@ -204,13 +204,13 @@ declare Boolean G_InitUpdateTokenReq;
 declare Ident G_UpdateTokenReq;
 declare Text G_State;
 
+declare ReqMgr_K_PostReqId G_ReqId;
 declare ReqMgr_K_PostRequest G_Req;
 
 declare Boolean G_UpdateTokenReqIsPending;
 declare Integer G_PendingUpdateTokenReqId;
 
 Void InitUpdateToken(Boolean _OnFinished) {
-    G_InitUpdateToken = True;
     declare Text Msg = {{{dump(dump(dump(C_AuthDialogMsg)))}}};
 
     if (_OnFinished) {
@@ -254,8 +254,6 @@ Void OpenLoginPage() {
 }
 
 Void InitUpdateTokenReq() {
-    G_InitUpdateTokenReq = True;
-
     G_State = LocalUser.Login ^ Now;
 
     declare K_GetTokenBody Body = K_GetTokenBody {
@@ -270,26 +268,18 @@ Void InitUpdateTokenReq() {
         Headers = ReqMgr_DefaultHeaders()
     };
 
-    declare Ident ReqId = ReqMgr_Make(G_Req);
-
-    if (ReqId == NullId) {
-        G_UpdateTokenReqIsPending = True;
-        G_PendingUpdateTokenReqId = ReqMgr_LastPendingReqId();
-    } else {
-        G_UpdateTokenReqIsPending = False;
-        G_UpdateTokenReq = ReqId;
-        OpenLoginPage();
-    }
+    G_ReqId = ReqMgr_Make(G_Req);
+    if (!ReqMgr_IsWaiting(G_ReqId)) OpenLoginPage();
 }
 
 Void LoopUpdateToken() {
-    if (!G_InitUpdateToken) return;
+    if (G_AuthDialogId == -1) return;
 
     declare Dlg_K_DialogPromptResult TokenDialog = Dlg_PromptDialog(G_AuthDialogId);
     if (!TokenDialog.Over) return;
 
     Dlg_CloseDialog(G_AuthDialogId);
-    G_InitUpdateToken = False;
+    G_AuthDialogId = -1;
     if (TokenDialog.Success) {
         InitUpdateTokenReq();
     } else {
@@ -305,22 +295,16 @@ Void LoopUpdateToken() {
 }
 
 Void LoopUpdateTokenReq() {
-    if (!G_InitUpdateTokenReq) return;
+    if (!ReqMgr_IsPending(G_ReqId)) return;
 
-    if (G_UpdateTokenReqIsPending) {
-        declare Ident ReqId = ReqMgr_MakePendingPost(G_PendingUpdateTokenReqId);
-        if (ReqId == NullId) {
-            return;
-        } else {
-            G_UpdateTokenReqIsPending = False;
-            G_UpdateTokenReq = ReqId;
-            OpenLoginPage();
-        }
+    if (ReqMgr_IsWaiting(G_ReqId)) {
+        G_ReqId = ReqMgr_MakePending(G_ReqId);
+        if (ReqMgr_IsWaiting(G_ReqId)) return;
     }
 
-    declare CHttpRequest Req <=> Http.Requests[G_UpdateTokenReq];
+    declare CHttpRequest Req <=> ReqMgr_GetReq(G_ReqId);
     if (!Req.IsCompleted) return;
-    G_InitUpdateTokenReq = False;
+    G_ReqId = ReqMgr_NullPostReq();
 
     if (Req.StatusCode == 200) {
         declare K_GetTokenResponse Res;
@@ -350,6 +334,9 @@ Boolean NeedsTokenUpdate() {
 }
 
 main() {
+    G_ReqId = ReqMgr_NullPostReq();
+    G_AuthDialogId = -1;
+
     InitNeedsTokenUpdate();
     declare netread Boolean Net_NeedsTokenUpdateOnFinished for UI = False;
 

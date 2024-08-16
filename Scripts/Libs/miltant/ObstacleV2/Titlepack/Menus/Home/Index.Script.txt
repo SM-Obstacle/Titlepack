@@ -11,8 +11,7 @@
 	Text link;
 }
 
-declare Ident G_LatestNewsImgReqId;
-declare Integer G_PendingLatestNewsImgReq;
+declare ReqMgr::K_GetReqId G_LatestNewsImgReqId;
 declare ReqMgr::K_GetRequest G_LatestNewsImgReq;
 
 Text GetName() {
@@ -122,36 +121,24 @@ Text Build(Text _NewsImgUrl, Text _NewsImgLink) {
 }
 
 Void Load() {
-	G_PendingLatestNewsImgReq = -1;
-
 	G_LatestNewsImgReq = ReqMgr::K_GetRequest {
 		Route = "latestnews_image",
 		UseCache = True,
 		Headers = ReqMgr::DefaultHeaders()
 	};
 
-	declare Ident ReqId = ReqMgr::Make(G_LatestNewsImgReq);
-
-	if (ReqId == NullId) {
-		G_PendingLatestNewsImgReq = ReqMgr::LastPendingReqId();
-	} else {
-		G_LatestNewsImgReqId = ReqId;
-	}
+	G_LatestNewsImgReqId = ReqMgr::Make(G_LatestNewsImgReq);
 }
 
 Void LoopReq() {
-	if (G_LatestNewsImgReqId == NullId && G_PendingLatestNewsImgReq == -1) return;
+	if (!ReqMgr::IsPending(G_LatestNewsImgReqId)) return;
 
-	if (G_PendingLatestNewsImgReq >= 0) {
-		declare Ident ReqId = ReqMgr::MakePendingGet(G_PendingLatestNewsImgReq);
-		if (ReqId == NullId) return;
-		else {
-			G_LatestNewsImgReqId = ReqId;
-			G_PendingLatestNewsImgReq = -1;
-		}
+	if (ReqMgr::IsWaiting(G_LatestNewsImgReqId)) {
+		G_LatestNewsImgReqId = ReqMgr::MakePending(G_LatestNewsImgReqId);
+		if (ReqMgr::IsWaiting(G_LatestNewsImgReqId)) return;
 	}
 
-	declare CHttpRequest Req <=> Http.Requests[G_LatestNewsImgReqId];
+	declare CHttpRequest Req <=> ReqMgr::GetReq(G_LatestNewsImgReqId);
 	if (!Req.IsCompleted) return;
 
 	declare K_LatestnewsImageResponse Res;
@@ -162,7 +149,7 @@ Void LoopReq() {
 	}
 
 	Http.Destroy(Req);
-	G_LatestNewsImgReqId = NullId;
+	G_LatestNewsImgReqId = ReqMgr::NullGetReq();
 
 	declare Windows::K_Window Window = Windows::K_Window {
 		Name = GetName(),

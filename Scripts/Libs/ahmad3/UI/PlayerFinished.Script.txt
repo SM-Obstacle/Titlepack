@@ -331,8 +331,7 @@ declare Integer G_AuthIgnoredUpdate;
 declare Integer G_CurrentReqIdx;
 declare K_FinishReq[Integer] G_AllFinishes;
 declare Integer[] G_WaitingForAuth;
-declare Integer[Integer] G_PendingPlayerFinishedReqs;
-declare Ident[Integer] G_PlayerFinishedReqs;
+declare ReqMgr_K_PostReqId[Integer] G_PlayerFinishedReqs;
 
 declare Boolean G_AuthIgnored;
 
@@ -349,40 +348,25 @@ Void InitPlayerFinish(K_FinishReq _Req) {
     G_CurrentReqIdx += 1;
     G_AllFinishes[G_CurrentReqIdx] = _Req;
 
-    declare Ident ReqId = ReqMgr_Make(ReqMgr_K_PostRequest {
+    G_PlayerFinishedReqs[G_CurrentReqIdx] = ReqMgr_Make(ReqMgr_K_PostRequest {
         Route = G_PlayerFinishedRoute,
         Body = _Req.Body,
         Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
     });
-
-    if (ReqId == NullId) {
-        G_PendingPlayerFinishedReqs[G_CurrentReqIdx] = ReqMgr_LastPendingReqId();
-    } else {
-        G_PlayerFinishedReqs[G_CurrentReqIdx] = ReqId;
-    }
 }
 
 Void LoopPlayerFinished() {
-    if (G_PendingPlayerFinishedReqs.count == 0 && G_PlayerFinishedReqs.count == 0) return;
+    if (G_PlayerFinishedReqs.count == 0) return;
 
-    declare Integer[] PendingReqsToRemove = [];
-    foreach (Idx => PendingReqId in G_PendingPlayerFinishedReqs) {
-        declare Ident ReqId = ReqMgr_MakePendingPost(PendingReqId);
-        if (ReqId == NullId) {
-            continue;
-        } else {
-            G_PlayerFinishedReqs[Idx] = ReqId;
-            PendingReqsToRemove.add(Idx);
-        }
-    }
+    declare ReqMgr_K_PostReqId[Integer] UpdatedReqs = G_PlayerFinishedReqs;
 
-    foreach (Idx in PendingReqsToRemove) {
-        G_PendingPlayerFinishedReqs.removekey(Idx);
-    }
-
-    declare Integer[] ReqsToRemove = [];
     foreach (Idx => ReqId in G_PlayerFinishedReqs) {
-        declare CHttpRequest Req <=> Http.Requests[ReqId];
+        if (ReqMgr_IsWaiting(ReqId)) {
+            UpdatedReqs[Idx] = ReqMgr_MakePending(ReqId);
+            if (ReqMgr_IsWaiting(UpdatedReqs[Idx])) continue;
+        }
+
+        declare CHttpRequest Req <=> ReqMgr_GetReq(ReqId);
         if (!Req.IsCompleted) continue;
 
         switch (Req.StatusCode) {
@@ -402,13 +386,11 @@ Void LoopPlayerFinished() {
             }
         }
 
-        ReqsToRemove.add(Idx);
+        UpdatedReqs.removekey(Idx);
         Http.Destroy(Req);
     }
 
-    foreach (Idx in ReqsToRemove) {
-        G_PlayerFinishedReqs.removekey(Idx);
-    }
+    G_PlayerFinishedReqs = UpdatedReqs;
 }
 
 Void SendWaitingForAuthReqs() {

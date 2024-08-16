@@ -61,8 +61,7 @@ declare Integer G_BanDialogId;
 
 declare Integer G_TokenUpdateReqDialogId;
 declare ReqMgr::K_PostRequest G_TokenUpdateReq;
-declare Ident G_TokenUpdateReqId;
-declare Integer G_TokenUpdatePendingReqId;
+declare ReqMgr::K_PostReqId G_TokenUpdateReqId;
 declare Boolean G_TokenUpdateReqFinished;
 declare Boolean G_TokenUpdateReqOk;
 
@@ -72,8 +71,7 @@ declare Integer G_TokenUpdateDialogId;
 //////////////// Player update procedure
 
 declare ReqMgr::K_PostRequest G_PlayerUpdateReq;
-declare Ident G_PlayerUpdateReqId;
-declare Integer G_PlayerUpdatePendingReqId;
+declare ReqMgr::K_PostReqId G_PlayerUpdateReqId;
 declare Boolean G_PlayerUpdateOk;
 declare Boolean G_PlayerUpdateFailed;
 declare Ban::K_OptBanishment G_PlayerUpdateOptBan;
@@ -83,8 +81,7 @@ declare Boolean G_PlayerUpdateNeedsTokenUpdate;
 
 declare Boolean G_OnlineTestSkipped;
 declare Boolean G_OnlineTestResult;
-declare Ident G_OnlineTestReq;
-declare Integer G_OnlineTestPendingReqId;
+declare ReqMgr::K_GetReqId  G_OnlineTestReq;
 
 //////////////// Welcome dialog
 
@@ -112,17 +109,10 @@ Boolean Private_InitOnlineTest() {
 		return True;
     }
 
-    declare Ident ReqId = ReqMgr::Make(
+    G_OnlineTestReq = ReqMgr::Make(
         ReqMgr::K_GetRequest { Route = "/generate_204" },
         "http://clients3.google.com"
     );
-    if (ReqId == NullId) {
-        G_OnlineTestPendingReqId = ReqMgr::LastPendingReqId();
-        G_OnlineTestReq = NullId;
-    } else {
-        G_OnlineTestReq = ReqId;
-        G_OnlineTestPendingReqId = -1;
-    }
 
     return False;
 }
@@ -139,21 +129,17 @@ Boolean Private_LoopOnlineTest() {
         return True;
     }
 
-    if (G_OnlineTestReq == NullId && G_OnlineTestPendingReqId == -1) return False;
+    if (!ReqMgr::IsPending(G_OnlineTestReq)) return False;
 
-    if (G_OnlineTestPendingReqId != -1) {
-        declare Ident ReqId = ReqMgr::MakePendingGet(G_OnlineTestPendingReqId);
-        if (ReqId == NullId) {
-            return False;
-        }
-        G_OnlineTestReq = ReqId;
-        G_OnlineTestPendingReqId = -1;
+    if (ReqMgr::IsWaiting(G_OnlineTestReq)) {
+        G_OnlineTestReq = ReqMgr::MakePending(G_OnlineTestReq);
+        if (ReqMgr::IsWaiting(G_OnlineTestReq)) return False;
     }
 
-    declare CHttpRequest Req <=> Http.Requests[G_OnlineTestReq];
+    declare CHttpRequest Req <=> ReqMgr::GetReq(G_OnlineTestReq);
     if (!Req.IsCompleted) return False;
 
-    G_OnlineTestReq = NullId;
+    G_OnlineTestReq = ReqMgr::NullGetReq();
     G_OnlineTestResult = Req.StatusCode == 204 || Req.StatusCode == 200;
 
     Http.Destroy(Req);
@@ -287,14 +273,7 @@ Void Private_InitUpdateTokenReq() {
         Headers = ReqMgr::DefaultHeaders()
     };
 
-    declare Ident ReqId = ReqMgr::Make(G_TokenUpdateReq);
-    if (ReqId == NullId) {
-        G_TokenUpdatePendingReqId = ReqMgr::LastPendingReqId();
-        G_TokenUpdateReqId = NullId;
-    } else {
-        G_TokenUpdatePendingReqId = -1;
-        G_TokenUpdateReqId = ReqId;
-    }
+    G_TokenUpdateReqId = ReqMgr::Make(G_TokenUpdateReq);
 
     declare Text Link = Constants::C_MP_Link
         ^ "client_id=" ^ Constants::C_MP_App_Id
@@ -329,23 +308,21 @@ or scan the QR code bellow:"""
  * @return True if the procedure is over, False otherwise.
  */
 Boolean Private_LoopUpdateTokenReq() {
-    if (G_TokenUpdateReqId == NullId && G_TokenUpdatePendingReqId == -1) return False;
+    if (!ReqMgr::IsPending(G_TokenUpdateReqId)) return False;
 
     DialogsUI::Prompt(G_TokenUpdateReqDialogId, True);
 
-    if (G_TokenUpdatePendingReqId != -1) {
-        declare Ident ReqId = ReqMgr::MakePendingPost(G_TokenUpdatePendingReqId);
-        if (ReqId == NullId) return False;
-        G_TokenUpdatePendingReqId = -1;
-        G_TokenUpdateReqId = ReqId;
+    if (ReqMgr::IsWaiting(G_TokenUpdateReqId)) {
+        G_TokenUpdateReqId = ReqMgr::MakePending(G_TokenUpdateReqId);
+        if (ReqMgr::IsWaiting(G_TokenUpdateReqId)) return False;
     }
 
-    declare CHttpRequest Req <=> Http.Requests[G_TokenUpdateReqId];
+    declare CHttpRequest Req <=> ReqMgr::GetReq(G_TokenUpdateReqId);
     if (!Req.IsCompleted) return False;
 
     // At this point, the procedure is over
 
-    G_TokenUpdateReqId = NullId;
+    G_TokenUpdateReqId = ReqMgr::NullPostReq();
 
     DialogsUI::CloseDialog(G_TokenUpdateReqDialogId);
 
@@ -412,14 +389,7 @@ Void Private_InitPlayerUpdateReq(Text _Token) {
         Headers = ReqMgr::DefaultHeadersWith(ReqMgr::AuthHeaders(LocalUser, _Token))
     };
 
-    declare Ident ReqId = ReqMgr::Make(G_PlayerUpdateReq);
-    if (ReqId == NullId) {
-        G_PlayerUpdateReqId = NullId;
-        G_PlayerUpdatePendingReqId = ReqMgr::LastPendingReqId();
-    } else {
-        G_PlayerUpdatePendingReqId = -1;
-        G_PlayerUpdateReqId = ReqId;
-    }
+    G_PlayerUpdateReqId = ReqMgr::Make(G_PlayerUpdateReq);
 }
 
 Void Private_InitPlayerUpdateReq() {
@@ -432,19 +402,17 @@ Void Private_InitPlayerUpdateReq() {
  * @return True if the player update procedure has finished, False otherwise.
  */
 Boolean Private_LoopPlayerUpdateReq() {
-    if (G_PlayerUpdateReqId == NullId && G_PlayerUpdatePendingReqId == -1) return False;
+    if (!ReqMgr::IsPending(G_PlayerUpdateReqId)) return False;
 
-    if (G_PlayerUpdatePendingReqId != -1) {
-        declare Ident ReqId = ReqMgr::MakePendingPost(G_PlayerUpdatePendingReqId);
-        if (ReqId == NullId) return False;
-        G_PlayerUpdatePendingReqId = -1;
-        G_PlayerUpdateReqId = ReqId;
+    if (ReqMgr::IsWaiting(G_PlayerUpdateReqId)) {
+        G_PlayerUpdateReqId = ReqMgr::MakePending(G_PlayerUpdateReqId);
+        if (ReqMgr::IsWaiting(G_PlayerUpdateReqId)) return False;
     }
 
-    declare CHttpRequest Req <=> Http.Requests[G_PlayerUpdateReqId];
+    declare CHttpRequest Req <=> ReqMgr::GetReq(G_PlayerUpdateReqId);
     if (!Req.IsCompleted) return False;
 
-    G_PlayerUpdateReqId = NullId;
+    G_PlayerUpdateReqId = ReqMgr::NullPostReq();
 
     switch (Req.StatusCode) {
         case ErrMgr::C_HttpErr_Unauthorized: {
@@ -591,8 +559,7 @@ Void Unload() {
 
     G_TokenUpdateDialogId = -1;
     G_TokenUpdateReq = ReqMgr::K_PostRequest {};
-    G_TokenUpdateReqId = NullId;
-    G_TokenUpdatePendingReqId = -1;
+    G_TokenUpdateReqId = ReqMgr::NullPostReq();
     G_TokenUpdateReqFinished = False;
     G_TokenUpdateReqOk = False;
 
@@ -600,8 +567,7 @@ Void Unload() {
     G_TokenUpdateDialogId = -1;
 
     G_PlayerUpdateReq = ReqMgr::K_PostRequest {};
-    G_PlayerUpdateReqId = NullId;
-    G_PlayerUpdatePendingReqId = -1;
+    G_PlayerUpdateReqId = ReqMgr::NullPostReq();
     G_PlayerUpdateOk = False;
     G_PlayerUpdateFailed = False;
     G_PlayerUpdateOptBan = Ban::K_OptBanishment {};
@@ -609,8 +575,7 @@ Void Unload() {
 
     G_OnlineTestSkipped = False;
     G_OnlineTestResult = False;
-    G_OnlineTestReq = NullId;
-    G_OnlineTestPendingReqId = -1;
+    G_OnlineTestReq = ReqMgr::NullGetReq();
 
     G_WelcomeDialogId = -1;
 }

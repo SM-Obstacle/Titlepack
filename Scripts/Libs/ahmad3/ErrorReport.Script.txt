@@ -5,7 +5,6 @@
  *   Reports errors to the API
  ***********************************************/
 
-#Include "Libs/ahmad3/Utils/Json.Script.txt" as Json
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 
 /*********************************************
@@ -33,8 +32,7 @@
   GLOBALES
  *********************************************/
 
-declare Ident[] G_Reqs;
-declare Integer[] G_PendingReqs;
+declare ReqMgr::K_PostReqId[] G_Reqs;
 
 /*********************************************
   FUNCTIONS
@@ -53,51 +51,33 @@ Void Private_ReportImpl(Text _Route, Text _Body, Text _PlayerLogin, Text _RawErr
         error = _RawError
     };
 
-    declare Ident ReqId = ReqMgr::Make(ReqMgr::K_PostRequest {
+    G_Reqs.add(ReqMgr::Make(ReqMgr::K_PostRequest {
         Route = "report",
         Body = Body.tojson(),
         Headers = ReqMgr::DefaultHeaders()
-    });
-
-    if (ReqId == NullId) {
-        G_PendingReqs.add(ReqMgr::LastPendingReqId());
-    } else {
-        G_Reqs.add(ReqId);
-    }
-}
-
-Void Private_HandlePendingReqs() {
-    declare Integer[] ToRemove;
-
-    foreach (PendingReqId in G_PendingReqs) {
-        declare Ident ReqId = ReqMgr::MakePendingPost(PendingReqId);
-        if (ReqId == NullId) continue;
-        G_Reqs.add(ReqId);
-        ToRemove.add(PendingReqId);
-    }
-
-    foreach (PendingReqId in ToRemove) {
-        G_PendingReqs.remove(PendingReqId);
-    }
+    }));
 }
 
 Void Private_HandleReqs() {
-    if (G_Reqs.count == 0 && G_PendingReqs.count == 0) return;
+    if (G_Reqs.count == 0) return;
 
-    Private_HandlePendingReqs();
+    declare Integer[] ToRemove = [];
 
-    declare Ident[] ToRemove;
+    for (Idx, 0, G_Reqs.count - 1) {
+        if (ReqMgr::IsWaiting(G_Reqs[Idx])) {
+            G_Reqs[Idx] = ReqMgr::MakePending(G_Reqs[Idx]);
+            if (ReqMgr::IsWaiting(G_Reqs[Idx])) continue;
+        }
 
-    foreach (ReqId in G_Reqs) {
-        declare CHttpRequest Req <=> Http.Requests[ReqId];
+        declare CHttpRequest Req <=> ReqMgr::GetReq(G_Reqs[Idx]);
         if (!Req.IsCompleted) continue;
-        ToRemove.add(ReqId);
+
+        ToRemove.add(Idx);
+        Http.Destroy(Req);
     }
 
-    foreach (ReqId in ToRemove) {
-        declare CHttpRequest Req <=> Http.Requests[ReqId];
-        Http.Destroy(Req);
-        G_Reqs.remove(ReqId);
+    foreach (ReqIdx in ToRemove) {
+        G_Reqs.removekey(ReqIdx);
     }
 }
 

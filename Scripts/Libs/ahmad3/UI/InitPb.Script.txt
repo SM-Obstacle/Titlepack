@@ -167,8 +167,7 @@ declare Text G_PbRoute;
 
 declare Integer G_AuthUpdated;
 
-declare Ident G_InitPbReq;
-declare Integer G_PendingInitPbReq;
+declare ReqMgr_K_GetReqId G_ReqId;
 declare ReqMgr_K_GetRequest G_Req;
 declare Boolean G_NeedAuth;
 
@@ -179,31 +178,20 @@ Void InitPbReq() {
         Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
     };
 
-    declare Ident ReqId = ReqMgr_Make(G_Req);
-
-    if (ReqId == NullId) {
-        G_PendingInitPbReq = ReqMgr_LastPendingReqId();
-    } else {
-        G_InitPbReq = ReqId;
-    }
+    G_ReqId = ReqMgr_Make(G_Req);
 }
 
 Void LoopInitPbReq() {
-    if (G_InitPbReq == NullId && G_PendingInitPbReq == -1) return;
-    
-    if (G_PendingInitPbReq >= 0) {
-        declare Ident ReqId = ReqMgr_MakePendingGet(G_PendingInitPbReq);
-        if (ReqId == NullId) {
-            return;
-        } else {
-            G_InitPbReq = ReqId;
-            G_PendingInitPbReq = -1;
-        }
+    if (!ReqMgr_IsPending(G_ReqId)) return;
+
+    if (ReqMgr_IsWaiting(G_ReqId)) {
+        G_ReqId = ReqMgr_MakePending(G_ReqId);
+        if (ReqMgr_IsWaiting(G_ReqId)) return;
     }
 
-    declare CHttpRequest Req <=> Http.Requests[G_InitPbReq];
+    declare CHttpRequest Req <=> ReqMgr_GetReq(G_ReqId);
     if (!Req.IsCompleted) return;
-    G_InitPbReq = NullId;
+    G_ReqId = ReqMgr_NullGetReq();
 
     switch (Req.StatusCode) {
         case 200: {
@@ -241,7 +229,7 @@ Boolean HasSentCachedReqs() {
 }
 
 main() {
-    G_PendingInitPbReq = -1;
+    G_ReqId = ReqMgr_NullGetReq();
     G_PbRoute = {{{dump(ObsEvents::PrefixRoute("player/pb"))}}};
     InitAuthUpdated();
 

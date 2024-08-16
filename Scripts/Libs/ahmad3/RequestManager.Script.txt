@@ -15,6 +15,8 @@
 #Const Version "2024-07-25"
 #Const ScriptName "RequestManager.Script.txt"
 
+#Const C_ReqNotWaitingAssertFailed  "You must wait for the request to be sent before retrieving the request object."
+
 /*********************************************
   TYPES
  *********************************************/
@@ -30,6 +32,11 @@
     Text Host;
 }
 
+#Struct K_GetReqId {
+    Ident ReqId;
+    Integer PendingReqId;
+}
+
 #Struct K_PostRequest {
     Text Route;
     Text Body;
@@ -39,6 +46,11 @@
 #Struct K_PostRequestWithHost {
     K_PostRequest Req;
     Text Host;
+}
+
+#Struct K_PostReqId {
+    Ident ReqId;
+    Integer PendingReqId;
 }
 
 /*********************************************
@@ -179,13 +191,12 @@ Text[Text] DefaultHeadersWith(Text[Text] _Others) {
     return MergeHeaders(DefaultHeaders(), _Others);
 }
 
-Integer LastPendingReqId() {
-    return G_LastPendingReqId;
-}
-
-Ident Make(K_PostRequest _Request, Text _Host) {
+K_PostReqId Make(K_PostRequest _Request, Text _Host) {
     if (Http.SlotsAvailable > 0) {
-        return Private_MakePostImpl(_Request, _Host);
+        return K_PostReqId {
+            ReqId = Private_MakePostImpl(_Request, _Host),
+            PendingReqId = -1
+        };
     }
 
     G_LastPendingReqId += 1;
@@ -194,16 +205,22 @@ Ident Make(K_PostRequest _Request, Text _Host) {
         Host = _Host
     };
 
-    return NullId;
+    return K_PostReqId {
+        ReqId = NullId,
+        PendingReqId = G_LastPendingReqId
+    };
 }
 
-Ident Make(K_PostRequest _Request) {
+K_PostReqId Make(K_PostRequest _Request) {
     return Make(_Request, Constants::C_HostUrl);
 }
 
-Ident Make(K_GetRequest _Request, Text _Host) {
+K_GetReqId Make(K_GetRequest _Request, Text _Host) {
     if (Http.SlotsAvailable > 0) {
-        return Private_MakeGetImpl(_Request, _Host);
+        return K_GetReqId {
+            PendingReqId = -1,
+            ReqId = Private_MakeGetImpl(_Request, _Host)
+        };
     }
 
     G_LastPendingReqId += 1;
@@ -212,45 +229,96 @@ Ident Make(K_GetRequest _Request, Text _Host) {
         Host = _Host
     };
 
-    return NullId;
+    return K_GetReqId {
+        PendingReqId = G_LastPendingReqId,
+        ReqId = NullId
+    };
 }
 
-Ident Make(K_GetRequest _Request) {
+K_GetReqId Make(K_GetRequest _Request) {
     return Make(_Request, Constants::C_HostUrl);
 }
 
-Ident MakePendingPost(Integer _PendingReqId) {
+K_PostReqId MakePending(K_PostReqId _PendingReqId) {
     assert(
-        G_PendingPostReqs.existskey(_PendingReqId),
+        G_PendingPostReqs.existskey(_PendingReqId.PendingReqId),
         "the param _PendingReqId must be the ID of a pending request"
     );
 
-    declare K_PostRequestWithHost PendingReq = G_PendingPostReqs[_PendingReqId];
+    declare K_PostRequestWithHost PendingReq = G_PendingPostReqs[_PendingReqId.PendingReqId];
     if (Http.SlotsAvailable > 0) {
-        G_PendingPostReqs.removekey(_PendingReqId);
-        return Private_MakePostImpl(PendingReq.Req, PendingReq.Host);
+        G_PendingPostReqs.removekey(_PendingReqId.PendingReqId);
+        return K_PostReqId {
+            ReqId = Private_MakePostImpl(PendingReq.Req, PendingReq.Host),
+            PendingReqId = -1
+        };
     }
 
-    return NullId;
+    return _PendingReqId;
 }
 
-Ident MakePendingGet(Integer _PendingReqId) {
+K_GetReqId MakePending(K_GetReqId _PendingReqId) {
     assert(
-        G_PendingGetReqs.existskey(_PendingReqId),
+        G_PendingGetReqs.existskey(_PendingReqId.PendingReqId),
         "the param _PendingReqId must be the ID of a pending request"
     );
 
-    declare K_GetRequestWithHost PendingReq = G_PendingGetReqs[_PendingReqId];
+    declare K_GetRequestWithHost PendingReq = G_PendingGetReqs[_PendingReqId.PendingReqId];
     if (Http.SlotsAvailable > 0) {
-        G_PendingGetReqs.removekey(_PendingReqId);
-        return Private_MakeGetImpl(PendingReq.Req, PendingReq.Host);
+        G_PendingGetReqs.removekey(_PendingReqId.PendingReqId);
+        return K_GetReqId {
+            ReqId = Private_MakeGetImpl(PendingReq.Req, PendingReq.Host),
+            PendingReqId = -1
+        };
     }
 
-    return NullId;
+    return _PendingReqId;
+}
+
+Boolean IsWaiting(K_PostReqId _Req) {
+    return _Req.PendingReqId != -1;
+}
+
+Boolean IsWaiting(K_GetReqId _Req) {
+    return _Req.PendingReqId != -1;
+}
+
+Boolean IsPending(K_PostReqId _Req) {
+    return _Req.ReqId != NullId || IsWaiting(_Req);
+}
+
+Boolean IsPending(K_GetReqId _Req) {
+    return _Req.ReqId != NullId || IsWaiting(_Req);
+}
+
+CHttpRequest GetReq(K_PostReqId _Req) {
+    assert(!IsWaiting(_Req), C_ReqNotWaitingAssertFailed);
+    return Http.Requests[_Req.ReqId];
+}
+
+CHttpRequest GetReq(K_GetReqId _Req) {
+    assert(!IsWaiting(_Req), C_ReqNotWaitingAssertFailed);
+    return Http.Requests[_Req.ReqId];
+}
+
+K_PostReqId NullPostReq() {
+    return K_PostReqId {
+        ReqId = NullId,
+        PendingReqId = -1
+    };
+}
+
+K_GetReqId NullGetReq() {
+    return K_GetReqId {
+        ReqId = NullId,
+        PendingReqId = -1
+    };
 }
 
 Text ML_Preproc(Text _ModName) {
     return """//!
+#Const {{{_ModName}}}_Private_C_ReqNotWaitingAssertFailed {{{dump(C_ReqNotWaitingAssertFailed)}}}
+
 #Struct {{{_ModName}}}_K_GetRequest {
     Text Route;
     Boolean UseCache;
@@ -262,6 +330,11 @@ Text ML_Preproc(Text _ModName) {
     Text Host;
 }
 
+#Struct {{{_ModName}}}_K_GetReqId {
+    Ident ReqId;
+    Integer PendingReqId;
+}
+
 #Struct {{{_ModName}}}_K_PostRequest {
     Text Route;
     Text Body;
@@ -271,6 +344,11 @@ Text ML_Preproc(Text _ModName) {
 #Struct {{{_ModName}}}_K_PostRequestWithHost {
     {{{_ModName}}}_K_PostRequest Req;
     Text Host;
+}
+
+#Struct {{{_ModName}}}_K_PostReqId {
+    Ident ReqId;
+    Integer PendingReqId;
 }
     """;
 }
@@ -343,13 +421,12 @@ Text[Text] {{{_ModName}}}_DefaultHeadersWith(Text[Text] _Others) {
     return {{{_ModName}}}_MergeHeaders({{{_ModName}}}_DefaultHeaders(), _Others);
 }
 
-Integer {{{_ModName}}}_LastPendingReqId() {
-    return {{{_ModName}}}_Private_G_LastPendingReqId;
-}
-
-Ident {{{_ModName}}}_Make({{{_ModName}}}_K_PostRequest _Request, Text _Host) {
+{{{_ModName}}}_K_PostReqId {{{_ModName}}}_Make({{{_ModName}}}_K_PostRequest _Request, Text _Host) {
     if (Http.SlotsAvailable > 0) {
-        return {{{_ModName}}}_Private_MakePostImpl(_Request, _Host);
+        return {{{_ModName}}}_K_PostReqId {
+            ReqId = {{{_ModName}}}_Private_MakePostImpl(_Request, _Host),
+            PendingReqId = -1
+        };
     }
 
     {{{_ModName}}}_Private_G_LastPendingReqId += 1;
@@ -358,16 +435,22 @@ Ident {{{_ModName}}}_Make({{{_ModName}}}_K_PostRequest _Request, Text _Host) {
         Host = _Host
     };
 
-    return NullId;
+    return {{{_ModName}}}_K_PostReqId {
+        ReqId = NullId,
+        PendingReqId = {{{_ModName}}}_Private_G_LastPendingReqId
+    };
 }
 
-Ident {{{_ModName}}}_Make({{{_ModName}}}_K_PostRequest _Request) {
+{{{_ModName}}}_K_PostReqId {{{_ModName}}}_Make({{{_ModName}}}_K_PostRequest _Request) {
     return {{{_ModName}}}_Make(_Request, {{{dump(Constants::C_HostUrl)}}});
 }
 
-Ident {{{_ModName}}}_Make({{{_ModName}}}_K_GetRequest _Request, Text _Host) {
+{{{_ModName}}}_K_GetReqId {{{_ModName}}}_Make({{{_ModName}}}_K_GetRequest _Request, Text _Host) {
     if (Http.SlotsAvailable > 0) {
-        return {{{_ModName}}}_Private_MakeGetImpl(_Request, _Host);
+        return {{{_ModName}}}_K_GetReqId {
+            ReqId = {{{_ModName}}}_Private_MakeGetImpl(_Request, _Host),
+            PendingReqId = -1
+        };
     }
 
     {{{_ModName}}}_Private_G_LastPendingReqId += 1;
@@ -376,44 +459,92 @@ Ident {{{_ModName}}}_Make({{{_ModName}}}_K_GetRequest _Request, Text _Host) {
         Host = _Host
     };
 
-    return NullId;
+    return {{{_ModName}}}_K_GetReqId {
+        ReqId = NullId,
+        PendingReqId = {{{_ModName}}}_Private_G_LastPendingReqId
+    };
 }
 
-Ident {{{_ModName}}}_Make({{{_ModName}}}_K_GetRequest _Request) {
+{{{_ModName}}}_K_GetReqId {{{_ModName}}}_Make({{{_ModName}}}_K_GetRequest _Request) {
     return {{{_ModName}}}_Make(_Request, {{{dump(Constants::C_HostUrl)}}});
 }
 
-Ident {{{_ModName}}}_MakePendingPost(Integer _PendingReqId) {
+{{{_ModName}}}_K_PostReqId {{{_ModName}}}_MakePending({{{_ModName}}}_K_PostReqId _PendingReqId) {
     assert(
-        {{{_ModName}}}_Private_G_PendingPostReqs.existskey(_PendingReqId),
+        {{{_ModName}}}_Private_G_PendingPostReqs.existskey(_PendingReqId.PendingReqId),
         "the param _PendingReqId must be the ID of a pending request"
     );
 
     declare {{{_ModName}}}_K_PostRequestWithHost PendingReq =
-        {{{_ModName}}}_Private_G_PendingPostReqs[_PendingReqId];
+        {{{_ModName}}}_Private_G_PendingPostReqs[_PendingReqId.PendingReqId];
     if (Http.SlotsAvailable > 0) {
-        {{{_ModName}}}_Private_G_PendingPostReqs.removekey(_PendingReqId);
-        return {{{_ModName}}}_Private_MakePostImpl(PendingReq.Req, PendingReq.Host);
+        {{{_ModName}}}_Private_G_PendingPostReqs.removekey(_PendingReqId.PendingReqId);
+        return {{{_ModName}}}_K_PostReqId {
+            ReqId = {{{_ModName}}}_Private_MakePostImpl(PendingReq.Req, PendingReq.Host),
+            PendingReqId = -1
+        };
     }
 
-    return NullId;
+    return _PendingReqId;
 }
 
-Ident {{{_ModName}}}_MakePendingGet(Integer _PendingReqId) {
+{{{_ModName}}}_K_GetReqId {{{_ModName}}}_MakePending({{{_ModName}}}_K_GetReqId _PendingReqId) {
     assert(
-        {{{_ModName}}}_Private_G_PendingGetReqs.existskey(_PendingReqId),
+        {{{_ModName}}}_Private_G_PendingGetReqs.existskey(_PendingReqId.PendingReqId),
         "the param _PendingReqId must be the ID of a pending request"
     );
 
     declare {{{_ModName}}}_K_GetRequestWithHost PendingReq =
-        {{{_ModName}}}_Private_G_PendingGetReqs[_PendingReqId];
+        {{{_ModName}}}_Private_G_PendingGetReqs[_PendingReqId.PendingReqId];
     if (Http.SlotsAvailable > 0) {
-        {{{_ModName}}}_Private_G_PendingGetReqs.removekey(_PendingReqId);
-        return {{{_ModName}}}_Private_MakeGetImpl(PendingReq.Req, PendingReq.Host);
+        {{{_ModName}}}_Private_G_PendingGetReqs.removekey(_PendingReqId.PendingReqId);
+        return {{{_ModName}}}_K_GetReqId {
+            ReqId = {{{_ModName}}}_Private_MakeGetImpl(PendingReq.Req, PendingReq.Host),
+            PendingReqId = -1
+        };
     }
 
-    return NullId;
+    return _PendingReqId;
+}
 
+Boolean {{{_ModName}}}_IsWaiting({{{_ModName}}}_K_PostReqId _Req) {
+    return _Req.PendingReqId != -1;
+}
+
+Boolean {{{_ModName}}}_IsWaiting({{{_ModName}}}_K_GetReqId _Req) {
+    return _Req.PendingReqId != -1;
+}
+
+Boolean {{{_ModName}}}_IsPending({{{_ModName}}}_K_PostReqId _Req) {
+    return _Req.ReqId != NullId || {{{_ModName}}}_IsWaiting(_Req);
+}
+
+Boolean {{{_ModName}}}_IsPending({{{_ModName}}}_K_GetReqId _Req) {
+    return _Req.ReqId != NullId || {{{_ModName}}}_IsWaiting(_Req);
+}
+
+CHttpRequest {{{_ModName}}}_GetReq({{{_ModName}}}_K_PostReqId _Req) {
+    assert(!{{{_ModName}}}_IsWaiting(_Req), {{{_ModName}}}_Private_C_ReqNotWaitingAssertFailed);
+    return Http.Requests[_Req.ReqId];
+}
+
+CHttpRequest {{{_ModName}}}_GetReq({{{_ModName}}}_K_GetReqId _Req) {
+    assert(!{{{_ModName}}}_IsWaiting(_Req), {{{_ModName}}}_Private_C_ReqNotWaitingAssertFailed);
+    return Http.Requests[_Req.ReqId];
+}
+
+{{{_ModName}}}_K_PostReqId {{{_ModName}}}_NullPostReq() {
+    return {{{_ModName}}}_K_PostReqId {
+        ReqId = NullId,
+        PendingReqId = -1
+    };
+}
+
+{{{_ModName}}}_K_GetReqId {{{_ModName}}}_NullGetReq() {
+    return {{{_ModName}}}_K_GetReqId {
+        ReqId = NullId,
+        PendingReqId = -1
+    };
 }
     """;
 }

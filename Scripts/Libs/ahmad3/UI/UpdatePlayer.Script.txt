@@ -72,10 +72,10 @@ declare Boolean G_PlayerUpdateReqIsPending;
 declare Integer G_PendingPlayerUpdateReqId;
 declare Boolean G_PlayerUpdateNeedsAuthUpdate;
 
+declare ReqMgr_K_PostReqId G_ReqId;
 declare ReqMgr_K_PostRequest G_Req;
 
 Void InitPlayerUpdate() {
-    G_InitPlayerUpdate = True;
     declare K_PlayerUpdateBody Body = K_PlayerUpdateBody {
         login = LocalUser.Login,
         name = LocalUser.Name,
@@ -88,33 +88,20 @@ Void InitPlayerUpdate() {
         Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
     };
 
-    declare Ident ReqId = ReqMgr_Make(G_Req);
-
-    if (ReqId == NullId) {
-        G_PlayerUpdateReqIsPending = True;
-        G_PendingPlayerUpdateReqId = ReqMgr_LastPendingReqId();
-    } else {
-        G_PlayerUpdateReqIsPending = False;
-        G_PlayerUpdateReq = ReqId;
-    }
+    G_ReqId = ReqMgr_Make(G_Req);
 }
 
 Void LoopPlayerUpdate() {
-    if (!G_InitPlayerUpdate) return;
+    if (!ReqMgr_IsPending(G_ReqId)) return;
 
-    if (G_PlayerUpdateReqIsPending) {
-        declare Ident ReqId = ReqMgr_MakePendingPost(G_PendingPlayerUpdateReqId);
-        if (ReqId == NullId) {
-            return;
-        } else {
-            G_PlayerUpdateReqIsPending = False;
-            G_PlayerUpdateReq = ReqId;
-        }
+    if (ReqMgr_IsWaiting(G_ReqId)) {
+        G_ReqId = ReqMgr_MakePending(G_ReqId);
+        if (ReqMgr_IsWaiting(G_ReqId)) return;
     }
 
-    declare CHttpRequest Req <=> Http.Requests[G_PlayerUpdateReq];
+    declare CHttpRequest Req <=> ReqMgr_GetReq(G_ReqId);
     if (!Req.IsCompleted) return;
-    G_InitPlayerUpdate = False;
+    G_ReqId = ReqMgr_NullPostReq();
 
     if (Req.StatusCode == 401) {
         G_PlayerUpdateNeedsAuthUpdate = True;
@@ -146,6 +133,8 @@ Boolean AuthUpdated() {
 }
 
 main() {
+    G_ReqId = ReqMgr_NullPostReq();
+
     InitAuthUpdated();
     InitPlayerUpdate();
     

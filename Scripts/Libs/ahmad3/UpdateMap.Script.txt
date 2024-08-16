@@ -57,21 +57,19 @@ Void Private_UpdateMap(Integer _CpsNumber) {
 
     declare Text JsonBody = Body.tojson();
 
-    declare Ident ReqId = ReqMgr::Make(ReqMgr::K_PostRequest {
+    declare ReqId = ReqMgr::Make(ReqMgr::K_PostRequest {
         Route = "map/insert",
         Body = JsonBody,
         Headers = ReqMgr::DefaultHeaders()
     });
 
-    declare Integer PendingReqId = ReqMgr::LastPendingReqId();
-
     // Wait for the request to be sent
-    while (ReqId == NullId) {
+    while (ReqMgr::IsWaiting(ReqId)) {
         yield;
-        ReqId = ReqMgr::MakePendingPost(PendingReqId);
+        ReqId = ReqMgr::MakePending(ReqId);
     }
 
-    declare CHttpRequest Req <=> Http.Requests[ReqId];
+    declare CHttpRequest Req <=> ReqMgr::GetReq(ReqId);
     wait(Req.IsCompleted);
 
     if (Req.StatusCode == 200) {

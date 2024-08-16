@@ -109,9 +109,7 @@ Text GetLayer() {
 
     declare Integer[][Text] G_MedalsTimesPerMap;
 
-    declare Ident G_ReqId;
-    declare Integer G_PendingReqId;
-    // The content of this is meaningless if `G_ReqId` is `NullId` or `G_PendingReqId` is -1.
+    declare ReqMgr_K_GetReqId G_ReqId;
     declare ReqMgr_K_GetRequest G_Req;
 
     declare CSmPlayer G_LocalPlayer;
@@ -234,9 +232,8 @@ Text GetLayer() {
     }
 
     Void UpdateRecords(Text _Login) {
-        if (G_ReqId != NullId && Http.Requests.existskey(G_ReqId)) {
-            Http.Destroy(Http.Requests[G_ReqId]);
-            G_ReqId = NullId;
+        if (ReqMgr_IsPending(G_ReqId) && !ReqMgr_IsWaiting(G_ReqId)) {
+            Http.Destroy(ReqMgr_GetReq(G_ReqId));
         }
 
         declare Text Params = "?mapId="^Map.Id^"&playerId=" ^ _Login;
@@ -247,32 +244,20 @@ Text GetLayer() {
             Headers = ReqMgr_DefaultHeaders()
         };
 
-        declare Ident ReqId = ReqMgr_Make(G_Req);
-
-        if (ReqId == NullId) {
-            G_PendingReqId = ReqMgr_LastPendingReqId();
-        } else {
-            G_ReqId = ReqId;
-            G_PendingReqId = -1;
-        }
+        G_ReqId = ReqMgr_Make(G_Req);
     }
 
     Void LoopUpdateRecords() {
-        if (G_ReqId == NullId && G_PendingReqId == -1) return;
+        if (!ReqMgr_IsPending(G_ReqId)) return;
 
-        if (G_PendingReqId >= 0) {
-            declare Ident ReqId = ReqMgr_MakePendingGet(G_PendingReqId);
-            if (ReqId == NullId) {
-                return;
-            } else {
-                G_ReqId = ReqId;
-                G_PendingReqId = -1;
-            }
+        if (ReqMgr_IsWaiting(G_ReqId)) {
+            G_ReqId = ReqMgr_MakePending(G_ReqId);
+            if (ReqMgr_IsWaiting(G_ReqId)) return;
         }
 
-        declare CHttpRequest Req <=> Http.Requests[G_ReqId];
+        declare CHttpRequest Req <=> ReqMgr_GetReq(G_ReqId);
         if (!Req.IsCompleted) return;
-        G_ReqId = NullId;
+        G_ReqId = ReqMgr_NullGetReq();
 
         if (Req.StatusCode == 200) {
             declare K_Response Res;
@@ -297,7 +282,7 @@ Text GetLayer() {
         {{{CustomUI::InjectMLInit()}}}
         wait(InputPlayer != Null && HasSentCachedReqs());
 
-        G_PendingReqId = -1;
+        G_ReqId = ReqMgr_NullGetReq();
 
 		declare Integer[Text] CampaignRecords for LocalUser;
         G_CampaignRecords = CampaignRecords;
