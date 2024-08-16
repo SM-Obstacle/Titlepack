@@ -55,53 +55,43 @@
 
 //////////////// Ban dialog
 
-declare Boolean G_InitBanDialog;
 declare Integer G_BanDialogId;
 
 //////////////// Token update procedure
 
-declare Boolean G_InitUpdateTokenReq;
 declare Integer G_TokenUpdateReqDialogId;
-declare Ident G_TokenUpdateReq;
-declare Boolean G_PendingTokenUpdateReq;
+declare ReqMgr::K_PostRequest G_TokenUpdateReq;
+declare Ident G_TokenUpdateReqId;
+declare Integer G_TokenUpdatePendingReqId;
 declare Boolean G_TokenUpdateReqFinished;
 declare Boolean G_TokenUpdateReqOk;
 
-declare Boolean G_InitUpdateToken;
-declare Boolean G_TokenUpdateDialogOver;
 declare Boolean G_TokenUpdateDialogOk;
 declare Integer G_TokenUpdateDialogId;
 
 //////////////// Player update procedure
 
-declare Boolean G_InitPlayerUpdateReq;
-declare Ident G_PlayerUpdateReq;
+declare ReqMgr::K_PostRequest G_PlayerUpdateReq;
+declare Ident G_PlayerUpdateReqId;
+declare Integer G_PlayerUpdatePendingReqId;
 declare Boolean G_PlayerUpdateOk;
 declare Boolean G_PlayerUpdateFailed;
 declare Ban::K_OptBanishment G_PlayerUpdateOptBan;
 declare Boolean G_PlayerUpdateNeedsTokenUpdate;
-declare Boolean G_PendingPlayerUpdateReq;
-declare Text G_UpdateJsonBody;
 
 //////////////// Online test
 
 declare Boolean G_OnlineTestSkipped;
 declare Boolean G_OnlineTestResult;
-declare Boolean G_PendingOnlineTest;
 declare Ident G_OnlineTestReq;
+declare Integer G_OnlineTestPendingReqId;
 
 //////////////// Welcome dialog
 
-declare Boolean G_InitWelcomeDialog;
-declare Boolean G_WelcomeDialogOver;
 declare Integer G_WelcomeDialogId;
 
 /*********************************************
   FUNCTIONS
- *********************************************/
-
-/*********************************************
-  PRIVATE
  *********************************************/
 
 ////////////////////
@@ -117,19 +107,22 @@ declare Integer G_WelcomeDialogId;
  * @return True if the online test is OK, False if it hasn't started yet
  */
 Boolean Private_InitOnlineTest() {
-    G_OnlineTestSkipped = False;
-    G_PendingOnlineTest = False;
-    G_OnlineTestResult = False;
-    G_OnlineTestReq = NullId;
-
 	if (TL::Split("|", LocalUser.ZonePath).count > 0) {
         G_OnlineTestSkipped = True;
 		return True;
     }
 
-    G_PendingOnlineTest = True;
-    declare CHttpRequest Req = Http.CreateGet("http://clients3.google.com/generate_204", False);
-    G_OnlineTestReq = Req.Id;
+    declare Ident ReqId = ReqMgr::Make(
+        ReqMgr::K_GetRequest { Route = "/generate_204" },
+        "http://clients3.google.com"
+    );
+    if (ReqId == NullId) {
+        G_OnlineTestPendingReqId = ReqMgr::LastPendingReqId();
+        G_OnlineTestReq = NullId;
+    } else {
+        G_OnlineTestReq = ReqId;
+        G_OnlineTestPendingReqId = -1;
+    }
 
     return False;
 }
@@ -140,19 +133,27 @@ Boolean Private_InitOnlineTest() {
  * @return True if the test has finished, False otherwise.
  */
 Boolean Private_LoopOnlineTest() {
-    if (!G_PendingOnlineTest) {
-        if (G_OnlineTestSkipped) {
-            G_OnlineTestSkipped = False;
-            G_OnlineTestResult = True;
-            return True;
-        }
-        return False;
+    if (G_OnlineTestSkipped) {
+        G_OnlineTestSkipped = False;
+        G_OnlineTestResult = True;
+        return True;
     }
 
-    declare CHttpRequest Req = Http.Requests[G_OnlineTestReq];
+    if (G_OnlineTestReq == NullId && G_OnlineTestPendingReqId == -1) return False;
+
+    if (G_OnlineTestPendingReqId != -1) {
+        declare Ident ReqId = ReqMgr::MakePendingGet(G_OnlineTestPendingReqId);
+        if (ReqId == NullId) {
+            return False;
+        }
+        G_OnlineTestReq = ReqId;
+        G_OnlineTestPendingReqId = -1;
+    }
+
+    declare CHttpRequest Req <=> Http.Requests[G_OnlineTestReq];
     if (!Req.IsCompleted) return False;
 
-    G_PendingOnlineTest = False;
+    G_OnlineTestReq = NullId;
     G_OnlineTestResult = Req.StatusCode == 204 || Req.StatusCode == 200;
 
     Http.Destroy(Req);
@@ -175,8 +176,6 @@ Boolean Private_IsOnline() {
  * Initializes the welcome dialog to the player.
  */
 Void Private_InitWelcomeDialog() {
-    G_InitWelcomeDialog = True;
-    G_WelcomeDialogOver = False;
     G_WelcomeDialogId = DialogsUI::NewDialog("Welcome to Obstacle!",
         DialogsUI::K_Message {
             Label = """Before we race on, let's take a quick pit stop: We're
@@ -204,11 +203,11 @@ Let's race on!"""
  * @return True if the dialog is over, False otherwise.
  */
 Boolean Private_LoopWelcomeDialog() {
-    if (!G_InitWelcomeDialog || G_WelcomeDialogOver) return False;
+    if (G_WelcomeDialogId == -1) return False;
     declare Dialogs::K_Result DialogState = DialogsUI::Prompt(G_WelcomeDialogId, True);
-    G_WelcomeDialogOver = DialogState.Over && DialogState.Success;
-    if (G_WelcomeDialogOver) {
+    if (DialogState.Over && DialogState.Success) {
         DialogsUI::CloseDialog(G_WelcomeDialogId);
+        G_WelcomeDialogId = -1;
         return True;
     }
     return False;
@@ -218,8 +217,6 @@ Boolean Private_LoopWelcomeDialog() {
  * Initializes the update token procedure.
  */
 Void Private_InitUpdateToken() {
-    G_InitUpdateToken = True;
-    G_TokenUpdateDialogOver = False;
     G_TokenUpdateDialogId = DialogsUI::NewDialog(
         "Authentication",
         DialogsUI::K_Message {
@@ -250,12 +247,12 @@ one you use in game."""
  * @return True if the dialog is over, False otherwise.
  */
 Boolean Private_LoopUpdateTokenDialog() {
-    if (!G_InitUpdateToken || G_TokenUpdateDialogOver) return False;
+    if (G_TokenUpdateDialogId == -1) return False;
     declare Dialogs::K_Result DialogState = DialogsUI::Prompt(G_TokenUpdateDialogId);
-    G_TokenUpdateDialogOver = DialogState.Over;
-    G_TokenUpdateDialogOk = DialogState.Success && DialogState.CustomData.exists(C_UpdateTokenDialogOk);
-    if (G_TokenUpdateDialogOver) {
+    if (DialogState.Over) {
+        G_TokenUpdateDialogOk = DialogState.Success && DialogState.CustomData.exists(C_UpdateTokenDialogOk);
         DialogsUI::CloseDialog(G_TokenUpdateDialogId);
+        G_TokenUpdateDialogId = -1;
         return True;
     }
     return False;
@@ -276,10 +273,6 @@ Boolean Private_UpdateTokenDialogIsOk() {
  * This includes the dialog and the token update HTTP request.
  */
 Void Private_InitUpdateTokenReq() {
-    G_InitUpdateTokenReq = True;
-    G_TokenUpdateReqFinished = False;
-    G_TokenUpdateReqOk = False;
-
     declare Text Login = LocalUser.Login;
     declare Text State = Login ^ Now;
     declare Private_K_GetTokenBody Body = Private_K_GetTokenBody {
@@ -288,13 +281,20 @@ Void Private_InitUpdateTokenReq() {
         redirect_uri = Constants::C_MP_Redirect
     };
 
-    declare CHttpRequest Req = Http.CreatePost(
-        Constants::C_HostUrl ^ "player/get_token",
-        Body.tojson(),
-        "Content-Type: application/json\nAccept: application/json"
-    );
+    G_TokenUpdateReq = ReqMgr::K_PostRequest {
+        Route = "player/get_token",
+        Body = Body.tojson(),
+        Headers = ReqMgr::DefaultHeaders()
+    };
 
-    G_TokenUpdateReq = Req.Id;
+    declare Ident ReqId = ReqMgr::Make(G_TokenUpdateReq);
+    if (ReqId == NullId) {
+        G_TokenUpdatePendingReqId = ReqMgr::LastPendingReqId();
+        G_TokenUpdateReqId = NullId;
+    } else {
+        G_TokenUpdatePendingReqId = -1;
+        G_TokenUpdateReqId = ReqId;
+    }
 
     declare Text Link = Constants::C_MP_Link
         ^ "client_id=" ^ Constants::C_MP_App_Id
@@ -304,7 +304,6 @@ Void Private_InitUpdateTokenReq() {
 
     OpenLink(Link, CManiaApp::ELinkType::ExternalBrowser);
 
-    G_PendingTokenUpdateReq = True;
     G_TokenUpdateReqDialogId = DialogsUI::NewDialog(
         "Authentication procedure",
         DialogsUI::K_Message {
@@ -330,17 +329,23 @@ or scan the QR code bellow:"""
  * @return True if the procedure is over, False otherwise.
  */
 Boolean Private_LoopUpdateTokenReq() {
-    if (!G_InitUpdateTokenReq || !G_PendingTokenUpdateReq) return False;
+    if (G_TokenUpdateReqId == NullId && G_TokenUpdatePendingReqId == -1) return False;
 
     DialogsUI::Prompt(G_TokenUpdateReqDialogId, True);
 
-    declare CHttpRequest Req = Http.Requests[G_TokenUpdateReq];
+    if (G_TokenUpdatePendingReqId != -1) {
+        declare Ident ReqId = ReqMgr::MakePendingPost(G_TokenUpdatePendingReqId);
+        if (ReqId == NullId) return False;
+        G_TokenUpdatePendingReqId = -1;
+        G_TokenUpdateReqId = ReqId;
+    }
+
+    declare CHttpRequest Req <=> Http.Requests[G_TokenUpdateReqId];
     if (!Req.IsCompleted) return False;
 
     // At this point, the procedure is over
 
-    G_PendingTokenUpdateReq = False;
-    G_TokenUpdateReqFinished = True;
+    G_TokenUpdateReqId = NullId;
 
     DialogsUI::CloseDialog(G_TokenUpdateReqDialogId);
 
@@ -351,6 +356,7 @@ Boolean Private_LoopUpdateTokenReq() {
         AuthUtils::SetUserToken(Res.token, LocalUser);
     } else {
         G_TokenUpdateReqOk = False;
+        ErrorReport::Report(G_TokenUpdateReq.Route, G_TokenUpdateReq.Body, LocalUser.Login, Req.Result, "POST");
     }
 
     Http.Destroy(Req);
@@ -394,35 +400,28 @@ Boolean Private_UpdateTokenIsOk() {
  * @param _Token the Obstacle token of the player. It must not be empty.
  */
 Void Private_InitPlayerUpdateReq(Text _Token) {
-    G_InitPlayerUpdateReq = True;
-    G_PlayerUpdateOk = False;
-    G_PendingPlayerUpdateReq = True;
-
     declare Private_K_UpdatePlayerBody Body = Private_K_UpdatePlayerBody {
         login = LocalUser.Login,
         name = LocalUser.Name,
         zone_path = LocalUser.ZonePath
     };
 
-    G_UpdateJsonBody = Body.tojson();
-    
-    declare CHttpRequest Req = Http.CreatePost(
-        Constants::C_HostUrl ^ "player/update",
-        Body.tojson(),
-        """Content-Type: application/json
-Accept: application/json
-PlayerLogin: {{{LocalUser.Login}}}
-Authorization: {{{_Token}}}"""
-    );
+    G_PlayerUpdateReq = ReqMgr::K_PostRequest {
+        Route = "player/update",
+        Body = Body.tojson(),
+        Headers = ReqMgr::DefaultHeadersWith(ReqMgr::AuthHeaders(LocalUser, _Token))
+    };
 
-    G_PlayerUpdateReq = Req.Id;
+    declare Ident ReqId = ReqMgr::Make(G_PlayerUpdateReq);
+    if (ReqId == NullId) {
+        G_PlayerUpdateReqId = NullId;
+        G_PlayerUpdatePendingReqId = ReqMgr::LastPendingReqId();
+    } else {
+        G_PlayerUpdatePendingReqId = -1;
+        G_PlayerUpdateReqId = ReqId;
+    }
 }
 
-/**
- * Initializes the player info update in the API.
- *
- * This needs to be called after the token update procedure.
- */
 Void Private_InitPlayerUpdateReq() {
     Private_InitPlayerUpdateReq(AuthUtils::GetUserToken(LocalUser));
 }
@@ -433,12 +432,19 @@ Void Private_InitPlayerUpdateReq() {
  * @return True if the player update procedure has finished, False otherwise.
  */
 Boolean Private_LoopPlayerUpdateReq() {
-    if (!G_InitPlayerUpdateReq || !G_PendingPlayerUpdateReq) return False;
+    if (G_PlayerUpdateReqId == NullId && G_PlayerUpdatePendingReqId == -1) return False;
 
-    declare CHttpRequest Req = Http.Requests[G_PlayerUpdateReq];
+    if (G_PlayerUpdatePendingReqId != -1) {
+        declare Ident ReqId = ReqMgr::MakePendingPost(G_PlayerUpdatePendingReqId);
+        if (ReqId == NullId) return False;
+        G_PlayerUpdatePendingReqId = -1;
+        G_PlayerUpdateReqId = ReqId;
+    }
+
+    declare CHttpRequest Req <=> Http.Requests[G_PlayerUpdateReqId];
     if (!Req.IsCompleted) return False;
 
-    G_PendingPlayerUpdateReq = False;
+    G_PlayerUpdateReqId = NullId;
 
     switch (Req.StatusCode) {
         case ErrMgr::C_HttpErr_Unauthorized: {
@@ -450,9 +456,12 @@ Boolean Private_LoopPlayerUpdateReq() {
         }
         default: {
             G_PlayerUpdateFailed = True;
-            G_PlayerUpdateOptBan = ErrMgr::Handle(Req.StatusCode, Req.Result).Ban;
-            ErrorReport::Report("/player/update", G_UpdateJsonBody, LocalUser.Login, Req.Result, "POST");
+            declare ErrMgr::K_Error Err = ErrMgr::Handle(Req.StatusCode, Req.Result);
+            G_PlayerUpdateOptBan = Err.Ban;
             G_PlayerUpdateNeedsTokenUpdate = False;
+            if (Err.Err.type != ErrMgr::C_Err_Maintenance) {
+                ErrorReport::Report(G_PlayerUpdateReq.Route, G_PlayerUpdateReq.Body, LocalUser.Login, Req.Result, "POST");
+            }
         }
     }
 
@@ -495,7 +504,6 @@ Ban::K_OptBanishment Private_PlayerUpdateReqGetOptBan() {
  * Initializes the banishment dialog.
  */
 Void Private_InitBanDialog() {
-    G_InitBanDialog = True;
     G_BanDialogId = DialogsUI::NewDialog(
         "Account banned",
         DialogsUI::K_Message {
@@ -525,12 +533,14 @@ support team on Discord."""
  * This waits for the player to valid the dialog, then quits the TP.
  */
 Void Private_LoopBanDialog() {
-    if (!G_InitBanDialog) return;
+    if (G_BanDialogId == -1) return;
 
     declare Dialogs::K_Result DialogState = DialogsUI::Prompt(G_BanDialogId, True);
     if (DialogState.Over) {
         Menu_Quit();
     }
+
+    G_BanDialogId = -1;
 }
 
 /**
@@ -544,7 +554,7 @@ Void Private_InitGreetPlayer() {
     if (Token == "") {
         Private_InitWelcomeDialog();
     } else {
-        Private_InitPlayerUpdateReq(Token);
+        Private_InitPlayerUpdateReq();
     }
 }
 
@@ -574,9 +584,42 @@ Boolean AuthSuccess() {
 }
 
 /**
+ * Unloads the library.
+ */
+Void Unload() {
+    G_BanDialogId = -1;
+
+    G_TokenUpdateDialogId = -1;
+    G_TokenUpdateReq = ReqMgr::K_PostRequest {};
+    G_TokenUpdateReqId = NullId;
+    G_TokenUpdatePendingReqId = -1;
+    G_TokenUpdateReqFinished = False;
+    G_TokenUpdateReqOk = False;
+
+    G_TokenUpdateDialogOk = False;
+    G_TokenUpdateDialogId = -1;
+
+    G_PlayerUpdateReq = ReqMgr::K_PostRequest {};
+    G_PlayerUpdateReqId = NullId;
+    G_PlayerUpdatePendingReqId = -1;
+    G_PlayerUpdateOk = False;
+    G_PlayerUpdateFailed = False;
+    G_PlayerUpdateOptBan = Ban::K_OptBanishment {};
+    G_PlayerUpdateNeedsTokenUpdate = False;
+
+    G_OnlineTestSkipped = False;
+    G_OnlineTestResult = False;
+    G_OnlineTestReq = NullId;
+    G_OnlineTestPendingReqId = -1;
+
+    G_WelcomeDialogId = -1;
+}
+
+/**
  * Loads the library.
  */
 Void Load() {
+    Unload();
     Private_InitOnlineTest();
 }
 

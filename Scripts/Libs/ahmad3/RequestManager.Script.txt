@@ -156,12 +156,15 @@ Text[Text] DefaultHeaders() {
     ];
 }
 
-Text[Text] AuthHeaders(CUser _User) {
-    declare Text Token = AuthUtils::GetUserToken(_User);
+Text[Text] AuthHeaders(CUser _User, Text _Token) {
     return [
         "PlayerLogin" => _User.Login,
-        "Authorization" => Token
+        "Authorization" => _Token
     ];
+}
+
+Text[Text] AuthHeaders(CUser _User) {
+    return AuthHeaders(_User, AuthUtils::GetUserToken(_User));
 }
 
 Text[Text] MergeHeaders(Text[Text] _A, Text[Text] _B) {
