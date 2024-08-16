@@ -111,7 +111,7 @@ Void LoopPlayerUpdate() {
         if (Err.Ban.IsPresent) {
             SendCustomEvent("ban:update", [LocalUser.Login, Err.Ban.tojson()]);
         } else if (Err.Err.type != ErrMgr_C_Err_Maintenance) {
-            ErrReport_Report(G_Req.Route, G_Req.Body, Req.Result, "POST");
+            ErrReport_ReportPost(G_Req.Route, G_Req.Body, Req.Result);
         }
     }
 

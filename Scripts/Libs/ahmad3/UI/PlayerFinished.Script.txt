@@ -117,7 +117,7 @@ Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult
     declare CSmPlayer Player <=> GetPlayer(_UI);
     declare ErrMgr::K_Error Err = ErrMgr::Handle(_StatusCode, _ReqResult);
     if (Err.Err.type != ErrMgr::C_Err_Maintenance) {
-        ErrReport::Report(_Route, _ReqBody, Player.User.Login, _ReqResult, "POST");
+        ErrReport::ReportPost(_Route, _ReqBody, Player.User.Login, _ReqResult);
     }
     Player::setHasWrongLbLine(Player, True, True);
 }

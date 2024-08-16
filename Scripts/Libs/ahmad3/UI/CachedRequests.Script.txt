@@ -170,8 +170,26 @@ Void RemoveCache(K_CachedReq _CachReq) {
     SaveCache(Cache);
 }
 
+Void NotifyCacheSent() {
+    // Save the remaining cache
+    declare K_CachedReq[] CachedReqs = [];
+    foreach (Remaining in G_IndexedCachedReqs) {
+        CachedReqs.add(Remaining);
+    }
+    SaveCache(CachedReqs);
+
+    // Notify the gamemode
+    SendCustomEvent({{{dump(C_Ev_CachedReqsSent)}}}, []);
+}
+
 Void InitTrySendCached() {
     declare K_CachedReq[] CachedReqs = GetCache();
+
+    if (CachedReqs.count == 0) {
+        NotifyCacheSent();
+        return;
+    }
+
     log("Trying to send " ^ CachedReqs.count ^ " cached request(s)");
 
     foreach (Idx => Req in CachedReqs) {
@@ -202,11 +220,10 @@ Void LoopTrySendCached() {
         if (Req.StatusCode == 200) {
             CachedReqsToRemove.add(Idx);
         } else {
-            ErrReport_Report(
+            ErrReport_ReportPost(
                 "staggered/" ^ G_IndexedCachedReqs[Idx].Route,
                 G_IndexedCachedReqs[Idx].Body,
-                Req.Result,
-                "POST"
+                Req.Result
             );
         }
 
@@ -221,13 +238,7 @@ Void LoopTrySendCached() {
     }
 
     if (G_StaggeredReqs.count == 0) {
-        // Save the remaining cache
-        declare K_CachedReq[] CachedReqs = [];
-        foreach (Remaining in G_IndexedCachedReqs) {
-            CachedReqs.add(Remaining);
-        }
-        SaveCache(CachedReqs);
-        SendCustomEvent({{{dump(C_Ev_CachedReqsSent)}}}, []);
+        NotifyCacheSent();
     }
 }
 

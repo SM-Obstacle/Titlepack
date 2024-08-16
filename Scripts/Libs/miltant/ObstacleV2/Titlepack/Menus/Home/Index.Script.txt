@@ -145,7 +145,7 @@ Void LoopReq() {
 	if (Req.StatusCode == 200) {
 		Res.fromjson(Req.Result);
 	} else {
-		ErrorReport::Report(G_LatestNewsImgReq.Route, "", LocalUser.Login, Req.Result, "GET");
+		ErrorReport::ReportGet(G_LatestNewsImgReq.Route, LocalUser.Login, Req.Result);
 	}
 
 	Http.Destroy(Req);

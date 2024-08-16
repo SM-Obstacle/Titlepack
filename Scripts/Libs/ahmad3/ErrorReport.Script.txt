@@ -115,18 +115,30 @@ Void Yield() {
     Private_HandleReqs();
 }
 
-Void Report(Text _Route, Text _Body, Text _PlayerLogin, Text _RawError, Text _Method) {
-    Private_ReportImpl(_Route, _Body, _PlayerLogin, _RawError, _Method);
+Void ReportPost(Text _Route, Text _Body, Text _PlayerLogin, Text _RawError) {
+    Private_ReportImpl(_Route, _Body, _PlayerLogin, _RawError, "POST");
 }
 
-Void Report(Text _Route, Text _Body, Text _RawError, Text _Method) {
-    Report(_Route, _Body, "", _RawError, _Method);
+Void ReportPost(Text _Route, Text _Body, Text _RawError) {
+    ReportPost(_Route, _Body, "", _RawError);
+}
+
+Void ReportGet(Text _Route, Text _PlayerLogin, Text _RawError) {
+    Private_ReportImpl(_Route, "", _PlayerLogin, _RawError, "GET");
+}
+
+Void ReportGet(Text _Route, Text _RawError) {
+    ReportGet(_Route, "", _RawError);
 }
 
 Text ML_Content(Text _ModName) {
     return """//!
-Void {{{_ModName}}}_Report(Text _Route, Text _Body, Text _RawErr, Text _Method) {
-    SendCustomEvent({{{dump(C_Ev_ErrReport)}}}, [_Route, _Body, LocalUser.Login, _RawErr, _Method]);
+Void {{{_ModName}}}_ReportPost(Text _Route, Text _Body, Text _RawErr) {
+    SendCustomEvent({{{dump(C_Ev_ErrReport)}}}, [_Route, _Body, LocalUser.Login, _RawErr, "POST"]);
+}
+
+Void {{{_ModName}}}_ReportGet(Text _Route, Text _RawErr) {
+    SendCustomEvent({{{dump(C_Ev_ErrReport)}}}, [_Route, "", LocalUser.Login, _RawErr, "GET"]);
 }
     """;
 }
