@@ -5,6 +5,7 @@
  *   Reports errors to the API
  ***********************************************/
 
+#Include "TextLib" as TL
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 
 /*********************************************
@@ -16,6 +17,7 @@
     Text route;
     Text body;
     Text player_login;
+    Integer status_code;
     Text error;
 }
 
@@ -42,12 +44,13 @@ declare ReqMgr::K_PostReqId[] G_Reqs;
 //// Private
 ////////////////////
 
-Void Private_ReportImpl(Text _Route, Text _Body, Text _PlayerLogin, Text _RawError, Text _Method) {
+Void Private_ReportImpl(Text _Route, Text _Body, Text _PlayerLogin, Integer _StatusCode, Text _RawError, Text _Method) {
     declare K_ErrorReportBody Body = K_ErrorReportBody {
         method = _Method,
         route = _Route,
         body = _Body,
         player_login = _PlayerLogin,
+        status_code = _StatusCode,
         error = _RawError
     };
 
@@ -105,40 +108,41 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
     declare Text Route = _Event.CustomEventData[0];
     declare Text Body = _Event.CustomEventData[1];
     declare Text PlayerLogin = _Event.CustomEventData[2];
-    declare Text Error = _Event.CustomEventData[3];
-    declare Text Method = _Event.CustomEventData[4];
+    declare Integer StatusCode = TL::ToInteger(_Event.CustomEventData[3]);
+    declare Text Error = _Event.CustomEventData[4];
+    declare Text Method = _Event.CustomEventData[5];
 
-    Private_ReportImpl(Route, Body, PlayerLogin, Error, Method);
+    Private_ReportImpl(Route, Body, PlayerLogin, StatusCode, Error, Method);
 }
 
 Void Yield() {
     Private_HandleReqs();
 }
 
-Void ReportPost(Text _Route, Text _Body, Text _PlayerLogin, Text _RawError) {
-    Private_ReportImpl(_Route, _Body, _PlayerLogin, _RawError, "POST");
+Void ReportPost(Text _Route, Text _Body, Text _PlayerLogin, Integer _StatusCode, Text _RawError) {
+    Private_ReportImpl(_Route, _Body, _PlayerLogin, _StatusCode, _RawError, "POST");
 }
 
-Void ReportPost(Text _Route, Text _Body, Text _RawError) {
-    ReportPost(_Route, _Body, "", _RawError);
+Void ReportPost(Text _Route, Text _Body, Integer _StatusCode, Text _RawError) {
+    ReportPost(_Route, _Body, "", _StatusCode, _RawError);
 }
 
-Void ReportGet(Text _Route, Text _PlayerLogin, Text _RawError) {
-    Private_ReportImpl(_Route, "", _PlayerLogin, _RawError, "GET");
+Void ReportGet(Text _Route, Text _PlayerLogin, Integer _StatusCode, Text _RawError) {
+    Private_ReportImpl(_Route, "", _PlayerLogin, _StatusCode, _RawError, "GET");
 }
 
-Void ReportGet(Text _Route, Text _RawError) {
-    ReportGet(_Route, "", _RawError);
+Void ReportGet(Text _Route, Integer _StatusCode, Text _RawError) {
+    ReportGet(_Route, "", _StatusCode, _RawError);
 }
 
 Text ML_Content(Text _ModName) {
     return """//!
-Void {{{_ModName}}}_ReportPost(Text _Route, Text _Body, Text _RawErr) {
-    SendCustomEvent({{{dump(C_Ev_ErrReport)}}}, [_Route, _Body, LocalUser.Login, _RawErr, "POST"]);
+Void {{{_ModName}}}_ReportPost(Text _Route, Text _Body, Integer _StatusCode, Text _RawErr) {
+    SendCustomEvent({{{dump(C_Ev_ErrReport)}}}, [_Route, _Body, LocalUser.Login, _StatusCode ^ "", _RawErr, "POST"]);
 }
 
-Void {{{_ModName}}}_ReportGet(Text _Route, Text _RawErr) {
-    SendCustomEvent({{{dump(C_Ev_ErrReport)}}}, [_Route, "", LocalUser.Login, _RawErr, "GET"]);
+Void {{{_ModName}}}_ReportGet(Text _Route, Integer _StatusCode, Text _RawErr) {
+    SendCustomEvent({{{dump(C_Ev_ErrReport)}}}, [_Route, "", LocalUser.Login, _StatusCode ^ "", _RawErr, "GET"]);
 }
     """;
 }

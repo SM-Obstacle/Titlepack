@@ -468,6 +468,7 @@ Void InitPlayer(CSmPlayer _Player) {
 
     Dialogs::ShowActiveDialogsTo(_Player);
 
+    setTimeInLb(_Player, -1);
     setHasWrongLbLine(_Player, False);
     setHasInitPb(_Player, False);
     setInitialized(_Player, True);

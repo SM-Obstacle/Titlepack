@@ -297,7 +297,7 @@ Text GetLayer() {
         } else {
             declare ErrMgr_K_Err Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
             if (Err.Err.type != ErrMgr_C_Err_Maintenance) {
-                ErrReport_ReportGet(G_Req.Route, Req.Result);
+                ErrReport_ReportGet(G_Req.Route, Req.StatusCode, Req.Result);
             }
         }
 

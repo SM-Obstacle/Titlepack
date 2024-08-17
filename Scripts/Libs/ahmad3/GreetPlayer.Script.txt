@@ -333,7 +333,7 @@ Boolean Private_LoopUpdateTokenReq() {
         AuthUtils::SetUserToken(Res.token, LocalUser);
     } else {
         G_TokenUpdateReqOk = False;
-        ErrorReport::ReportPost(G_TokenUpdateReq.Route, G_TokenUpdateReq.Body, LocalUser.Login, Req.Result);
+        ErrorReport::ReportPost(G_TokenUpdateReq.Route, G_TokenUpdateReq.Body, LocalUser.Login, Req.StatusCode, Req.Result);
     }
 
     Http.Destroy(Req);
@@ -428,7 +428,7 @@ Boolean Private_LoopPlayerUpdateReq() {
             G_PlayerUpdateOptBan = Err.Ban;
             G_PlayerUpdateNeedsTokenUpdate = False;
             if (Err.Err.type != ErrMgr::C_Err_Maintenance) {
-                ErrorReport::ReportPost(G_PlayerUpdateReq.Route, G_PlayerUpdateReq.Body, LocalUser.Login, Req.Result);
+                ErrorReport::ReportPost(G_PlayerUpdateReq.Route, G_PlayerUpdateReq.Body, LocalUser.Login, Req.StatusCode, Req.Result);
             }
         }
     }

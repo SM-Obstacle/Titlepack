@@ -313,7 +313,7 @@ Void LoopUpdateTokenReq() {
         SendCustomEvent({{{dump(C_Ev_TokenUpdated)}}}, []);
     } else {
         SendCustomEvent({{{dump(C_Ev_TokenUpdateFailed)}}}, []);
-        ErrReport_ReportPost(G_Req.Route, G_Req.Body, Req.Result);
+        ErrReport_ReportPost(G_Req.Route, G_Req.Body, Req.StatusCode, Req.Result);
     }
 
     Http.Destroy(Req);

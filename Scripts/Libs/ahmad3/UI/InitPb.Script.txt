@@ -203,7 +203,7 @@ Void LoopInitPbReq() {
             G_NeedAuth = True;
         }
         default: {
-            ErrReport_ReportGet(G_Req.Route, Req.Result);
+            ErrReport_ReportGet(G_Req.Route, Req.StatusCode, Req.Result);
         }
     }
 

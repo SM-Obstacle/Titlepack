@@ -95,7 +95,7 @@ Thank you.""",
             ]
         });
     } else {
-        ErrReport::ReportPost("/map/insert", JsonBody, Req.Result);
+        ErrReport::ReportPost("/map/insert", JsonBody, Req.StatusCode, Req.Result);
         UIManager.UIAll.SendChat(Err.Err.message);
     }
 

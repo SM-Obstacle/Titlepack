@@ -134,6 +134,7 @@ declare Integer G_RemoveCacheUpdate;
 
 declare ReqMgr_K_PostReqId[Integer] G_StaggeredReqs;
 declare K_CachedReq[Integer] G_IndexedCachedReqs;
+declare Text[Integer] G_ReqBodies;
 
 K_CachedReq[] GetCache() {
 	declare persistent Text ObsStore_ReqCache for LocalUser = "";
@@ -199,9 +200,10 @@ Void InitTrySendCached() {
 
     foreach (Idx => Req in CachedReqs) {
         G_IndexedCachedReqs[Idx] = Req;
+        G_ReqBodies[Idx] = "{\"req_tstp\":" ^ Req.Tstp ^ ",\"body\":" ^ Req.Body ^ "}";
         G_StaggeredReqs[Idx] = ReqMgr_Make(ReqMgr_K_PostRequest {
             Route = "staggered/" ^ Req.Route,
-            Body = "{\"req_tstp\":" ^ Req.Tstp ^ ",\"body\":" ^ Req.Body ^ "}",
+            Body = G_ReqBodies[Idx],
             Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
         });
     }
@@ -230,7 +232,8 @@ Void LoopTrySendCached() {
             // so it would flood the error report system.
             ErrReport_ReportPost(
                 "staggered/" ^ G_IndexedCachedReqs[Idx].Route,
-                G_IndexedCachedReqs[Idx].Body,
+                G_ReqBodies[Idx],
+                Req.StatusCode,
                 Req.Result
             );
         }
