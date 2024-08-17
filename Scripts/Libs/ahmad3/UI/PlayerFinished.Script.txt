@@ -78,6 +78,8 @@ declare K_Finish[Integer] G_IndexedFinishes;
 declare Integer[] G_CacheApproved;
 declare Integer[] G_HandledFinishErrs;
 
+declare Ident[] G_CheckedCachedReqs;
+
 /*********************************************
   FUNCTIONS
  *********************************************/
@@ -229,7 +231,6 @@ Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _FinishId) {
 
 Void Private_SignalWrongLbTime(CUIConfig _UI, K_Finish _Finish) {
     declare CSmPlayer Player <=> GetPlayer(_UI);
-    log("time in lb: " ^ Player::getTimeInLb(Player) ^ " and " ^ _Finish.Body.time);
     if (Player::getTimeInLb(Player) > _Finish.Body.time || Player::getTimeInLb(Player) == -1) {
         Player::setHasWrongLbLine(Player, True, True);
     }
@@ -256,6 +257,29 @@ Void Private_HandleCacheApprove(CUIConfig _UI, Integer _FinishId) {
     Private_ReleaseFinishFor(_UI);
 }
 
+Void Private_CheckCachedReqs() {
+    foreach (Player in AllPlayers) {
+        if (G_CheckedCachedReqs.exists(Player.Id)) continue;
+        declare CUIConfig UI <=> UIManager.GetUI(Player);
+        if (UI == Null || !CachReqs::HasSavedCache(UI)) continue;
+
+        declare CachReqs::K_CachedReq[] CachedReqs = CachReqs::GetCacheOf(UI);
+
+        declare Integer MinTime = -1;
+        foreach (CachedReq in CachedReqs) {
+            declare K_PlayerFinishedBody Body = K_PlayerFinishedBody {};
+            if (!Body.fromjson(CachedReq.Body) || Body.map_uid != Map.Id ^ "") continue;
+            if (Body.time < MinTime || MinTime == -1) MinTime = Body.time;
+        }
+
+        if (MinTime != -1 && (Player::getTimeInLb(Player) > MinTime || Player::getTimeInLb(Player) == -1)) {
+            Player::setHasWrongLbLine(Player, True, True);
+        }
+
+        G_CheckedCachedReqs.add(Player.Id);
+    }
+}
+
 ////////////////////
 //// Public
 ////////////////////
@@ -279,6 +303,7 @@ Void Unload() {
     G_IndexedFinishes = [];
     G_CacheApproved = [];
     G_HandledFinishErrs = [];
+    G_CheckedCachedReqs = [];
 }
 
 Void Load() {
@@ -327,6 +352,8 @@ Void Yield() {
             }
         }
     }
+
+    Private_CheckCachedReqs();
 }
 
 Void NotifyPlayerFinished(CSmPlayer _Player) {

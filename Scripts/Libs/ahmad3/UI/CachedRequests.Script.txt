@@ -34,6 +34,12 @@
 }
 
 /*********************************************
+  GLOBALES
+ *********************************************/
+
+declare K_CachedReq[][Ident] G_CachedReqs;
+
+/*********************************************
   FUNCTIONS
  *********************************************/
 
@@ -53,6 +59,14 @@ Text GetVersion() {
  */
 Text GetScriptName() {
     return ScriptName;
+}
+
+K_CachedReq[] GetCacheOf(CUIConfig _UI) {
+    return G_CachedReqs.get(_UI.Id, []);
+}
+
+Boolean HasSavedCache(CUIConfig _UI) {
+    return G_CachedReqs.existskey(_UI.Id);
 }
 
 K_CachedReq SaveCacheFor(CUIConfig _UI, Text _Body, Text _Route) {
@@ -78,12 +92,20 @@ Void RemoveCache(CUIConfig _UI, K_CachedReq _CachReq) {
     Net_CachReqs_RemoveCacheUpdate = Now;
 }
 
+Void Unload() {
+    G_CachedReqs = [];
+}
+
+Void Load() {
+    Unload();
+}
+
 Void HandleCustomEvent(CUIConfigEvent _Event) {
     assert(
         _Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent,
         "param _Event must be a custom event"
     );
-    
+
     switch (_Event.CustomEventType) {
         case C_Ev_SaveCache: {
             declare Text Body = _Event.CustomEventData[0];
@@ -92,6 +114,10 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
         }
 
         case C_Ev_CachedReqsSent: {
+            declare K_CachedReq[] CachedReqs = [];
+            CachedReqs.fromjson(_Event.CustomEventData[0]);
+            G_CachedReqs[_Event.UI.Id] = CachedReqs;
+
             declare netwrite Boolean Net_CachReqs_HasSentCachedReqs for _Event.UI = False;
             Net_CachReqs_HasSentCachedReqs = True;
         }
@@ -185,7 +211,7 @@ Void NotifyCacheSent() {
     SaveCache(CachedReqs);
 
     // Notify the gamemode
-    SendCustomEvent({{{dump(C_Ev_CachedReqsSent)}}}, []);
+    SendCustomEvent({{{dump(C_Ev_CachedReqsSent)}}}, [CachedReqs.tojson()]);
 }
 
 Void InitTrySendCached() {
