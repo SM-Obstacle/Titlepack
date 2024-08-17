@@ -44,6 +44,16 @@
   FUNCTIONS
  *********************************************/
 
+Void setTimeInLb(CSmPlayer _Player, Integer _TimeInLb) {
+    declare Integer TimeInLb for _Player = -1;
+    TimeInLb = _TimeInLb;
+}
+
+Integer getTimeInLb(CSmPlayer _Player) {
+    declare Integer TimeInLb for _Player = -1;
+    return TimeInLb;
+}
+
 Void setTabsInitialized(CSmPlayer _Player, Boolean _TabsInit) {
     declare Boolean TabsInitialized for _Player = False;
     TabsInitialized = _TabsInit;

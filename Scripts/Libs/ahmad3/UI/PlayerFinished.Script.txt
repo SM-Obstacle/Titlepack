@@ -31,6 +31,7 @@
 #Const C_Ev_ReqFailedToSend "player:finish:err"
 #Const C_Ev_ApproveCache "player:finish:cached"
 #Const C_Ev_PlayerFinished "player:finish"
+#Const C_Ev_NeedAuth "player:finish:needauth"
 
 /*********************************************
   TYPES
@@ -54,6 +55,13 @@
     Integer[] cps;
 }
 
+#Struct K_Finish {
+    K_PlayerFinishedBody Body;
+    Text JsonBody;
+    Text Route;
+    Integer Tstp;
+}
+
 #Struct K_OptCachedReq {
     CachReqs::K_CachedReq[] Content;
 }
@@ -63,6 +71,12 @@
  *********************************************/
 
 declare CachReqs::K_CachedReq[][Ident] G_FinishCachedReqs;
+
+declare Integer G_LastFinishId;
+declare K_Finish[Integer] G_IndexedFinishes;
+
+declare Integer[] G_CacheApproved;
+declare Integer[] G_HandledFinishErrs;
 
 /*********************************************
   FUNCTIONS
@@ -113,13 +127,20 @@ Text Private_OrdinalSuffix(Integer _Rank) {
     return TL::ToText(_Rank) ^ Suff;
 }
 
-Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult, Text _ReqBody, Text _Route) {
+Void Private_HandleFinishErr(CUIConfig _UI, Integer _StatusCode, Text _ReqResult, Integer _FinishId) {
     declare CSmPlayer Player <=> GetPlayer(_UI);
     declare ErrMgr::K_Error Err = ErrMgr::Handle(_StatusCode, _ReqResult);
     if (Err.Err.type != ErrMgr::C_Err_Maintenance) {
-        ErrReport::ReportPost(_Route, _ReqBody, Player.User.Login, _ReqResult);
+        declare K_Finish Finish = G_IndexedFinishes[_FinishId];
+        ErrReport::ReportPost(Finish.Route, Finish.JsonBody, Player.User.Login, _ReqResult);
+
+        if (G_CacheApproved.exists(_FinishId)) {
+            G_IndexedFinishes.removekey(_FinishId);
+            G_CacheApproved.remove(_FinishId);
+        } else {
+            G_HandledFinishErrs.add(_FinishId);
+        }
     }
-    Player::setHasWrongLbLine(Player, True, True);
 }
 
 K_OptCachedReq Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body, Text _Route) {
@@ -145,11 +166,13 @@ K_OptCachedReq Private_RemoveCached(CUIConfig _UI, Integer _Tstp, Text _Body, Te
     return Private_OptCachedReq_Of(CachedReq);
 }
 
-Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Body, Text _Route) {
+Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _FinishId) {
     declare K_HasFinishedResponse Res;
     Res.fromjson(_Response);
 
-    declare K_OptCachedReq Cached = Private_RemoveCached(_UI, _Tstp, _Body, _Route);
+    declare K_Finish Finish = G_IndexedFinishes[_FinishId];
+
+    declare K_OptCachedReq Cached = Private_RemoveCached(_UI, Finish.Tstp, Finish.JsonBody, Finish.Route);
     if (Private_OptCachedReq_IsPresent(Cached)) {
         CachReqs::RemoveCache(_UI, Private_OptCachedReq_Get(Cached));
     }
@@ -204,10 +227,31 @@ Void Private_HandleFinish(CUIConfig _UI, Text _Response, Integer _Tstp, Text _Bo
     Private_ReleaseFinishFor(_UI);
 }
 
-Void Private_HandleCacheApprove(CUIConfig _UI, Integer _Tstp, Text _Body, Text _Route) {
+Void Private_SignalWrongLbTime(CUIConfig _UI, K_Finish _Finish) {
     declare CSmPlayer Player <=> GetPlayer(_UI);
-    Player::setHasWrongLbLine(Player, True, True);
-    Private_RemoveCached(_UI, _Tstp, _Body, _Route);
+    if (Player::getTimeInLb(Player) > _Finish.Body.time || Player::getTimeInLb(Player) == -1) {
+        Player::setHasWrongLbLine(Player, True, True);
+    }
+}
+
+Void Private_HandleNeedAuth(CUIConfig _UI, Integer _FinishId) {
+    declare K_Finish Finish = G_IndexedFinishes[_FinishId];
+    Private_SignalWrongLbTime(_UI, Finish);
+}
+
+Void Private_HandleCacheApprove(CUIConfig _UI, Integer _FinishId) {
+    declare K_Finish Finish = G_IndexedFinishes[_FinishId];
+
+    Private_SignalWrongLbTime(_UI, Finish);
+    Private_RemoveCached(_UI, Finish.Tstp, Finish.JsonBody, Finish.Route);
+
+    if (G_HandledFinishErrs.exists(_FinishId)) {
+        G_IndexedFinishes.removekey(_FinishId);
+        G_HandledFinishErrs.remove(_FinishId);
+    } else {
+        G_CacheApproved.add(_FinishId);
+    }
+
     Private_ReleaseFinishFor(_UI);
 }
 
@@ -229,31 +273,57 @@ Text GetScriptName() {
     return ScriptName;
 }
 
-Void HandleCustomEvent(CUIConfigEvent _Event) {
-    assert(_Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent, "_Event must be a custom event");
+Void Unload() {
+    G_LastFinishId = 0;
+    G_IndexedFinishes = [];
+    G_CacheApproved = [];
+    G_HandledFinishErrs = [];
+}
 
-    switch (_Event.CustomEventType) {
-        case C_Ev_ReqFailedToSend: {
-            declare Integer StatusCode = TL::ToInteger(_Event.CustomEventData[0]);
-            declare Text Result = _Event.CustomEventData[1];
-            declare Text ReqBody = _Event.CustomEventData[2];
-            declare Text Route = _Event.CustomEventData[3];
-            Private_HandleFinishErr(_Event.UI, StatusCode, Result, ReqBody, Route);
-        }
+Void Load() {
+    Unload();
+}
 
-        case C_Ev_PlayerFinished: {
-            declare Text Response = _Event.CustomEventData[0];
-            declare Integer Tstp = TL::ToInteger(_Event.CustomEventData[1]);
-            declare Text Body = _Event.CustomEventData[2];
-            declare Text Route = _Event.CustomEventData[3];
-            Private_HandleFinish(_Event.UI, Response, Tstp, Body, Route);
-        }
+Void Yield() {
+    foreach (Event in UIManager.PendingEvents) {
+        if (Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent) continue;
 
-        case C_Ev_ApproveCache: {
-            declare Integer Tstp = TL::ToInteger(_Event.CustomEventData[0]);
-            declare Text Body = _Event.CustomEventData[1];
-            declare Text Route = _Event.CustomEventData[2];
-            Private_HandleCacheApprove(_Event.UI, Tstp, Body, Route);
+        switch (Event.CustomEventType) {
+            /**
+             * A request failed to send.
+             * This is always sent along with the `C_Ev_ApproveCache` event.
+             */
+            case C_Ev_ReqFailedToSend: {
+                declare Integer StatusCode = TL::ToInteger(Event.CustomEventData[0]);
+                declare Text Result = Event.CustomEventData[1];
+                declare Integer FinishId = TL::ToInteger(Event.CustomEventData[2]);
+                Private_HandleFinishErr(Event.UI, StatusCode, Result, FinishId);
+            }
+
+            /**
+             * The result of the finish request.
+             */
+            case C_Ev_PlayerFinished: {
+                declare Text Response = Event.CustomEventData[0];
+                declare Integer FinishId = TL::ToInteger(Event.CustomEventData[1]);
+                Private_HandleFinish(Event.UI, Response, FinishId);
+            }
+
+            /**
+             * The finish request returned an Unauthorized error, we need the player to authenticate.
+             */
+            case C_Ev_NeedAuth: {
+                declare Integer FinishId = TL::ToInteger(Event.CustomEventData[0]);
+                Private_HandleNeedAuth(Event.UI, FinishId);
+            }
+
+            /**
+             * The finish request wasn't sent or failed to send, so we approve its cache saving.
+             */
+            case C_Ev_ApproveCache: {
+                declare Integer FinishId = TL::ToInteger(Event.CustomEventData[0]);
+                Private_HandleCacheApprove(Event.UI, FinishId);
+            }
         }
     }
 }
@@ -285,22 +355,31 @@ Void NotifyPlayerFinished(CSmPlayer _Player) {
         cps = CpTimes
     };
 
+    declare Text Route = ObsEvents::PrefixRoute("player/finished");
     declare Text JsonBody = Body.tojson();
+    declare CachReqs::K_CachedReq Cached = CachReqs::SaveCacheFor(UI, JsonBody, Route);
 
-    declare CachReqs::K_CachedReq Cached = CachReqs::SaveCacheFor(
-        UI,
-        JsonBody,
-        ObsEvents::PrefixRoute("player/finished")
-    );
+    G_LastFinishId += 1;
+    G_IndexedFinishes[G_LastFinishId] = K_Finish {
+        Body = Body,
+        JsonBody = JsonBody,
+        Route = Route,
+        Tstp = Cached.Tstp
+    };
+
     if (!G_FinishCachedReqs.existskey(UI.Id)) {
         G_FinishCachedReqs[UI.Id] = [];
     }
     G_FinishCachedReqs[UI.Id].add(Cached);
 
     declare netwrite Integer Net_PF_Update for UI = -1;
+    declare netwrite Integer Net_PF_FinishId for UI = -1;
+    declare netwrite Text Net_PF_Route for UI = "";
     declare netwrite Integer Net_PF_Tstp for UI = -1;
     declare netwrite Text Net_PF_Body for UI = "";
 
+    Net_PF_FinishId = G_LastFinishId;
+    Net_PF_Route = Route;
     Net_PF_Body = JsonBody;
     Net_PF_Tstp = Cached.Tstp;
     Net_PF_Update = Now;
@@ -313,6 +392,7 @@ Text GetLayer() {
 
 #Struct K_FinishReq {
     Integer Tstp;
+    Text Route;
     Text Body;
 }
 
@@ -328,28 +408,26 @@ declare Integer G_Update;
 declare Integer G_AuthUpdated;
 declare Integer G_AuthIgnoredUpdate;
 
-declare Integer G_CurrentReqIdx;
 declare K_FinishReq[Integer] G_AllFinishes;
 declare Integer[] G_WaitingForAuth;
 declare ReqMgr_K_PostReqId[Integer] G_PlayerFinishedReqs;
 
 declare Boolean G_AuthIgnored;
 
-Void ApproveCached(K_FinishReq _Req) {
-    SendCustomEvent({{{dump(C_Ev_ApproveCache)}}}, [_Req.Tstp ^ "", _Req.Body, G_PlayerFinishedRoute]);
+Void ApproveCached(Integer _FinishId) {
+    SendCustomEvent({{{dump(C_Ev_ApproveCache)}}}, [_FinishId ^ ""]);
 }
 
-Void InitPlayerFinish(K_FinishReq _Req) {
+Void InitPlayerFinish(K_FinishReq _Req, Integer _FinishId) {
     if (G_AuthIgnored) {
-        ApproveCached(_Req);
+        ApproveCached(_FinishId);
         return;
     }
 
-    G_CurrentReqIdx += 1;
-    G_AllFinishes[G_CurrentReqIdx] = _Req;
+    G_AllFinishes[_FinishId] = _Req;
 
-    G_PlayerFinishedReqs[G_CurrentReqIdx] = ReqMgr_Make(ReqMgr_K_PostRequest {
-        Route = G_PlayerFinishedRoute,
+    G_PlayerFinishedReqs[_FinishId] = ReqMgr_Make(ReqMgr_K_PostRequest {
+        Route = _Req.Route,
         Body = _Req.Body,
         Headers = ReqMgr_DefaultHeadersWith(ReqMgr_AuthHeaders())
     });
@@ -372,16 +450,17 @@ Void LoopPlayerFinished() {
         switch (Req.StatusCode) {
             case 200: {
                 declare K_FinishReq Finish = G_AllFinishes[Idx];
-                SendCustomEvent({{{dump(C_Ev_PlayerFinished)}}}, [Req.Result, Finish.Tstp ^ "", Finish.Body, G_PlayerFinishedRoute]);
+                SendCustomEvent({{{dump(C_Ev_PlayerFinished)}}}, [Req.Result, Idx ^ ""]);
                 G_AllFinishes.removekey(Idx);
             }
             case 401: {
                 UserAuth_NotifyNeedUpdate(True);
+                SendCustomEvent({{{dump(C_Ev_NeedAuth)}}}, [Idx ^ ""]);
                 G_WaitingForAuth.add(Idx);
             }
             default: {
-                ApproveCached(G_AllFinishes[Idx]);
-                SendCustomEvent({{{dump(C_Ev_ReqFailedToSend)}}}, [Req.StatusCode ^ "", Req.Result, G_AllFinishes[Idx].Body, G_PlayerFinishedRoute]);
+                ApproveCached(Idx);
+                SendCustomEvent({{{dump(C_Ev_ReqFailedToSend)}}}, [Req.StatusCode ^ "", Req.Result, Idx ^ ""]);
                 G_AllFinishes.removekey(Idx);
             }
         }
@@ -395,14 +474,14 @@ Void LoopPlayerFinished() {
 
 Void SendWaitingForAuthReqs() {
     foreach (Idx in G_WaitingForAuth) {
-        InitPlayerFinish(G_AllFinishes[Idx]);
+        InitPlayerFinish(G_AllFinishes[Idx], Idx);
     }
     G_WaitingForAuth.clear();
 }
 
 Void ApproveCacheForWaitingAuthReqs() {
     foreach (Idx in G_WaitingForAuth) {
-        ApproveCached(G_AllFinishes[Idx]);
+        ApproveCached(Idx);
     }
     G_WaitingForAuth.clear();
 }
@@ -450,12 +529,12 @@ Boolean AuthIgnored() {
 }
 
 main() {
-    G_PlayerFinishedRoute = {{{dump(ObsEvents::PrefixRoute("player/finished"))}}};
-
     InitUpdate();
     InitAuthUpdated();
     InitAuthIgnored();
 
+    declare netread Integer Net_PF_FinishId for UI = -1;
+    declare netread Text Net_PF_Route for UI = "";
     declare netread Text Net_PF_Body for UI = "";
     declare netread Integer Net_PF_Tstp for UI = -1;
 
@@ -463,10 +542,14 @@ main() {
         yield;
 
         if (Updated()) {
-            InitPlayerFinish(K_FinishReq {
-                Tstp = Net_PF_Tstp,
-                Body = Net_PF_Body
-            });
+            InitPlayerFinish(
+                K_FinishReq {
+                    Tstp = Net_PF_Tstp,
+                    Route = Net_PF_Route,
+                    Body = Net_PF_Body
+                },
+                Net_PF_FinishId
+            );
         }
 
         if (AuthUpdated()) {

@@ -1,10 +1,12 @@
 #Include "TextLib" as TL
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
+#Include "Libs/smokegun/Player.Script.txt" as Player
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
 
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
+#Include "Libs/ahmad3/UI/CachedRequests.Script.txt" as CachReqs
 #Include "Libs/ahmad3/Events.Script.txt" as Events
 #Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
@@ -15,6 +17,24 @@
 
 #Const  Version     "2024-07-16"
 #Const  ScriptName  "RecordsWidget.Script.txt"
+
+#Const C_Ev_LocalPlayerTime "recordswidget:localplayertime"
+
+Void Yield() {
+    foreach (Event in UIManager.PendingEvents) {
+        if (
+            Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent
+            || Event.CustomEventType != C_Ev_LocalPlayerTime
+        ) {
+            continue;
+        }
+
+        declare Integer TimeInLb = TL::ToInteger(Event.CustomEventData[0]);
+
+        declare CSmPlayer Player <=> GetPlayer(Event.UI);
+        Player::setTimeInLb(Player, TimeInLb);
+    }
+}
 
 Text Private_GetSmallRecords() {
     declare Real QuadHeight = 67.;
@@ -116,6 +136,7 @@ Text GetLayer() {
     Void UpdateUI(K_Response _Response) {
         declare netread Boolean Net_HasWrongLbLine for G_LocalPlayer = False;
         declare HasLocalPlayerFinished = False;
+        declare Integer LocalPlayerTime = -1;
         foreach (Idx => Control in G_Frame_Records.Controls) {
             declare frame <=> (Control as CMlFrame);
             declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
@@ -131,6 +152,7 @@ Text GetLayer() {
 
                 if (_Response.response[Idx].login == G_LocalPlayer.User.Login) {
                     HasLocalPlayerFinished = True;
+                    LocalPlayerTime = _Response.response[Idx].time;
                     if (Net_HasWrongLbLine) bgQuad.Show();
                 }
 
@@ -144,6 +166,10 @@ Text GetLayer() {
             } else {
                 Control.Hide();
             }
+        }
+
+        if (HasLocalPlayerFinished && G_LocalPlayer == InputPlayer) {
+            SendCustomEvent({{{dump(C_Ev_LocalPlayerTime)}}}, [LocalPlayerTime ^ ""]);
         }
     }
 
@@ -194,10 +220,7 @@ Text GetLayer() {
         Http.Destroy(Req);
     }
 
-    Boolean HasSentCachedReqs() {
-        declare netread Boolean Net_CachReqs_HasSentCachedReqs for UI = False;
-        return Net_CachReqs_HasSentCachedReqs;
-    }
+    {{{CachReqs::ML_WaitCacheSentFn("HasSentCachedReqs")}}}
 
     main() {
         {{{CustomUI::InjectMLInit()}}}

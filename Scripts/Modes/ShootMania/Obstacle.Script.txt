@@ -261,6 +261,7 @@ if (ObsEvents::HasFailed()) {
 ***Match_StartMap***
 ***
 
+PlayerFinished::Load();
 CPTimes::Init();
 
 EventsUI::Init();
@@ -347,8 +348,15 @@ CreateUI();
 
 ***
 
+***Obs_YieldRecordsWidget***
+***
+RecordsWidget::Yield();
+***
+
 ***Match_Yield***
 ***
+--- Obs_YieldRecordsWidget ---
+PlayerFinished::Yield();
 ErrorReport::Yield();
 SpectatorCount::Yield();
 SpecList::Yield();
@@ -387,7 +395,6 @@ foreach (Event in UIManager.PendingEvents) {
             }
             default: {
                 CachReqs::HandleCustomEvent(Event);
-                PlayerFinished::HandleCustomEvent(Event);
                 UpdateAuth::HandleCustomEvent(Event);
                 EventsUI::HandleCustomEvent(Event);
                 ErrorReport::HandleCustomEvent(Event);

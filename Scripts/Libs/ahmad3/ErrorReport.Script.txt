@@ -76,8 +76,8 @@ Void Private_HandleReqs() {
         Http.Destroy(Req);
     }
 
-    foreach (ReqIdx in ToRemove) {
-        G_Reqs.removekey(ReqIdx);
+    foreach (Idx => ReqIdx in ToRemove) {
+        G_Reqs.removekey(ReqIdx - Idx);
     }
 }
 

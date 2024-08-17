@@ -8,6 +8,7 @@
 #Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 #Include "Libs/ahmad3/UI/UpdateAuth.Script.txt" as UpdateAuth
+#Include "Libs/ahmad3/UI/CachedRequests.Script.txt" as CachReqs
 
 #Include "Libs/smokegun/Tools.Script.txt" as Tools
 #Include "Libs/miltant/Randomizer.Script.txt" as RNG
@@ -223,10 +224,7 @@ Boolean AuthUpdated() {
     return False;
 }
 
-Boolean HasSentCachedReqs() {
-    declare netread Boolean Net_CachReqs_HasSentCachedReqs for UI = False;
-    return Net_CachReqs_HasSentCachedReqs;
-}
+{{{CachReqs::ML_WaitCacheSentFn("HasSentCachedReqs")}}}
 
 main() {
     G_ReqId = ReqMgr_NullGetReq();

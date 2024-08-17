@@ -1,6 +1,10 @@
+#Include "TextLib" as TL
+
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/smokegun/Constants.Script.txt" as Constants
+#Include "Libs/smokegun/Player.Script.txt" as Player
 
+#Include "Libs/ahmad3/UI/CachedRequests.Script.txt" as CachReqs
 #Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrReport
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
@@ -13,6 +17,8 @@
 
 #Const  Version     "2023-28-06"
 #Const  ScriptName  "RecordsWidget.Script.txt"
+
+#Const C_Ev_TimeInLb "medalswidget:timeinlb"
 
 Void Init() {
     if (ObsEvents::HasFailed() || !ObsEvents::HasEventLoaded()) return;
@@ -29,6 +35,22 @@ Void Init() {
     }
 
     Net_MedalsTimesPerMapUpdated = Now;
+}
+
+Void Yield() {
+    foreach (Event in UIManager.PendingEvents) {
+        if (
+            Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent
+            || Event.CustomEventType != C_Ev_TimeInLb
+        ) {
+            continue;
+        }
+
+        declare Integer TimeInLb = TL::ToInteger(Event.CustomEventData[0]);
+
+        declare CSmPlayer Player <=> GetPlayer(Event.UI);
+        Player::setTimeInLb(Player, TimeInLb);
+    }
 }
 
 Text Private_GetSmallRecords() {
@@ -139,14 +161,23 @@ Text GetLayer() {
 
     Void UpdateUI(K_Response _Response) {
         declare PlayerRank = -1;
+        declare Integer LocalPlayerTime = -1;
         foreach (I => Record in _Response.response) {
             if (Record.login == G_LocalPlayer.User.Login) {
                 G_CampaignRecords[Map.MapInfo.MapUid] = Record.time;
                 G_CurrentPlayerRank = I + 1;
                 PlayerRank = I;
+
+                LocalPlayerTime = Record.time;
+
                 break;
             }
         }
+
+        if (LocalPlayerTime != -1 && G_LocalPlayer == InputPlayer) {
+            SendCustomEvent({{{dump(C_Ev_TimeInLb)}}}, [LocalPlayerTime ^ ""]);
+        }
+
         if (PlayerRank == -1) {
             G_CampaignRecords[Map.MapInfo.MapUid] = 0;
             G_CurrentPlayerRank = _Response.response.count + 2;
@@ -273,10 +304,7 @@ Text GetLayer() {
         Http.Destroy(Req);
     }
 
-    Boolean HasSentCachedReqs() {
-        declare netread Boolean Net_CachReqs_HasSentCachedReqs for UI = False;
-        return Net_CachReqs_HasSentCachedReqs;
-    }
+    {{{CachReqs::ML_WaitCacheSentFn("HasSentCachedReqs")}}}
 
     main() {
         {{{CustomUI::InjectMLInit()}}}

@@ -38,10 +38,6 @@
  *********************************************/
 
 ////////////////////
-//// Private
-////////////////////
-
-////////////////////
 //// Public
 ////////////////////
 
@@ -67,7 +63,7 @@ K_CachedReq SaveCacheFor(CUIConfig _UI, Text _Body, Text _Route) {
     };
 
     declare netwrite Integer Net_CachReqs_SaveCacheUpdate for _UI = -1;
-    declare netwrite K_CachedReq Net_CachReqs_SaveCacheBody for _UI;
+    declare netwrite K_CachedReq Net_CachReqs_SaveCacheBody for _UI = K_CachedReq {};
     Net_CachReqs_SaveCacheBody = Out;
     Net_CachReqs_SaveCacheUpdate = Now;
 
@@ -76,7 +72,7 @@ K_CachedReq SaveCacheFor(CUIConfig _UI, Text _Body, Text _Route) {
 
 Void RemoveCache(CUIConfig _UI, K_CachedReq _CachReq) {
     declare netwrite Integer Net_CachReqs_RemoveCacheUpdate for _UI = -1;
-    declare netwrite K_CachedReq Net_CachReqs_RemoveCacheBody for _UI;
+    declare netwrite K_CachedReq Net_CachReqs_RemoveCacheBody for _UI = K_CachedReq {};
 
     Net_CachReqs_RemoveCacheBody = _CachReq;
     Net_CachReqs_RemoveCacheUpdate = Now;
@@ -100,6 +96,15 @@ Void HandleCustomEvent(CUIConfigEvent _Event) {
             Net_CachReqs_HasSentCachedReqs = True;
         }
     }
+}
+
+Text ML_WaitCacheSentFn(Text _FuncName) {
+    return """//!
+Boolean {{{_FuncName}}}() {
+    declare netread Boolean Net_CachReqs_HasSentCachedReqs for UI = False;
+    return Net_CachReqs_HasSentCachedReqs;
+}
+    """;
 }
 
 Text GetLayer() {
@@ -149,14 +154,14 @@ Void SaveCache(K_CachedReq[] _Cache) {
 }
 
 Void SaveCacheSingle(K_CachedReq _CachReq) {
-    log("Saving to cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
+    log("[ObsCache]" ^ Now ^ "> Saving to cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
     declare K_CachedReq[] Cache = GetCache();
     Cache.add(_CachReq);
     SaveCache(Cache);
 }
 
 Void RemoveCache(K_CachedReq _CachReq) {
-    log("Removing from cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
+    log("[ObsCache]" ^ Now ^ "> Removing from cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
     declare K_CachedReq[] Cache = GetCache();
     declare Integer IdxToRemove = -1;
     foreach (Idx => Cached in Cache) {
@@ -190,7 +195,7 @@ Void InitTrySendCached() {
         return;
     }
 
-    log("Trying to send " ^ CachedReqs.count ^ " cached request(s)");
+    log("[ObsCache]" ^ Now ^ "> Trying to send " ^ CachedReqs.count ^ " cached request(s)");
 
     foreach (Idx => Req in CachedReqs) {
         G_IndexedCachedReqs[Idx] = Req;
@@ -219,7 +224,10 @@ Void LoopTrySendCached() {
 
         if (Req.StatusCode == 200) {
             CachedReqsToRemove.add(Idx);
-        } else {
+        } else if (Req.StatusCode != 401) {
+            // We report only if it's not an Unauthorized error, because in this case
+            // all the cached requests would probably have this error too
+            // so it would flood the error report system.
             ErrReport_ReportPost(
                 "staggered/" ^ G_IndexedCachedReqs[Idx].Route,
                 G_IndexedCachedReqs[Idx].Body,
@@ -238,6 +246,9 @@ Void LoopTrySendCached() {
     }
 
     if (G_StaggeredReqs.count == 0) {
+        if (CachedReqsToRemove.count > 0) {
+            log("[ObsCache]" ^ Now ^ "> Successfuly sent " ^ CachedReqsToRemove.count ^ " cached request(s).");
+        }
         NotifyCacheSent();
     }
 }
