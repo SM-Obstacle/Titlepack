@@ -220,13 +220,15 @@ Text GetLayer() {
         Http.Destroy(Req);
     }
 
-    {{{CachReqs::ML_WaitCacheSentFn("HasSentCachedReqs")}}}
+    {{{CachReqs::ML_CacheUpdatedFunc("InitCacheUpdater", "CachedReqsSent")}}}
 
     main() {
         {{{CustomUI::InjectMLInit()}}}
-        wait(InputPlayer != Null && Page != Null && HasSentCachedReqs());
+        wait(InputPlayer != Null && Page != Null);
 
         G_ReqId = ReqMgr_NullGetReq();
+
+        InitCacheUpdater();
 
         declare LastPlayerLogin = "";
 
@@ -248,7 +250,7 @@ Text GetLayer() {
                 LastPlayerLogin = G_LocalPlayer.User.Login;
             }
 
-            if (Net_RecordsUpdated != LastUpdate && G_Frame_Widget.Visible) {
+            if ((Net_RecordsUpdated != LastUpdate || CachedReqsSent()) && G_Frame_Widget.Visible) {
                 LastUpdate = Net_RecordsUpdated;
                 UpdateRecords(G_LocalPlayer.User.Login);
             }

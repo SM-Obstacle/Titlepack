@@ -224,14 +224,14 @@ Boolean AuthUpdated() {
     return False;
 }
 
-{{{CachReqs::ML_WaitCacheSentFn("HasSentCachedReqs")}}}
+{{{CachReqs::ML_CacheUpdatedFunc("InitCacheUpdater", "CachedReqsSent")}}}
 
 main() {
     G_ReqId = ReqMgr_NullGetReq();
     G_PbRoute = {{{dump(ObsEvents::PrefixRoute("player/pb"))}}};
     InitAuthUpdated();
+    InitCacheUpdater();
 
-    wait(HasSentCachedReqs());
     InitPbReq();
 
     while (True) {
@@ -239,7 +239,7 @@ main() {
 
         LoopInitPbReq();
 
-        if (G_NeedAuth && AuthUpdated()) {
+        if (G_NeedAuth && AuthUpdated() || CachedReqsSent()) {
             G_NeedAuth = False;
             InitPbReq();
         }
