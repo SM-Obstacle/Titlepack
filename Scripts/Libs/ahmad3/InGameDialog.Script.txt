@@ -545,9 +545,9 @@ Void Private_HandleButtonClicked(
 ////////////////////
 
 /**
- * Initializes the library.
+ * Unloads the library.
  */
-Void Init() {
+Void Unload() {
     G_PendingDialogs = [];
     G_LastDialogId = 0;
     G_ShownDialogIds = [];
@@ -563,6 +563,13 @@ Void Init() {
         declare netwrite Integer[Integer] Net_Dlg_PromptDialogUpdates for UI = [];
         Net_Dlg_PromptDialogUpdates = [];
     }
+}
+
+/**
+ * Loads the library.
+ */
+Void Load() {
+    Unload();
 }
 
 Void ShowActiveDialogsTo(CSmPlayer _Player) {

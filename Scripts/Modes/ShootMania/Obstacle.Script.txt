@@ -235,7 +235,7 @@ Obstacle::LoadActions();
 declare netwrite Integer Net_MapStartUpdate for Teams[0] = -1;
 Net_MapStartUpdate = Now;
 
-Dialog::Init();
+Dialog::Load();
 
 // This needs to be called before PrepareMap to have the right settings.
 // It also updates the event ids for ObsEvents, used to load the event later.
@@ -881,6 +881,8 @@ Void CreateUI() {
 }
 
 Void DestroyUI(Boolean _Hard) {
+    Dialog::Unload();
+
     Layers::Detach("EventsUI");
     Layers::Detach("Chrono");
     Layers::Detach("Glitches");
