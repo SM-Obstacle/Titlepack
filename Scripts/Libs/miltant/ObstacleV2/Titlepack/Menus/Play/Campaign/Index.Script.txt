@@ -957,9 +957,10 @@ Void Loop() {
 				EventAPI::LoadEdition("campaign", G_LoadedEdition);
 				G_CampaignContentLoading = True;
 				// If we already cached this edition, we update the UI for it
-				if (EventAPI::GetCachedEvent("campaign").EditionsDetails.existskey(G_LoadedEdition)) {
-					G_UpdateCampaignContent = True;
-				}
+				// FIXME: caching events is too heavy
+				// if (EventAPI::GetCachedEvent("campaign").EditionsDetails.existskey(G_LoadedEdition)) {
+				// 	G_UpdateCampaignContent = True;
+				// }
 			}
 			case "refresh": {
 				Private_DebounceRefresh();
