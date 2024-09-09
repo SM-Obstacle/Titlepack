@@ -147,7 +147,7 @@ Void Private_BeginRestartRequest(K_OptEventRow _Event) {
     if (Private_OptEventRow_IsPresent(_Event)) {
         declare K_EventRow Event = Private_OptEventRow_Get(_Event);
         Message::SendBigMessage("Switching to " ^ Event.Name ^ "...", MessageTime, 1);
-    } else {
+    } else if (Private_OptEventRow_IsPresent(G_PlayedEvent)) {
         declare K_EventRow OldEvent = Private_OptEventRow_Get(G_PlayedEvent);
         Message::SendBigMessage("Quitting " ^ OldEvent.Name ^ "...", MessageTime, 1);
     }
@@ -254,6 +254,14 @@ K_Event Private_GetSelectedEventOf(CUIConfig _UI) {
     return Net_EventsUI_SelectedEvent;
 }
 
+/**
+ * Returns the amount of votes needed to switch to the provided event or quit the running event.
+ *
+ * @param _Vote The current amount of votes.
+ * @param _Event The associated event the vote is for. If empty, the vote is for quitting the
+ * running event.
+ * @return The amount of votes needed to switch to the provided event or quit the running event.
+ */
 Integer Private_GetRemainingVotesOf(K_VoteInfo _Vote, K_OptEventRow _Event) {
     declare Integer Amount = _Vote.Amount;
     declare Integer Remaining = ML::CeilingInteger(G_PlayerAmount * Settings::GetSwitchEventVotingRatio())
