@@ -41,9 +41,42 @@
 
 declare K_CachedReq[][Ident] G_CachedReqs;
 
+declare Ident[] G_PendingResetWrongLbLine;
+
 /*********************************************
   FUNCTIONS
  *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Void Private_AddPendingResetWrongLbLine(CUIConfig _UI) {
+    if (!G_PendingResetWrongLbLine.exists(_UI.Id)) {
+        G_PendingResetWrongLbLine.add(_UI.Id);
+    }
+}
+
+Void Private_ManagePendingResetWrongLbLine() {
+    declare Ident[] ToRemove = [];
+
+    foreach (Id in G_PendingResetWrongLbLine) {
+        if (!UIManager.UI.existskey(Id)) {
+            ToRemove.add(Id);
+            continue;
+        }
+
+        declare CSmPlayer Player <=> GetPlayer(UIManager.UI[Id]);
+        if (Player == Null) continue;
+
+        Player::setHasWrongLbLine(Player, False, True);
+        ToRemove.add(Id);
+    }
+
+    foreach (Id in ToRemove) {
+        G_PendingResetWrongLbLine.remove(Id);
+    }
+}
 
 ////////////////////
 //// Public
@@ -102,30 +135,30 @@ Void Load() {
     Unload();
 }
 
-Void HandleCustomEvent(CUIConfigEvent _Event) {
-    assert(
-        _Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent,
-        "param _Event must be a custom event"
-    );
+Void Yield() {
+    foreach (Event in UIManager.PendingEvents) {
+        if (Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent) continue;
 
-    switch (_Event.CustomEventType) {
-        case C_Ev_SaveCache: {
-            declare Text Body = _Event.CustomEventData[0];
-            declare Text Route = _Event.CustomEventData[1];
-            SaveCacheFor(_Event.UI, Body, Route);
-        }
+        switch (Event.CustomEventType) {
+            case C_Ev_SaveCache: {
+                declare Text Body = Event.CustomEventData[0];
+                declare Text Route = Event.CustomEventData[1];
+                SaveCacheFor(Event.UI, Body, Route);
+            }
 
-        case C_Ev_CachedReqsSent: {
-            declare K_CachedReq[] CachedReqs = [];
-            CachedReqs.fromjson(_Event.CustomEventData[0]);
-            G_CachedReqs[_Event.UI.Id] = CachedReqs;
+            case C_Ev_CachedReqsSent: {
+                declare K_CachedReq[] CachedReqs = [];
+                CachedReqs.fromjson(Event.CustomEventData[0]);
+                G_CachedReqs[Event.UI.Id] = CachedReqs;
 
-            declare CSmPlayer Player <=> GetPlayer(_Event.UI);
-            Player::setHasWrongLbLine(Player, False, True);
-            declare netwrite Integer Net_CachReqs_CachedReqsSentUpdate for _Event.UI = -1;
-            Net_CachReqs_CachedReqsSentUpdate = Now;
+                Private_AddPendingResetWrongLbLine(Event.UI);
+                declare netwrite Integer Net_CachReqs_CachedReqsSentUpdate for Event.UI = -1;
+                Net_CachReqs_CachedReqsSentUpdate = Now;
+            }
         }
     }
+
+    Private_ManagePendingResetWrongLbLine();
 }
 
 Text ML_CacheUpdatedFunc(

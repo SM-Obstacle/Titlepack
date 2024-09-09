@@ -59,6 +59,10 @@ Void Private_ManagePendingDevModes() {
         Player::setUseDevMode(Player, True);
         ToRemove.add(UIId);
     }
+
+    foreach (Id in ToRemove) {
+        G_PendingDevModes.remove(Id);
+    }
 }
 
 ////////////////////

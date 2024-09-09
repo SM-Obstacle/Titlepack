@@ -364,6 +364,7 @@ AntiDevMode::Yield();
 NextMapVote::Yield(S_NextMapVotingRatio);
 InitPb::Yield();
 Dialog::Yield();
+CachReqs::Yield();
 
 foreach (Event in UIManager.PendingEvents) {
     if (Event.Type == CUIConfigEvent::EType::OnLayerCustomEvent) {
@@ -394,7 +395,6 @@ foreach (Event in UIManager.PendingEvents) {
                 CPTimes::ResetLayer(Player, Obstacle::GetCheckpointsTotal());
             }
             default: {
-                CachReqs::HandleCustomEvent(Event);
                 UpdateAuth::HandleCustomEvent(Event);
                 EventsUI::HandleCustomEvent(Event);
                 ErrorReport::HandleCustomEvent(Event);
