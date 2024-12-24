@@ -213,6 +213,10 @@ declare Text[Integer] G_ReqBodies;
 
 declare Boolean G_NeedAuth;
 
+Void Log(Text _Msg) {
+    log("[ObsCache]" ^ Now ^ "> " ^ _Msg);
+}
+
 K_CachedReq[] GetCache() {
 	declare persistent Text ObsStore_ReqCache for LocalUser = "";
 	declare Integer VersIndex = Utils_FindCharIndex(ObsStore_ReqCache, "[");
@@ -232,14 +236,14 @@ Void SaveCache(K_CachedReq[] _Cache) {
 }
 
 Void SaveCacheSingle(K_CachedReq _CachReq) {
-    log("[ObsCache]" ^ Now ^ "> Saving to cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
+    Log("Saving to cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
     declare K_CachedReq[] Cache = GetCache();
     Cache.add(_CachReq);
     SaveCache(Cache);
 }
 
 Void RemoveCache(K_CachedReq _CachReq) {
-    log("[ObsCache]" ^ Now ^ "> Removing from cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
+    Log("Removing from cache: `" ^ _CachReq.Route ^ "` (" ^ _CachReq.Tstp ^ ")");
     declare K_CachedReq[] Cache = GetCache();
     declare Integer IdxToRemove = -1;
     foreach (Idx => Cached in Cache) {
@@ -273,8 +277,9 @@ Void InitTrySendCached() {
         return;
     }
 
-    log("[ObsCache]" ^ Now ^ "> Trying to send " ^ CachedReqs.count ^ " cached request(s)");
+    Log("Trying to send " ^ CachedReqs.count ^ " cached request(s)");
 
+    // TODO: avoid to send all the cached requests, and send them once in a single request
     foreach (Idx => Req in CachedReqs) {
         G_IndexedCachedReqs[Idx] = Req;
         G_ReqBodies[Idx] = "{\"req_tstp\":" ^ Req.Tstp ^ ",\"body\":" ^ Req.Body ^ "}";
@@ -334,9 +339,9 @@ Void LoopTrySendCached() {
 
     if (G_StaggeredReqs.count == 0) {
         if (CachedReqsToRemove.count == 0) {
-            log("[ObsCache]" ^ Now ^ "> All failed :(");
+            Log("All failed :(");
         } else {
-            log("[ObsCache]" ^ Now ^ "> Successfully sent " ^ CachedReqsToRemove.count ^ " cached request(s), "
+            Log("Successfully sent " ^ CachedReqsToRemove.count ^ " cached request(s), "
                 ^ G_IndexedCachedReqs.count ^ " remaining.");
         }
         NotifyCacheSent();
