@@ -1,5 +1,5 @@
-#Include "Libs/ahmad3/EventAPI.Script.txt"										as EventAPI
-#Include "Libs/ahmad3/EventAPITypes.Script.txt"									as EventAPITypes
+#Include "Libs/ahmad3/EventAPI/Titlepack.Script.txt"							as EventAPI
+#Include "Libs/ahmad3/EventAPI/Types.Script.txt"								as EventAPITypes
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/smokegun/Constants.Script.txt"									as Constants
@@ -129,8 +129,12 @@ Text Build() {
 		</frame>
 	</frame>
 
+	<frame pos="-2.5 -22" id="Frame_LoadingIcon">
+		<quad valign="center" halign="center" style="UIConstruction_Buttons" substyle="Reload" size="10 10" id="Quad_LoadingIcon" hidden="0" />
+	</frame>
+
 	<frame pos="-96.17 53.5">
-		<frame pos="8 -46.67">
+		<frame pos="8 -46.67" id="Frame_CampaignContent" hidden="1">
 			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_1" hidden="1"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_2" hidden="1" pos="34.5"/>
@@ -468,7 +472,8 @@ Text Build() {
 
 		declare K_EventEditionContentCategory[] Categories = P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
 		G_LastPage_Categories = ML::Max(0, Categories.count - 1) / C_MaxCategoriesPerPage + 1;
-		foreach (I => Category in Categories) {
+		for (I, 0, ML::Min(Categories.count, C_MaxMapsPerCategoryPage) - 1) {
+			declare K_EventEditionContentCategory Category = Categories[I];
 			G_CategoriesPages[I].LastPage = ML::Max(0, Category.maps.count - 1) / C_MaxMapsPerCategoryPage + 1;
 		}
 	}
@@ -476,14 +481,16 @@ Text Build() {
 	Void InitCampaignEditionsList() {
 		declare K_Event P_CampaignEvent for Page;
 		declare Integer P_SelectedEdition for Page;
+		declare Integer ControlIndex = 0;
 		foreach (I => Edition in P_CampaignEvent.Editions) {
-			declare Integer ControlIndex = (P_CampaignEvent.Editions.count-I+1);
+			ControlIndex += 1;
 			declare CMlFrame Frame_CampaignEdition = (Page.GetFirstChild("CampaignEditionItem_" ^ ControlIndex) as CMlFrame);
 			declare CMlLabel Label_CampaignEdition = (Frame_CampaignEdition.GetFirstChild("Label_CampaignEdition") as CMlLabel);
 			declare EditionName = Edition.name;
 			if (Edition.subtitle != "")
 				EditionName ^= " " ^ Edition.subtitle;
 			Label_CampaignEdition.SetText(EditionName);
+			Label_CampaignEdition.DataAttributeSet("editionid", TL::ToText(I));
 			declare Vec3 TextColor = CL::HexToRgb("B4B4B4");
 			if (P_SelectedEdition == I) {
 				TextColor = CL::HexToRgb("FFFFFF");
@@ -491,8 +498,25 @@ Text Build() {
 			Label_CampaignEdition.TextColor = TextColor;
 		}
 	}
+
+	Void LoopLoadingIcon(CMlQuad _Quad, CMlFrame _CampaignContent) {
+		declare Boolean P_CampaignLoading for Page = False;
+		if (P_CampaignLoading) {
+			if (!_Quad.Visible) {
+				_Quad.Visible = True;
+				_CampaignContent.Visible = False;
+			}
+			_Quad.RelativeRotation += 4;
+		} else if (_Quad.Visible) {
+			_Quad.Visible = False;
+			_CampaignContent.Visible = True;
+		}
+	}
 		
 	main() {
+		declare CMlQuad Quad_Loading = (Page.GetFirstChild("Quad_LoadingIcon") as CMlQuad);
+		declare CMlFrame Frame_CampaignContent = (Page.GetFirstChild("Frame_CampaignContent") as CMlFrame);
+
 		declare Frame_Infos = (Page.GetFirstChild("Frame_Infos") as CMlFrame);
 		declare Quad_Loader = (Frame_Infos.GetFirstChild("Quad_Loader") as CMlQuad);
 
@@ -520,9 +544,17 @@ Text Build() {
 
 		InitPages();
 
-		wait(P_SelectedEdition != -1);
+		while (P_SelectedEdition == -1) {
+			Quad_Loading.RelativeRotation += 4;
+			yield;
+		}
+
+		Quad_Loading.Visible = False;
+		Frame_CampaignContent.Visible = True;
 
 		while (True) {
+			LoopLoadingIcon(Quad_Loading, Frame_CampaignContent);
+
 			declare Lerp = ML::Abs(ML::Cos(Now % 2000 / 636.62));
 			Quad_Loader.Size = <Lerp * 12.5, 10.17>;
 
@@ -605,7 +637,8 @@ Text Build() {
 						if (Event.ControlId != "Label_CampaignEdition") continue;
 
 						declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
-						declare Integer EditionIdx = 1 + P_CampaignEvent.Editions.count - TL::ToInteger(TL::SubString(Label_Edition.Parent.ControlId, 20, 1));
+						if (!Label_Edition.DataAttributeExists("editionid")) continue;
+						declare Integer EditionIdx = TL::ToInteger(Event.Control.DataAttributeGet("editionid"));
 						if (EditionIdx == P_SelectedEdition) continue;
 
 						Label_Edition.TextColor = CL::HexToRgb("B4B4B4");
@@ -613,9 +646,12 @@ Text Build() {
 					case CMlScriptEvent::Type::MouseClick: {
 						switch (Event.ControlId) {
 							case "Label_CampaignEdition": {
-								declare Integer EditionIdx = 1 + P_CampaignEvent.Editions.count - TL::ToInteger(TL::SubString(Event.Control.Parent.ControlId, 20, 1));
+								// FIXME: se baser sur l'idx de l'associated array et pas sur son emplacement
+								if (!Event.Control.DataAttributeExists("editionid")) continue;
+								declare Text RawEditionIdx = Event.Control.DataAttributeGet("editionid");
+								declare Integer EditionIdx = TL::ToInteger(RawEditionIdx);
 								if (EditionIdx == P_SelectedEdition) continue;
-								SendCustomEvent("update_edition_selection", [TL::ToText(EditionIdx)]);
+								SendCustomEvent("update_edition_selection", [RawEditionIdx]);
 							}
 							case "Button_Map": {
 								declare CMlFrame ClickedCard = Event.Control.Parent;
@@ -696,8 +732,10 @@ Void Load() {
 	G_PendingPlayingMapsUpdate = -1;
 	G_LoadedEdition = -1;
 
-	declare Integer PendingPlayingMapsUpdate for LocalUser = -1;
-	PendingPlayingMapsUpdate = -1;
+	declare Integer ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser = -1;
+	ObsCampaignEvent_PendingPlayingMapsUpdate = -1;
+	declare Boolean P_CampaignLoading for Windows::GetPage(GetName()) = False;
+	P_CampaignLoading = True;
 }
 
 Void Private_InitLoadingMapDialogLoop(Text _MapName) {
@@ -714,9 +752,9 @@ Void Private_InitLoadingMapDialogLoop(Text _MapName) {
 Void Private_LoadingMapDialogLoop() {
 	if (!G_LoadingMap) return;
 
-	declare Boolean LoadingDialogPlayingMap for LocalUser = False;
-	if (LoadingDialogPlayingMap) {
-		LoadingDialogPlayingMap = False;
+	declare Boolean ObsCampaignEvent_LoadingDialogPlayingMap for LocalUser = False;
+	if (ObsCampaignEvent_LoadingDialogPlayingMap) {
+		ObsCampaignEvent_LoadingDialogPlayingMap = False;
 		G_LoadingMap = False;
 		UI::CloseDialog(G_LoadingMapDialog);
 		return;
@@ -731,164 +769,170 @@ Void Private_DebounceRefresh() {
 	Load();
 }
 
-Void Loop() {
-	EventAPI::Loop();
-	Private_LoadingMapDialogLoop();
+Void Private_LoopPlayerFinish(CMlPage _P) {
+	declare Boolean ObsCampaignEvent_EndScreenShown for LocalUser = False;
+	if (!ObsCampaignEvent_EndScreenShown) return;
 
-	declare CMlPage P <=> Windows::GetPage(GetName());
+	declare Integer P_SelectedEdition for _P;
+	// Refetches the current edition even if it has already been loaded
+	EventAPI::LoadEdition("campaign", P_SelectedEdition, False);
+	declare Boolean P_CampaignLoading for _P = False;
+	P_CampaignLoading = True;
+	ObsCampaignEvent_EndScreenShown = False;
+	G_CampaignContentLoading = True;
 
-	// Check if a player has finished a map
-	declare Boolean __EndScreen_MapFinished for LocalUser = False;
-	if (__EndScreen_MapFinished) {
-		declare Integer P_SelectedEdition for P;
-		// Refetches the current edition even if it has already been loaded
-		EventAPI::LoadEdition("campaign", P_SelectedEdition, False);
-		__EndScreen_MapFinished = False;
-		G_CampaignContentLoading = True;
+	declare Integer P_SelectedMapJ for _P = -1;
+	P_SelectedMapJ += 1;
+}
 
-		declare Integer P_SelectedMapJ for P = -1;
-		P_SelectedMapJ += 1;
+Void Private_LoopPlayerNextMap(CMlPage _P) {
+	declare Integer ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser = -1;
+	if (ObsCampaignEvent_PendingPlayingMapsUpdate == G_PendingPlayingMapsUpdate) return;
+
+	G_PendingPlayingMapsUpdate = ObsCampaignEvent_PendingPlayingMapsUpdate;
+
+	declare Integer P_SelectedEdition for _P = -1;
+	declare Integer P_SelectedMapI for _P = -1;
+	declare Integer P_SelectedMapJ for _P = -1;
+
+	if (G_PendingPlayingMaps[0].count == 0) {
+		P_SelectedMapI += 1;
+		if (P_SelectedMapI == G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories.count) {
+			P_SelectedMapI = 0;
+		}
+		P_SelectedMapJ = 0;
+		G_PendingPlayingMaps.removekey(0);
+	}
+	declare K_PendingPlayingMap NextMap = G_PendingPlayingMaps[0][0];
+	G_PendingPlayingMaps[0].removekey(0);
+
+	declare Boolean IsLastMap = G_PendingPlayingMaps.count == 1 && G_PendingPlayingMaps[0].count == 0;
+	declare Boolean LockEventsUI = True;
+
+	Private_InitLoadingMapDialogLoop(NextMap.MapName);
+
+	wait(TitleControl.IsReady);
+	TitleControl.PlayMap(NextMap.MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
+	<mode_script_settings>
+		<setting name="S_LockEventsUI" value="{{{LockEventsUI}}}" type="boolean" />
+		<setting name="S_EventHandle" value="campaign" type="text" />
+		<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />
+		<setting name="S_LastMap" value="{{{IsLastMap}}}" type="boolean" />
+	</mode_script_settings>
+	""");
+}
+
+Void Private_LoopEditionLoaded(CMlPage _P) {
+	if (!(G_CampaignContentLoading && EventAPI::EventHasContent("campaign"))) return;
+
+	G_CampaignEvent = EventAPI::GetEvent("campaign");
+	G_UpdateCampaignContent = True;
+	G_CampaignContentLoading = False;
+	declare Boolean P_CampaignLoading for _P = False;
+	P_CampaignLoading = False;
+}
+
+Void Private_LoopUpdatePageContent(CMlPage _P) {
+	if (!G_UpdateCampaignContent) return;
+
+	G_UpdateCampaignContent = False;
+
+	declare EventAPITypes::K_Event P_CampaignEvent for _P;
+	P_CampaignEvent = G_CampaignEvent;
+
+	// todo more graceful handling of this
+	if (P_CampaignEvent.Editions.count == 0) {
+		log("No editions available");
+		return;
 	}
 
-	// Check if the player is nexting a map
-	// This is also triggered when the player clicks on "Play map"
-	declare Integer PendingPlayingMapsUpdate for LocalUser = -1;
-	if (PendingPlayingMapsUpdate != G_PendingPlayingMapsUpdate) {
-		G_PendingPlayingMapsUpdate = PendingPlayingMapsUpdate;
-
-		declare Integer P_SelectedEdition for P = -1;
-		declare Integer P_SelectedMapI for P = -1;
-		declare Integer P_SelectedMapJ for P = -1;
-
-		if (G_PendingPlayingMaps[0].count == 0) {
-			P_SelectedMapI += 1;
-			if (P_SelectedMapI == G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories.count) {
-				P_SelectedMapI = 0;
-			}
-			P_SelectedMapJ = 0;
-			G_PendingPlayingMaps.removekey(0);
+	declare Integer SelectedEdition = -1;
+	if (G_LoadedEdition == -1) {
+		// If it's the first load, we get the maximum event edition
+		foreach (EditionId => _NotUsed in G_CampaignEvent.Editions) {
+			if (EditionId > SelectedEdition) SelectedEdition = EditionId;
 		}
-		declare K_PendingPlayingMap NextMap = G_PendingPlayingMaps[0][0];
-		G_PendingPlayingMaps[0].removekey(0);
-
-		declare Boolean IsLastMap = G_PendingPlayingMaps.count == 1 && G_PendingPlayingMaps[0].count == 0;
-		declare Boolean LockEventsUI = True;
-
-		Private_InitLoadingMapDialogLoop(NextMap.MapName);
-
-		wait(TitleControl.IsReady);
-		TitleControl.PlayMap(NextMap.MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
-		<mode_script_settings>
-		 	<setting name="S_LockEventsUI" value="{{{LockEventsUI}}}" type="boolean" />
-			<setting name="S_EventHandle" value="campaign" type="text" />
-			<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />
-			<setting name="S_LastMap" value="{{{IsLastMap}}}" type="boolean" />
-		</mode_script_settings>
-		""");
+	} else {
+		// Else we just bind to the loaded edition index, because this would be
+		// what the user selected in the page
+		SelectedEdition = G_LoadedEdition;
 	}
 
-	// Check when the campaign edition loading has finished
-	if (G_CampaignContentLoading && EventAPI::EventHasContent("campaign")) {
-		G_CampaignEvent = EventAPI::GetEvent("campaign");
-		G_UpdateCampaignContent = True;
-		G_CampaignContentLoading = False;
+	declare Integer P_SelectedMapI for _P = -1;
+	declare Integer P_SelectedMapJ for _P = -1;
+	declare Integer SelectedMapI = -1;
+	declare Integer SelectedMapJ = -1;
+	declare Boolean Break = False;
+	foreach (I => Category in P_CampaignEvent.EditionsDetails[SelectedEdition].categories) {
+		SelectedMapI += 1;
+		SelectedMapJ = 0;
+		foreach (J => Map in Category.maps) {
+			if (Map.personal_best >= 0) {
+				SelectedMapJ += 1;
+			} else {
+				Break = True;
+				break;
+			}
+		}
+		if (Break) break;
 	}
+	P_SelectedMapI = ML::Max(SelectedMapI, 0);
+	P_SelectedMapJ = ML::Max(SelectedMapJ, 0);
 
-	// Is set to True either in the above condition or in the Load() function or when the
-	// player selects a cached edition
-	if (G_UpdateCampaignContent) {
-		G_UpdateCampaignContent = False;
+	declare Integer P_SelectedEdition for _P = -1;
+	P_SelectedEdition = SelectedEdition;
+	
+	declare Boolean P_TimesReloaded for _P;
+	P_TimesReloaded = True;
 
-		declare EventAPITypes::K_Event P_CampaignEvent for P;
-		P_CampaignEvent = G_CampaignEvent;
+	// Fetches the downloaded maps for the current edition
+	// flatten, sort by date asc
+	G_FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\campaign\\", True, False, True).Id;
+}
 
-		// todo more graceful handling of this
-		if (P_CampaignEvent.Editions.count == 0) {
-			log("No editions available");
-			return;
-		}
-
-		declare Integer SelectedEdition = -1;
-		if (G_LoadedEdition == -1) {
-			// If it's the first load, we get the maximum event edition
-			foreach (EditionId => _NotUsed in G_CampaignEvent.Editions) {
-				if (EditionId > SelectedEdition) SelectedEdition = EditionId;
-			}
-		} else {
-			// Else we just bind to the loaded edition index, because this would be
-			// what the user selected in the page
-			SelectedEdition = G_LoadedEdition;
-		}
-
-		declare Integer P_SelectedMapI for P = -1;
-		declare Integer P_SelectedMapJ for P = -1;
-		declare Integer SelectedMapI = -1;
-		declare Integer SelectedMapJ = -1;
-		declare Boolean Break = False;
-		foreach (I => Category in P_CampaignEvent.EditionsDetails[SelectedEdition].categories) {
-			SelectedMapI += 1;
-			SelectedMapJ = 0;
-			foreach (J => Map in Category.maps) {
-				if (Map.personal_best >= 0) {
-					SelectedMapJ += 1;
-				} else {
-					Break = True;
-					break;
-				}
-			}
-			if (Break) break;
-		}
-		P_SelectedMapI = ML::Max(SelectedMapI, 0);
-		P_SelectedMapJ = ML::Max(SelectedMapJ, 0);
-
-		declare Integer P_SelectedEdition for P = -1;
-		P_SelectedEdition = SelectedEdition;
-		
-		declare Boolean P_TimesReloaded for P;
-		P_TimesReloaded = True;
-
-		// Fetches the downloaded maps for the current edition
-		// flatten, sort by date asc
-		G_FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\campaign\\", True, False, True).Id;
+Void Private_LoopMapFilesList(CMlPage _P) {
+	if (!(DataFileMgr.TaskResults.existskey(G_FileList)
+		&& DataFileMgr.TaskResults[G_FileList].HasSucceeded))
+	{
+		return;
 	}
 
 	// associate Maps to their parent folder and update the manialink
 	declare CMapInfo[][Integer] CampaignFiles;
+	declare CTaskResult_MapList MapsList = (DataFileMgr.TaskResults[G_FileList] as CTaskResult_MapList);
 
-	if (DataFileMgr.TaskResults.existskey(G_FileList) && DataFileMgr.TaskResults[G_FileList].HasSucceeded) {
-		declare CTaskResult_MapList MapsList = (DataFileMgr.TaskResults[G_FileList] as CTaskResult_MapList);
-		
-		foreach (File in MapsList.MapInfos) {
-			declare Text Folder = TL::RegexMatch("""^MEDIABROWSER_HiddenResources\\campaign\\([0-9]+)\\""", File.Path, "i")[1];
-			if (Folder == "") continue;
-			declare Integer CampaignEdition = TL::ToInteger(Folder);
-			if (!CampaignFiles.existskey(CampaignEdition))	CampaignFiles[CampaignEdition] = [];
-			CampaignFiles[CampaignEdition].add(File);
-		}
-
-		declare Text[Text] P_MapsWithThumbnails for P = [];
-
-		foreach (EditionId => Maps in CampaignFiles) {
-			if (!G_CampaignLocalMapsUids.existskey(EditionId)) G_CampaignLocalMapsUids[EditionId] = [];
-			foreach (MapInfo in Maps) {
-				G_CampaignLocalMapsUids[EditionId].add(K_LocalMapInfo {
-					MapUid = MapInfo.MapUid,
-					FileName = MapInfo.FileName
-				});
-				P_MapsWithThumbnails[MapInfo.MapUid] = "file://Thumbnails/MapUid/" ^ MapInfo.MapUid;
-			}
-		}
-
-		DataFileMgr.TaskResult_Release(G_FileList);
+	foreach (File in MapsList.MapInfos) {
+		declare Text Folder = TL::RegexMatch("""^MEDIABROWSER_HiddenResources\\campaign\\([0-9]+)\\""", File.Path, "i")[1];
+		if (Folder == "") continue;
+		declare Integer CampaignEdition = TL::ToInteger(Folder);
+		if (!CampaignFiles.existskey(CampaignEdition))	CampaignFiles[CampaignEdition] = [];
+		CampaignFiles[CampaignEdition].add(File);
 	}
 
+	declare Text[Text] P_MapsWithThumbnails for _P = [];
+
+	foreach (EditionId => Maps in CampaignFiles) {
+		if (!G_CampaignLocalMapsUids.existskey(EditionId)) G_CampaignLocalMapsUids[EditionId] = [];
+		foreach (MapInfo in Maps) {
+			G_CampaignLocalMapsUids[EditionId].add(K_LocalMapInfo {
+				MapUid = MapInfo.MapUid,
+				FileName = MapInfo.FileName
+			});
+			P_MapsWithThumbnails[MapInfo.MapUid] = "file://Thumbnails/MapUid/" ^ MapInfo.MapUid;
+		}
+	}
+
+	DataFileMgr.TaskResult_Release(G_FileList);
+}
+
+Void Private_LoopCheckEvents(CMlPage _P) {
 	foreach (Event in PendingEvents) {
 		if (Event.Type != CManiaAppEvent::EType::LayerCustomEvent) continue;
 		switch (Event.CustomEventType) {
 			case "play_campaign": {
-				declare Integer P_SelectedMapI for P;
-				declare Integer P_SelectedMapJ for P;
-				declare Integer P_SelectedEdition for P;
+				declare Integer P_SelectedMapI for _P;
+				declare Integer P_SelectedMapJ for _P;
+				declare Integer P_SelectedEdition for _P;
 				declare EventAPITypes::K_EventEditionContentCategory[] CampaignCategories = G_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
 
 				// Initialize with the current category maps
@@ -936,25 +980,54 @@ Void Loop() {
 					MapList.add(CategoryMaps);
 				}
 
-				declare Integer PendingPlayingMapsUpdate for LocalUser;
+				declare Integer ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser;
 				G_PendingPlayingMaps = MapList;
-				PendingPlayingMapsUpdate = Now;
+				ObsCampaignEvent_PendingPlayingMapsUpdate = Now;
 			}
 			case "update_map_selection": {
-				declare Integer P_SelectedMapI for P;
-				declare Integer P_SelectedMapJ for P;
+				declare Integer P_SelectedMapI for _P;
+				declare Integer P_SelectedMapJ for _P;
 
 				P_SelectedMapI = TL::ToInteger(Event.CustomEventData[0]);
 				P_SelectedMapJ = TL::ToInteger(Event.CustomEventData[1]);
 			}
 			case "update_edition_selection": {
 				G_LoadedEdition = TL::ToInteger(Event.CustomEventData[0]);
-				EventAPI::LoadEdition("campaign", G_LoadedEdition);
+				declare Boolean Cached = EventAPI::LoadEdition("campaign", G_LoadedEdition);
 				G_CampaignContentLoading = True;
+				if (!Cached) {
+					declare Boolean P_CampaignLoading for _P = False;
+					P_CampaignLoading = True;
+				}
 			}
 			case "refresh": {
 				Private_DebounceRefresh();
 			}
 		}
 	}
+}
+
+Void Loop() {
+	EventAPI::Loop();
+	Private_LoadingMapDialogLoop();
+
+	declare CMlPage Page <=> Windows::GetPage(GetName());
+
+	// Check if a player has finished a map
+	Private_LoopPlayerFinish(Page);
+
+	// Check if the player is nexting a map
+	// This is also triggered when the player clicks on "Play map"
+	Private_LoopPlayerNextMap(Page);
+
+	// Check when the campaign edition loading has finished
+	Private_LoopEditionLoaded(Page);
+
+	// Is set to True either in the above condition or in the Load() function or when the
+	// player selects a cached edition
+	Private_LoopUpdatePageContent(Page);
+
+	Private_LoopMapFilesList(Page);
+
+	Private_LoopCheckEvents(Page);
 }

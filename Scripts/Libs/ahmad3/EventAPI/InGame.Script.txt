@@ -1,5 +1,5 @@
-#Include "Libs/ahmad3/InnerEventAPI.Script.txt" as EventAPI
-#Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
+#Include "Libs/ahmad3/EventAPI/Impl.Script.txt" as EventAPI
+#Include "Libs/ahmad3/EventAPI/Types.Script.txt" as Types
 
 declare Types::K_EventEditionDetails G_Event;
 declare Boolean G_EventLoaded;

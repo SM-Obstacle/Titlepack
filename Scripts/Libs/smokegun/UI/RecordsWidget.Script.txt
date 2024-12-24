@@ -7,7 +7,7 @@
 #Include "Libs/ahmad3/Ban.Script.txt" as Ban
 
 #Include "Libs/ahmad3/UI/CachedRequests.Script.txt" as CachReqs
-#Include "Libs/ahmad3/Events.Script.txt" as Events
+#Include "Libs/ahmad3/EventAPI/InGame.Script.txt" as Events
 #Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrorReport
 #Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 

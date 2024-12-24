@@ -16,7 +16,7 @@
 #Include "Libs/smokegun/ObstacleLib.Script.txt" as Obstacle
 #Include "Libs/smokegun/CPTimes.Script.txt" as CPTimes
 
-#Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
+#Include "Libs/ahmad3/EventAPI/InGame.Script.txt" as ObsEvents
 
 /*********************************************
   CONSTANTS

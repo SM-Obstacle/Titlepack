@@ -1,5 +1,5 @@
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
-#Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
+#Include "Libs/ahmad3/EventAPI/InGame.Script.txt" as ObsEvents
 
 #Const  Version     "2023-29-06"
 #Const  ScriptName  "EndScreen.Script.txt"
@@ -40,16 +40,16 @@ Text GetLayer(Boolean _WithNextMapButton, Boolean _LastMap) {
 			NotifyNextMapToTP = """
 			// We notify the TP that we're about to unload the map
 			if (Name == "next_map") {
-				declare Integer PendingPlayingMapsUpdate for LocalUser;
-				PendingPlayingMapsUpdate = Now;
+				declare Integer ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser;
+				ObsCampaignEvent_PendingPlayingMapsUpdate = Now;
 			}
 			""";
 		}
 
 		NotifyFinishedMapToTP = """
 		// We notify the TP that the player finished a map
-		declare Boolean __EndScreen_MapFinished for LocalUser;
-		__EndScreen_MapFinished = True;
+		declare Boolean ObsCampaignEvent_EndScreenShown for LocalUser;
+		ObsCampaignEvent_EndScreenShown = True;
 		""";
 	}
 	

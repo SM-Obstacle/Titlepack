@@ -26,8 +26,8 @@ if (ServerLogin == "") {
 ***
 if (ServerAdmin == Null) {
     declare CSmPlayer Player = Players[0];
-    declare Boolean LoadingDialogPlayingMap for Player.User = False;
-    LoadingDialogPlayingMap = True;
+    declare Boolean ObsCampaignEvent_LoadingDialogPlayingMap for Player.User = False;
+    ObsCampaignEvent_LoadingDialogPlayingMap = True;
 }
 ***
 

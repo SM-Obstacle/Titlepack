@@ -15,7 +15,7 @@
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as ErrMgr
 #Include "Libs/ahmad3/ErrorReport.Script.txt" as ErrReport
 
-#Include "Libs/ahmad3/Events.Script.txt" as ObsEvents
+#Include "Libs/ahmad3/EventAPI/InGame.Script.txt" as ObsEvents
 
 #Include "Libs/smokegun/Settings.Script.txt" as Settings
 #Include "Libs/smokegun/Player.Script.txt" as Player

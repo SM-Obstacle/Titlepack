@@ -1,7 +1,7 @@
 #Include "TextLib" as TL
 
 #Include "Libs/smokegun/Constants.Script.txt" as C
-#Include "Libs/ahmad3/EventAPITypes.Script.txt" as Types
+#Include "Libs/ahmad3/EventAPI/Types.Script.txt" as Types
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as Err
 
 #Struct K_RequestAttr {
@@ -84,24 +84,25 @@ Void Private_InitRequest(Text _Route, Integer _Type, Text _EventHandle) {
     if (!G_PendingEvents.exists(_EventHandle)) G_PendingEvents.add(_EventHandle);
 }
 
-Void LoadEdition(Text _EventHandle, Integer _EventEdition, Boolean _Lazy) {
+Boolean LoadEdition(Text _EventHandle, Integer _EventEdition, Boolean _Lazy) {
     // If the event hasn't been fetched yet, then we put it with the requested edition
     // in the pending list
     if (!G_Events.existskey(_EventHandle) || !G_Events[_EventHandle].Editions.existskey(_EventEdition)) {
         G_PendingLoadingEditions[_EventHandle] = _EventEdition;
-        return;
+        return False;
     }
 
     // We already loaded the edition for this event, so it doesn't require to refetch the API
     if (_Lazy && G_Events[_EventHandle].EditionsDetails.existskey(_EventEdition)) {
-        return;
+        return True;
     }
 
     Private_InitRequest("event/" ^ _EventHandle ^ "/" ^ _EventEdition, C::C_Request_EventHandleEdition, _EventHandle);
+    return False;
 }
 
-Void LoadEdition(Text _EventHandle, Integer _EventEdition) {
-    LoadEdition(_EventHandle, _EventEdition, True);
+Boolean LoadEdition(Text _EventHandle, Integer _EventEdition) {
+    return LoadEdition(_EventHandle, _EventEdition, True);
 }
 
 Void LoadEvent(Text _EventHandle) {
