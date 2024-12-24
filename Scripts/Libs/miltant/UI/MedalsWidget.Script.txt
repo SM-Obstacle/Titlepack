@@ -295,7 +295,7 @@ Text GetLayer() {
             Res.fromjson(Req.Result);
             UpdateUI(Res);
         } else {
-            declare ErrMgr_K_Err Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
+            declare ErrMgr_K_Error Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
             if (Err.Err.type != ErrMgr_C_Err_Maintenance) {
                 ErrReport_ReportGet(G_Req.Route, Req.StatusCode, Req.Result);
             }
