@@ -698,11 +698,6 @@ Void Load() {
 
 	declare Integer PendingPlayingMapsUpdate for LocalUser = -1;
 	PendingPlayingMapsUpdate = -1;
-
-	if (EventAPI::HasCachedEvent("campaign")) {
-		G_CampaignEvent = EventAPI::GetCachedEvent("campaign");
-		G_UpdateCampaignContent = True;
-	}
 }
 
 Void Private_InitLoadingMapDialogLoop(Text _MapName) {
@@ -956,11 +951,6 @@ Void Loop() {
 				G_LoadedEdition = TL::ToInteger(Event.CustomEventData[0]);
 				EventAPI::LoadEdition("campaign", G_LoadedEdition);
 				G_CampaignContentLoading = True;
-				// If we already cached this edition, we update the UI for it
-				// FIXME: caching events is too heavy
-				// if (EventAPI::GetCachedEvent("campaign").EditionsDetails.existskey(G_LoadedEdition)) {
-				// 	G_UpdateCampaignContent = True;
-				// }
 			}
 			case "refresh": {
 				Private_DebounceRefresh();
