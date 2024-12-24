@@ -31,14 +31,14 @@
 
 #Const C_MP_App_Id			"de1ce3ba8e"
 #Const C_MP_Link				"https://prod.live.maniaplanet.com/login/oauth2/authorize?response_type=code&"
-//#Const C_MP_Redirect		"http://192.168.31.184:3000/give_token"
+//#Const C_MP_Redirect		"http://192.168.31.5:3000/give_token"
 //
 #Const C_MP_Redirect		"https://obstacle.titlepack.io/give_token"
 
-//#Const C_WebsiteUrl "http://192.168.31.184:3000"
+//#Const C_WebsiteUrl "http://192.168.31.5:3000"
 //
 #Const C_WebsiteUrl "https://obstacle.titlepack.io"
-//#Const C_HostUrl "http://192.168.31.184:3001/"
+//#Const C_HostUrl "http://192.168.31.5:3001/"
 //
 #Const C_HostUrl "https://obstacle.titlepack.io/api/"
 
