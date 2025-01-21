@@ -507,8 +507,6 @@ Void Private_LoopBanDialog() {
     if (DialogState.Over) {
         Menu_Quit();
     }
-
-    G_BanDialogId = -1;
 }
 
 /**
