@@ -1,11 +1,12 @@
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"				as Windows
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"			as SubMenu
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Index.Script.txt"	as Campaign
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Servers/Index.Script.txt"	as Servers
-#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"		as ExplorerDialog
-#Include "Libs/miltant/ObstacleV2/Titlepack/Components/Index.Script.txt"			as Components
-#Include "Libs/miltant/ObstacleV2/Titlepack/Components/DropDown.Script.txt"			as DropDown
-#Include "Libs/miltant/ObstacleV2/Internationalization.Script.txt"					as Internationalization
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"					as Windows
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"				as SubMenu
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Campaign.Script.txt"	as Campaign
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Servers/Index.Script.txt"		as Servers
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Events/Index.Script.txt"			as Events
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"			as ExplorerDialog
+#Include "Libs/miltant/ObstacleV2/Titlepack/Components/Index.Script.txt"				as Components
+#Include "Libs/miltant/ObstacleV2/Titlepack/Components/DropDown.Script.txt"				as DropDown
+#Include "Libs/miltant/ObstacleV2/Internationalization.Script.txt"						as Internationalization
 #Include "TextLib" as TL
 
 
@@ -60,6 +61,12 @@ Void Load() {
 	SubMenus.add(Online);
 	Servers::Load();
 
+	declare SubMenu::K_SubMenu Events;
+	Events.Name = "events";
+	Events.Image = "online";
+	SubMenus.add(Events);
+	Events::Load();
+
 	declare SubMenu::K_SubMenu Local;
 	Local.Name = "local";
 	Local.Image = "local";
@@ -78,8 +85,8 @@ Void Load() {
 
 
 	declare Windows::K_Window Window;
-	Window.Name = GetName();
-	Window.Manialink = SubMenu::Build(SubMenus);
+	Window.Layer.Name = GetName();
+	Window.Layer.Manialink = SubMenu::Build(SubMenus);
 	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
@@ -88,6 +95,7 @@ Void Load() {
 Void Loop() {
 	Campaign::Loop();
 	Servers::Loop();
+	Events::Loop();
 
 	foreach(Event in PendingEvents) {
 		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent) {

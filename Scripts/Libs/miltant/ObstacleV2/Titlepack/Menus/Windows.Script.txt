@@ -1,20 +1,26 @@
 #Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"	as Layers
 
 
-#Struct K_Window {
+#Struct K_ManialinkLayer {
 	Text Name;
 	Text Manialink;
+}
+
+#Struct K_Window {
+	K_ManialinkLayer Layer;
 	CUILayer::EUILayerAnimation Animation;
+	K_ManialinkLayer[] SubLayers;
 }
 
 declare K_Window[Text] G_Windows;
 declare Text G_Current_Window;
+declare K_Window G_CurrentRealWindow;
 
 
 Text Build(K_Window _Menu) {
 	declare ML_Text = """
-<manialink version="3" name="L_Window_{{{_Menu.Name}}}">
-{{{_Menu.Manialink}}}
+<manialink version="3" name="L_Window_{{{_Menu.Layer.Name}}}">
+{{{_Menu.Layer.Manialink}}}
 </manialink>
 	""";
 
@@ -26,12 +32,16 @@ Text Current() {
 }
 
 Void CreateWindow(K_Window _Window) {
-	if (!G_Windows.existskey(_Window.Name)) {
-		G_Windows[_Window.Name] = _Window;
-		declare LayerName = "L_Window_" ^ _Window.Name;
+	if (!G_Windows.existskey(_Window.Layer.Name)) {
+		G_Windows[_Window.Layer.Name] = _Window;
+		declare LayerName = "L_Window_" ^ _Window.Layer.Name;
 		declare Text MLText = Build(_Window);
 
 		Layers::Create(LayerName, MLText);
+
+		foreach (SubLayer in _Window.SubLayers) {
+			Layers::Create(LayerName ^ "_SubLayer_" ^ SubLayer.Name, SubLayer.Manialink);
+		}
 
 		Layers::SetAnimationTypeIn(LayerName, _Window.Animation);
 	}
@@ -54,6 +64,9 @@ CMlPage GetPage(Text _Name) {
 
 Void Unload() {
 	Layers::Detach(G_Current_Window);
+	foreach (SubLayer in G_CurrentRealWindow.SubLayers) {
+		Layers::Detach(G_Current_Window ^ "_SubLayer_" ^ SubLayer.Name);
+	}
 	G_Current_Window = "";
 }
 
@@ -64,7 +77,13 @@ Void Load(Text _Window) {
 		declare LayerName = "L_Window_" ^ _Window;
 
 		Layers::Attach(LayerName);
+
 		G_Current_Window = LayerName;
+		G_CurrentRealWindow = G_Windows[_Window];
+
+		foreach (SubLayer in G_Windows[_Window].SubLayers) {
+			Layers::Attach(LayerName ^ "_SubLayer_" ^ SubLayer.Name);
+		}
 
 		if (Layers::Exists("Obstacle_Background")) {
 			switch (_Window) {

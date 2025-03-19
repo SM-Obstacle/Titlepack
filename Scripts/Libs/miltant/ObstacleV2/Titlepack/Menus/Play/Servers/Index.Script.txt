@@ -261,8 +261,8 @@ Text Build() {
 
 Void Load() {
 	declare Windows::K_Window Window;
-	Window.Name = GetName();
-	Window.Manialink = Build();
+	Window.Layer.Name = GetName();
+	Window.Layer.Manialink = Build();
 	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
