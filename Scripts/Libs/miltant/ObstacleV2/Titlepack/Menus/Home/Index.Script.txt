@@ -152,10 +152,8 @@ Void LoopReq() {
 	G_LatestNewsImgReqId = ReqMgr::NullGetReq();
 
 	declare Windows::K_Window Window = Windows::K_Window {
-		Layer = Windows::K_ManialinkLayer {
-			Name = GetName(),
-			Manialink = Build(Res.img_url, Res.link)
-		},
+		Name = GetName(),
+		Manialink = Build(Res.img_url, Res.link),
 		Animation = CUILayer::EUILayerAnimation::LeftSlow
 	};
 

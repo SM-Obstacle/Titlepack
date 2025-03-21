@@ -5,10 +5,21 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			    as Windows
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Index.Script.txt"   as Campaign
 
+#Include "TextLib" as TL
+
+Text GetName() {
+	return "campaign";
+}
+
+Text GetSideBarName() {
+	return "L_CampaignSideBar";
+}
+
 Text BuildSideBar() {
 	return """
+<manialink version="3" name="{{{GetSideBarName()}}}">
 {{{Styles::GetStyleSheet()}}}
-<frame id="Frame_CampaignSideBar">
+<frame id="Frame_CampaignSideBar" pos="92.16 53.5">
 	<framemodel id="CampaignEditionItem">
 		<label id="Label_CampaignEdition" halign="center" textprefix="$t" class="lato" textcolor="" textsize="4.8" scriptevents="1"/>
 	</framemodel>
@@ -40,6 +51,8 @@ Text BuildSideBar() {
 
 {{{EventAPITypes::ML_Preproc()}}}
 
+{{{Styles::GetDeclareGlobals()}}}
+
 Void InitCampaignEditionsList() {
 	declare K_Event P_CampaignEvent for Page;
 	declare Integer P_SelectedEdition for Page;
@@ -68,17 +81,53 @@ Void InitCampaignEditionsList() {
 }
 
 main() {
-	declare Text P_SelectedEventHandle for Page = "";
 	declare Integer P_SelectedEdition for Page = -1;
-	
-	declare Text SelectedCampaignHandle = "";
 	declare Integer SelectedCampaign = -1;
 
 	wait(P_SelectedEdition != -1);
 
 	while (True) {
-		if (SelectedCampaign != P_SelectedEdition || SelectedCampaignHandle != P_SelectedEventHandle) {
+		if (SelectedCampaign != P_SelectedEdition) {
 			InitCampaignEditionsList();
+			SelectedCampaign = P_SelectedEdition;
+		}
+
+		foreach (Event in PendingEvents) {
+			{{{Styles::GetEventLoopActiveItem()}}}
+
+			switch (Event.Type) {
+				case CMlScriptEvent::Type::MouseOver: {
+					if (Event.ControlId != "Label_CampaignEdition") continue;
+
+					declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
+					Label_Edition.TextColor = CL::HexToRgb("FFFFFF");
+				}
+				case CMlScriptEvent::Type::MouseOut: {
+					if (Event.ControlId != "Label_CampaignEdition") continue;
+
+					declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
+					if (!Label_Edition.DataAttributeExists("editionid")) continue;
+					declare Integer EditionIdx = TL::ToInteger(Event.Control.DataAttributeGet("editionid"));
+					if (EditionIdx == P_SelectedEdition) continue;
+
+					Label_Edition.TextColor = CL::HexToRgb("B4B4B4");
+				}
+				case CMlScriptEvent::Type::MouseClick: {
+					switch (Event.ControlId) {
+						case "Label_CampaignEdition": {
+							// FIXME: se baser sur l'idx de l'associated array et pas sur son emplacement
+							if (!Event.Control.DataAttributeExists("editionid")) continue;
+							declare Text RawEditionIdx = Event.Control.DataAttributeGet("editionid");
+							declare Integer EditionIdx = TL::ToInteger(RawEditionIdx);
+							if (EditionIdx == P_SelectedEdition) continue;
+							SendCustomEvent("update_edition_selection", [RawEditionIdx]);
+						}
+						case "Quad_Refresh": {
+							SendCustomEvent("refresh", []);
+						}
+					}
+				}
+			}
 		}
 
 		yield;
@@ -86,17 +135,36 @@ main() {
 }
 
 ]]></script>
+</manialink>
 """;
 }
 
 Void Load() {
-	Campaign::SetEventHandle("campaign");
-	Campaign::Load([Windows::K_ManialinkLayer {
-		Name = "L_CampaignSideBar",
-		Manialink = BuildSideBar()
-	}]);
+	Campaign::Load(GetName(), [
+		GetSideBarName() => BuildSideBar()
+	]);
+	Campaign::SetEventHandle(GetName(), "campaign");
 }
 
 Void Loop() {
-	Campaign::Loop(Windows::GetPage("L_CampaignSideBar"));
+	Campaign::Loop(GetName(), Windows::GetPageOfSubLayer(GetName(), GetSideBarName()));
+
+	foreach (Event in PendingEvents) {
+		if (Event.Type != CManiaAppEvent::EType::LayerCustomEvent
+			|| Event.CustomEventLayer.AttachId != GetSideBarName())
+		{
+			continue;
+		}
+
+		switch (Event.CustomEventType) {
+			case "update_edition_selection": {
+				declare Integer EditionId = TL::ToInteger(Event.CustomEventData[0]);
+				Campaign::SelectEdition(GetName(), "campaign", EditionId);
+			}
+
+			case "refresh": {
+				Campaign::Refresh(GetName());
+			}
+		}
+	}
 }

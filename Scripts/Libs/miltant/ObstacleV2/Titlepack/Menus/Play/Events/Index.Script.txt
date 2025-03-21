@@ -6,7 +6,7 @@
  *   of the Titlepack.
  ***********************************************/
 
-
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Index.Script.txt"   as Campaign
 
 /*********************************************
   CONSTANTS
@@ -20,10 +20,14 @@
 //// Public
 ////////////////////
 
-Void Load() {
+Text GetName() {
+    return "events";
+}
 
+Void Load() {
+    Campaign::Load(GetName(), []);
 }
 
 Void Loop() {
-
+    Campaign::Loop(GetName(), Null);
 }

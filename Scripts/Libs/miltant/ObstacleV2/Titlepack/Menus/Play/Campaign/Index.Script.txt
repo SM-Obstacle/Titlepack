@@ -39,29 +39,25 @@
 	Text MapName;
 }
 
-Text GetName() {
-	return "campaign";
-}
-
-declare Ident G_FileList;
-declare Boolean G_ContentLoading;
-declare Boolean G_UpdateContent;
-declare EventAPITypes::K_Event G_CurrentEvent;
-declare K_LocalMapInfo[][Integer] G_CampaignLocalMapsUids;
-declare K_PendingPlayingMap[][] G_PendingPlayingMaps;
-declare Integer G_PendingPlayingMapsUpdate;
-declare Text G_LoadedEventHandle;
-declare Integer G_LoadedEdition;
+declare Ident[Text] G_FileList;
+declare Boolean[Text] G_ContentLoading;
+declare Boolean[Text] G_UpdateContent;
+declare EventAPITypes::K_Event[Text] G_CurrentEvent;
+declare K_LocalMapInfo[][Integer][Text] G_CampaignLocalMapsUids;
+declare K_PendingPlayingMap[][][Text] G_PendingPlayingMaps;
+declare Integer[Text] G_PendingPlayingMapsUpdate;
+declare Text[Text] G_LoadedEventHandle;
+declare Integer[Text] G_LoadedEdition;
 
 // Used to handle the state of the map loading dialog
-declare Integer G_LoadingMapDialog;
-declare Boolean G_LoadingMap;
+declare Integer[Text] G_LoadingMapDialog;
+declare Boolean[Text] G_LoadingMap;
 
 // Used to debounce the refresh of the event editions
-declare Integer G_RefreshInstant;
+declare Integer[Text] G_RefreshInstant;
 
-Void SetEventHandle(Text _EventHandle) {
-	G_LoadedEventHandle = _EventHandle;
+Void SetEventHandle(Text _LayerName, Text _EventHandle) {
+	G_LoadedEventHandle[_LayerName] = _EventHandle;
 }
 
 Text Build() {
@@ -608,14 +604,6 @@ Text Build() {
 					}
 					case CMlScriptEvent::Type::MouseClick: {
 						switch (Event.ControlId) {
-							case "Label_CampaignEdition": {
-								// FIXME: se baser sur l'idx de l'associated array et pas sur son emplacement
-								if (!Event.Control.DataAttributeExists("editionid")) continue;
-								declare Text RawEditionIdx = Event.Control.DataAttributeGet("editionid");
-								declare Integer EditionIdx = TL::ToInteger(RawEditionIdx);
-								if (EditionIdx == P_SelectedEdition) continue;
-								SendCustomEvent("update_edition_selection", [RawEditionIdx]);
-							}
 							case "Button_Map": {
 								declare CMlFrame ClickedCard = Event.Control.Parent;
 
@@ -651,9 +639,6 @@ Text Build() {
 									MapsNeedRefresh = True;
 								}
 							}
-							case "Quad_Refresh": {
-								SendCustomEvent("refresh", []);
-							}
 						}
 
 						// Manages the click event of the categories pagination buttons
@@ -680,35 +665,50 @@ Text Build() {
 """;
 }
 
-Void Load(Windows::K_ManialinkLayer[] _SubLayers) {
+Void Unload(Text _LayerName) {
+	G_FileList[_LayerName] = NullId;
+	G_ContentLoading[_LayerName] = False;
+	G_UpdateContent[_LayerName] = False;
+	G_CurrentEvent[_LayerName] = EventAPITypes::K_Event {};
+	G_CampaignLocalMapsUids[_LayerName] = [];
+	G_PendingPlayingMaps[_LayerName] = [];
+	G_PendingPlayingMapsUpdate[_LayerName] = 0;
+	G_LoadedEventHandle[_LayerName] = "";
+	G_LoadedEdition[_LayerName] = 0;
+	G_LoadingMapDialog[_LayerName] = 0;
+	G_LoadingMap[_LayerName] = False;
+	G_RefreshInstant[_LayerName] = 0;
+}
+
+Void Private_Reload(Text _LayerName) {
+	G_ContentLoading[_LayerName] = True;
 	EventAPI::Load();
 
-	G_ContentLoading = True;
+	G_PendingPlayingMapsUpdate[_LayerName] = -1;
+	G_LoadedEdition[_LayerName] = -1;
+
+	declare Integer[Text] ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser = [_LayerName => -1];
+	ObsCampaignEvent_PendingPlayingMapsUpdate[_LayerName] = -1;
+	declare Boolean P_CampaignLoading for Windows::GetPage(_LayerName) = False;
+	P_CampaignLoading = True;
+}
+
+Void Load(Text _LayerName, Text[Text] _SubLayers) {
+	Unload(_LayerName);
 
 	declare Windows::K_Window Window;
-	Window.Layer.Name = GetName();
-	Window.Layer.Manialink = Build();
+	Window.Name = _LayerName;
+	Window.Manialink = Build();
 	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 	Window.SubLayers = _SubLayers;
 
 	Windows::CreateWindow(Window);
-	
-	G_PendingPlayingMapsUpdate = -1;
-	G_LoadedEdition = -1;
-
-	declare Integer ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser = -1;
-	ObsCampaignEvent_PendingPlayingMapsUpdate = -1;
-	declare Boolean P_CampaignLoading for Windows::GetPage(GetName()) = False;
-	P_CampaignLoading = True;
+	Private_Reload(_LayerName);
 }
 
-Void Load() {
-	Load([]);
-}
-
-Void Private_InitLoadingMapDialogLoop(Text _MapName) {
-	G_LoadingMap = True;
-	G_LoadingMapDialog = UI::NewDialog(
+Void Private_InitLoadingMapDialogLoop(Text _LayerName, Text _MapName) {
+	G_LoadingMap[_LayerName] = True;
+	G_LoadingMapDialog[_LayerName] = UI::NewDialog(
 		"Loading...",
 		UI::K_Message {
 			Label = "Loading the map $<" ^ _MapName ^ "$>, please wait..."
@@ -717,103 +717,112 @@ Void Private_InitLoadingMapDialogLoop(Text _MapName) {
 	);
 }
 
-Void Private_LoadingMapDialogLoop() {
-	if (!G_LoadingMap) return;
+Void Private_LoadingMapDialogLoop(Text _LayerName) {
+	if (!G_LoadingMap[_LayerName]) return;
 
 	declare Boolean ObsCampaignEvent_LoadingDialogPlayingMap for LocalUser = False;
 	if (ObsCampaignEvent_LoadingDialogPlayingMap) {
 		ObsCampaignEvent_LoadingDialogPlayingMap = False;
-		G_LoadingMap = False;
-		UI::CloseDialog(G_LoadingMapDialog);
+		G_LoadingMap[_LayerName] = False;
+		UI::CloseDialog(G_LoadingMapDialog[_LayerName]);
 		return;
 	}
 
-	UI::Prompt(G_LoadingMapDialog, True);
+	UI::Prompt(G_LoadingMapDialog[_LayerName], True);
 }
 
-Void Private_DebounceRefresh() {
-	if (Now - G_RefreshInstant < C_EventsRefreshPeriod * 1000) return;
-	G_RefreshInstant = Now;
-	Load();
+Void Private_DebounceRefresh(Text _LayerName) {
+	if (Now - G_RefreshInstant[_LayerName] < C_EventsRefreshPeriod * 1000) return;
+	G_RefreshInstant[_LayerName] = Now;
+	Private_Reload(_LayerName);
 }
 
-Void Private_LoopPlayerFinish(CMlPage _P) {
+Void Private_LoopPlayerFinish(Text _LayerName) {
+	declare CMlPage CurrentPage <=> Windows::GetPage(_LayerName);
+
 	declare Boolean ObsCampaignEvent_EndScreenShown for LocalUser = False;
 	if (!ObsCampaignEvent_EndScreenShown) return;
 
-	declare Integer P_SelectedEdition for _P;
+	declare Integer P_SelectedEdition for CurrentPage;
 	// Refetches the current edition even if it has already been loaded
-	EventAPI::LoadEdition(G_LoadedEventHandle, P_SelectedEdition, False);
-	declare Boolean P_CampaignLoading for _P = False;
+	EventAPI::LoadEdition(G_LoadedEventHandle[_LayerName], P_SelectedEdition, False);
+	declare Boolean P_CampaignLoading for CurrentPage = False;
 	P_CampaignLoading = True;
 	ObsCampaignEvent_EndScreenShown = False;
-	G_ContentLoading = True;
+	G_ContentLoading[_LayerName] = True;
 
-	declare Integer P_SelectedMapJ for _P = -1;
+	declare Integer P_SelectedMapJ for CurrentPage = -1;
 	P_SelectedMapJ += 1;
 }
 
-Void Private_LoopPlayerNextMap(CMlPage _P) {
-	declare Integer ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser = -1;
-	if (ObsCampaignEvent_PendingPlayingMapsUpdate == G_PendingPlayingMapsUpdate) return;
+Void Private_LoopPlayerNextMap(Text _LayerName) {
+	declare CMlPage CurrentPage <=> Windows::GetPage(_LayerName);
 
-	G_PendingPlayingMapsUpdate = ObsCampaignEvent_PendingPlayingMapsUpdate;
+	declare Integer[Text] ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser = [_LayerName => -1];
+	if (ObsCampaignEvent_PendingPlayingMapsUpdate[_LayerName] == G_PendingPlayingMapsUpdate[_LayerName]) return;
 
-	declare Integer P_SelectedEdition for _P = -1;
-	declare Integer P_SelectedMapI for _P = -1;
-	declare Integer P_SelectedMapJ for _P = -1;
+	G_PendingPlayingMapsUpdate[_LayerName] = ObsCampaignEvent_PendingPlayingMapsUpdate[_LayerName];
 
-	if (G_PendingPlayingMaps[0].count == 0) {
+	declare Integer P_SelectedEdition for CurrentPage = -1;
+	declare Integer P_SelectedMapI for CurrentPage = -1;
+	declare Integer P_SelectedMapJ for CurrentPage = -1;
+
+	if (G_PendingPlayingMaps[_LayerName][0].count == 0) {
 		P_SelectedMapI += 1;
-		if (P_SelectedMapI == G_CurrentEvent.EditionsDetails[P_SelectedEdition].categories.count) {
+		if (P_SelectedMapI == G_CurrentEvent[_LayerName].EditionsDetails[P_SelectedEdition].categories.count) {
 			P_SelectedMapI = 0;
 		}
 		P_SelectedMapJ = 0;
-		G_PendingPlayingMaps.removekey(0);
+		G_PendingPlayingMaps[_LayerName].removekey(0);
 	}
-	declare K_PendingPlayingMap NextMap = G_PendingPlayingMaps[0][0];
-	G_PendingPlayingMaps[0].removekey(0);
+	declare K_PendingPlayingMap NextMap = G_PendingPlayingMaps[_LayerName][0][0];
+	G_PendingPlayingMaps[_LayerName][0].removekey(0);
 
-	declare Boolean IsLastMap = G_PendingPlayingMaps.count == 1 && G_PendingPlayingMaps[0].count == 0;
+	declare Boolean IsLastMap = G_PendingPlayingMaps[_LayerName].count == 1 && G_PendingPlayingMaps[_LayerName][0].count == 0;
 	declare Boolean LockEventsUI = True;
 
-	Private_InitLoadingMapDialogLoop(NextMap.MapName);
+	Private_InitLoadingMapDialogLoop(_LayerName, NextMap.MapName);
 
 	wait(TitleControl.IsReady);
 	TitleControl.PlayMap(NextMap.MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
 	<mode_script_settings>
 		<setting name="S_LockEventsUI" value="{{{LockEventsUI}}}" type="boolean" />
-		<setting name="S_EventHandle" value="{{{G_LoadedEventHandle}}}" type="text" />
+		<setting name="S_EventHandle" value="{{{G_LoadedEventHandle[_LayerName]}}}" type="text" />
 		<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />
 		<setting name="S_LastMap" value="{{{IsLastMap}}}" type="boolean" />
+		<setting name="S_LayerNameUsedInTp" value="{{{_LayerName}}}" type="text" />
 	</mode_script_settings>
 	""");
 }
 
-Void Private_LoopEditionLoaded(CMlPage _P) {
-	if (!(G_ContentLoading && EventAPI::EventHasContent(G_LoadedEventHandle))) return;
+Void Private_LoopEditionLoaded(Text _LayerName) {
+	if (!(G_ContentLoading[_LayerName] && EventAPI::EventHasContent(G_LoadedEventHandle[_LayerName]))) return;
 
-	G_CurrentEvent = EventAPI::GetEvent(G_LoadedEventHandle);
-	G_UpdateContent = True;
-	G_ContentLoading = False;
-	declare Boolean P_CampaignLoading for _P = False;
+	G_CurrentEvent[_LayerName] = EventAPI::GetEvent(G_LoadedEventHandle[_LayerName]);
+	G_UpdateContent[_LayerName] = True;
+	G_ContentLoading[_LayerName] = False;
+	declare Boolean P_CampaignLoading for Windows::GetPage(_LayerName) = False;
 	P_CampaignLoading = False;
 }
 
-Void Private_UpdatePageCurrentEvent(CMlPage _P, Text _Handle, Integer _Edition) {
+Void Private_UpdatePageCurrentEvent(Text _LayerName, CMlPage _P, Text _Handle, Integer _Edition) {
 	declare Text P_SelectedEventHandle for _P = "";
 	P_SelectedEventHandle = _Handle;
 	declare Integer P_SelectedEdition for _P = -1;
 	P_SelectedEdition = _Edition;
+	declare EventAPITypes::K_Event P_CampaignEvent for _P;
+	P_CampaignEvent = G_CurrentEvent[_LayerName];
 }
 
-Void Private_LoopUpdatePageContent(CMlPage _P, CMlPage _SideBarPage) {
-	if (!G_UpdateContent) return;
+Void Private_LoopUpdatePageContent(Text _LayerName, CMlPage _SideBarPage) {
+	declare CMlPage CurrentPage <=> Windows::GetPage(_LayerName);
 
-	G_UpdateContent = False;
+	if (!G_UpdateContent[_LayerName]) return;
 
-	declare EventAPITypes::K_Event P_CampaignEvent for _P;
-	P_CampaignEvent = G_CurrentEvent;
+	G_UpdateContent[_LayerName] = False;
+
+	declare EventAPITypes::K_Event P_CampaignEvent for CurrentPage;
+	P_CampaignEvent = G_CurrentEvent[_LayerName];
 
 	// todo more graceful handling of this
 	if (P_CampaignEvent.Editions.count == 0) {
@@ -822,19 +831,19 @@ Void Private_LoopUpdatePageContent(CMlPage _P, CMlPage _SideBarPage) {
 	}
 
 	declare Integer SelectedEdition = -1;
-	if (G_LoadedEdition == -1) {
+	if (G_LoadedEdition[_LayerName] == -1) {
 		// If it's the first load, we get the maximum event edition
-		foreach (EditionId => _NotUsed in G_CurrentEvent.Editions) {
+		foreach (EditionId => _NotUsed in G_CurrentEvent[_LayerName].Editions) {
 			if (EditionId > SelectedEdition) SelectedEdition = EditionId;
 		}
 	} else {
 		// Else we just bind to the loaded edition index, because this would be
 		// what the user selected in the page
-		SelectedEdition = G_LoadedEdition;
+		SelectedEdition = G_LoadedEdition[_LayerName];
 	}
 
-	declare Integer P_SelectedMapI for _P = -1;
-	declare Integer P_SelectedMapJ for _P = -1;
+	declare Integer P_SelectedMapI for CurrentPage = -1;
+	declare Integer P_SelectedMapJ for CurrentPage = -1;
 	declare Integer SelectedMapI = -1;
 	declare Integer SelectedMapJ = -1;
 	declare Boolean Break = False;
@@ -854,28 +863,30 @@ Void Private_LoopUpdatePageContent(CMlPage _P, CMlPage _SideBarPage) {
 	P_SelectedMapI = ML::Max(SelectedMapI, 0);
 	P_SelectedMapJ = ML::Max(SelectedMapJ, 0);
 
-	declare Boolean P_TimesReloaded for _P;
+	declare Boolean P_TimesReloaded for CurrentPage;
 	P_TimesReloaded = True;
 
-	Private_UpdatePageCurrentEvent(_P, G_LoadedEventHandle, SelectedEdition);
-	Private_UpdatePageCurrentEvent(_SideBarPage, G_LoadedEventHandle, SelectedEdition);
+	Private_UpdatePageCurrentEvent(_LayerName, CurrentPage, G_LoadedEventHandle[_LayerName], SelectedEdition);
+	Private_UpdatePageCurrentEvent(_LayerName, _SideBarPage, G_LoadedEventHandle[_LayerName], SelectedEdition);
 
 	// Fetches the downloaded maps for the current edition
 	// flatten, sort by date asc
 	// FIXME: why do we do this everytime?
-	G_FileList = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\campaign\\", True, False, True).Id;
+	G_FileList[_LayerName] = DataFileMgr.Map_GetGameList("\\MEDIABROWSER_HiddenResources\\campaign\\", True, False, True).Id;
 }
 
-Void Private_LoopMapFilesList(CMlPage _P) {
-	if (!(DataFileMgr.TaskResults.existskey(G_FileList)
-		&& DataFileMgr.TaskResults[G_FileList].HasSucceeded))
+Void Private_LoopMapFilesList(Text _LayerName) {
+	declare CMlPage CurrentPage <=> Windows::GetPage(_LayerName);
+
+	if (!(DataFileMgr.TaskResults.existskey(G_FileList[_LayerName])
+		&& DataFileMgr.TaskResults[G_FileList[_LayerName]].HasSucceeded))
 	{
 		return;
 	}
 
 	// associate Maps to their parent folder and update the manialink
 	declare CMapInfo[][Integer] CampaignFiles;
-	declare CTaskResult_MapList MapsList = (DataFileMgr.TaskResults[G_FileList] as CTaskResult_MapList);
+	declare CTaskResult_MapList MapsList = (DataFileMgr.TaskResults[G_FileList[_LayerName]] as CTaskResult_MapList);
 
 	foreach (File in MapsList.MapInfos) {
 		declare Text Folder = TL::RegexMatch("""^MEDIABROWSER_HiddenResources\\campaign\\([0-9]+)\\""", File.Path, "i")[1];
@@ -885,12 +896,12 @@ Void Private_LoopMapFilesList(CMlPage _P) {
 		CampaignFiles[CampaignEdition].add(File);
 	}
 
-	declare Text[Text] P_MapsWithThumbnails for _P = [];
+	declare Text[Text] P_MapsWithThumbnails for CurrentPage = [];
 
 	foreach (EditionId => Maps in CampaignFiles) {
-		if (!G_CampaignLocalMapsUids.existskey(EditionId)) G_CampaignLocalMapsUids[EditionId] = [];
+		if (!G_CampaignLocalMapsUids[_LayerName].existskey(EditionId)) G_CampaignLocalMapsUids[_LayerName][EditionId] = [];
 		foreach (MapInfo in Maps) {
-			G_CampaignLocalMapsUids[EditionId].add(K_LocalMapInfo {
+			G_CampaignLocalMapsUids[_LayerName][EditionId].add(K_LocalMapInfo {
 				MapUid = MapInfo.MapUid,
 				FileName = MapInfo.FileName
 			});
@@ -898,18 +909,25 @@ Void Private_LoopMapFilesList(CMlPage _P) {
 		}
 	}
 
-	DataFileMgr.TaskResult_Release(G_FileList);
+	DataFileMgr.TaskResult_Release(G_FileList[_LayerName]);
 }
 
-Void Private_LoopCheckEvents(CMlPage _P) {
+Void Private_LoopCheckEvents(Text _LayerName) {
 	foreach (Event in PendingEvents) {
-		if (Event.Type != CManiaAppEvent::EType::LayerCustomEvent) continue;
+		if (Event.Type != CManiaAppEvent::EType::LayerCustomEvent
+			|| Event.CustomEventLayer.AttachId != _LayerName)
+		{
+			continue;
+		}
+
+		declare CMlPage CurrentPage <=> Windows::GetPage(_LayerName);
+
 		switch (Event.CustomEventType) {
 			case "play_campaign": {
-				declare Integer P_SelectedMapI for _P;
-				declare Integer P_SelectedMapJ for _P;
-				declare Integer P_SelectedEdition for _P;
-				declare EventAPITypes::K_EventEditionContentCategory[] CampaignCategories = G_CurrentEvent.EditionsDetails[P_SelectedEdition].categories;
+				declare Integer P_SelectedMapI for CurrentPage;
+				declare Integer P_SelectedMapJ for CurrentPage;
+				declare Integer P_SelectedEdition for CurrentPage;
+				declare EventAPITypes::K_EventEditionContentCategory[] CampaignCategories = G_CurrentEvent[_LayerName].EditionsDetails[P_SelectedEdition].categories;
 
 				// Initialize with the current category maps
 				declare K_PendingPlayingMap[][] MapList = [[]];
@@ -917,8 +935,8 @@ Void Private_LoopCheckEvents(CMlPage _P) {
 				foreach (Map in CampaignCategories[P_SelectedMapI].maps.slice(P_SelectedMapJ, CampaignCategories[P_SelectedMapI].maps.count)) {
 					declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
 
-					if (G_CampaignLocalMapsUids.existskey(P_SelectedEdition)) {
-						foreach (FileMap in G_CampaignLocalMapsUids[P_SelectedEdition]) {
+					if (G_CampaignLocalMapsUids[_LayerName].existskey(P_SelectedEdition)) {
+						foreach (FileMap in G_CampaignLocalMapsUids[_LayerName][P_SelectedEdition]) {
 							if (FileMap.MapUid == Map.map_uid) {
 								Path = FileMap.FileName;
 								break;
@@ -938,8 +956,8 @@ Void Private_LoopCheckEvents(CMlPage _P) {
 					foreach (Map in Category.maps) {
 						declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
 
-						if (G_CampaignLocalMapsUids.existskey(P_SelectedEdition)) {
-							foreach (FileMap in G_CampaignLocalMapsUids[P_SelectedEdition]) {
+						if (G_CampaignLocalMapsUids[_LayerName].existskey(P_SelectedEdition)) {
+							foreach (FileMap in G_CampaignLocalMapsUids[_LayerName][P_SelectedEdition]) {
 								if (FileMap.MapUid == Map.map_uid) {
 									Path = FileMap.FileName;
 									break;
@@ -956,54 +974,56 @@ Void Private_LoopCheckEvents(CMlPage _P) {
 					MapList.add(CategoryMaps);
 				}
 
-				declare Integer ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser;
-				G_PendingPlayingMaps = MapList;
-				ObsCampaignEvent_PendingPlayingMapsUpdate = Now;
+				declare Integer[Text] ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser;
+				G_PendingPlayingMaps[_LayerName] = MapList;
+				ObsCampaignEvent_PendingPlayingMapsUpdate[_LayerName] = Now;
 			}
 			case "update_map_selection": {
-				declare Integer P_SelectedMapI for _P;
-				declare Integer P_SelectedMapJ for _P;
+				declare Integer P_SelectedMapI for CurrentPage;
+				declare Integer P_SelectedMapJ for CurrentPage;
 
 				P_SelectedMapI = TL::ToInteger(Event.CustomEventData[0]);
 				P_SelectedMapJ = TL::ToInteger(Event.CustomEventData[1]);
-			}
-			case "update_edition_selection": {
-				G_LoadedEdition = TL::ToInteger(Event.CustomEventData[0]);
-				declare Boolean Cached = EventAPI::LoadEdition(G_LoadedEventHandle, G_LoadedEdition);
-				G_ContentLoading = True;
-				if (!Cached) {
-					declare Boolean P_CampaignLoading for _P = False;
-					P_CampaignLoading = True;
-				}
-			}
-			case "refresh": {
-				Private_DebounceRefresh();
 			}
 		}
 	}
 }
 
-Void Loop(CMlPage _SideBarPage) {
-	EventAPI::Loop();
-	Private_LoadingMapDialogLoop();
+Void SelectEdition(Text _LayerName, Text _EventHandle, Integer _EditionId) {
+	G_LoadedEdition[_LayerName] = _EditionId;
+	G_LoadedEventHandle[_LayerName] = _EventHandle;
+	G_ContentLoading[_LayerName] = True;
 
-	declare CMlPage Page <=> Windows::GetPage(GetName());
+	declare Boolean Cached = EventAPI::LoadEdition(_EventHandle, _EditionId);
+	if (!Cached) {
+		declare Boolean P_CampaignLoading for Windows::GetPage(_LayerName) = False;
+		P_CampaignLoading = True;
+	}
+}
+
+Void Refresh(Text _LayerName) {
+	Private_DebounceRefresh(_LayerName);
+}
+
+Void Loop(Text _LayerName, CMlPage _SideBarPage) {
+	EventAPI::Loop();
+	Private_LoadingMapDialogLoop(_LayerName);
 
 	// Check if a player has finished a map
-	Private_LoopPlayerFinish(Page);
+	Private_LoopPlayerFinish(_LayerName);
 
 	// Check if the player is nexting a map
 	// This is also triggered when the player clicks on "Play map"
-	Private_LoopPlayerNextMap(Page);
+	Private_LoopPlayerNextMap(_LayerName);
 
 	// Check when the campaign edition loading has finished
-	Private_LoopEditionLoaded(Page);
+	Private_LoopEditionLoaded(_LayerName);
 
 	// Is set to True either in the above condition or in the Load() function or when the
 	// player selects a cached edition
-	Private_LoopUpdatePageContent(Page, _SideBarPage);
+	Private_LoopUpdatePageContent(_LayerName, _SideBarPage);
 
-	Private_LoopMapFilesList(Page);
+	Private_LoopMapFilesList(_LayerName);
 
-	Private_LoopCheckEvents(Page);
+	Private_LoopCheckEvents(_LayerName);
 }

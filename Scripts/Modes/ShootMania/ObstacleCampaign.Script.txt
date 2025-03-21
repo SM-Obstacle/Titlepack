@@ -4,6 +4,8 @@
 
 // This is used by the TP to know if we're playing the last map of the event or not.
 #Setting S_LastMap False as "<hidden>"
+// This is sent by the TP to identify which layer was used to make the player play the map.
+#Setting S_LayerNameUsedInTp "" as "<hidden>"
 
 ***Match_InitServer***
 ***
@@ -87,7 +89,7 @@ UIManager.GetUI(Player).UISequence = CUIConfig::EUISequence::Podium;
 
 ***Campaign_CreateUI***
 ***
-Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null, S_LastMap));
+Layers::Create("EndScreen", EndScreen::GetLayer(ServerAdmin == Null, S_LastMap, S_LayerNameUsedInTp));
 ***
 
 ***MB_Private_EnableLadder***

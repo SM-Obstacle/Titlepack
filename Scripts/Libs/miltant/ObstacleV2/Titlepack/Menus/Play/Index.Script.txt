@@ -50,7 +50,7 @@ Void Load() {
 	declare SubMenu::K_SubMenu[] SubMenus;
 
 	declare SubMenu::K_SubMenu Campaign;
-	Campaign.Name = "campaign";
+	Campaign.Name = Campaign::GetName();
 	Campaign.Image = "campaign";
 	SubMenus.add(Campaign);
 	Campaign::Load();
@@ -85,8 +85,8 @@ Void Load() {
 
 
 	declare Windows::K_Window Window;
-	Window.Layer.Name = GetName();
-	Window.Layer.Manialink = SubMenu::Build(SubMenus);
+	Window.Name = GetName();
+	Window.Manialink = SubMenu::Build(SubMenus);
 	Window.Animation = CUILayer::EUILayerAnimation::LeftSlow;
 
 	Windows::CreateWindow(Window);
