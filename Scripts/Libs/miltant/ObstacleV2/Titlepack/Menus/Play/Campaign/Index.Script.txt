@@ -538,7 +538,8 @@ Text Build() {
 				MapsNeedRefresh = True;
 
 				declare Vec2[Text] SpecialConfig;
-				if (C_SpecialEventConfigKey[SelectedCampaignHandle].existskey(SelectedCampaign)
+				if (C_SpecialEventConfigKey.existskey(SelectedCampaignHandle)
+					&& C_SpecialEventConfigKey[SelectedCampaignHandle].existskey(SelectedCampaign)
 					&& C_SpecialEventConfig.existskey(C_SpecialEventConfigKey[SelectedCampaignHandle][SelectedCampaign]))
 				{
 					SpecialConfig = C_SpecialEventConfig[C_SpecialEventConfigKey[SelectedCampaignHandle][SelectedCampaign]];
