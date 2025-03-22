@@ -1,5 +1,3 @@
-#Include "Libs/miltant/Nadeo_Fork/Common/Core/MenuLayers.Script.txt"				as Layers
-
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						    as Styles
 #Include "Libs/ahmad3/EventAPI/Types.Script.txt"								    as EventAPITypes
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			    as Windows

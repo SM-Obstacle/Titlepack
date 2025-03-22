@@ -79,14 +79,14 @@ Text Build() {
 	</framemodel>
 
 	<framemodel id="CategoryModel">
-		<quad pos="16.75 2" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
+		<quad pos="16.75 2" id="Quad_Category_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
 		<quad id="Category" pos="-.83" size="31.17 3.67"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -8.67" id="Card_1"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -20.33" id="Card_2"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -32" id="Card_3"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -43.67" id="Card_4"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -55.33" id="Card_5"/>
-		<quad pos="16.75 -66.5" id="Quad_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
+		<quad pos="16.75 -66.5" id="Quad_Category_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
 	</framemodel>
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
@@ -132,13 +132,13 @@ Text Build() {
 
 	<frame pos="-96.17 53.5">
 		<frame pos="8 -46.67" id="Frame_CampaignContent" hidden="1">
-			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
+			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
 			<frameinstance modelid="CategoryModel" id="F_Category_1" hidden="1"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_2" hidden="1" pos="34.5"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_3" hidden="1" pos="69"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_4" hidden="1" pos="103.5"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_5" hidden="1" pos="138"/>
-			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" hidden="1"/>
+			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
 		</frame>
 
 		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" class="lator" id="Label_EventLn1"/>
@@ -195,8 +195,8 @@ Text Build() {
 		foreach (I => PageState in G_CategoriesPages.slice(C_MaxCategoriesPerPage * (G_CurrentPage_Categories-1), C_MaxCategoriesPerPage)) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ (I+1)) as CMlFrame);
 
-			declare CMlQuad Quad_PreviousPage <=> (Frame_Category.GetFirstChild("Quad_PreviousPage") as CMlQuad);
-			declare CMlQuad Quad_NextPage <=> (Frame_Category.GetFirstChild("Quad_NextPage") as CMlQuad);
+			declare CMlQuad Quad_PreviousPage <=> (Frame_Category.GetFirstChild("Quad_Category_PreviousPage") as CMlQuad);
+			declare CMlQuad Quad_NextPage <=> (Frame_Category.GetFirstChild("Quad_Category_NextPage") as CMlQuad);
 
 			declare previousPageDisabled = Quad_PreviousPage.Substyle == "ArrowDisabled";
 			if (PageState.CurrentPage == 1 && !previousPageDisabled) {
@@ -352,12 +352,14 @@ Text Build() {
 
 		Frame_Infos.Show();
 
-		// Number displayed on the maps cards
-		declare DisplayNumber = 0;
+		declare Integer CategoriesSliceStartIdx = C_MaxCategoriesPerPage * (G_CurrentPage_Categories-1);
 
 		// Show all of current page
+
 		declare K_EventEditionContentCategory[] Categories = P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories
-			.slice(C_MaxCategoriesPerPage * (G_CurrentPage_Categories-1), C_MaxCategoriesPerPage);
+			.slice(CategoriesSliceStartIdx, C_MaxCategoriesPerPage);
+
+		// Iterate over the sliced categories (indexes correspond to P_SelectedMapI + CategoriesSliceStartIdx)
 		foreach (I => Category in Categories) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ (I+1)) as CMlFrame);
 			Frame_Category.Show();
@@ -365,7 +367,7 @@ Text Build() {
 			declare CMlQuad Quad_Category = (Frame_Category.GetFirstChild("Category") as CMlQuad);
 			Quad_Category.ChangeImageUrl(Category.banner_img_url);
 
-			declare Integer MapsSliceStart = C_MaxMapsPerCategoryPage * (G_CategoriesPages[I].CurrentPage - 1);
+			declare Integer MapsSliceStart = C_MaxMapsPerCategoryPage * (G_CategoriesPages[CategoriesSliceStartIdx + I].CurrentPage - 1);
 
 			declare K_EventEditionContentMap[] Maps = Category.maps
 				.slice(MapsSliceStart, C_MaxMapsPerCategoryPage);
@@ -373,13 +375,9 @@ Text Build() {
 			// Used to put 0 left padding in the map indexes
 			declare Integer DigitNum = ML::Max(NumberOfDigits(Category.maps.count), 2);
 
-			foreach (MapI => Map in Category.maps) {
-				if (MapI < MapsSliceStart || MapI >= MapsSliceStart + C_MaxMapsPerCategoryPage) continue;
-
-				// 0 to C_MaxMapsPerCategoryPage index, to retrieve the frame from the manialink
-				declare Integer CardI = MapI - MapsSliceStart;
-
-				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ (CardI+1)) as CMlFrame);
+			// Iterate over the sliced maps (indexes correspond to P_SelectedMapJ + MapsSliceStart)
+			foreach (MapI => Map in Maps) {
+				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ (MapI+1)) as CMlFrame);
 				Frame_Card.Show();
 				
 				declare CMlQuad CompletedIndicator = (Frame_Card.GetFirstChild("Quad_CompletedIndicator") as CMlQuad);
@@ -391,15 +389,23 @@ Text Build() {
 				declare CMlQuad Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
 				declare CMlQuad Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
 
-				DisplayNumber += 1;
+				// Number shown on the card
+				declare Integer TotalCount = 1;
+				declare Integer CategoryIdx = CategoriesSliceStartIdx + I - 1;
+				for (J, 0, CategoriesSliceStartIdx + I - 1) {
+					TotalCount += P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories[J].maps.count;
+				}
+
+				declare Integer MapNumber = MapsSliceStart + MapI + TotalCount;
+
 				// Put left padding with 0
 				declare Text Label_Num_Text = "";
-				for (I, 0, DigitNum - NumberOfDigits(DisplayNumber) - 1) {
+				for (I, 0, DigitNum - NumberOfDigits(MapNumber) - 1) {
 					Label_Num_Text ^= "0";
 				}
-				Label_Num.SetText(Label_Num_Text ^ DisplayNumber);
+				Label_Num.SetText(Label_Num_Text ^ MapNumber);
 
-				if (P_SelectedMapJ == MapI && P_SelectedMapI == I) {
+				if (P_SelectedMapJ == MapsSliceStart + MapI && P_SelectedMapI == CategoriesSliceStartIdx + I) {
 					Label_Num.TextColor = CL::HexToRgb("1D1F37");
 					
 					CompletedIndicator.RelativePosition_V3.Y = -8.67;
@@ -436,23 +442,19 @@ Text Build() {
 	Void InitPages() {
 		G_CurrentPage_Categories = 1;
 		G_LastPage_Categories = 1;
-		for (I, 0, C_MaxMapsPerCategoryPage) {
-			G_CategoriesPages.add(K_CategoryPageState {
-				CurrentPage = 1,
-				LastPage = 1
-			});
-		}
-	}
+		G_CategoriesPages.clear();
 
-	Void InitLastPages() {
 		declare K_Event P_CampaignEvent for Page;
 		declare Integer P_SelectedEdition for Page;
 
 		declare K_EventEditionContentCategory[] Categories = P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
 		G_LastPage_Categories = ML::Max(0, Categories.count - 1) / C_MaxCategoriesPerPage + 1;
-		for (I, 0, ML::Min(Categories.count, C_MaxMapsPerCategoryPage) - 1) {
+		for (I, 0, Categories.count - 1) {
 			declare K_EventEditionContentCategory Category = Categories[I];
-			G_CategoriesPages[I].LastPage = ML::Max(0, Category.maps.count - 1) / C_MaxMapsPerCategoryPage + 1;
+			G_CategoriesPages.add(K_CategoryPageState {
+				CurrentPage = 1,
+				LastPage = ML::Max(0, Category.maps.count - 1) / C_MaxMapsPerCategoryPage + 1
+			});
 		}
 	}
 
@@ -501,8 +503,6 @@ Text Build() {
 		declare Text[Text] P_MapsWithThumbnails for Page = [];
 		declare Boolean P_TimesReloaded for Page = False;
 
-		InitPages();
-
 		while (P_SelectedEdition == -1) {
 			Quad_Loading.RelativeRotation += 4;
 			yield;
@@ -527,7 +527,7 @@ Text Build() {
 			}
 
 			if (SelectedCampaign != P_SelectedEdition || SelectedCampaignHandle != P_SelectedEventHandle) {
-				InitLastPages();
+				InitPages();
 				SelectedCampaignHandle = P_SelectedEventHandle;
 				SelectedCampaign = P_SelectedEdition;
 
@@ -643,14 +643,14 @@ Text Build() {
 						}
 
 						// Manages the click event of the categories pagination buttons
-						if (Event.ControlId == "Quad_PreviousPage" || Event.ControlId == "Quad_NextPage") {
+						if (Event.ControlId == "Quad_Category_PreviousPage" || Event.ControlId == "Quad_Category_NextPage") {
 							declare CMlFrame Category_Frame = Event.Control.Parent;
 							declare Integer CategoryIndex = TL::ToInteger(TL::SubString(Category_Frame.ControlId, 11, 1)) - 1 + (G_CurrentPage_Categories - 1) * C_MaxCategoriesPerPage;
 
-							if (Event.ControlId == "Quad_PreviousPage" && G_CategoriesPages[CategoryIndex].CurrentPage > 1) {
+							if (Event.ControlId == "Quad_Category_PreviousPage" && G_CategoriesPages[CategoryIndex].CurrentPage > 1) {
 								G_CategoriesPages[CategoryIndex].CurrentPage -= 1;
 								MapsNeedRefresh = True;
-							} else if (Event.ControlId == "Quad_NextPage" && G_CategoriesPages[CategoryIndex].CurrentPage < G_CategoriesPages[CategoryIndex].LastPage) {
+							} else if (Event.ControlId == "Quad_Category_NextPage" && G_CategoriesPages[CategoryIndex].CurrentPage < G_CategoriesPages[CategoryIndex].LastPage) {
 								G_CategoriesPages[CategoryIndex].CurrentPage += 1;
 								MapsNeedRefresh = True;
 							}
