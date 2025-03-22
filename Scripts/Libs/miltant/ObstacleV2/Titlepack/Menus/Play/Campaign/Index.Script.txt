@@ -82,13 +82,11 @@ Text Build() {
 			<label id="Label_CategoryName" textsize="2" class="lato" textprefix="$t" pos="15.3 -1.835" halign="center" valign="center2" />
 			<quad id="Category" size="31.17 3.67"/>
 		</frame>
-		<frame id="Frame_CategoryMapList">
-			<frameinstance hidden="1" modelid="MapCard" pos="0 -8.67" id="Card_1"/>
-			<frameinstance hidden="1" modelid="MapCard" pos="0 -20.33" id="Card_2"/>
-			<frameinstance hidden="1" modelid="MapCard" pos="0 -32" id="Card_3"/>
-			<frameinstance hidden="1" modelid="MapCard" pos="0 -43.67" id="Card_4"/>
-			<frameinstance hidden="1" modelid="MapCard" pos="0 -55.33" id="Card_5"/>
-		</frame>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -8.67" id="Card_1"/>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -20.33" id="Card_2"/>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -32" id="Card_3"/>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -43.67" id="Card_4"/>
+		<frameinstance hidden="1" modelid="MapCard" pos="0 -55.33" id="Card_5"/>
 		<quad pos="16.75 -66.5" id="Quad_Category_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowDown" scriptevents="1" />
 	</framemodel>
 
