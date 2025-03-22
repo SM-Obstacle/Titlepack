@@ -18,12 +18,10 @@
 
 #Const C_SpecialEventConfig [
 	0 => [
-		"label1pos" => <181., -24.5>,
-		"label2pos" => <181., -29.5>
+		"label1pos" => <181., -29.5>
 	],
 	1 => [
-		"label1pos" => <6., -24.5>,
-		"label2pos" => <6., -29.5>
+		"label1pos" => <6., -29.5>
 	]
 ]
 
@@ -79,14 +77,19 @@ Text Build() {
 	</framemodel>
 
 	<framemodel id="CategoryModel">
-		<quad pos="16.75 2" id="Quad_Category_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
-		<quad id="Category" pos="-.83" size="31.17 3.67"/>
-		<frameinstance hidden="1" modelid="MapCard" pos="0 -8.67" id="Card_1"/>
-		<frameinstance hidden="1" modelid="MapCard" pos="0 -20.33" id="Card_2"/>
-		<frameinstance hidden="1" modelid="MapCard" pos="0 -32" id="Card_3"/>
-		<frameinstance hidden="1" modelid="MapCard" pos="0 -43.67" id="Card_4"/>
-		<frameinstance hidden="1" modelid="MapCard" pos="0 -55.33" id="Card_5"/>
-		<quad pos="16.75 -66.5" id="Quad_Category_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
+		<quad pos="16.75 2" id="Quad_Category_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowUp" scriptevents="1" />
+		<frame pos="-.83">
+			<label id="Label_CategoryName" textsize="2" class="lato" textprefix="$t" pos="15.3 -1.835" halign="center" valign="center2" />
+			<quad id="Category" size="31.17 3.67"/>
+		</frame>
+		<frame id="Frame_CategoryMapList">
+			<frameinstance hidden="1" modelid="MapCard" pos="0 -8.67" id="Card_1"/>
+			<frameinstance hidden="1" modelid="MapCard" pos="0 -20.33" id="Card_2"/>
+			<frameinstance hidden="1" modelid="MapCard" pos="0 -32" id="Card_3"/>
+			<frameinstance hidden="1" modelid="MapCard" pos="0 -43.67" id="Card_4"/>
+			<frameinstance hidden="1" modelid="MapCard" pos="0 -55.33" id="Card_5"/>
+		</frame>
+		<quad pos="16.75 -66.5" id="Quad_Category_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowDown" scriptevents="1" />
 	</framemodel>
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
@@ -132,19 +135,18 @@ Text Build() {
 
 	<frame pos="-96.17 53.5">
 		<frame pos="8 -46.67" id="Frame_CampaignContent" hidden="1">
-			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
+			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowPrev" scriptevents="1" />
 			<frameinstance modelid="CategoryModel" id="F_Category_1" hidden="1"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_2" hidden="1" pos="34.5"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_3" hidden="1" pos="69"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_4" hidden="1" pos="103.5"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_5" hidden="1" pos="138"/>
-			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" substyle="ArrowDisabled" scriptevents="1" />
+			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowNext" scriptevents="1" />
 		</frame>
 
-		<label pos="6 -6.5" textsize="8" textprefix="$t$fff" class="lator" id="Label_EventLn1"/>
+		<label pos="6 -6.5" textsize="8" textprefix="$t$s$fff" class="lator" id="Label_EventLn1"/>
 		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" class="lato" textfont="light" id="Label_EventLn2"/>
-		<label id="Label_LeaderboardsLink" pos="181 -24.5" textsize="2" textfont="light" halign="right" class="lato" />
-		<label id="Label_Feedback" pos="181 -29.5" textsize="2" text="$sAny feedback? Contact $iunmecrandomofficiel$i  on Discord" class="lato" textfont="light" halign="right"/>
+		<label id="Label_LeaderboardsLink" pos="181 -29.5" textsize="2" textfont="light" halign="right" class="lato" />
 		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
 		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
@@ -178,18 +180,18 @@ Text Build() {
 		declare Quad_PreviousPage_Categories <=> (Page.GetFirstChild("Quad_PreviousPage") as CMlQuad);
 		declare Quad_NextPage_Categories <=> (Page.GetFirstChild("Quad_NextPage") as CMlQuad);
 
-		declare previousPageDisabled = Quad_PreviousPage_Categories.Substyle == "ArrowDisabled";
+		declare previousPageDisabled = !Quad_PreviousPage_Categories.Visible;
 		if (G_CurrentPage_Categories == 1 && !previousPageDisabled) {
-			Quad_PreviousPage_Categories.Substyle = "ArrowDisabled";
+			Quad_PreviousPage_Categories.Hide();
 		} else if (G_CurrentPage_Categories > 1) {
-			Quad_PreviousPage_Categories.Substyle = "ArrowPrev";
+			Quad_PreviousPage_Categories.Show();
 		}
 
-		declare nextPageDisabled = Quad_NextPage_Categories.Substyle == "ArrowDisabled";
+		declare nextPageDisabled = !Quad_NextPage_Categories.Visible;
 		if (G_CurrentPage_Categories == G_LastPage_Categories && !nextPageDisabled) {
-			Quad_NextPage_Categories.Substyle = "ArrowDisabled";
+			Quad_NextPage_Categories.Hide();
 		} else if (G_CurrentPage_Categories < G_LastPage_Categories) {
-			Quad_NextPage_Categories.Substyle = "ArrowNext";
+			Quad_NextPage_Categories.Show();
 		}
 
 		foreach (I => PageState in G_CategoriesPages.slice(C_MaxCategoriesPerPage * (G_CurrentPage_Categories-1), C_MaxCategoriesPerPage)) {
@@ -198,18 +200,18 @@ Text Build() {
 			declare CMlQuad Quad_PreviousPage <=> (Frame_Category.GetFirstChild("Quad_Category_PreviousPage") as CMlQuad);
 			declare CMlQuad Quad_NextPage <=> (Frame_Category.GetFirstChild("Quad_Category_NextPage") as CMlQuad);
 
-			declare previousPageDisabled = Quad_PreviousPage.Substyle == "ArrowDisabled";
+			declare previousPageDisabled = !Quad_PreviousPage.Visible;
 			if (PageState.CurrentPage == 1 && !previousPageDisabled) {
-				Quad_PreviousPage.Substyle = "ArrowDisabled";
+				Quad_PreviousPage.Hide();
 			} else if (PageState.CurrentPage > 1) {
-				Quad_PreviousPage.Substyle = "ArrowUp";
+				Quad_PreviousPage.Show();
 			}
 
-			declare nextPageDisabled = Quad_NextPage.Substyle == "ArrowDisabled";
+			declare nextPageDisabled = !Quad_NextPage.Visible;
 			if (PageState.CurrentPage == PageState.LastPage && !nextPageDisabled) {
-				Quad_NextPage.Substyle = "ArrowDisabled";
+				Quad_NextPage.Hide();
 			} else if (PageState.CurrentPage < PageState.LastPage) {
-				Quad_NextPage.Substyle = "ArrowDown";
+				Quad_NextPage.Show();
 			}
 		}
 	}
@@ -364,8 +366,13 @@ Text Build() {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ (I+1)) as CMlFrame);
 			Frame_Category.Show();
 
-			declare CMlQuad Quad_Category = (Frame_Category.GetFirstChild("Category") as CMlQuad);
-			Quad_Category.ChangeImageUrl(Category.banner_img_url);
+			if (Category.banner_img_url == "") {
+				declare CMlLabel Label_CategoryName = (Frame_Category.GetFirstChild("Label_CategoryName") as CMlLabel);
+				Label_CategoryName.SetText(Category.name);
+			} else {
+				declare CMlQuad Quad_Category = (Frame_Category.GetFirstChild("Category") as CMlQuad);
+				Quad_Category.ChangeImageUrl(Category.banner_img_url);
+			}
 
 			declare Integer MapsSliceStart = C_MaxMapsPerCategoryPage * (G_CategoriesPages[CategoriesSliceStartIdx + I].CurrentPage - 1);
 
@@ -483,7 +490,6 @@ Text Build() {
 		declare Label_EventLn1 = (Page.GetFirstChild("Label_EventLn1") as CMlLabel);
 		declare Label_EventLn2 = (Page.GetFirstChild("Label_EventLn2") as CMlLabel);
 		declare Label_Leaderboards = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
-		declare Label_Feedback = (Page.GetFirstChild("Label_Feedback") as CMlLabel);
 
 		declare K_Event P_CampaignEvent for Page;
 		declare Text P_SelectedEventHandle for Page = "";
@@ -549,18 +555,11 @@ Text Build() {
 
 				Label_Leaderboards.RelativePosition_V3.X = SpecialConfig["label1pos"].X;
 				Label_Leaderboards.RelativePosition_V3.Y = SpecialConfig["label1pos"].Y;
-				Label_Feedback.RelativePosition_V3.X = SpecialConfig["label2pos"].X;
-				Label_Feedback.RelativePosition_V3.Y = SpecialConfig["label2pos"].Y;
 
 				if (Label_Leaderboards.RelativePosition_V3.X < 81.67) {
 					Label_Leaderboards.HorizontalAlign = CMlControl::AlignHorizontal::Left;
 				} else {
 					Label_Leaderboards.HorizontalAlign = CMlControl::AlignHorizontal::Right;
-				}
-				if (Label_Feedback.RelativePosition_V3.X < 81.67) {
-					Label_Feedback.HorizontalAlign = CMlControl::AlignHorizontal::Left;
-				} else {
-					Label_Feedback.HorizontalAlign = CMlControl::AlignHorizontal::Right;
 				}
 			}
 
