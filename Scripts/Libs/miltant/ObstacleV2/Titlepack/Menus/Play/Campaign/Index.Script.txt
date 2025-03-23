@@ -170,6 +170,8 @@ Text Build() {
 
 	{{{Styles::GetDeclareGlobals()}}}
 
+	declare K_Event G_Event;
+
 	declare Integer G_CurrentPage_Categories;
 	declare Integer G_LastPage_Categories;
 	declare K_CategoryPageState[] G_CategoriesPages;
@@ -241,7 +243,6 @@ Text Build() {
 		declare Integer P_SelectedEdition for Page;
 		declare Integer P_SelectedMapI for Page;
 		declare Integer P_SelectedMapJ for Page;
-		declare K_Event P_CampaignEvent for Page;
 
 		UpdatePageButtons();
 
@@ -276,14 +277,14 @@ Text Build() {
 		}
 
 		// Keeps the page cleared
-		if (P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories.count == 0) return;
+		if (G_Event.EditionsDetails[P_SelectedEdition].categories.count == 0) return;
 
-		declare SelectedCategory = P_CampaignEvent.EditionsDetails[P_SelectedEdition]
+		declare SelectedCategory = G_Event.EditionsDetails[P_SelectedEdition]
 			.categories[P_SelectedMapI];
 		declare K_EventEditionContentMap SelectedMap = SelectedCategory
 			.maps[ML::Min(P_SelectedMapJ, SelectedCategory.maps.count - 1)];
 
-		declare LeaderboardsLink = "$fff$s$i$l[{{{Constants::C_WebsiteUrl}}}/event/" ^ P_CampaignEvent.Event.handle ^ "/" ^ P_SelectedEdition ^ "]Leaderboards...";
+		declare LeaderboardsLink = "$fff$s$i$l[{{{Constants::C_WebsiteUrl}}}/event/" ^ G_Event.Event.handle ^ "/" ^ P_SelectedEdition ^ "]Leaderboards...";
 		Label_LeaderboardsLink.Show();
 		Label_LeaderboardsLink.SetText(LeaderboardsLink);
 
@@ -356,7 +357,7 @@ Text Build() {
 
 		// Show all of current page
 
-		declare K_EventEditionContentCategory[] Categories = P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories
+		declare K_EventEditionContentCategory[] Categories = G_Event.EditionsDetails[P_SelectedEdition].categories
 			.slice(CategoriesSliceStartIdx, C_MaxCategoriesPerPage);
 
 		// Iterate over the sliced categories (indexes correspond to P_SelectedMapI + CategoriesSliceStartIdx)
@@ -398,7 +399,7 @@ Text Build() {
 				declare Integer TotalCount = 1;
 				declare Integer CategoryIdx = CategoriesSliceStartIdx + I - 1;
 				for (J, 0, CategoriesSliceStartIdx + I - 1) {
-					TotalCount += P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories[J].maps.count;
+					TotalCount += G_Event.EditionsDetails[P_SelectedEdition].categories[J].maps.count;
 				}
 
 				declare Integer MapNumber = MapsSliceStart + MapI + TotalCount;
@@ -449,10 +450,9 @@ Text Build() {
 		G_LastPage_Categories = 1;
 		G_CategoriesPages.clear();
 
-		declare K_Event P_CampaignEvent for Page;
 		declare Integer P_SelectedEdition for Page;
 
-		declare K_EventEditionContentCategory[] Categories = P_CampaignEvent.EditionsDetails[P_SelectedEdition].categories;
+		declare K_EventEditionContentCategory[] Categories = G_Event.EditionsDetails[P_SelectedEdition].categories;
 		G_LastPage_Categories = ML::Max(0, Categories.count - 1) / C_MaxCategoriesPerPage + 1;
 		for (I, 0, Categories.count - 1) {
 			declare K_EventEditionContentCategory Category = Categories[I];
@@ -475,6 +475,34 @@ Text Build() {
 			_Quad.Visible = False;
 			_CampaignContent.Visible = True;
 		}
+	}
+
+	Void ChunkUnnamedCategory() {
+		declare Integer P_SelectedEdition for Page = -1;
+		// Make sure the edition exists and has only 1 category with an empty name
+		if (P_SelectedEdition == -1
+			|| !G_Event.EditionsDetails.existskey(P_SelectedEdition)
+			|| G_Event.EditionsDetails[P_SelectedEdition].categories.count != 1
+			|| G_Event.EditionsDetails[P_SelectedEdition].categories[0].name != "")
+		{
+			return;
+		}
+
+		declare K_EventEditionDetails Event = G_Event.EditionsDetails[P_SelectedEdition];
+		declare Integer LastCategoryMapsCount = Event.categories[Event.categories.count - 1].maps.count;
+
+		while (LastCategoryMapsCount > C_MaxMapsPerCategoryPage) {
+			declare K_EventEditionContentMap[] Maps = Event.categories[Event.categories.count - 1].maps.slice(5, LastCategoryMapsCount);
+			for (I, C_MaxMapsPerCategoryPage, LastCategoryMapsCount - 1) {
+				Event.categories[Event.categories.count - 1].maps.removekey(C_MaxMapsPerCategoryPage + LastCategoryMapsCount - I - 1);
+			}
+			Event.categories.add(K_EventEditionContentCategory { maps = Maps });
+
+			LastCategoryMapsCount = Maps.count;
+			yield;
+		}
+
+		G_Event.EditionsDetails[P_SelectedEdition] = Event;
 	}
 		
 	main() {
@@ -531,11 +559,13 @@ Text Build() {
 			}
 
 			if (SelectedCampaign != P_SelectedEdition || SelectedCampaignHandle != P_SelectedEventHandle) {
+				G_Event = P_CampaignEvent;
+				ChunkUnnamedCategory();
 				InitPages();
 				SelectedCampaignHandle = P_SelectedEventHandle;
 				SelectedCampaign = P_SelectedEdition;
 
-				declare SelectedEdition = P_CampaignEvent.EditionsDetails[SelectedCampaign];
+				declare SelectedEdition = G_Event.EditionsDetails[SelectedCampaign];
 				Quad_Banner.ChangeImageUrl(SelectedEdition.banner_img_url);
 				Label_EventLn1.SetText(SelectedEdition.name);
 				Label_EventLn2.SetText(SelectedEdition.subtitle);
