@@ -35,6 +35,18 @@ Void Load() {
     Impl::Init();
 }
 
+Types::K_Event[Text] GetEvents() {
+    return Impl::GetEvents();
+}
+
+Boolean HasAnyEventLoading() {
+    return Impl::HasAnyEventLoading();
+}
+
+Boolean HasAnyUpdate() {
+    return False;
+}
+
 Void Loop() {
     Private_UpdateAuthHeaders();
     Impl::Loop();
