@@ -48,7 +48,7 @@ Text BuildSideBar() {
 {{{Styles::GetStyleSheet()}}}
 <frame id="Frame_EventsSideBar" pos="92.16 53.5">
 	<framemodel id="CampaignEditionItem">
-		<label id="Label_CampaignEdition" halign="center" textprefix="$t" class="lato" textcolor="" textsize="4.8" scriptevents="1"/>
+		<label id="Label_CampaignEdition" halign="center" textprefix="$t" class="lato" textcolor="" textsize="3.5" size="56 5.4" scriptevents="1"/>
 	</framemodel>
 
 	<frame>
