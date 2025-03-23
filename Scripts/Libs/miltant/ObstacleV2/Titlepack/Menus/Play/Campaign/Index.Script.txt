@@ -987,6 +987,14 @@ Void Private_LoopCheckEvents(Text _LayerName) {
 	}
 }
 
+Text GetSelectedEventHandle(Text _LayerName) {
+	return G_LoadedEventHandle[_LayerName];
+}
+
+Integer GetSelectedEditionId(Text _LayerName) {
+	return G_LoadedEdition[_LayerName];
+}
+
 Void SelectEdition(Text _LayerName, Text _EventHandle, Integer _EditionId) {
 	G_LoadedEdition[_LayerName] = _EditionId;
 	G_LoadedEventHandle[_LayerName] = _EventHandle;

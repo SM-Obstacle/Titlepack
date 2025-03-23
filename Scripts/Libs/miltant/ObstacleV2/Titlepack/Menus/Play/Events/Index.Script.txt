@@ -93,6 +93,8 @@ Void UpdateList() {
 	// Clear
 	for (I, 0, 7) {
 		declare CMlFrame Frame_CampaignEdition = (Page.GetFirstChild("CampaignEditionItem_" ^ I + 1) as CMlFrame);
+		declare CMlLabel Label_CampaignEdition = (Frame_CampaignEdition.GetFirstChild("Label_CampaignEdition") as CMlLabel);
+		Label_CampaignEdition.TextColor = CL::HexToRgb("B4B4B4");
 		Frame_CampaignEdition.Hide();
 	}
 
@@ -143,7 +145,8 @@ main() {
 	declare Integer P_SelectedEdition for Page = -1;
 	declare Integer SelectedCampaign = -1;
 
-	declare K_Event[Text] P_Events for Page = [];
+	declare Integer P_SelectedItem for Page = -1;
+
 	declare Integer P_EventsUpdate for Page = -1;
 	declare Integer EventsUpdate = -1;
 
@@ -183,7 +186,7 @@ main() {
 						case "Label_CampaignEdition": {
 							declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
 							declare Integer Idx = TL::ToInteger(Event.Control.DataAttributeGet("idx"));
-							if (Idx == P_SelectedEdition) continue;
+							if (Idx == P_SelectedItem) continue;
 
 							Label_Edition.TextColor = CL::HexToRgb("B4B4B4");
 						}
@@ -236,20 +239,45 @@ Void Private_UpdateList() {
 
 	if (G_EventSelected) {
 		// List all editions
-		foreach (Edition in G_Events[G_CurrentEventHandle].Editions) {
+		declare Integer I = 0;
+		declare Integer SelectedIdx = -1;
+		foreach (EditionId => Edition in G_Events[G_CurrentEventHandle].Editions) {
 			P_Items.add(Edition.name);
+			if (Campaign::GetSelectedEditionId(GetName()) == EditionId) {
+				SelectedIdx = I;
+			}
+			I += 1;
 		}
+
 		// Show "go previous" button
 		declare Text P_SelectedEvent for SideBarPage = "";
 		P_SelectedEvent = TL::Replace(G_CurrentEventHandle, "_", " ");
+
+		// Update selected item
+		declare Integer P_SelectedItem for SideBarPage = -1;
+		if (Campaign::GetSelectedEventHandle(GetName()) == G_CurrentEventHandle) {
+			P_SelectedItem = SelectedIdx;
+		} else {
+			P_SelectedItem = -1;
+		}
 	} else {
 		// List all events
+		declare Integer I = 0;
+		declare Integer SelectedIdx = -1;
 		foreach (Handle => Event in G_Events) {
 			if (Handle == "campaign") continue;
+			if (Campaign::GetSelectedEventHandle(GetName()) == Handle) {
+				SelectedIdx = I;
+			}
 			P_Items.add(TL::Replace(Handle, "_", " "));
+			I += 1;
 		}
+
 		declare Text P_SelectedEvent for SideBarPage = "";
 		P_SelectedEvent = "";
+
+		declare Integer P_SelectedItem for SideBarPage = -1;
+		P_SelectedItem = SelectedIdx;
 	}
 
 	declare Integer P_EventsUpdate for SideBarPage = -1;

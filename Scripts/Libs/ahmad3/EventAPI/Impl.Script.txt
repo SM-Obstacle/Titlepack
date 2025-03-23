@@ -130,7 +130,7 @@ Void Private_InitEventEditions(Types::K_EventResponse[] _Events) {
 }
 
 Boolean HasAnyEventLoading() {
-    return G_PendingEvents.count > 0;
+    return !G_EventRequestLoaded || G_PendingEvents.count > 0;
 }
 
 Void SetAuthHeaders(Text _AuthHeaders) {
