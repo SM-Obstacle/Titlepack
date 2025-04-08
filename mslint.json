@@ -9,7 +9,8 @@
       "rules": {
         "no-empty": "error",
         "no-lonely-if": "error",
-        "type-declaration": "off"
+        "type-declaration": "off",
+        "no-useless-concat": "off"
       }
     }
   ]
