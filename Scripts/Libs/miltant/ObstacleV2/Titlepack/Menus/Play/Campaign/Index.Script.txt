@@ -77,7 +77,7 @@ Text Build() {
 	</framemodel>
 
 	<framemodel id="CategoryModel">
-		<quad pos="16.75 2" id="Quad_Category_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowUp" scriptevents="1" />
+		<quad pos="16.75 2" id="Quad_Category_PreviousPage" valign="center" halign="right" size="5 5" style="Icons128x128_1" hidden="1" substyle="BackFocusable" rot="90" scriptevents="1" />
 		<frame pos="-.83">
 			<label id="Label_CategoryName" textsize="2" class="lato" textprefix="$t" pos="15.3 -1.835" halign="center" valign="center2" />
 			<quad id="Category" size="31.17 3.67"/>
@@ -87,7 +87,7 @@ Text Build() {
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -32" id="Card_3"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -43.67" id="Card_4"/>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -55.33" id="Card_5"/>
-		<quad pos="16.75 -66.5" id="Quad_Category_NextPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowDown" scriptevents="1" />
+		<quad pos="16.75 -66.5" id="Quad_Category_NextPage" valign="center" halign="right" size="5 5" style="Icons128x128_1" hidden="1" substyle="BackFocusable" rot="-90" scriptevents="1" />
 	</framemodel>
 
 	<frame pos="-154.17" id="Frame_Infos" hidden="1">
@@ -133,13 +133,13 @@ Text Build() {
 
 	<frame pos="-96.17 53.5">
 		<frame pos="8 -46.67" id="Frame_CampaignContent" hidden="1">
-			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowPrev" scriptevents="1" />
+			<quad pos="-1.17 5" id="Quad_PreviousPage" valign="center" halign="right" size="5 5" style="Icons128x128_1" hidden="1" substyle="BackFocusable" scriptevents="1" />
 			<frameinstance modelid="CategoryModel" id="F_Category_1" hidden="1"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_2" hidden="1" pos="34.5"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_3" hidden="1" pos="69"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_4" hidden="1" pos="103.5"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_5" hidden="1" pos="138"/>
-			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons64x64_1" hidden="1" substyle="ArrowNext" scriptevents="1" />
+			<quad pos="169.17 5" id="Quad_NextPage" valign="center" halign="left" size="5 5" style="Icons128x128_1" hidden="1" substyle="BackFocusable" rot="180" scriptevents="1" />
 		</frame>
 
 		<label pos="6 -6.5" textsize="8" textprefix="$t$s$fff" class="lator" id="Label_EventLn1"/>
