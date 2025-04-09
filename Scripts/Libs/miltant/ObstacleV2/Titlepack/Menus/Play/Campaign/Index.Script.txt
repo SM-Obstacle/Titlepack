@@ -291,7 +291,13 @@ Text Build() {
 		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/event/campaign/" ^ P_SelectedEdition ^ "/map/" ^ SelectedMap.map_uid ^ "]";
 		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.main_author.login ^ "]";
 
-		declare MapName = TL::RegexReplace("\\$[lLhHpP](\\[.*\\])?", SelectedMap.name, "g", "");
+		declare Text MapName;
+		if (SelectedMap.original_map.mx_id == 0) {
+			MapName = SelectedMap.name;
+		} else {
+			MapName = SelectedMap.original_map.name;
+		}
+		MapName = TL::RegexReplace("\\$[lLhHpP](\\[.*\\])?", MapName, "g", "");
 		declare AuthorName = TL::RegexReplace("\\$[lLhHpP](\\[.*\\])?", SelectedMap.main_author.name, "g", "");
 		MapName = TL::Replace(MapName, "$z", "$z" ^ MapLink);
 		AuthorName = TL::Replace(AuthorName, "$z", "$z" ^ AuthorLink);
@@ -940,6 +946,40 @@ Void Private_LoopMapFilesList(Text _LayerName) {
 	DataFileMgr.TaskResult_Release(G_FileList[_LayerName]);
 }
 
+K_PendingPlayingMap Private_GetPendingPlayingMapType(
+	Text _LayerName,
+	EventAPITypes::K_EventEditionContentMap _Map,
+	Integer _SelectedEdition
+) {
+	declare Integer MxId;
+	declare Text Name;
+
+	if (_Map.original_map.mx_id == 0) {
+		MxId = _Map.mx_id;
+		Name = _Map.name;
+	} else {
+		MxId = _Map.original_map.mx_id;
+		Name = _Map.original_map.name;
+	}
+	declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ MxId;
+
+	if (G_CampaignLocalMapsUids[_LayerName].existskey(_SelectedEdition)) {
+		foreach (FileMap in G_CampaignLocalMapsUids[_LayerName][_SelectedEdition]) {
+			if (FileMap.MapUid == _Map.map_uid
+				|| _Map.original_map.mx_id != 0 && FileMap.MapUid == _Map.original_map.map_uid
+			) {
+				Path = FileMap.FileName;
+				break;
+			}
+		}
+	}
+
+	return K_PendingPlayingMap {
+		MapName = Name,
+		MapPath = Path
+	};
+}
+
 Void Private_LoopCheckEvents(Text _LayerName) {
 	foreach (Event in PendingEvents) {
 		if (Event.Type != CManiaAppEvent::EType::LayerCustomEvent
@@ -961,42 +1001,14 @@ Void Private_LoopCheckEvents(Text _LayerName) {
 				declare K_PendingPlayingMap[][] MapList = [[]];
 
 				foreach (Map in CampaignCategories[P_SelectedMapI].maps.slice(P_SelectedMapJ, CampaignCategories[P_SelectedMapI].maps.count)) {
-					declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
-
-					if (G_CampaignLocalMapsUids[_LayerName].existskey(P_SelectedEdition)) {
-						foreach (FileMap in G_CampaignLocalMapsUids[_LayerName][P_SelectedEdition]) {
-							if (FileMap.MapUid == Map.map_uid) {
-								Path = FileMap.FileName;
-								break;
-							}
-						}
-					}
-
-					MapList[0].add(K_PendingPlayingMap {
-						MapName = Map.name,
-						MapPath = Path
-					});
+					MapList[0].add(Private_GetPendingPlayingMapType(_LayerName, Map, P_SelectedEdition));
 				}
 
 				foreach (Category in CampaignCategories.slice(P_SelectedMapI + 1, CampaignCategories.count)) {
 					declare K_PendingPlayingMap[] CategoryMaps;
 
 					foreach (Map in Category.maps) {
-						declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ Map.mx_id;
-
-						if (G_CampaignLocalMapsUids[_LayerName].existskey(P_SelectedEdition)) {
-							foreach (FileMap in G_CampaignLocalMapsUids[_LayerName][P_SelectedEdition]) {
-								if (FileMap.MapUid == Map.map_uid) {
-									Path = FileMap.FileName;
-									break;
-								}
-							}
-						}
-
-						CategoryMaps.add(K_PendingPlayingMap {
-							MapName = Map.name,
-							MapPath = Path
-						});
+						CategoryMaps.add(Private_GetPendingPlayingMapType(_LayerName, Map, P_SelectedEdition));
 					}
 
 					MapList.add(CategoryMaps);

@@ -30,7 +30,11 @@ Void Init() {
 
     foreach (Category in ObsEvents::CurrentEdition().categories) {
         foreach (Map in Category.maps) {
-            Net_MedalsTimesPerMap[Map.map_uid] = [Map.bronze_time, Map.silver_time, Map.gold_time, Map.champion_time];
+            declare Integer[] MedalTimes = [Map.bronze_time, Map.silver_time, Map.gold_time, Map.champion_time];
+            Net_MedalsTimesPerMap[Map.map_uid] = MedalTimes;
+            if (Map.original_map.mx_id != 0) {
+                Net_MedalsTimesPerMap[Map.original_map.map_uid] = MedalTimes;
+            }
         }
     }
 
