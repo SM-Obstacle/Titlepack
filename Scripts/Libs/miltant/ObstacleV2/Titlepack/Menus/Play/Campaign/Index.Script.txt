@@ -763,7 +763,7 @@ Void Unload(Text _LayerName) {
 
 Void Private_Reload(Text _LayerName) {
 	G_ContentLoading[_LayerName] = True;
-	EventAPI::Load();
+	EventAPI::Load(True);
 
 	G_PendingPlayingMapsUpdate[_LayerName] = -1;
 	G_LoadedEdition[_LayerName] = -1;
@@ -864,12 +864,17 @@ Void Private_LoopPlayerNextMap(Text _LayerName) {
 
 	Private_InitLoadingMapDialogLoop(_LayerName, NextMap.MapName);
 
+	declare Text PlayEventSettings = "";
+	if (!G_CurrentEvent[_LayerName].EditionsDetails[P_SelectedEdition].expired) {
+		PlayEventSettings = """<setting name="S_LockEventsUI" value="{{{LockEventsUI}}}" type="boolean" />
+		<setting name="S_EventHandle" value="{{{G_LoadedEventHandle[_LayerName]}}}" type="text" />
+		<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />""";
+	}
+
 	wait(TitleControl.IsReady);
 	TitleControl.PlayMap(NextMap.MapPath, "Scripts/Modes/ShootMania/ObstacleCampaign.Script.txt", """
 	<mode_script_settings>
-		<setting name="S_LockEventsUI" value="{{{LockEventsUI}}}" type="boolean" />
-		<setting name="S_EventHandle" value="{{{G_LoadedEventHandle[_LayerName]}}}" type="text" />
-		<setting name="S_EventEdition" value="{{{P_SelectedEdition}}}" type="integer" />
+		{{{PlayEventSettings}}}
 		<setting name="S_LastMap" value="{{{IsLastMap}}}" type="boolean" />
 		<setting name="S_LayerNameUsedInTp" value="{{{_LayerName}}}" type="text" />
 	</mode_script_settings>

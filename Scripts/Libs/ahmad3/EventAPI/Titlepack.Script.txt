@@ -29,10 +29,10 @@ Void Private_UpdateAuthHeaders() {
     }
 }
 
-Void Load() {
+Void Load(Boolean _IncludeExpired) {
     G_AuthHeadersPending = True;
     Private_UpdateAuthHeaders();
-    Impl::Init();
+    Impl::Init(_IncludeExpired);
 }
 
 Types::K_Event[Text] GetEvents() {

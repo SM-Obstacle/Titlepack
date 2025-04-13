@@ -137,14 +137,25 @@ Void SetAuthHeaders(Text _AuthHeaders) {
     G_AuthHeaders = _AuthHeaders;
 }
 
-Void Init() {
+Text Private_IncludeExpiredToQueryParam(Boolean _IncludeExpired) {
+    if (_IncludeExpired) {
+        return "include_expired=true";
+    }
+    return "include_expired=false";
+}
+
+Void Init(Boolean _IncludeExpired) {
     G_HasFailed = False;
     G_Events = [];
     G_PendingEvents = [];
     G_PendingLoadingEditions = [];
     G_PendingRequests = [];
     G_EventRequestLoaded = False;
-    Private_InitRequest("event", C::C_Request_Event);
+    Private_InitRequest("event?" ^ Private_IncludeExpiredToQueryParam(_IncludeExpired), C::C_Request_Event);
+}
+
+Void Init() {
+    Init(False);
 }
 
 /**
