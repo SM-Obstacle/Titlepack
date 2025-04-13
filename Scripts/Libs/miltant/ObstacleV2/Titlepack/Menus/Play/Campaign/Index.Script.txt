@@ -8,21 +8,15 @@
 #Include "TextLib" as TL
 #Include "MathLib" as ML
 
-// TODO: generalize this in the API
+#Const C_TitlePosY -6.5
+#Const C_SubtitlePosY -15.5
+#Const C_AuthorsPosY -25.5
+#Const C_LbLinkPosY -29.5
 
-#Const C_SpecialEventConfigKey [
-	"campaign" => [
-		2 => 1
-	]
-]
-
-#Const C_SpecialEventConfig [
-	0 => [
-		"label1pos" => <181., -29.5>
-	],
-	1 => [
-		"label1pos" => <6., -29.5>
-	]
+#Const C_Alignment [
+	"L" => 6.,
+	"C" => 93.5,
+	"R" => 181.
 ]
 
 #Const C_EventsRefreshPeriod 5 // In seconds
@@ -142,9 +136,10 @@ Text Build() {
 			<quad pos="169.17 5" id="Quad_NextPage" valign="center2" halign="center" size="5 5" style="Icons128x128_1" hidden="1" substyle="BackFocusable" rot="180" scriptevents="1" />
 		</frame>
 
-		<label pos="6 -6.5" textsize="8" textprefix="$t$s$fff" class="lator" id="Label_EventLn1"/>
-		<label pos="6 -15.5" textsize="6" textprefix="$t$fff" class="lato" textfont="light" id="Label_EventLn2"/>
-		<label id="Label_LeaderboardsLink" pos="181 -29.5" textsize="2" textfont="light" halign="right" class="lato" />
+		<label pos="6 {{{C_TitlePosY}}}" textsize="8" textprefix="$t$s$fff" class="lator" id="Label_EventLn1"/>
+		<label pos="6 {{{C_SubtitlePosY}}}" textsize="6" textprefix="$t$fff" class="lato" textfont="light" id="Label_EventLn2"/>
+		<label id="Label_Authors" pos="181 {{{C_AuthorsPosY}}}" textsize="2" textprefix="$s" textfont="light" halign="right" class="lato" />
+		<label id="Label_LeaderboardsLink" pos="181 {{{C_LbLinkPosY}}}" textsize="2" textfont="light" halign="right" class="lato" />
 		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
 		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
@@ -165,8 +160,13 @@ Text Build() {
 
 	#Const C_MaxCategoriesPerPage 5
 	#Const C_MaxMapsPerCategoryPage 5
-	#Const C_SpecialEventConfigKey {{{dump(C_SpecialEventConfigKey)}}}
-	#Const C_SpecialEventConfig  {{{dump(C_SpecialEventConfig)}}}
+
+	#Const C_TitlePosY {{{dump(C_TitlePosY)}}}
+	#Const C_SubtitlePosY {{{dump(C_SubtitlePosY)}}}
+	#Const C_AuthorsPosY {{{dump(C_AuthorsPosY)}}}
+	#Const C_LbLinkPosY {{{dump(C_LbLinkPosY)}}}
+
+	#Const C_Alignment {{{dump(C_Alignment)}}}
 
 	{{{Styles::GetDeclareGlobals()}}}
 
@@ -228,6 +228,24 @@ Text Build() {
 		return Num;
 	}
 
+	Text GetAuthorListText(Text[] _Authors) {
+		if (_Authors.count == 0) {
+			return "";
+		}
+
+		declare Text AuthorsTxt = "$<" ^ _Authors[0] ^ "$>";
+
+        foreach (Author in _Authors.slice(1, _Authors.count - 2)) {
+			AuthorsTxt ^= ", $<" ^ Author ^ "$>";
+        }
+
+		if (_Authors.count > 1) {
+			AuthorsTxt ^= " and $<" ^ _Authors[_Authors.count - 1] ^ "$>";
+		}
+
+		return AuthorsTxt;
+	}
+
 	Void UpdateMaps() {
 		declare Frame_Infos = (Page.GetFirstChild("Frame_Infos") as CMlFrame);
 		declare Quad_Thumbnail = (Page.GetFirstChild("Quad_Thumbnail") as CMlQuad);
@@ -238,6 +256,7 @@ Text Build() {
 		declare Label_NextOppTime = (Page.GetFirstChild("Label_NextOppTime") as CMlLabel);
 		declare Label_NextOppTimeDiff = (Page.GetFirstChild("Label_NextOppTimeDiff") as CMlLabel);
 		declare Quad_NextOppMedal = (Page.GetFirstChild("Quad_NextOppMedal") as CMlQuad);
+		declare Label_Authors = (Page.GetFirstChild("Label_Authors") as CMlLabel);
 		declare Label_LeaderboardsLink = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
 
 		declare Integer P_SelectedEdition for Page;
@@ -252,6 +271,7 @@ Text Build() {
 		Label_NextOppTime.SetText("--:--:--");
 		Label_NextOppTimeDiff.Hide();
 		Label_NextOpponent.SetText("None");
+		Label_Authors.Hide();
 		Label_LeaderboardsLink.Hide();
 		for (I, 1, C_MaxCategoriesPerPage) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ I) as CMlFrame);
@@ -284,11 +304,17 @@ Text Build() {
 		declare K_EventEditionContentMap SelectedMap = SelectedCategory
 			.maps[ML::Min(P_SelectedMapJ, SelectedCategory.maps.count - 1)];
 
+		// Show authors if present
+		if (G_Event.EditionsDetails[P_SelectedEdition].authors.count > 0) {
+			Label_Authors.Show();
+			Label_Authors.SetText("By " ^ GetAuthorListText(G_Event.EditionsDetails[P_SelectedEdition].authors));
+		}
+
 		declare LeaderboardsLink = "$fff$s$i$l[{{{Constants::C_WebsiteUrl}}}/event/" ^ G_Event.Event.handle ^ "/" ^ P_SelectedEdition ^ "]Leaderboards...";
 		Label_LeaderboardsLink.Show();
 		Label_LeaderboardsLink.SetText(LeaderboardsLink);
 
-		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/event/campaign/" ^ P_SelectedEdition ^ "/map/" ^ SelectedMap.map_uid ^ "]";
+		declare MapLink = "$l[{{{Constants::C_WebsiteUrl}}}/event/" ^ G_Event.Event.handle ^ "/" ^ P_SelectedEdition ^ "/map/" ^ SelectedMap.map_uid ^ "]";
 		declare AuthorLink = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.main_author.login ^ "]";
 
 		declare Text MapName;
@@ -510,6 +536,43 @@ Text Build() {
 
 		G_Event.EditionsDetails[P_SelectedEdition] = Event;
 	}
+
+	CMlControl::AlignHorizontal ApiAlignToControlAlign(Text _Align) {
+		switch (TL::ToLowerCase(_Align)) {
+			case "l": return CMlControl::AlignHorizontal::Left;
+			case "r": return CMlControl::AlignHorizontal::Right;
+			case "c": return CMlControl::AlignHorizontal::HCenter;
+		}
+		return CMlControl::AlignHorizontal::None;
+	}
+
+	Void UpdateTextPlacement(CMlLabel _Label, Text _Align, Real _PosX, Real _PosY, Real _DefaultPosY) {
+		declare Vec2 Pos;
+		declare CMlControl::AlignHorizontal Align = CMlControl::AlignHorizontal::HCenter;
+		if (_Align != "") {
+			Pos = <C_Alignment[_Align], _DefaultPosY>;
+			Align = ApiAlignToControlAlign(_Align);
+		} else {
+			Pos = <_PosX, _PosY>;
+		}
+		_Label.RelativePosition_V3 = Pos;
+		_Label.HorizontalAlign = Align;
+	}
+
+	Void UpdateBannerTextPlacements(
+		K_EventEditionDetails _Event,
+		CMlLabel _Label_TitleLn1,
+		CMlLabel _Label_TitleLn2,
+		CMlLabel _Label_Authors,
+		CMlLabel _Label_Leaderboards
+	) {
+		declare K_EventEditionInGameParams Params = _Event.ingame_params;
+
+		UpdateTextPlacement(_Label_TitleLn1, Params.titles_align, Params.titles_pos_x, Params.titles_pos_y, C_TitlePosY);
+		UpdateTextPlacement(_Label_TitleLn2, Params.titles_align, Params.titles_pos_x, Params.titles_pos_y, C_SubtitlePosY);
+		UpdateTextPlacement(_Label_Authors, Params.authors_align, Params.authors_pos_x, Params.authors_pos_y, C_AuthorsPosY);
+		UpdateTextPlacement(_Label_Leaderboards, Params.lb_link_align, Params.lb_link_pos_x, Params.lb_link_pos_y, C_LbLinkPosY);
+	}
 		
 	main() {
 		declare CMlQuad Quad_Loading = (Page.GetFirstChild("Quad_LoadingIcon") as CMlQuad);
@@ -521,6 +584,7 @@ Text Build() {
 		declare Quad_Banner = (Page.GetFirstChild("Quad_Banner") as CMlQuad);
 		declare Label_EventLn1 = (Page.GetFirstChild("Label_EventLn1") as CMlLabel);
 		declare Label_EventLn2 = (Page.GetFirstChild("Label_EventLn2") as CMlLabel);
+		declare Label_Authors = (Page.GetFirstChild("Label_Authors") as CMlLabel);
 		declare Label_Leaderboards = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
 
 		declare K_Event P_CampaignEvent for Page;
@@ -577,24 +641,7 @@ Text Build() {
 				Label_EventLn2.SetText(SelectedEdition.subtitle);
 				MapsNeedRefresh = True;
 
-				declare Vec2[Text] SpecialConfig;
-				if (C_SpecialEventConfigKey.existskey(SelectedCampaignHandle)
-					&& C_SpecialEventConfigKey[SelectedCampaignHandle].existskey(SelectedCampaign)
-					&& C_SpecialEventConfig.existskey(C_SpecialEventConfigKey[SelectedCampaignHandle][SelectedCampaign]))
-				{
-					SpecialConfig = C_SpecialEventConfig[C_SpecialEventConfigKey[SelectedCampaignHandle][SelectedCampaign]];
-				} else {
-					SpecialConfig = C_SpecialEventConfig[0];
-				}
-
-				Label_Leaderboards.RelativePosition_V3.X = SpecialConfig["label1pos"].X;
-				Label_Leaderboards.RelativePosition_V3.Y = SpecialConfig["label1pos"].Y;
-
-				if (Label_Leaderboards.RelativePosition_V3.X < 81.67) {
-					Label_Leaderboards.HorizontalAlign = CMlControl::AlignHorizontal::Left;
-				} else {
-					Label_Leaderboards.HorizontalAlign = CMlControl::AlignHorizontal::Right;
-				}
+				UpdateBannerTextPlacements(SelectedEdition, Label_EventLn1, Label_EventLn2, Label_Authors, Label_Leaderboards);
 			}
 
 			if (SelectedMapI != P_SelectedMapI || SelectedMapJ != P_SelectedMapJ) {

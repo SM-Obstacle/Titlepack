@@ -50,6 +50,19 @@
     K_EventEditionContentMap[] maps;
 }
 
+#Struct K_EventEditionInGameParams {
+    Text titles_align;
+    Text lb_link_align;
+    Text authors_align;
+    Boolean put_subtitle_on_newline;
+    Real titles_pos_x;
+    Real titles_pos_y;
+    Real lb_link_pos_x;
+    Real lb_link_pos_y;
+    Real authors_pos_x;
+    Real authors_pos_y;
+}
+
 #Struct K_EventEditionDetails {
     Integer id;
     Text name;
@@ -57,6 +70,7 @@
     Text[] authors;
     Integer start_date;
     Integer end_date;
+    K_EventEditionInGameParams ingame_params;
     Text banner_img_url;
     Text banner2_img_url;
     Integer mx_id;
@@ -130,6 +144,19 @@ Text ML_Preproc(Text _Prefix) {
     {{{_Prefix}}}K_EventEditionContentMap[] maps;
 }
 
+#Struct {{{_Prefix}}}K_EventEditionInGameParams {
+    Text titles_align;
+    Text lb_link_align;
+    Text authors_align;
+    Boolean put_subtitle_on_newline;
+    Real titles_pos_x;
+    Real titles_pos_y;
+    Real lb_link_pos_x;
+    Real lb_link_pos_y;
+    Real authors_pos_x;
+    Real authors_pos_y;
+}
+
 #Struct {{{_Prefix}}}K_EventEditionDetails {
     Integer id;
     Text name;
@@ -137,6 +164,7 @@ Text ML_Preproc(Text _Prefix) {
     Text[] authors;
     Integer start_date;
     Integer end_date;
+    {{{_Prefix}}}K_EventEditionInGameParams ingame_params;
     Text banner_img_url;
     Text banner2_img_url;
     Integer mx_id;
