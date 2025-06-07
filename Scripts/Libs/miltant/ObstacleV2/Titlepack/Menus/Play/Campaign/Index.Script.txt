@@ -1049,14 +1049,24 @@ Void Private_LoopCheckEvents(Text _LayerName) {
 				declare Integer P_SelectedEdition for CurrentPage;
 				declare EventAPITypes::K_EventEditionContentCategory[] CampaignCategories = G_CurrentEvent[_LayerName].EditionsDetails[P_SelectedEdition].categories;
 
+				// Copy the UI variables to avoid modifying the UI via them
+				declare Integer SelectedMapI = P_SelectedMapI;
+				declare Integer SelectedMapJ = P_SelectedMapJ;
+
+				// Flatten the indexes if the event doesn't have categories
+				if (CampaignCategories.count == 1 && CampaignCategories[0].handle == "") {
+					SelectedMapJ = P_SelectedMapI * 5 + P_SelectedMapJ;
+					SelectedMapI = 0;
+				}
+
 				// Initialize with the current category maps
 				declare K_PendingPlayingMap[][] MapList = [[]];
 
-				foreach (Map in CampaignCategories[P_SelectedMapI].maps.slice(P_SelectedMapJ, CampaignCategories[P_SelectedMapI].maps.count)) {
+				foreach (Map in CampaignCategories[SelectedMapI].maps.slice(SelectedMapJ, CampaignCategories[SelectedMapI].maps.count)) {
 					MapList[0].add(Private_GetPendingPlayingMapType(_LayerName, Map, P_SelectedEdition));
 				}
 
-				foreach (Category in CampaignCategories.slice(P_SelectedMapI + 1, CampaignCategories.count)) {
+				foreach (Category in CampaignCategories.slice(SelectedMapI + 1, CampaignCategories.count)) {
 					declare K_PendingPlayingMap[] CategoryMaps;
 
 					foreach (Map in Category.maps) {
