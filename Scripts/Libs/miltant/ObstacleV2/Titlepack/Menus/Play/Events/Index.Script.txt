@@ -67,7 +67,7 @@ Text BuildSideBar() {
 
 		<quad pos="6.5 -120" id="Quad_Refresh" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="Refresh" scriptevents="1" />
 		<label pos="12 -120" textsize="1.3" text="Refresh" halign="center" valign="center" class="lato"/>
-		<label pos="31 -5.5" textsize="5.2" text="editions" textprefix="$t" halign="center" valign="center2" class="lato"/>
+		<label id="Label_SideBarTitle" pos="31 -5.5" textsize="5.2" text="editions" textprefix="$t" halign="center" valign="center2" class="lato"/>
 
 		<!-- Selected event -->
 		<frame id="Frame_SelectedEvent" hidden="1">
@@ -91,6 +91,7 @@ Text BuildSideBar() {
 Void UpdateList() {
 	declare Integer P_SelectedItem for Page = -1;
 	declare Text[] P_Items for Page = [];
+	declare Text P_SelectedEvent for Page = "";
 
 	// Clear
 	for (I, 0, 7) {
@@ -105,7 +106,11 @@ Void UpdateList() {
 		declare CMlLabel Label_CampaignEdition = (Frame_CampaignEdition.GetFirstChild("Label_CampaignEdition") as CMlLabel);
 
 		Frame_CampaignEdition.Show();
-		Label_CampaignEdition.SetText(Item);
+		if (P_SelectedEvent == "") {
+			Label_CampaignEdition.SetText(" " ^ Item);
+		} else {
+			Label_CampaignEdition.SetText(Item);
+		}
 		Label_CampaignEdition.DataAttributeSet("idx", TL::ToText(I));
 
 		declare Vec3 TextColor = CL::HexToRgb("B4B4B4");
@@ -117,14 +122,16 @@ Void UpdateList() {
 	}
 
 	declare CMlFrame Frame_SelectedEvent <=> (Page.GetFirstChild("Frame_SelectedEvent") as CMlFrame);
-	declare Text P_SelectedEvent for Page = "";
+	declare CMlLabel Label_SideBarTitle <=> (Page.GetFirstChild("Label_SideBarTitle") as CMlLabel);
 
-	if (P_SelectedEvent != "") {
+	if (P_SelectedEvent == "") {
+		Frame_SelectedEvent.Hide();
+		Label_SideBarTitle.SetText("events");
+	} else {
 		Frame_SelectedEvent.Show();
 		declare CMlLabel Label_SelectedEvent <=> (Frame_SelectedEvent.GetFirstChild("Label_SelectedEvent") as CMlLabel);
 		Label_SelectedEvent.SetText(P_SelectedEvent);
-	} else {
-		Frame_SelectedEvent.Hide();
+		Label_SideBarTitle.SetText("editions");
 	}
 }
 
