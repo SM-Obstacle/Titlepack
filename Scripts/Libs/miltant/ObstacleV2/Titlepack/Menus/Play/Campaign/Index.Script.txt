@@ -134,6 +134,8 @@ Text Build() {
 			<frameinstance modelid="CategoryModel" id="F_Category_4" hidden="1" pos="103.5"/>
 			<frameinstance modelid="CategoryModel" id="F_Category_5" hidden="1" pos="138"/>
 			<quad pos="169.17 5" id="Quad_NextPage" valign="center2" halign="center" size="5 5" style="Icons128x128_1" hidden="1" substyle="BackFocusable" rot="180" scriptevents="1" />
+			<label pos="174 -75" textsize="1" hidden="1" class="lato" halign="right" valign="center2" textcolor="fffa" id="Label_ExpiredEdition"
+				text="* This event has expired, but you can still play its maps. Your records won't be saved for the event, only for the maps." />
 		</frame>
 
 		<label pos="6 {{{C_TitlePosY}}}" textsize="8" textprefix="$t$s$fff" class="lator" id="Label_EventLn1"/>
@@ -258,6 +260,7 @@ Text Build() {
 		declare Quad_NextOppMedal = (Page.GetFirstChild("Quad_NextOppMedal") as CMlQuad);
 		declare Label_Authors = (Page.GetFirstChild("Label_Authors") as CMlLabel);
 		declare Label_LeaderboardsLink = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
+		declare Label_ExpiredEdition = (Page.GetFirstChild("Label_ExpiredEdition") as CMlLabel);
 
 		declare Integer P_SelectedEdition for Page;
 		declare Integer P_SelectedMapI for Page;
@@ -273,6 +276,7 @@ Text Build() {
 		Label_NextOpponent.SetText("None");
 		Label_Authors.Hide();
 		Label_LeaderboardsLink.Hide();
+		Label_ExpiredEdition.Hide();
 		for (I, 1, C_MaxCategoriesPerPage) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ I) as CMlFrame);
 			// We first hide the sub-frames for the maps cards
@@ -289,8 +293,8 @@ Text Build() {
 				Quad_MedalS.Hide();
 				Quad_MedalG.Hide();
 				Quad_MedalC.Hide();
-
 			}
+
 			// Then we hide the category frame itself
 			// so that when it shows up again, the maps cards are still hidden
 			Frame_Category.Hide();
@@ -298,6 +302,10 @@ Text Build() {
 
 		// Keeps the page cleared
 		if (G_Event.EditionsDetails[P_SelectedEdition].categories.count == 0) return;
+
+		if (G_Event.EditionsDetails[P_SelectedEdition].expired) {
+			Label_ExpiredEdition.Show();
+		}
 
 		declare SelectedCategory = G_Event.EditionsDetails[P_SelectedEdition]
 			.categories[P_SelectedMapI];
