@@ -882,7 +882,12 @@ Void Private_LoopPlayerNextMap(Text _LayerName) {
 }
 
 Void Private_LoopEditionLoaded(Text _LayerName) {
-	if (!(G_ContentLoading[_LayerName] && EventAPI::EventHasContent(G_LoadedEventHandle[_LayerName]))) return;
+	if (!(G_ContentLoading[_LayerName]
+		&& EventAPI::EventHasContent(G_LoadedEventHandle[_LayerName])
+		&& EventAPI::GetEvent(G_LoadedEventHandle[_LayerName]).EditionsDetails.existskey(G_LoadedEdition[_LayerName])))
+	{
+		return;
+	}
 
 	G_CurrentEvent[_LayerName] = EventAPI::GetEvent(G_LoadedEventHandle[_LayerName]);
 	G_UpdateContent[_LayerName] = True;

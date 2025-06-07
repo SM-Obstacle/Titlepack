@@ -26,6 +26,10 @@ declare Text G_CurrentEventHandle;
 
 declare Boolean G_WaitingEventReq;
 
+// Set to true when the editions of an event is listed in the side bar
+declare Boolean G_IsEventSelected;
+declare EventAPITypes::K_Event[Text] G_Events;
+
 /*********************************************
   FUNCTIONS
  *********************************************/
@@ -236,17 +240,13 @@ main() {
     """;
 }
 
-// Set to true when the editions of an event is listed in the side bar
-declare Boolean G_EventSelected;
-declare EventAPITypes::K_Event[Text] G_Events;
-
 Void Private_UpdateList() {
 	declare CMlPage SideBarPage <=> Windows::GetPageOfSubLayer(GetName(), GetSideBarName());
 
 	declare Text[] P_Items for SideBarPage = [];
 	P_Items.clear();
 
-	if (G_EventSelected) {
+	if (G_IsEventSelected) {
 		// List all editions
 		declare Integer I = 0;
 		declare Integer SelectedIdx = -1;
@@ -293,10 +293,36 @@ Void Private_UpdateList() {
 	P_EventsUpdate = Now;
 }
 
+/**
+ * Save the given event to the persistent data of the user, to automatically select it
+ * on the next session.
+ * @param _SelectedHandle the event handle.
+ * @param _SelectedEdition the event edition ID. It can be -1 if no edition is selected.
+ */
+Void Private_SaveSelectedEventEdition(Text _SelectedHandle, Integer _SelectedEdition) {
+	declare persistent Text ObsStore_LastSelectedEventHandle for LocalUser = "";
+	declare persistent Integer ObsStore_LastSelectedEventEditionId for LocalUser = -1;
+	ObsStore_LastSelectedEventHandle = _SelectedHandle;
+	ObsStore_LastSelectedEventEditionId = _SelectedEdition;
+}
+
+Text Private_GetSavedSelectedEventHandle() {
+	declare persistent Text ObsStore_LastSelectedEventHandle for LocalUser = "";
+	return ObsStore_LastSelectedEventHandle;
+}
+
+Integer Private_GetSavedSelectedEditionId() {
+	declare persistent Integer ObsStore_LastSelectedEventEditionId for LocalUser = -1;
+	return ObsStore_LastSelectedEventEditionId;
+}
+
 Void Private_UpdateEvents() {
 	// Here, we consider that the editions in the array are properly initialized,
 	// meaning the last edition ID is loaded in the `Editions` array AND in the `EditionsDetails` array.
 	declare EventAPITypes::K_Event[Text] Events = EventAPI::GetEvents();
+
+	declare Text LastSelectedHandle = Private_GetSavedSelectedEventHandle();
+	declare Integer LastSelectedEditionId = Private_GetSavedSelectedEditionId();
 
 	declare Text MaxDate = "";
 	declare Text LatestHandle = "";
@@ -308,12 +334,22 @@ Void Private_UpdateEvents() {
 	foreach (Handle => Event in Events) {
 		if (Handle == "campaign") continue;
 
-		if (Event.Editions[Event.Event.last_edition_id].start_date > MaxDate) {
+		if (LastSelectedHandle == Handle) {
+			if (LastSelectedEditionId != -1 && Event.Editions.existskey(LastSelectedEditionId)) {
+				LatestEdition = LastSelectedEditionId;
+			} else {
+				LatestEdition = Event.Event.last_edition_id;
+			}
+			LatestHandle = Handle;
+			SelectedIdx = Idx;
+			break;
+		} else if (Event.Editions[Event.Event.last_edition_id].start_date > MaxDate) {
 			MaxDate = Event.Editions[Event.Event.last_edition_id].start_date;
 			LatestHandle = Handle;
 			LatestEdition = Event.Event.last_edition_id;
 			SelectedIdx = Idx;
 		}
+
 		Idx += 1;
 	}
 
@@ -325,8 +361,10 @@ Void Private_UpdateEvents() {
 	declare Integer P_SelectedItem for Windows::GetPageOfSubLayer(GetName(), GetSideBarName()) = -1;
 	P_SelectedItem = SelectedIdx;
 
+	log("I WANT " ^ LatestHandle ^ "/" ^ LatestEdition);
 	Campaign::SelectEdition(GetName(), LatestHandle, LatestEdition);
-	G_EventSelected = True;
+	Private_SaveSelectedEventEdition(LatestHandle, LatestEdition);
+	G_IsEventSelected = True;
 	G_CurrentEventHandle = LatestHandle;
 	G_Events = Events;
 	Private_UpdateList();
@@ -335,10 +373,7 @@ Void Private_UpdateEvents() {
 Void Load() {
 	G_WaitingEventReq = True;
 
-	// TODO: select the current event handle from the latest event edition (get max edition date)
     Campaign::Load(GetName(), [GetSideBarName() => BuildSideBar()]);
-    Campaign::SelectEdition(GetName(), "benchmark", 2);
-	Private_UpdateEvents();
 }
 
 Void Loop() {
@@ -346,13 +381,15 @@ Void Loop() {
 
     Campaign::Loop(GetName(), SideBarPage);
 
+	// TODO: this will select the latest event each time a new event is loaded which isn't intended
+	// it should be executed only once
 	if (G_WaitingEventReq && !EventAPI::HasAnyEventLoading()) {
 		G_WaitingEventReq = False;
 		Private_UpdateEvents();
 	}
 
 	if (!G_WaitingEventReq && EventAPI::HasAnyUpdate()) {
-		// ...
+		// TODO: update side bar
 	}
 
 	foreach (Event in PendingEvents) {
@@ -364,7 +401,7 @@ Void Loop() {
 
 		switch (Event.CustomEventType) {
 			case "goback": {
-				G_EventSelected = False;
+				G_IsEventSelected = False;
 				Private_UpdateList();
 			}
 			case "select_item": {
@@ -372,7 +409,7 @@ Void Loop() {
 
 				// If event selected, select edition.
 				// Otherwise, list all editions of this event.
-				if (G_EventSelected) {
+				if (G_IsEventSelected) {
 					// Get which edition was selected
 					declare EventAPITypes::K_Event CurrentEvent = G_Events[G_CurrentEventHandle];
 					declare Integer SelectedEditionId = -1;
@@ -389,6 +426,7 @@ Void Loop() {
 					if (SelectedEditionId != -1) {
 						Campaign::SelectEdition(GetName(), G_CurrentEventHandle, SelectedEditionId);
 						Private_UpdateList();
+						Private_SaveSelectedEventEdition(G_CurrentEventHandle, SelectedEditionId);
 					}
 				} else {
 					// Get which event was selected
@@ -406,8 +444,9 @@ Void Loop() {
 					// Unlikely
 					if (SelectedHandle != "") {
 						G_CurrentEventHandle = SelectedHandle;
-						G_EventSelected = True;
+						G_IsEventSelected = True;
 						Private_UpdateList();
+						Private_SaveSelectedEventEdition(G_CurrentEventHandle, -1);
 					}
 				}
 			}
