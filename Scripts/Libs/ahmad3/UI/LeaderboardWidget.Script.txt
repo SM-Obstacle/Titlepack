@@ -59,20 +59,20 @@ Text Private_GetSmallRecords() {
 <frame id="Frame_Small_Records" class="LibCustomUI_Module">
     <framemodel id="small_record">
         <label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" textfont="light"/>
-        <label id="name" pos="-14 0" size="20 4" halign="left" valign="center2" textsize="1" textfont="light"/>
+        <label id="name" pos="-14 0" size="20 4" halign="left" valign="center2" textsize="1" />
         <label id="time" pos="20 0" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
     </framemodel>
 
     <frame pos="139 75">
         <frame id="Frame_Background" halign="center" valign="center2" z-index="-1">
-            <quad z-index="-1" size="44 {{{QuadHeight}}}" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="top" scriptevents="1"/>
+            <quad z-index="-1" id="Quad_Background" size="44 {{{QuadHeight}}}" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="top" scriptevents="1"/>
             <label pos="0 -1" size="40 5" text="Records" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
             {{{LabelEvent}}}
         </frame>
         <frame id="Frame_Records" pos="0 {{{RecordsFrameY}}}">
-            <frameinstance modelid="small_record" pos="0 0" id="record0"/>
-            <frameinstance modelid="small_record" pos="0 -4" id="record1"/>
-            <frameinstance modelid="small_record" pos="0 -8" id="record2"/>
+            <frameinstance modelid="small_record" pos="0 0" id="record0" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -4" id="record1" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -8" id="record2" hidden="1"/>
             <frameinstance modelid="small_record" pos="0 -12" id="record3" hidden="1"/>
             <frameinstance modelid="small_record" pos="0 -16" id="record4" hidden="1"/>
             <frameinstance modelid="small_record" pos="0 -20" id="record5" hidden="1"/>
@@ -87,25 +87,25 @@ Text Private_GetSmallRecords() {
             <frameinstance modelid="small_record" pos="0 -56" id="record14" hidden="1"/>
 
 			<frame pos="-20 -13" id="Frame_Medal_3">
-				<quad pos="-.5" size="3 3" image="file://Media/Images/Obstacle/Medals/champion.png" valign="center"/>
+				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/champion.png" valign="center"/>
         		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Master Time" textfont="light"/>
         		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
 			</frame>
 
 			<frame pos="-20 -18" id="Frame_Medal_2">
-				<quad pos="-.5" size="3 3" image="file://Media/Images/Obstacle/Medals/gold.png" valign="center"/>
+				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/gold.png" valign="center"/>
         		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Gold Time" textfont="light"/>
         		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
 			</frame>
 
 			<frame pos="-20 -23" id="Frame_Medal_1">
-				<quad pos="-.5" size="3 3" image="file://Media/Images/Obstacle/Medals/silver.png" valign="center"/>
+				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/silver.png" valign="center"/>
         		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Silver Time" textfont="light"/>
         		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
 			</frame>
 
 			<frame pos="-20 -28" id="Frame_Medal_0">
-				<quad pos="-.5" size="3 3" image="file://Media/Images/Obstacle/Medals/bronze.png" valign="center"/>
+				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/bronze.png" valign="center"/>
         		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Bronze Time" textfont="light"/>
         		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
 			</frame>
@@ -214,6 +214,8 @@ Text GetLayer() {
         if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
             return G_MedalsTimesPerMap[Map.MapInfo.MapUid][Medal];
         }
+        // TODO: first check if the map has saved medal for it, because the default value is 1000 wtf
+        return -1;
         switch (Medal) {
             case 0: {
                 return Map.MapInfo.TMObjective_BronzeTime;
@@ -254,37 +256,31 @@ Text GetLayer() {
 
         // medals to display
         declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
-        // non-null ranks to display
-        declare Integer[] Ranks;
-        if (_Response.response.count > 0) {
-            Ranks.add(0);
-
-            if (PlayerRank < 3 || PlayerRank == -1) {
-                if (_Response.response.count > 1)
-                    Ranks.add(1);
-                if (_Response.response.count > 2)
-                    Ranks.add(2);
-            } else {
-                Ranks.add(PlayerRank - 1);
-                Ranks.add(PlayerRank);
-            }
-        }
 
         declare CurrentHeight = 0.;
         declare CurrentMedal = Medals.count - 1;
         declare CurrentTime = Medals[0] + 1;
 
-        foreach (I => Rank in Ranks) {
-            CurrentTime = _Response.response[Rank].time;
+        declare Integer AmountOfInsertedMedals = 0;
+
+        foreach (I => Rank in _Response.response) {
+            CurrentTime = Rank.time;
             
             // displays medals before the current rank
             while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
                 declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
                 declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
 
-                Frame.RelativePosition_V3.Y = CurrentHeight;
-                timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
-                CurrentHeight -= 4.;
+                if (Medals[CurrentMedal] == -1) {
+                    Frame.Hide();
+                } else {
+                    Frame.Show();
+                    AmountOfInsertedMedals += 1;
+                    Frame.RelativePosition_V3.Y = CurrentHeight;
+                    timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+                    CurrentHeight -= 4.;
+                }
+
                 CurrentMedal -= 1;
             }
 
@@ -296,39 +292,54 @@ Text GetLayer() {
 
             frame.RelativePosition_V3.Y = CurrentHeight;
             CurrentHeight -= 4.;
-            if (I < Ranks.count) {
-                rankLabel.SetText(""^_Response.response[Rank].rank);
-                nameLabel.SetText(_Response.response[Rank].nickname);
-                timeLabel.SetText(TL::TimeToText(_Response.response[Rank].time, True));
-            }
+            rankLabel.SetText(""^Rank.rank);
+            nameLabel.SetText(Rank.nickname);
+            timeLabel.SetText(TL::TimeToText(Rank.time, True));
+            frame.Show();
         }
 
-        // displays medals after the last rank
+        // Display medals after the last rank
         while (CurrentMedal >= 0) {
             declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
             declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
 
-            Frame.RelativePosition_V3.Y = CurrentHeight;
-            timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
-            CurrentHeight -= 4.;
+            if (CurrentHeight <= -15 * 4 || Medals[CurrentMedal] == -1) {
+                Frame.Hide();
+            } else {
+                Frame.Show();
+                Frame.RelativePosition_V3.Y = CurrentHeight;
+                timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+                CurrentHeight -= 4.;
+            }
+
             CurrentMedal -= 1;
         }
 
-        // hides unused ranks
-        for (I, Ranks.count, 2) {
-            declare frame <=> (G_Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
+        declare Real AddedHeight = 0.;
+
+        // Expand height of main frames if exceeded
+        if (-CurrentHeight >= 4 * 15) {
+            AddedHeight = 4. * AmountOfInsertedMedals;
+            G_Frame_Widget.Size.Y += AddedHeight;
+            G_Frame_Records.Size.Y += AddedHeight;
+            declare CMlQuad Background <=> (Page.GetFirstChild("Quad_Background") as CMlQuad);
+            Background.Size.Y += AddedHeight;
+        }
+
+        // Current player doesn't have any record on the map so we show the last empty line
+        if (PlayerRank == -1) {
+            declare frame <=> (G_Frame_Records.GetFirstChild("record14") as CMlFrame);
             declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
             declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
             declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
 
-            frame.RelativePosition_V3.Y = CurrentHeight;
-            CurrentHeight -= 4.;
-            
-            rankLabel.SetText("");
-            nameLabel.SetText("---");
+            frame.RelativePosition_V3.Y = -4. * 14 - AddedHeight;
+
+            frame.Show();
+            rankLabel.SetText("---");
+            nameLabel.SetText(InputPlayer.User.Name);
             timeLabel.SetText("--:--:--");
         }
-
     }
 
     Void UpdateRecords(Text _Login) {
