@@ -210,24 +210,29 @@ Text GetLayer() {
     declare CMlFrame G_Frame_Widget;
     declare CMlFrame G_Frame_Records;
 
-    Integer GetMedal(Integer Medal) {
+    Integer GetMedal(Integer _Medal) {
         if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
-            return G_MedalsTimesPerMap[Map.MapInfo.MapUid][Medal];
+            return G_MedalsTimesPerMap[Map.MapInfo.MapUid][_Medal];
         }
-        // TODO: first check if the map has saved medal for it, because the default value is 1000 wtf
+        declare metadata Boolean Meta_IsMedalSet for Map = False;
+        if (Meta_IsMedalSet) {
+            switch (_Medal) {
+                case 0: {
+                    return Map.MapInfo.TMObjective_BronzeTime;
+                }
+                case 1: {
+                    return Map.MapInfo.TMObjective_SilverTime;
+                }
+                case 2: {
+                    return Map.MapInfo.TMObjective_GoldTime;
+                }
+                case 4: {
+                    return Map.MapInfo.TMObjective_AuthorTime;
+                }
+            }
+        }
+
         return -1;
-        switch (Medal) {
-            case 0: {
-                return Map.MapInfo.TMObjective_BronzeTime;
-            }
-            case 1: {
-                return Map.MapInfo.TMObjective_SilverTime;
-            }
-            case 2: {
-                return Map.MapInfo.TMObjective_GoldTime;
-            }
-        }
-        return Map.MapInfo.TMObjective_AuthorTime;
     }
 
     Void UpdateUI(K_Response _Response) {

@@ -66,14 +66,19 @@ Text GetStylesheet()
     """;
 }
 
-Text LittleButton(Text _Position, Text _Text, Text _Name)
+Text LittleButton(Text _Position, Text _Text, Text _Name, Text _Size)
 {
     return """
         <frame pos="{{{_Position}}}}">
-            <label id="{{{_Name}}}" size="6 6" halign="center" valign="center2" scriptevents="1"
+            <label id="{{{_Name}}}" size="{{{_Size}}}" halign="center" valign="center2" scriptevents="1"
                 text="{{{_Text}}}" focusareacolor1="797979AA" focusareacolor2="4777C1FF" textcolor="FFFFFFFF" />
         </frame>
     """;
+}
+
+Text LittleButton(Text _Position, Text _Text, Text _Name)
+{
+    return LittleButton(_Position, _Text, _Name, "6 6");
 }
 
 Text Select2(Text _Position, Text _Option1, Text _Option2, Text _Selector)
@@ -654,6 +659,12 @@ Void EditObjectives()
             {{{Property("0 -15", "Silver Medal", Entry("0 -5.5", "Entry_Silver_Medal"))}}}
             {{{Property("0 -30", "Gold Medal", Entry("0 -5.5", "Entry_Gold_Medal"))}}}
             {{{Property("0 -45", "Master Medal", Entry("0 -5.5", "Entry_Champion_Medal"))}}}
+
+            {{{LittleButton("-20 -65", "", "Button_Clear", "8 8")}}}
+            <label text="Clear medal times" pos="-12 -65" valign="center2" />
+
+            {{{LittleButton("-20 -80", "", "Button_Save", "8 8")}}}
+            <label text="Save medal times" pos="-12 -80" valign="center2" />
         </frame>
     """;
 
@@ -695,8 +706,6 @@ Void EditObjectives()
         Entry_Silver_Medal.SetText(TL::TimeToText(Silver_Medal , True), False);
         Entry_Gold_Medal.SetText(TL::TimeToText(Gold_Medal, True), False);
         Entry_Champion_Medal.SetText(TL::TimeToText(Champion_Medal, True), False);
-
-        SendCustomEvent("Event_Save_Objectives", Text[]);
     }
 
     main() {
@@ -716,41 +725,54 @@ Void EditObjectives()
             }
 
             foreach (Event in PendingEvents) {
-                if (Event.Type == CMlScriptEvent::Type::EntrySubmit) {
-                    declare Entry <=> (Event.Control as CMlEntry);
-                    declare EntryValue = ParseTime(Entry.Value);
-                    
-                    switch(Entry.ControlId) {
-                        case "Entry_Champion_Medal": Champion_Medal = EntryValue;
-                        case "Entry_Gold_Medal": Gold_Medal = EntryValue;
-                        case "Entry_Silver_Medal": Silver_Medal = EntryValue;
-                        case "Entry_Bronze_Medal": Bronze_Medal = EntryValue;
-                    }
-
-
-                    if (Gold_Medal < Champion_Medal) {
-                        if (Gold_Medal < 0.5 * Champion_Medal) {
-                            Gold_Medal = ML::CeilingInteger(Champion_Medal / 1000. * 1.066666) * 1000;
-                        } else {
-                            Gold_Medal = Champion_Medal;
+                switch (Event.Type) {
+                    case CMlScriptEvent::Type::MouseClick: {
+                        switch (Event.ControlId) {
+                            case "Button_Save": {
+                                SendCustomEvent("Event_Save_Objectives", Text[]);
+                            }
+                            case "Button_Clear": {
+                                SendCustomEvent("Event_Clear_Objectives", Text[]);
+                            }
                         }
                     }
-                    if (Silver_Medal < Gold_Medal) {
-                        if (Silver_Medal < 0.5 * Gold_Medal) {
-                            Silver_Medal = ML::CeilingInteger(Gold_Medal / 1000. * 1.125) * 1000;
-                        } else {
-                            Silver_Medal = Gold_Medal;
+                    case CMlScriptEvent::Type::EntrySubmit: {
+                        declare Entry <=> (Event.Control as CMlEntry);
+                        declare EntryValue = ParseTime(Entry.Value);
+                        
+                        switch(Entry.ControlId) {
+                            case "Entry_Champion_Medal": Champion_Medal = EntryValue;
+                            case "Entry_Gold_Medal": Gold_Medal = EntryValue;
+                            case "Entry_Silver_Medal": Silver_Medal = EntryValue;
+                            case "Entry_Bronze_Medal": Bronze_Medal = EntryValue;
                         }
-                    }
-                    if (Bronze_Medal < Silver_Medal) {
-                        if (Bronze_Medal < 0.5 * Silver_Medal) {
-                            Bronze_Medal = ML::CeilingInteger(Silver_Medal / 1000. * 1.25) * 1000;
-                        } else {
-                            Bronze_Medal = Silver_Medal;
-                        }
-                    }
 
-                    NeedUpdate = True;
+
+                        if (Gold_Medal < Champion_Medal) {
+                            if (Gold_Medal < 0.5 * Champion_Medal) {
+                                Gold_Medal = ML::CeilingInteger(Champion_Medal / 1000. * 1.066666) * 1000;
+                            } else {
+                                Gold_Medal = Champion_Medal;
+                            }
+                        }
+                        if (Silver_Medal < Gold_Medal) {
+                            if (Silver_Medal < 0.5 * Gold_Medal) {
+                                Silver_Medal = ML::CeilingInteger(Gold_Medal / 1000. * 1.125) * 1000;
+                            } else {
+                                Silver_Medal = Gold_Medal;
+                            }
+                        }
+                        if (Bronze_Medal < Silver_Medal) {
+                            if (Bronze_Medal < 0.5 * Silver_Medal) {
+                                Bronze_Medal = ML::CeilingInteger(Silver_Medal / 1000. * 1.25) * 1000;
+                            } else {
+                                Bronze_Medal = Silver_Medal;
+                            }
+                        }
+
+                        NeedUpdate = True;
+
+                    }
                 }
             }
         }
@@ -762,25 +784,56 @@ Void EditObjectives()
 
 Void SaveObjectives()
 {
-    declare metadata Integer Meta_Champion_Medal for Map;
-    declare metadata Integer Meta_Gold_Medal for Map;
-    declare metadata Integer Meta_Silver_Medal for Map;
-    declare metadata Integer Meta_Bronze_Medal for Map;
+    declare metadata Boolean Meta_IsMedalSet for Map = False;
+    declare metadata Integer Meta_Champion_Medal for Map = -1;
+    declare metadata Integer Meta_Gold_Medal for Map = -1;
+    declare metadata Integer Meta_Silver_Medal for Map = -1;
+    declare metadata Integer Meta_Bronze_Medal for Map = -1;
 
-    declare Integer Champion_Medal for ManialinkPage;
-    declare Integer Gold_Medal for ManialinkPage;
-    declare Integer Silver_Medal for ManialinkPage;
-    declare Integer Bronze_Medal for ManialinkPage;
+    declare Integer Champion_Medal for ManialinkPage = -1;
+    declare Integer Gold_Medal for ManialinkPage = -1;
+    declare Integer Silver_Medal for ManialinkPage = -1;
+    declare Integer Bronze_Medal for ManialinkPage = -1;
     
-    Map.TMObjective_AuthorTime = Champion_Medal;
-    Map.TMObjective_GoldTime = Gold_Medal;
-    Map.TMObjective_SilverTime = Silver_Medal;
-    Map.TMObjective_BronzeTime = Bronze_Medal;
+    if (Champion_Medal != -1) {
+        Map.TMObjective_AuthorTime = Champion_Medal;
+        Meta_Champion_Medal = Champion_Medal;
+    }
+    if (Gold_Medal != -1) {
+        Map.TMObjective_GoldTime = Gold_Medal;
+        Meta_Gold_Medal = Gold_Medal;
+    }
+    if (Silver_Medal != -1) {
+        Map.TMObjective_SilverTime = Silver_Medal;
+        Meta_Silver_Medal = Silver_Medal;
+    }
+    if (Bronze_Medal != -1) {
+        Map.TMObjective_BronzeTime = Bronze_Medal;
+        Meta_Bronze_Medal = Bronze_Medal;
+    }
 
-    Meta_Champion_Medal = Champion_Medal;
-    Meta_Gold_Medal = Gold_Medal;
-    Meta_Silver_Medal = Silver_Medal;
-    Meta_Bronze_Medal = Bronze_Medal;
+    if (Champion_Medal != -1 && Gold_Medal != -1 && Silver_Medal != -1 && Bronze_Medal != -1) {
+        Meta_IsMedalSet = True;
+    }
+}
+
+Void ClearObjectives() {
+    declare metadata Boolean Meta_IsMedalSet for Map = False;
+    declare metadata Integer Meta_Champion_Medal for Map = -1;
+    declare metadata Integer Meta_Gold_Medal for Map = -1;
+    declare metadata Integer Meta_Silver_Medal for Map = -1;
+    declare metadata Integer Meta_Bronze_Medal for Map = -1;
+    
+    Map.TMObjective_AuthorTime = -1;
+    Map.TMObjective_GoldTime = -1;
+    Map.TMObjective_SilverTime = -1;
+    Map.TMObjective_BronzeTime = -1;
+
+    Meta_Champion_Medal = -1;
+    Meta_Gold_Medal = -1;
+    Meta_Silver_Medal = -1;
+    Meta_Bronze_Medal = -1;
+    Meta_IsMedalSet = False;
 }
 
 Void PreserveObjectives()
@@ -2211,6 +2264,9 @@ Void Loop()
                     }
                     case "Event_Save_Objectives": {
                         SaveObjectives();
+                    }
+                    case "Event_Clear_Objectives": {
+                        ClearObjectives();
                     }
                     case "Event_Save_Map": {
                         SaveMapSettings();
