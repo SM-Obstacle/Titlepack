@@ -198,6 +198,8 @@ Text GetLayer() {
     {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
     {{{ErrReport::ML_Content("ErrReport")}}}
 
+    declare Real G_OriginalBackgroundHeight;
+
     declare Integer[][Text] G_MedalsTimesPerMap;
 
     declare ReqMgr_K_GetReqId G_ReqId;
@@ -209,6 +211,7 @@ Text GetLayer() {
 
     declare CMlFrame G_Frame_Widget;
     declare CMlFrame G_Frame_Records;
+    declare CMlQuad G_Quad_Background;
 
     /**
      * @param _Medal The index of the medal.
@@ -220,31 +223,35 @@ Text GetLayer() {
             return G_MedalsTimesPerMap[Map.MapInfo.MapUid][_Medal];
         }
 
+        declare metadata Boolean Meta_IsMedalSet for Map = False;
+
         declare metadata Integer Meta_Bronze_Medal for Map = -1;
         declare metadata Integer Meta_Silver_Medal for Map = -1;
         declare metadata Integer Meta_Gold_Medal for Map = -1;
         declare metadata Integer Meta_Champion_Medal for Map = -1;
 
-        // They're meta variables so we treat them carefully :P
-        switch (_Medal) {
-            case 0: {
-                if (Meta_Bronze_Medal > 0 && Meta_Bronze_Medal > Meta_Silver_Medal) {
-                    return Meta_Bronze_Medal;
+        if (Meta_IsMedalSet) {
+            // They're meta variables so we treat them carefully :P
+            switch (_Medal) {
+                case 0: {
+                    if (Meta_Bronze_Medal > 0 && Meta_Bronze_Medal > Meta_Silver_Medal) {
+                        return Meta_Bronze_Medal;
+                    }
                 }
-            }
-            case 1: {
-                if (Meta_Silver_Medal > 0 && Meta_Silver_Medal > Meta_Gold_Medal) {
-                    return Meta_Silver_Medal;
+                case 1: {
+                    if (Meta_Silver_Medal > 0 && Meta_Silver_Medal > Meta_Gold_Medal) {
+                        return Meta_Silver_Medal;
+                    }
                 }
-            }
-            case 2: {
-                if (Meta_Gold_Medal > 0 && Meta_Gold_Medal > Meta_Champion_Medal) {
-                    return Meta_Gold_Medal;
+                case 2: {
+                    if (Meta_Gold_Medal > 0 && Meta_Gold_Medal > Meta_Champion_Medal) {
+                        return Meta_Gold_Medal;
+                    }
                 }
-            }
-            case 3: {
-                if (Meta_Champion_Medal > 0) {
-                    return Meta_Champion_Medal;
+                case 3: {
+                    if (Meta_Champion_Medal > 0) {
+                        return Meta_Champion_Medal;
+                    }
                 }
             }
         }
@@ -339,14 +346,11 @@ Text GetLayer() {
 
         declare Real AddedHeight = 0.;
 
-        // Expand height of main frames if exceeded
-        if (-CurrentHeight >= 4 * 15) {
-            AddedHeight = 4. * AmountOfInsertedMedals;
-            G_Frame_Widget.Size.Y += AddedHeight;
-            G_Frame_Records.Size.Y += AddedHeight;
-            declare CMlQuad Background <=> (Page.GetFirstChild("Quad_Background") as CMlQuad);
-            Background.Size.Y += AddedHeight;
-        }
+        // Update height of main frames
+        AddedHeight = 4. * AmountOfInsertedMedals;
+        G_Frame_Widget.Size.Y = 15 * 4 + AddedHeight;
+        G_Frame_Records.Size.Y = 15 * 4 + AddedHeight;
+        G_Quad_Background.Size.Y = G_OriginalBackgroundHeight + AddedHeight;
 
         // Current player doesn't have any record on the map so we show the last empty line
         if (PlayerRank == -1) {
@@ -422,6 +426,9 @@ Text GetLayer() {
         declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
         declare netread Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
         declare Integer MedalsTimesPerMapUpdated = -1;
+        // Makes sure the first request begins after having initialized the medal times,
+        // to avoid the latter from being randomly defined in the leaderboard.
+        declare Boolean IsMedalInitDone = False;
 
         declare netread Net_StartTime for InputPlayer = -1;
         declare netread Net_CheckpointsTotal for Teams[0] = -1;
@@ -438,6 +445,8 @@ Text GetLayer() {
 
         G_Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
         G_Frame_Records <=> (G_Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
+        G_Quad_Background <=> (Page.GetFirstChild("Quad_Background") as CMlQuad);
+        G_OriginalBackgroundHeight = G_Quad_Background.Size.Y;
 
         while (True) {
             yield;
@@ -454,6 +463,7 @@ Text GetLayer() {
             if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
                 G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
                 MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
+                IsMedalInitDone = True;
             }
 
             if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
@@ -463,7 +473,7 @@ Text GetLayer() {
                 G_Frame_Widget.Show();
             }
 
-            if (Net_RecordsUpdated != LastUpdate || CachedReqsSent()) {
+            if ((Net_RecordsUpdated != LastUpdate || CachedReqsSent()) && IsMedalInitDone) {
                 log("Records updated " ^ LastUpdate ^ " -> " ^ Net_RecordsUpdated ^ " (running: " ^ Running ^ ")");
                 LastUpdate = Net_RecordsUpdated;
                 UpdateRecords(G_LocalPlayer.User.Login);

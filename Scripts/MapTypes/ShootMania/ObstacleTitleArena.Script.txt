@@ -66,14 +66,19 @@ Text GetStylesheet()
     """;
 }
 
-Text LittleButton(Text _Position, Text _Text, Text _Name, Text _Size)
+Text LittleButton(Text _Position, Text _Text, Text _Name, Text _Size, Text _FocusBgColor)
 {
     return """
         <frame pos="{{{_Position}}}}">
             <label id="{{{_Name}}}" size="{{{_Size}}}" halign="center" valign="center2" scriptevents="1"
-                text="{{{_Text}}}" focusareacolor1="797979AA" focusareacolor2="4777C1FF" textcolor="FFFFFFFF" />
+                text="{{{_Text}}}" focusareacolor1="797979AA" focusareacolor2="{{{_FocusBgColor}}}" textcolor="FFFFFFFF" />
         </frame>
     """;
+}
+
+Text LittleButton(Text _Position, Text _Text, Text _Name, Text _Size)
+{
+    return LittleButton(_Position, _Text, _Name, _Size, "4777C1FF");
 }
 
 Text LittleButton(Text _Position, Text _Text, Text _Name)
@@ -672,10 +677,10 @@ Void EditObjectives()
             {{{LittleButton("-25 -63", "", "Button_Generate", "7 7")}}}
             <label text="Generate medal times from author" pos="-16 -63" valign="center2" autonewline="1" size="50" />
 
-            {{{LittleButton("-25 -73", "", "Button_Clear", "7 7")}}}
+            {{{LittleButton("-25 -73", "", "Button_Clear", "7 7", "751313")}}}
             <label text="Clear medal times" pos="-16 -73" valign="center2" />
 
-            {{{LittleButton("-25 -83", "", "Button_Save", "7 7")}}}
+            {{{LittleButton("-25 -83", "", "Button_Save", "7 7", "007a1dff")}}}
             <label text="Save medal times" pos="-16 -83" valign="center2" />
         </frame>
     """;
@@ -856,6 +861,13 @@ Void SaveObjectives()
     // meta variables are those used accross the whole mode to determine the medal times
     // defined by the author of a map.
 
+    // FIXME(ahmad): Actually, we can't trust only the medal times meta variables.
+    // On old versions of the Obstacle map type, the simple fact of opening the "Edit objectives"
+    // window, could edit these meta variables, and e.g. set the author time to 1s (which is
+    // the default value of the author time objective). So we rely on this meta variable.
+    // This is bad because old maps that defined medal times are seen as not having medal times :(
+    declare metadata Boolean Meta_IsMedalSet for Map = False;
+
     declare metadata Integer Meta_Champion_Medal for Map = -1;
     declare metadata Integer Meta_Gold_Medal for Map = -1;
     declare metadata Integer Meta_Silver_Medal for Map = -1;
@@ -868,19 +880,24 @@ Void SaveObjectives()
     
     if (Champion_Medal > 0) {
         Meta_Champion_Medal = Champion_Medal;
+        Meta_IsMedalSet = True;
     }
     if (Gold_Medal > 0 && Gold_Medal > Champion_Medal) {
         Meta_Gold_Medal = Gold_Medal;
+        Meta_IsMedalSet = True;
     }
     if (Silver_Medal > 0 && Silver_Medal > Gold_Medal) {
         Meta_Silver_Medal = Silver_Medal;
+        Meta_IsMedalSet = True;
     }
     if (Bronze_Medal > 0 && Bronze_Medal > Silver_Medal) {
         Meta_Bronze_Medal = Bronze_Medal;
+        Meta_IsMedalSet = True;
     }
 }
 
 Void ClearObjectives() {
+    declare metadata Boolean Meta_IsMedalSet for Map = False;
     declare metadata Integer Meta_Champion_Medal for Map = -1;
     declare metadata Integer Meta_Gold_Medal for Map = -1;
     declare metadata Integer Meta_Silver_Medal for Map = -1;
@@ -890,6 +907,7 @@ Void ClearObjectives() {
     Meta_Gold_Medal = -1;
     Meta_Silver_Medal = -1;
     Meta_Bronze_Medal = -1;
+    Meta_IsMedalSet = False;
 }
 
 Void PreserveObjectives()
