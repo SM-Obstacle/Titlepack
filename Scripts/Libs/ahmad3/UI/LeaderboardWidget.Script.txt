@@ -210,24 +210,41 @@ Text GetLayer() {
     declare CMlFrame G_Frame_Widget;
     declare CMlFrame G_Frame_Records;
 
+    /**
+     * @param _Medal The index of the medal.
+     *  0 is bronze; 1 is silver; 2 is gold; 3 is author.
+     * @return The time of the corresponding medal in milliseconds, or -1 if missing or wrong index.
+     */
     Integer GetMedal(Integer _Medal) {
         if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
             return G_MedalsTimesPerMap[Map.MapInfo.MapUid][_Medal];
         }
-        declare metadata Boolean Meta_IsMedalSet for Map = False;
-        if (Meta_IsMedalSet) {
-            switch (_Medal) {
-                case 0: {
-                    return Map.MapInfo.TMObjective_BronzeTime;
+
+        declare metadata Integer Meta_Bronze_Medal for Map = -1;
+        declare metadata Integer Meta_Silver_Medal for Map = -1;
+        declare metadata Integer Meta_Gold_Medal for Map = -1;
+        declare metadata Integer Meta_Champion_Medal for Map = -1;
+
+        // They're meta variables so we treat them carefully :P
+        switch (_Medal) {
+            case 0: {
+                if (Meta_Bronze_Medal > 0 && Meta_Bronze_Medal > Meta_Silver_Medal) {
+                    return Meta_Bronze_Medal;
                 }
-                case 1: {
-                    return Map.MapInfo.TMObjective_SilverTime;
+            }
+            case 1: {
+                if (Meta_Silver_Medal > 0 && Meta_Silver_Medal > Meta_Gold_Medal) {
+                    return Meta_Silver_Medal;
                 }
-                case 2: {
-                    return Map.MapInfo.TMObjective_GoldTime;
+            }
+            case 2: {
+                if (Meta_Gold_Medal > 0 && Meta_Gold_Medal > Meta_Champion_Medal) {
+                    return Meta_Gold_Medal;
                 }
-                case 4: {
-                    return Map.MapInfo.TMObjective_AuthorTime;
+            }
+            case 3: {
+                if (Meta_Champion_Medal > 0) {
+                    return Meta_Champion_Medal;
                 }
             }
         }
