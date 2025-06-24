@@ -63,7 +63,7 @@ Void Load() {
 
 	declare SubMenu::K_SubMenu Events;
 	Events.Name = "events";
-	Events.Image = "online";
+	Events.Image = "event";
 	SubMenus.add(Events);
 	Events::Load();
 
