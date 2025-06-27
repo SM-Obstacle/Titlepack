@@ -138,13 +138,15 @@ Text Build() {
 				text="* This event has expired, but you can still play its maps. Your records won't be saved for the event, only for the maps." />
 		</frame>
 
-		<label pos="6 {{{C_TitlePosY}}}" textsize="8" textprefix="$t$s$fff" class="lator" id="Label_EventLn1"/>
-		<label pos="6 {{{C_SubtitlePosY}}}" textsize="6" textprefix="$t$fff" class="lato" textfont="light" id="Label_EventLn2"/>
-		<label id="Label_Authors" pos="181 {{{C_AuthorsPosY}}}" textsize="2" textprefix="$s" textfont="light" halign="right" class="lato" />
-		<label id="Label_LeaderboardsLink" pos="181 {{{C_LbLinkPosY}}}" textsize="2" textfont="light" halign="right" class="lato" />
-		<quad size="183.33 35.17" bgcolor="92B7B7FF" id="Quad_Banner"/>
+		<label pos="6 {{{C_TitlePosY}}}" textsize="8" textprefix="$t$s$fff" class="lator" id="Label_EventLn1" z-index="2"/>
+		<label pos="6 {{{C_SubtitlePosY}}}" textsize="6" textprefix="$t$fff" class="lato" textfont="light" id="Label_EventLn2" z-index="2"/>
+		<label id="Label_Authors" pos="181 {{{C_AuthorsPosY}}}" textsize="2" textprefix="$s" textfont="light" halign="right" class="lato" z-index="2"/>
+		<label id="Label_LeaderboardsLink" pos="181 {{{C_LbLinkPosY}}}" textsize="2" textfont="light" halign="right" class="lato" z-index="2"/>
+		<quad size="183.33 35.17" image="file://Media/Images/Obstacle/Campaign/FCampaignBannerClip.png" />
+		<quad size="183.33 35.17" bgcolor="516ca7aa" z-index="0" id="Quad_Banner" />
+		<quad size="183.33 35.17" image="file://Media/Images/Obstacle/Campaign/FCampaignBannerDarkFilter.png" z-index="1" />
 		<quad pos="0 -35.17" size="183.33 1.17" bgcolor="FFF"/>
-		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png"/>
+		<quad pos="0 -36.33" size="183.33 87.83" image="file://Media/Images/Obstacle/Campaign/Background.png" />
 	</frame>
 </frame>
 
@@ -889,11 +891,33 @@ Void Private_LoopPlayerNextMap(Text _LayerName) {
 	""");
 }
 
+Void SelectEdition(Text _LayerName, Text _EventHandle, Integer _EditionId) {
+	G_LoadedEdition[_LayerName] = _EditionId;
+	G_LoadedEventHandle[_LayerName] = _EventHandle;
+	G_ContentLoading[_LayerName] = True;
+
+	declare Boolean Cached = EventAPI::LoadEdition(_EventHandle, _EditionId);
+	if (!Cached) {
+		declare Boolean P_CampaignLoading for Windows::GetPage(_LayerName) = False;
+		P_CampaignLoading = True;
+	}
+}
+
+
 Void Private_LoopEditionLoaded(Text _LayerName) {
 	if (!(G_ContentLoading[_LayerName]
-		&& EventAPI::EventHasContent(G_LoadedEventHandle[_LayerName])
-		&& EventAPI::GetEvent(G_LoadedEventHandle[_LayerName]).EditionsDetails.existskey(G_LoadedEdition[_LayerName])))
+		&& EventAPI::EventHasContent(G_LoadedEventHandle[_LayerName])))
 	{
+		return;
+	}
+
+	// The layer didn't select any edition, so we select the last one.
+	if (G_LoadedEdition[_LayerName] == -1) {
+		declare EventAPITypes::K_Event Event = EventAPI::GetEvent(G_LoadedEventHandle[_LayerName]);
+		SelectEdition(_LayerName, Event.Event.handle, Event.Event.last_edition_id);
+	}
+
+	if (!EventAPI::GetEvent(G_LoadedEventHandle[_LayerName]).EditionsDetails.existskey(G_LoadedEdition[_LayerName])) {
 		return;
 	}
 
@@ -1110,18 +1134,6 @@ Text GetSelectedEventHandle(Text _LayerName) {
 
 Integer GetSelectedEditionId(Text _LayerName) {
 	return G_LoadedEdition[_LayerName];
-}
-
-Void SelectEdition(Text _LayerName, Text _EventHandle, Integer _EditionId) {
-	G_LoadedEdition[_LayerName] = _EditionId;
-	G_LoadedEventHandle[_LayerName] = _EventHandle;
-	G_ContentLoading[_LayerName] = True;
-
-	declare Boolean Cached = EventAPI::LoadEdition(_EventHandle, _EditionId);
-	if (!Cached) {
-		declare Boolean P_CampaignLoading for Windows::GetPage(_LayerName) = False;
-		P_CampaignLoading = True;
-	}
 }
 
 Void Refresh(Text _LayerName) {

@@ -361,7 +361,6 @@ Void Private_UpdateEvents() {
 	declare Integer P_SelectedItem for Windows::GetPageOfSubLayer(GetName(), GetSideBarName()) = -1;
 	P_SelectedItem = SelectedIdx;
 
-	log("I WANT " ^ LatestHandle ^ "/" ^ LatestEdition);
 	Campaign::SelectEdition(GetName(), LatestHandle, LatestEdition);
 	Private_SaveSelectedEventEdition(LatestHandle, LatestEdition);
 	G_IsEventSelected = True;
