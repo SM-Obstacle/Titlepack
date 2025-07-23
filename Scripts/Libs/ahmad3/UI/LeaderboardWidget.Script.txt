@@ -61,7 +61,7 @@ Text Private_GetSmallRecords() {
 <frame id="Frame_Small_Records" class="LibCustomUI_Module">
     <framemodel id="small_record">
         <label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" textfont="light"/>
-        <label id="name" pos="-14 0" size="20 4" halign="left" valign="center2" textsize="1" />
+        <label id="name" pos="-13 0" size="20 4" halign="left" valign="center2" textsize="1" />
         <label id="time" pos="20 0" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
     </framemodel>
 
