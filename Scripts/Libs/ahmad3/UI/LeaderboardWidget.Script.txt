@@ -54,6 +54,8 @@ Text Private_GetSmallRecords() {
         RecordsFrameY = -12.;
     }
 
+    // HACK: we add 4 more pixels so that the UI helper stays bigger than our frame to be able to move it.
+    // Maybe it would be better to improve the custom UI helper module to add a small handle to each helper.
     CustomUI::Add("Frame_Small_Records", <139., 75.>, <44., QuadHeight + 4 * 5>, "top", "");
     return """
 <frame id="Frame_Small_Records" class="LibCustomUI_Module">
