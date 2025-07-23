@@ -334,6 +334,8 @@ Boolean Private_LoopUpdateTokenReq() {
     } else {
         G_TokenUpdateReqOk = False;
         ErrorReport::ReportPost(G_TokenUpdateReq.Route, G_TokenUpdateReq.Body, LocalUser.Login, Req.StatusCode, Req.Result);
+        // Reset to a dummy auth token, to avoid keeping it empty if it's a new player.
+        AuthUtils::SetUserToken("FAILED", LocalUser);
     }
 
     Http.Destroy(Req);
@@ -515,13 +517,7 @@ Void Private_LoopBanDialog() {
  * If they're new, the welcome dialog is initialized. Otherwise, the player update procedure begins.
  */
 Void Private_InitGreetPlayer() {
-    declare Text Token = AuthUtils::GetUserToken(LocalUser);
-
-    if (Token == "") {
-        Private_InitWelcomeDialog();
-    } else {
-        Private_InitPlayerUpdateReq();
-    }
+    Private_InitPlayerUpdateReq();
 }
 
 /**
