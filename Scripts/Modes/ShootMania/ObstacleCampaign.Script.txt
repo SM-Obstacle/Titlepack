@@ -31,11 +31,6 @@ if (ServerAdmin == Null) {
 }
 ***
 
-***Obs_YieldRecordsWidget***
-***
-MedalsWidget::Yield();
-***
-
 ***Campaign_Match_Yield***
 ***
 switch (Event.CustomEventType) {
@@ -59,11 +54,6 @@ switch (Event.CustomEventType) {
 ***Obs_PlayerTookGoal***
 ***
 +++ Campaign_EndRound +++
-***
-
-***Obs_CreateRecordsLayer***
-***
-Layers::Create("Records", MedalsWidget::GetLayer());
 ***
 
 ***Obs_CreateSurvivalRankingLayer***
