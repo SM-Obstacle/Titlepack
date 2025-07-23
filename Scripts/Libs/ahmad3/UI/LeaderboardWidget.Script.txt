@@ -54,7 +54,7 @@ Text Private_GetSmallRecords() {
         RecordsFrameY = -12.;
     }
 
-    CustomUI::Add("Frame_Small_Records", <139., 75.>, <44., 34.>);
+    CustomUI::Add("Frame_Small_Records", <139., 75.>, <44., QuadHeight + 4 * 5>, "top", "");
     return """
 <frame id="Frame_Small_Records" class="LibCustomUI_Module">
     <framemodel id="small_record">
