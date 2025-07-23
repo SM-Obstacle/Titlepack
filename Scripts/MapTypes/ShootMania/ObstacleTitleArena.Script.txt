@@ -66,14 +66,24 @@ Text GetStylesheet()
     """;
 }
 
-Text LittleButton(Text _Position, Text _Text, Text _Name)
+Text LittleButton(Text _Position, Text _Text, Text _Name, Text _Size, Text _FocusBgColor)
 {
     return """
         <frame pos="{{{_Position}}}}">
-            <label id="{{{_Name}}}" size="6 6" halign="center" valign="center2" scriptevents="1"
-                text="{{{_Text}}}" focusareacolor1="797979AA" focusareacolor2="4777C1FF" textcolor="FFFFFFFF" />
+            <label id="{{{_Name}}}" size="{{{_Size}}}" halign="center" valign="center2" scriptevents="1"
+                text="{{{_Text}}}" focusareacolor1="797979AA" focusareacolor2="{{{_FocusBgColor}}}" textcolor="FFFFFFFF" />
         </frame>
     """;
+}
+
+Text LittleButton(Text _Position, Text _Text, Text _Name, Text _Size)
+{
+    return LittleButton(_Position, _Text, _Name, _Size, "4777C1FF");
+}
+
+Text LittleButton(Text _Position, Text _Text, Text _Name)
+{
+    return LittleButton(_Position, _Text, _Name, "6 6");
 }
 
 Text Select2(Text _Position, Text _Option1, Text _Option2, Text _Selector)
@@ -642,10 +652,19 @@ Void EditObjectives()
 {
     G_LastAnchorId = NullId;
 
-    declare Bronze_Medal for ManialinkPage = Map.TMObjective_BronzeTime;
-    declare Silver_Medal for ManialinkPage = Map.TMObjective_SilverTime;
-    declare Gold_Medal for ManialinkPage = Map.TMObjective_GoldTime;
-    declare Champion_Medal for ManialinkPage = Map.TMObjective_AuthorTime;
+    declare metadata Integer Meta_Bronze_Medal for Map = -1;
+    declare metadata Integer Meta_Silver_Medal for Map = -1;
+    declare metadata Integer Meta_Gold_Medal for Map = -1;
+    declare metadata Integer Meta_Champion_Medal for Map = -1;
+
+    declare Bronze_Medal for ManialinkPage = -1;
+    Bronze_Medal = Meta_Bronze_Medal;
+    declare Silver_Medal for ManialinkPage = -1;
+    Silver_Medal = Meta_Silver_Medal;
+    declare Gold_Medal for ManialinkPage = -1;
+    Gold_Medal = Meta_Gold_Medal;
+    declare Champion_Medal for ManialinkPage = -1;
+    Champion_Medal = Meta_Champion_Medal;
 
     /// --- Manialink
     declare Properties = """
@@ -653,7 +672,16 @@ Void EditObjectives()
             {{{Property("0 0", "Bronze Medal", Entry("0 -5.5", "Entry_Bronze_Medal"))}}}
             {{{Property("0 -15", "Silver Medal", Entry("0 -5.5", "Entry_Silver_Medal"))}}}
             {{{Property("0 -30", "Gold Medal", Entry("0 -5.5", "Entry_Gold_Medal"))}}}
-            {{{Property("0 -45", "Master Medal", Entry("0 -5.5", "Entry_Champion_Medal"))}}}
+            {{{Property("0 -45", "Author Medal", Entry("0 -5.5", "Entry_Champion_Medal"))}}}
+
+            {{{LittleButton("-25 -63", "", "Button_Generate", "7 7")}}}
+            <label text="Generate medal times from author" pos="-16 -63" valign="center2" autonewline="1" size="50" />
+
+            {{{LittleButton("-25 -73", "", "Button_Clear", "7 7", "751313")}}}
+            <label text="Clear medal times" pos="-16 -73" valign="center2" />
+
+            {{{LittleButton("-25 -83", "", "Button_Save", "7 7", "007a1dff")}}}
+            <label text="Save medal times" pos="-16 -83" valign="center2" />
         </frame>
     """;
 
@@ -664,6 +692,18 @@ Void EditObjectives()
     <script><!--
     #Include "TextLib" as TL
     #Include "MathLib" as ML
+    #Include "ColorLib" as CL
+
+    #Const C_CheckIconDelay 1000
+
+    declare Text G_OldIconForGenerate;
+    declare Integer G_LastIconCheckForGenerate;
+
+    declare Text G_OldIconForSave;
+    declare Integer G_LastIconCheckForSave;
+
+    declare Text G_OldIconForClear;
+    declare Integer G_LastIconCheckForClear;
 
     Integer ParseTime(Text _Source) {
         declare Time = 0.;
@@ -695,8 +735,6 @@ Void EditObjectives()
         Entry_Silver_Medal.SetText(TL::TimeToText(Silver_Medal , True), False);
         Entry_Gold_Medal.SetText(TL::TimeToText(Gold_Medal, True), False);
         Entry_Champion_Medal.SetText(TL::TimeToText(Champion_Medal, True), False);
-
-        SendCustomEvent("Event_Save_Objectives", Text[]);
     }
 
     main() {
@@ -705,8 +743,20 @@ Void EditObjectives()
         declare Integer Gold_Medal for Page;
         declare Integer Champion_Medal for Page;
 
+        declare CMlEntry Entry_Bronze_Medal <=> (Page.GetFirstChild("Entry_Bronze_Medal") as CMlEntry);
+        declare CMlEntry Entry_Silver_Medal <=> (Page.GetFirstChild("Entry_Silver_Medal") as CMlEntry);
+        declare CMlEntry Entry_Gold_Medal <=> (Page.GetFirstChild("Entry_Gold_Medal") as CMlEntry);
+        declare CMlEntry Entry_Champion_Medal <=> (Page.GetFirstChild("Entry_Champion_Medal") as CMlEntry);
+
         declare NeedUpdate = True;
-        
+
+        declare CMlLabel GenerateBtn <=> (Page.GetFirstChild("Button_Generate") as CMlLabel);
+        declare CMlLabel SaveBtn <=> (Page.GetFirstChild("Button_Save") as CMlLabel);
+        declare CMlLabel ClearBtn <=> (Page.GetFirstChild("Button_Clear") as CMlLabel);
+        G_OldIconForGenerate = GenerateBtn.Value;
+        G_OldIconForSave = SaveBtn.Value;
+        G_OldIconForClear = ClearBtn.Value;
+
         while (True) {
             yield;
 
@@ -715,42 +765,85 @@ Void EditObjectives()
                 NeedUpdate = False;
             }
 
+            if (Now - G_LastIconCheckForGenerate > C_CheckIconDelay) {
+                GenerateBtn.SetText(G_OldIconForGenerate);
+            }
+            if (Now - G_LastIconCheckForSave > C_CheckIconDelay) {
+                SaveBtn.SetText(G_OldIconForSave);
+            }
+            if (Now - G_LastIconCheckForClear > C_CheckIconDelay) {
+                ClearBtn.SetText(G_OldIconForClear);
+            }
+
             foreach (Event in PendingEvents) {
-                if (Event.Type == CMlScriptEvent::Type::EntrySubmit) {
-                    declare Entry <=> (Event.Control as CMlEntry);
-                    declare EntryValue = ParseTime(Entry.Value);
-                    
-                    switch(Entry.ControlId) {
-                        case "Entry_Champion_Medal": Champion_Medal = EntryValue;
-                        case "Entry_Gold_Medal": Gold_Medal = EntryValue;
-                        case "Entry_Silver_Medal": Silver_Medal = EntryValue;
-                        case "Entry_Bronze_Medal": Bronze_Medal = EntryValue;
-                    }
+                switch (Event.Type) {
+                    case CMlScriptEvent::Type::MouseClick: {
+                        switch (Event.ControlId) {
+                            case "Button_Generate": {
+                                if (Champion_Medal > 0) {
+                                    declare Real AuthorMedal = Champion_Medal + 0.0;
+                                    declare Real GoldMedal = (((AuthorMedal * 106) / 100) / 1000 + 1) * 1000;
+                                    Gold_Medal = ML::CeilingInteger(GoldMedal);
+                                    declare Real SilverMedal = (((AuthorMedal * 120) / 100) / 1000 + 1) * 1000;
+                                    Silver_Medal = ML::CeilingInteger(SilverMedal);
+                                    declare Real BronzeMedal = (((AuthorMedal * 150) / 100) / 1000 + 1) * 1000;
+                                    Bronze_Medal = ML::CeilingInteger(BronzeMedal);
 
+                                    Entry_Gold_Medal.TextColor = CL::HexToRgb("fff");
+                                    Entry_Silver_Medal.TextColor = CL::HexToRgb("fff");
+                                    Entry_Bronze_Medal.TextColor = CL::HexToRgb("fff");
 
-                    if (Gold_Medal < Champion_Medal) {
-                        if (Gold_Medal < 0.5 * Champion_Medal) {
-                            Gold_Medal = ML::CeilingInteger(Champion_Medal / 1000. * 1.066666) * 1000;
-                        } else {
-                            Gold_Medal = Champion_Medal;
+                                    UpdateView();
+                                    GenerateBtn.SetText("✔");
+                                    G_LastIconCheckForGenerate = Now;
+                                }
+                            }
+                            case "Button_Save": {
+                                SendCustomEvent("Event_Save_Objectives", Text[]);
+                                SaveBtn.SetText("✔");
+                                G_LastIconCheckForSave = Now;
+                            }
+                            case "Button_Clear": {
+                                SendCustomEvent("Event_Clear_Objectives", Text[]);
+                                Bronze_Medal = -1;
+                                Silver_Medal = -1;
+                                Gold_Medal = -1;
+                                Champion_Medal = -1;
+                                UpdateView();
+                                ClearBtn.SetText("✔");
+                                G_LastIconCheckForClear = Now;
+                            }
                         }
                     }
-                    if (Silver_Medal < Gold_Medal) {
-                        if (Silver_Medal < 0.5 * Gold_Medal) {
-                            Silver_Medal = ML::CeilingInteger(Gold_Medal / 1000. * 1.125) * 1000;
-                        } else {
-                            Silver_Medal = Gold_Medal;
+                    case CMlScriptEvent::Type::EntrySubmit: {
+                        declare Entry <=> (Event.Control as CMlEntry);
+                        declare EntryValue = ParseTime(Entry.Value);
+                        
+                        switch(Entry.ControlId) {
+                            case "Entry_Champion_Medal": Champion_Medal = EntryValue;
+                            case "Entry_Gold_Medal": Gold_Medal = EntryValue;
+                            case "Entry_Silver_Medal": Silver_Medal = EntryValue;
+                            case "Entry_Bronze_Medal": Bronze_Medal = EntryValue;
                         }
-                    }
-                    if (Bronze_Medal < Silver_Medal) {
-                        if (Bronze_Medal < 0.5 * Silver_Medal) {
-                            Bronze_Medal = ML::CeilingInteger(Silver_Medal / 1000. * 1.25) * 1000;
-                        } else {
-                            Bronze_Medal = Silver_Medal;
-                        }
-                    }
 
-                    NeedUpdate = True;
+                        if (Gold_Medal < Champion_Medal || Gold_Medal <= 0) {
+                            Entry_Gold_Medal.TextColor = CL::HexToRgb("e40");
+                        } else {
+                            Entry_Gold_Medal.TextColor = CL::HexToRgb("fff");
+                        }
+                        if (Silver_Medal < Gold_Medal || Silver_Medal <= 0) {
+                            Entry_Silver_Medal.TextColor = CL::HexToRgb("e40");
+                        } else {
+                            Entry_Silver_Medal.TextColor = CL::HexToRgb("fff");
+                        }
+                        if (Bronze_Medal < Silver_Medal || Bronze_Medal <= 0) {
+                            Entry_Bronze_Medal.TextColor = CL::HexToRgb("e40");
+                        } else {
+                            Entry_Bronze_Medal.TextColor = CL::HexToRgb("fff");
+                        }
+
+                        NeedUpdate = True;
+                    }
                 }
             }
         }
@@ -762,25 +855,59 @@ Void EditObjectives()
 
 Void SaveObjectives()
 {
-    declare metadata Integer Meta_Champion_Medal for Map;
-    declare metadata Integer Meta_Gold_Medal for Map;
-    declare metadata Integer Meta_Silver_Medal for Map;
-    declare metadata Integer Meta_Bronze_Medal for Map;
+    // We don't use to the Map#TMObjective_{X}Time because only the author time correspond
+    // to the time we provide. Other times are calculated based on the author time, so they
+    // don't correspond to what we provide. So we use meta variables for them. These
+    // meta variables are those used accross the whole mode to determine the medal times
+    // defined by the author of a map.
 
-    declare Integer Champion_Medal for ManialinkPage;
-    declare Integer Gold_Medal for ManialinkPage;
-    declare Integer Silver_Medal for ManialinkPage;
-    declare Integer Bronze_Medal for ManialinkPage;
+    // FIXME(ahmad): Actually, we can't trust only the medal times meta variables.
+    // On old versions of the Obstacle map type, the simple fact of opening the "Edit objectives"
+    // window, could edit these meta variables, and e.g. set the author time to 1s (which is
+    // the default value of the author time objective). So we rely on this meta variable.
+    // This is bad because old maps that defined medal times are seen as not having medal times :(
+    declare metadata Boolean Meta_IsMedalSet for Map = False;
+
+    declare metadata Integer Meta_Champion_Medal for Map = -1;
+    declare metadata Integer Meta_Gold_Medal for Map = -1;
+    declare metadata Integer Meta_Silver_Medal for Map = -1;
+    declare metadata Integer Meta_Bronze_Medal for Map = -1;
+
+    declare Integer Champion_Medal for ManialinkPage = -1;
+    declare Integer Gold_Medal for ManialinkPage = -1;
+    declare Integer Silver_Medal for ManialinkPage = -1;
+    declare Integer Bronze_Medal for ManialinkPage = -1;
     
-    Map.TMObjective_AuthorTime = Champion_Medal;
-    Map.TMObjective_GoldTime = Gold_Medal;
-    Map.TMObjective_SilverTime = Silver_Medal;
-    Map.TMObjective_BronzeTime = Bronze_Medal;
+    if (Champion_Medal > 0) {
+        Meta_Champion_Medal = Champion_Medal;
+        Meta_IsMedalSet = True;
+    }
+    if (Gold_Medal > 0 && Gold_Medal > Champion_Medal) {
+        Meta_Gold_Medal = Gold_Medal;
+        Meta_IsMedalSet = True;
+    }
+    if (Silver_Medal > 0 && Silver_Medal > Gold_Medal) {
+        Meta_Silver_Medal = Silver_Medal;
+        Meta_IsMedalSet = True;
+    }
+    if (Bronze_Medal > 0 && Bronze_Medal > Silver_Medal) {
+        Meta_Bronze_Medal = Bronze_Medal;
+        Meta_IsMedalSet = True;
+    }
+}
 
-    Meta_Champion_Medal = Champion_Medal;
-    Meta_Gold_Medal = Gold_Medal;
-    Meta_Silver_Medal = Silver_Medal;
-    Meta_Bronze_Medal = Bronze_Medal;
+Void ClearObjectives() {
+    declare metadata Boolean Meta_IsMedalSet for Map = False;
+    declare metadata Integer Meta_Champion_Medal for Map = -1;
+    declare metadata Integer Meta_Gold_Medal for Map = -1;
+    declare metadata Integer Meta_Silver_Medal for Map = -1;
+    declare metadata Integer Meta_Bronze_Medal for Map = -1;
+
+    Meta_Champion_Medal = -1;
+    Meta_Gold_Medal = -1;
+    Meta_Silver_Medal = -1;
+    Meta_Bronze_Medal = -1;
+    Meta_IsMedalSet = False;
 }
 
 Void PreserveObjectives()
@@ -2211,6 +2338,9 @@ Void Loop()
                     }
                     case "Event_Save_Objectives": {
                         SaveObjectives();
+                    }
+                    case "Event_Clear_Objectives": {
+                        ClearObjectives();
                     }
                     case "Event_Save_Map": {
                         SaveMapSettings();

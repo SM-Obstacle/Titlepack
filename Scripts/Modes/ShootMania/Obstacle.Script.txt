@@ -22,8 +22,7 @@
 
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
 #Include "Libs/miltant/UI/Markers.Script.txt" as Markers
-#Include "Libs/smokegun/UI/RecordsWidget.Script.txt" as RecordsWidget
-#Include "Libs/miltant/UI/MedalsWidget.Script.txt" as MedalsWidget
+#Include "Libs/ahmad3/UI/LeaderboardWidget.Script.txt" as LeaderboardWidget
 #Include "Libs/smokegun/UI/TimeDiff.Script.txt" as TimeDiff
 #Include "Libs/smokegun/UI/Chrono.Script.txt" as Chrono
 #Include "Libs/miltant/UI/Glitches.Script.txt" as Glitches
@@ -266,7 +265,7 @@ CPTimes::Init();
 
 EventsUI::Init();
 if (ObsEvents::HasEventLoaded()) {
-    MedalsWidget::Init();
+    LeaderboardWidget::Init();
 }
 
 Dynamics::UseDynamics();
@@ -350,7 +349,7 @@ CreateUI();
 
 ***Obs_YieldRecordsWidget***
 ***
-RecordsWidget::Yield();
+LeaderboardWidget::Yield();
 ***
 
 ***Match_Yield***
@@ -416,7 +415,7 @@ Obstacle::ObsRespawnPlayer(Player, True);
 
 ***Obs_CreateRecordsLayer***
 ***
-Layers::Create("Records", RecordsWidget::GetLayer());
+Layers::Create("Records", LeaderboardWidget::GetLayer());
 ***
 
 
