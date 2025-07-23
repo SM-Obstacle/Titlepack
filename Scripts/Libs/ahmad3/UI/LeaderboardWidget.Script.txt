@@ -1,3 +1,10 @@
+/************************************************
+ *   Leaderboard widget
+ *   Authors:     ahmad3, smokegun, miltant
+ *
+ *   Contains the manialink of the leaderboards widget in the UI.
+ ***********************************************/
+
 #Include "TextLib" as TL
 
 #Include "Libs/miltant/Nadeo_Fork/CustomUI.Script.txt" as CustomUI
@@ -12,13 +19,124 @@
 #Include "Libs/ahmad3/RequestManager.Script.Txt" as ReqMgr
 
 /*********************************************
-    CONSTANTS
-*********************************************/
+  CONSTANTS
+ *********************************************/
 
-#Const  Version     "2023-28-06"
-#Const  ScriptName  "RecordsWidget.Script.txt"
+#Const Version "2025-06-11"
+#Const ScriptName "Scripts/Libs/ahmad3/UI/LeaderboardWidget.Script.txt"
 
-#Const C_Ev_TimeInLb "medalswidget:timeinlb"
+#Const C_Ev_NotifyTimeInLb "LbWidget:NotifyLocalTime"
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Private
+////////////////////
+
+Text Private_GetSmallRecords() {
+    declare Real QuadHeight = 67.;
+    declare Text LabelEvent;
+    declare Real RecordsFrameY = -8.;
+
+    if (ObsEvents::HasEventLoaded()) {
+        declare CurrentEdition = ObsEvents::CurrentEdition();
+        declare Text EventName = CurrentEdition.name;
+        if (TL::Length(CurrentEdition.subtitle) > 0) {
+            EventName ^= " " ^ CurrentEdition.subtitle;
+        }
+
+        QuadHeight = 71.;
+        LabelEvent = """
+<label pos="0 -7.25" size="80 5" text="on {{{EventName}}}" style="TextValueSmall" textsize="1" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
+""";
+        RecordsFrameY = -12.;
+    }
+
+    // HACK: we add 4 more pixels so that the UI helper stays bigger than our frame to be able to move it.
+    // Maybe it would be better to improve the custom UI helper module to add a small handle to each helper.
+    CustomUI::Add("Frame_Small_Records", <139., 75.>, <44., QuadHeight + 4 * 5>, "top", "");
+    return """
+<frame id="Frame_Small_Records" class="LibCustomUI_Module">
+    <framemodel id="small_record">
+        <label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" textfont="light"/>
+        <label id="name" pos="-13 0" size="20 4" halign="left" valign="center2" textsize="1" />
+        <label id="time" pos="20 0" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+    </framemodel>
+
+    <frame pos="139 75">
+        <frame id="Frame_Background" halign="center" valign="center2" z-index="-1">
+            <quad z-index="-1" id="Quad_Background" size="44 {{{QuadHeight}}}" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="top" scriptevents="1"/>
+            <label pos="0 -1" size="40 5" text="Records" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
+            {{{LabelEvent}}}
+        </frame>
+        <frame id="Frame_Records" pos="0 {{{RecordsFrameY}}}">
+            <frameinstance modelid="small_record" pos="0 0" id="record0" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -4" id="record1" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -8" id="record2" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -12" id="record3" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -16" id="record4" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -20" id="record5" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -24" id="record6" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -28" id="record7" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -32" id="record8" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -36" id="record9" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -40" id="record10" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -44" id="record11" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -48" id="record12" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -52" id="record13" hidden="1"/>
+            <frameinstance modelid="small_record" pos="0 -56" id="record14" hidden="1"/>
+
+			<frame pos="-20 -13" id="Frame_Medal_3">
+				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/champion.png" valign="center"/>
+        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Master Time" textfont="light"/>
+        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+			</frame>
+
+			<frame pos="-20 -18" id="Frame_Medal_2">
+				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/gold.png" valign="center"/>
+        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Gold Time" textfont="light"/>
+        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+			</frame>
+
+			<frame pos="-20 -23" id="Frame_Medal_1">
+				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/silver.png" valign="center"/>
+        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Silver Time" textfont="light"/>
+        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+			</frame>
+
+			<frame pos="-20 -28" id="Frame_Medal_0">
+				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/bronze.png" valign="center"/>
+        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Bronze Time" textfont="light"/>
+        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+			</frame>
+        </frame>
+        <frame id="Frame_Error" hidden="1" pos="0 -{{{QuadHeight / 2}}}">
+            <label text="Error" textcolor="f20" halign="center" valign="center2" />
+        </frame>
+    </frame>
+</frame>
+    """;
+}
+
+////////////////////
+//// Public
+////////////////////
+
+/**
+ * Returns the version of the script module.
+ */
+Text GetVersion() {
+    return Version;
+}
+
+/**
+ * Returns the name of the script module.
+ */
+Text GetScriptName() {
+    return ScriptName;
+}
 
 Void Init() {
     if (ObsEvents::HasFailed() || !ObsEvents::HasEventLoaded()) return;
@@ -45,7 +163,7 @@ Void Yield() {
     foreach (Event in UIManager.PendingEvents) {
         if (
             Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent
-            || Event.CustomEventType != C_Ev_TimeInLb
+            || Event.CustomEventType != C_Ev_NotifyTimeInLb
         ) {
             continue;
         }
@@ -55,53 +173,6 @@ Void Yield() {
         declare CSmPlayer Player <=> GetPlayer(Event.UI);
         Player::setTimeInLb(Player, TimeInLb);
     }
-}
-
-Text Private_GetSmallRecords() {
-    CustomUI::Add("Frame_Medals_Records", <139., 75.>, <44., 34.>);
-    return """
-<frame id="Frame_Medals_Records" class="LibCustomUI_Module">
-    <framemodel id="small_record">
-        <label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" textfont="light"/>
-        <label id="name" pos="-14 0" size="20 4" halign="left" valign="center2" textsize="1" textfont="light"/>
-        <label id="time" pos="20 0" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-    </framemodel>
-
-    <frame pos="139 75">
-        <frame id="Frame_Records" pos="0 -3">
-            <frameinstance modelid="small_record" pos="0 0" id="record0"/>
-            <frameinstance modelid="small_record" pos="0 -4" id="record1"/>
-            <frameinstance modelid="small_record" pos="0 -8" id="record2"/>
-
-			<frame pos="-20 -13" id="Frame_Medal_3">
-				<quad pos="-1" size="4 4" image="file://Media/Images/Obstacle/Medals/champion.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Master Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-			</frame>
-
-			<frame pos="-20 -18" id="Frame_Medal_2">
-				<quad pos="-1" size="4 4" image="file://Media/Images/Obstacle/Medals/gold.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Gold Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-			</frame>
-
-			<frame pos="-20 -23" id="Frame_Medal_1">
-				<quad pos="-1" size="4 4" image="file://Media/Images/Obstacle/Medals/silver.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Silver Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-			</frame>
-
-			<frame pos="-20 -28" id="Frame_Medal_0">
-				<quad pos="-1" size="4 4" image="file://Media/Images/Obstacle/Medals/bronze.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Bronze Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-			</frame>
-        </frame>
-
-    	<quad size="44 34" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="top" scriptevents="1"/>
-    </frame>
-</frame>
-    """;
 }
 
 Text GetLayer() {
@@ -133,6 +204,8 @@ Text GetLayer() {
     {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
     {{{ErrReport::ML_Content("ErrReport")}}}
 
+    declare Real G_OriginalBackgroundHeight;
+
     declare Integer[][Text] G_MedalsTimesPerMap;
 
     declare ReqMgr_K_GetReqId G_ReqId;
@@ -144,23 +217,52 @@ Text GetLayer() {
 
     declare CMlFrame G_Frame_Widget;
     declare CMlFrame G_Frame_Records;
+    declare CMlQuad G_Quad_Background;
 
-    Integer GetMedal(Integer Medal) {
+    /**
+     * @param _Medal The index of the medal.
+     *  0 is bronze; 1 is silver; 2 is gold; 3 is author.
+     * @return The time of the corresponding medal in milliseconds, or -1 if missing or wrong index.
+     */
+    Integer GetMedal(Integer _Medal) {
         if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
-            return G_MedalsTimesPerMap[Map.MapInfo.MapUid][Medal];
+            return G_MedalsTimesPerMap[Map.MapInfo.MapUid][_Medal];
         }
-        switch (Medal) {
-            case 0: {
-                return Map.MapInfo.TMObjective_BronzeTime;
-            }
-            case 1: {
-                return Map.MapInfo.TMObjective_SilverTime;
-            }
-            case 2: {
-                return Map.MapInfo.TMObjective_GoldTime;
+
+        declare metadata Boolean Meta_IsMedalSet for Map = False;
+
+        declare metadata Integer Meta_Bronze_Medal for Map = -1;
+        declare metadata Integer Meta_Silver_Medal for Map = -1;
+        declare metadata Integer Meta_Gold_Medal for Map = -1;
+        declare metadata Integer Meta_Champion_Medal for Map = -1;
+
+        if (Meta_IsMedalSet) {
+            // They're meta variables so we treat them carefully :P
+            switch (_Medal) {
+                case 0: {
+                    if (Meta_Bronze_Medal > 0 && Meta_Bronze_Medal > Meta_Silver_Medal) {
+                        return Meta_Bronze_Medal;
+                    }
+                }
+                case 1: {
+                    if (Meta_Silver_Medal > 0 && Meta_Silver_Medal > Meta_Gold_Medal) {
+                        return Meta_Silver_Medal;
+                    }
+                }
+                case 2: {
+                    if (Meta_Gold_Medal > 0 && Meta_Gold_Medal > Meta_Champion_Medal) {
+                        return Meta_Gold_Medal;
+                    }
+                }
+                case 3: {
+                    if (Meta_Champion_Medal > 0) {
+                        return Meta_Champion_Medal;
+                    }
+                }
             }
         }
-        return Map.MapInfo.TMObjective_AuthorTime;
+
+        return -1;
     }
 
     Void UpdateUI(K_Response _Response) {
@@ -179,7 +281,7 @@ Text GetLayer() {
         }
 
         if (LocalPlayerTime != -1 && G_LocalPlayer == InputPlayer) {
-            SendCustomEvent({{{dump(C_Ev_TimeInLb)}}}, [LocalPlayerTime ^ ""]);
+            SendCustomEvent({{{dump(C_Ev_NotifyTimeInLb)}}}, [LocalPlayerTime ^ ""]);
         }
 
         if (PlayerRank == -1) {
@@ -189,37 +291,31 @@ Text GetLayer() {
 
         // medals to display
         declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
-        // non-null ranks to display
-        declare Integer[] Ranks;
-        if (_Response.response.count > 0) {
-            Ranks.add(0);
-
-            if (PlayerRank < 3 || PlayerRank == -1) {
-                if (_Response.response.count > 1)
-                    Ranks.add(1);
-                if (_Response.response.count > 2)
-                    Ranks.add(2);
-            } else {
-                Ranks.add(PlayerRank - 1);
-                Ranks.add(PlayerRank);
-            }
-        }
 
         declare CurrentHeight = 0.;
         declare CurrentMedal = Medals.count - 1;
         declare CurrentTime = Medals[0] + 1;
 
-        foreach (I => Rank in Ranks) {
-            CurrentTime = _Response.response[Rank].time;
+        declare Integer AmountOfInsertedMedals = 0;
+
+        foreach (I => Rank in _Response.response) {
+            CurrentTime = Rank.time;
             
             // displays medals before the current rank
             while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
                 declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
                 declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
 
-                Frame.RelativePosition_V3.Y = CurrentHeight;
-                timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
-                CurrentHeight -= 5.;
+                if (Medals[CurrentMedal] == -1) {
+                    Frame.Hide();
+                } else {
+                    Frame.Show();
+                    AmountOfInsertedMedals += 1;
+                    Frame.RelativePosition_V3.Y = CurrentHeight;
+                    timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+                    CurrentHeight -= 4.;
+                }
+
                 CurrentMedal -= 1;
             }
 
@@ -231,39 +327,51 @@ Text GetLayer() {
 
             frame.RelativePosition_V3.Y = CurrentHeight;
             CurrentHeight -= 4.;
-            if (I < Ranks.count) {
-                rankLabel.SetText(""^_Response.response[Rank].rank);
-                nameLabel.SetText(_Response.response[Rank].nickname);
-                timeLabel.SetText(TL::TimeToText(_Response.response[Rank].time, True));
-            }
+            rankLabel.SetText(""^Rank.rank);
+            nameLabel.SetText(Rank.nickname);
+            timeLabel.SetText(TL::TimeToText(Rank.time, True));
+            frame.Show();
         }
 
-        // displays medals after the last rank
+        // Display medals after the last rank
         while (CurrentMedal >= 0) {
             declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
             declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
 
-            Frame.RelativePosition_V3.Y = CurrentHeight;
-            timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
-            CurrentHeight -= 5.;
+            if (CurrentHeight <= -15 * 4 || Medals[CurrentMedal] == -1) {
+                Frame.Hide();
+            } else {
+                Frame.Show();
+                Frame.RelativePosition_V3.Y = CurrentHeight;
+                timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+                CurrentHeight -= 4.;
+            }
+
             CurrentMedal -= 1;
         }
 
-        // hides unused ranks
-        for (I, Ranks.count, 2) {
-            declare frame <=> (G_Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
+        declare Real AddedHeight = 0.;
+
+        // Update height of main frames
+        AddedHeight = 4. * AmountOfInsertedMedals;
+        G_Frame_Widget.Size.Y = 15 * 4 + AddedHeight;
+        G_Frame_Records.Size.Y = 15 * 4 + AddedHeight;
+        G_Quad_Background.Size.Y = G_OriginalBackgroundHeight + AddedHeight;
+
+        // Current player doesn't have any record on the map so we show the last empty line
+        if (PlayerRank == -1) {
+            declare frame <=> (G_Frame_Records.GetFirstChild("record14") as CMlFrame);
             declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
             declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
             declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
 
-            frame.RelativePosition_V3.Y = CurrentHeight;
-            CurrentHeight -= 4.;
-            
-            rankLabel.SetText("");
-            nameLabel.SetText("---");
+            frame.RelativePosition_V3.Y = -4. * 14 - AddedHeight;
+
+            frame.Show();
+            rankLabel.SetText("---");
+            nameLabel.SetText(InputPlayer.User.Name);
             timeLabel.SetText("--:--:--");
         }
-
     }
 
     Void UpdateRecords(Text _Login) {
@@ -324,6 +432,9 @@ Text GetLayer() {
         declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
         declare netread Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
         declare Integer MedalsTimesPerMapUpdated = -1;
+        // Makes sure the first request begins after having initialized the medal times,
+        // to avoid the latter from being randomly defined in the leaderboard.
+        declare Boolean IsMedalInitDone = False;
 
         declare netread Net_StartTime for InputPlayer = -1;
         declare netread Net_CheckpointsTotal for Teams[0] = -1;
@@ -338,8 +449,10 @@ Text GetLayer() {
         declare LastPlayerLogin = InputPlayer.User.Login;
         declare UpdateUI = False;
 
-        G_Frame_Widget <=> (Page.GetFirstChild("Frame_Medals_Records") as CMlFrame);
+        G_Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
         G_Frame_Records <=> (G_Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
+        G_Quad_Background <=> (Page.GetFirstChild("Quad_Background") as CMlQuad);
+        G_OriginalBackgroundHeight = G_Quad_Background.Size.Y;
 
         while (True) {
             yield;
@@ -356,6 +469,7 @@ Text GetLayer() {
             if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
                 G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
                 MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
+                IsMedalInitDone = True;
             }
 
             if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
@@ -365,7 +479,7 @@ Text GetLayer() {
                 G_Frame_Widget.Show();
             }
 
-            if (Net_RecordsUpdated != LastUpdate || CachedReqsSent()) {
+            if ((Net_RecordsUpdated != LastUpdate || CachedReqsSent()) && IsMedalInitDone) {
                 log("Records updated " ^ LastUpdate ^ " -> " ^ Net_RecordsUpdated ^ " (running: " ^ Running ^ ")");
                 LastUpdate = Net_RecordsUpdated;
                 UpdateRecords(G_LocalPlayer.User.Login);
