@@ -47,6 +47,7 @@
     Text handle;
     Text name;
     Text banner_img_url;
+    Text hex_color;
     K_EventEditionContentMap[] maps;
 }
 
@@ -141,6 +142,7 @@ Text ML_Preproc(Text _Prefix) {
     Text handle;
     Text name;
     Text banner_img_url;
+    Text hex_color;
     {{{_Prefix}}}K_EventEditionContentMap[] maps;
 }
 

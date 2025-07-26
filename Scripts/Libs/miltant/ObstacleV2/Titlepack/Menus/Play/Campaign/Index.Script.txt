@@ -74,6 +74,7 @@ Text Build() {
 		<quad pos="15 2" id="Quad_Category_PreviousPage" valign="center2" halign="center" size="5 5" style="Icons128x128_1" hidden="1" substyle="BackFocusable" rot="90" scriptevents="1" />
 		<frame pos="-.83">
 			<label id="Label_CategoryName" textsize="2" class="lato" textprefix="$t" pos="15.3 -1.835" halign="center" valign="center2" />
+			<quad id="Quad_CategoryNameBackground" size="31.17 5.67" pos="15.3 -1.6" halign="center" valign="center" style="Bgs1" substyle="HealthBar" hidden="1" />
 			<quad id="Category" size="31.17 3.67"/>
 		</frame>
 		<frameinstance hidden="1" modelid="MapCard" pos="0 -8.67" id="Card_1"/>
@@ -281,6 +282,8 @@ Text Build() {
 		Label_ExpiredEdition.Hide();
 		for (I, 1, C_MaxCategoriesPerPage) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ I) as CMlFrame);
+			declare CMlQuad Quad_CategoryNameBackground = (Frame_Category.GetFirstChild("Quad_CategoryNameBackground") as CMlQuad);
+
 			// We first hide the sub-frames for the maps cards
 			for (J, 1, C_MaxMapsPerCategoryPage) {
 				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ J) as CMlFrame);
@@ -296,6 +299,8 @@ Text Build() {
 				Quad_MedalG.Hide();
 				Quad_MedalC.Hide();
 			}
+
+			Quad_CategoryNameBackground.Hide();
 
 			// Then we hide the category frame itself
 			// so that when it shows up again, the maps cards are still hidden
@@ -410,6 +415,16 @@ Text Build() {
 			if (Category.banner_img_url == "") {
 				declare CMlLabel Label_CategoryName = (Frame_Category.GetFirstChild("Label_CategoryName") as CMlLabel);
 				Label_CategoryName.SetText(Category.name);
+				if (Category.hex_color == "") {
+					Label_CategoryName.TextColor = CL::HexToRgb("FFFFFF");
+				} else {
+					declare Vec3 Color = CL::HexToRgb(Category.hex_color);
+					Label_CategoryName.TextColor = Color;
+					if (1./3. * (Color.X + Color.Y + Color.Z) < 0.1) {
+						declare CMlQuad Quad_CategoryNameBackground = (Frame_Category.GetFirstChild("Quad_CategoryNameBackground") as CMlQuad);
+						Quad_CategoryNameBackground.Show();
+					}
+				}
 			} else {
 				declare CMlQuad Quad_Category = (Frame_Category.GetFirstChild("Category") as CMlQuad);
 				Quad_Category.ChangeImageUrl(Category.banner_img_url);
