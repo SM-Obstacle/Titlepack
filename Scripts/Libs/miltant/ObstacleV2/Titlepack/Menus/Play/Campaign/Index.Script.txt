@@ -3,6 +3,7 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			as Windows
 #Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						as Styles
 #Include "Libs/smokegun/Constants.Script.txt"									as Constants
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"			as Dialogs
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt"   			as UI
 
 #Include "TextLib" as TL
@@ -43,7 +44,8 @@ declare Integer[Text] G_LoadedEdition;
 
 // Used to handle the state of the map loading dialog
 declare Integer[Text] G_LoadingMapDialog;
-declare Boolean[Text] G_LoadingMap;
+// 0 means not loading, x > 0 means the timestamp when starting the map loading
+declare Integer[Text] G_LoadingMap;
 
 // Used to debounce the refresh of the event editions
 declare Integer[Text] G_RefreshInstant;
@@ -782,7 +784,7 @@ Void Unload(Text _LayerName) {
 	G_LoadedEventHandle[_LayerName] = "";
 	G_LoadedEdition[_LayerName] = 0;
 	G_LoadingMapDialog[_LayerName] = 0;
-	G_LoadingMap[_LayerName] = False;
+	G_LoadingMap[_LayerName] = 0;
 	G_RefreshInstant[_LayerName] = 0;
 }
 
@@ -813,7 +815,7 @@ Void Load(Text _LayerName, Text[Text] _SubLayers) {
 }
 
 Void Private_InitLoadingMapDialogLoop(Text _LayerName, Text _MapName) {
-	G_LoadingMap[_LayerName] = True;
+	G_LoadingMap[_LayerName] = Now;
 	G_LoadingMapDialog[_LayerName] = UI::NewDialog(
 		"Loading...",
 		UI::K_Message {
@@ -824,17 +826,24 @@ Void Private_InitLoadingMapDialogLoop(Text _LayerName, Text _MapName) {
 }
 
 Void Private_LoadingMapDialogLoop(Text _LayerName) {
-	if (!G_LoadingMap[_LayerName]) return;
+	if (G_LoadingMap[_LayerName] == 0) return;
 
 	declare Boolean ObsCampaignEvent_LoadingDialogPlayingMap for LocalUser = False;
 	if (ObsCampaignEvent_LoadingDialogPlayingMap) {
 		ObsCampaignEvent_LoadingDialogPlayingMap = False;
-		G_LoadingMap[_LayerName] = False;
+		G_LoadingMap[_LayerName] = 0;
 		UI::CloseDialog(G_LoadingMapDialog[_LayerName]);
 		return;
 	}
 
-	UI::Prompt(G_LoadingMapDialog[_LayerName], True);
+	// FIXME: we allow to close the dialog after 10 seconds, in case the loading failed,
+	// but we should probably handle the loading failure more gracefully, e.g. with TitleControl.LatestResult.
+	declare Dialogs::K_Result Result = UI::Prompt(G_LoadingMapDialog[_LayerName], True);
+	if (Result.Over && Now - G_LoadingMap[_LayerName] > 10000) {
+		G_LoadingMap[_LayerName] = 0;
+		UI::CloseDialog(G_LoadingMapDialog[_LayerName]);
+		return;
+	}
 }
 
 Void Private_DebounceRefresh(Text _LayerName) {
