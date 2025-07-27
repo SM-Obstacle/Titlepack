@@ -1,0 +1,457 @@
+/************************************************
+ *   Events manialink
+ *   Author:     ahmad3
+ *
+ *   Module containing the manialink of the Events page
+ *   of the Titlepack.
+ ***********************************************/
+
+#Include "Libs/miltant/ObstacleV2/ManialinkLib.Script.txt"						    as Styles
+#Include "Libs/ahmad3/EventAPI/Types.Script.txt"								    as EventAPITypes
+#Include "Libs/ahmad3/EventAPI/Titlepack.Script.txt"								as EventAPI
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"			    as Windows
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Index.Script.txt"   as Campaign
+
+#Include "TextLib" as TL
+
+/*********************************************
+  CONSTANTS
+ *********************************************/
+
+/*********************************************
+  GLOBALES
+ *********************************************/
+
+declare Text G_CurrentEventHandle;
+
+declare Boolean G_WaitingEventReq;
+
+// Set to true when the editions of an event is listed in the side bar
+declare Boolean G_IsEventSelected;
+declare EventAPITypes::K_Event[Text] G_Events;
+
+/*********************************************
+  FUNCTIONS
+ *********************************************/
+
+////////////////////
+//// Public
+////////////////////
+
+Text GetName() {
+    return "events";
+}
+
+Text GetSideBarName() {
+    return "L_EventsSideBar";
+}
+
+Text BuildSideBar() {
+    return """
+<manialink version="3" name="{{{GetSideBarName()}}}">
+{{{Styles::GetStyleSheet()}}}
+<frame id="Frame_EventsSideBar" pos="92.16 53.5">
+	<framemodel id="CampaignEditionItem">
+		<label id="Label_CampaignEdition" halign="center" textprefix="$t" class="lato"
+			textsize="3.5" focusareacolor1="0000" focusareacolor2="0000" size="56 5.4"
+			scriptevents="1" />
+	</framemodel>
+
+	<frame>
+		<frame pos="31 -24">
+			<frameinstance modelid="CampaignEditionItem" id="CampaignEditionItem_1"/>
+			<frameinstance modelid="CampaignEditionItem" pos="0 -7.2" id="CampaignEditionItem_2"/>
+			<frameinstance modelid="CampaignEditionItem" pos="0 -14.4" id="CampaignEditionItem_3"/>
+			<frameinstance modelid="CampaignEditionItem" pos="0 -21.6" id="CampaignEditionItem_4"/>
+			<frameinstance modelid="CampaignEditionItem" pos="0 -28.8" id="CampaignEditionItem_5"/>
+			<frameinstance modelid="CampaignEditionItem" pos="0 -36" id="CampaignEditionItem_6"/>
+			<frameinstance modelid="CampaignEditionItem" pos="0 -43.2" id="CampaignEditionItem_7"/>
+			<frameinstance modelid="CampaignEditionItem" pos="0 -50.4" id="CampaignEditionItem_8"/>
+		</frame>
+
+		<quad pos="6.5 -120" id="Quad_Refresh" valign="center" halign="right" size="5 5" style="Icons64x64_1" substyle="Refresh" scriptevents="1" />
+		<label pos="12 -120" textsize="1.3" text="Refresh" halign="center" valign="center" class="lato"/>
+		<label id="Label_SideBarTitle" pos="31 -5.5" textsize="5.2" text="editions" textprefix="$t" halign="center" valign="center2" class="lato"/>
+
+		<!-- Selected event -->
+		<frame id="Frame_SelectedEvent" hidden="1">
+			<quad id="Quad_GoBack" pos="1 -12" size="5 5" style="Icons128x128_1" substyle="Back" opacity="0.5" scriptevents="1" />
+			<label id="Label_SelectedEvent" textprefix="$t" class="lato" pos="6 -12.25" opacity="0.5" scriptevents="1" />
+		</frame>
+
+		<quad size="62 123.83" image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
+	</frame>
+</frame>
+<script><![CDATA[
+
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "ColorLib" as CL
+
+{{{EventAPITypes::ML_Preproc()}}}
+
+{{{Styles::GetDeclareGlobals()}}}
+
+Void UpdateList() {
+	declare Integer P_SelectedItem for Page = -1;
+	declare Text[] P_Items for Page = [];
+	declare Text P_SelectedEvent for Page = "";
+
+	// Clear
+	for (I, 0, 7) {
+		declare CMlFrame Frame_CampaignEdition = (Page.GetFirstChild("CampaignEditionItem_" ^ I + 1) as CMlFrame);
+		declare CMlLabel Label_CampaignEdition = (Frame_CampaignEdition.GetFirstChild("Label_CampaignEdition") as CMlLabel);
+		Label_CampaignEdition.TextColor = CL::HexToRgb("B4B4B4");
+		Frame_CampaignEdition.Hide();
+	}
+
+	foreach (I => Item in P_Items) {
+		declare CMlFrame Frame_CampaignEdition = (Page.GetFirstChild("CampaignEditionItem_" ^ I + 1) as CMlFrame);
+		declare CMlLabel Label_CampaignEdition = (Frame_CampaignEdition.GetFirstChild("Label_CampaignEdition") as CMlLabel);
+
+		Frame_CampaignEdition.Show();
+		if (P_SelectedEvent == "") {
+			Label_CampaignEdition.SetText(" " ^ Item);
+		} else {
+			Label_CampaignEdition.SetText(Item);
+		}
+		Label_CampaignEdition.DataAttributeSet("idx", TL::ToText(I));
+
+		declare Vec3 TextColor = CL::HexToRgb("B4B4B4");
+		if (P_SelectedItem == I) {
+			TextColor = CL::HexToRgb("FFFFFF");
+		}
+
+		Label_CampaignEdition.TextColor = TextColor;
+	}
+
+	declare CMlFrame Frame_SelectedEvent <=> (Page.GetFirstChild("Frame_SelectedEvent") as CMlFrame);
+	declare CMlLabel Label_SideBarTitle <=> (Page.GetFirstChild("Label_SideBarTitle") as CMlLabel);
+
+	if (P_SelectedEvent == "") {
+		Frame_SelectedEvent.Hide();
+		Label_SideBarTitle.SetText("events");
+	} else {
+		Frame_SelectedEvent.Show();
+		declare CMlLabel Label_SelectedEvent <=> (Frame_SelectedEvent.GetFirstChild("Label_SelectedEvent") as CMlLabel);
+		Label_SelectedEvent.SetText(P_SelectedEvent);
+		Label_SideBarTitle.SetText("editions");
+	}
+}
+
+Void SetSelectedEventLabelOpacity(Real _Opacity) {
+	declare CMlQuad Quad_GoBack <=> (Page.GetFirstChild("Quad_GoBack") as CMlQuad);
+	declare CMlLabel Label_SelectedEvent <=> (Page.GetFirstChild("Label_SelectedEvent") as CMlLabel);
+	Label_SelectedEvent.Opacity = _Opacity;
+	Quad_GoBack.Opacity = _Opacity;
+}
+
+Void HighlightSelectedEventLabel() {
+	SetSelectedEventLabelOpacity(1.);
+}
+
+Void LowlightSelectedEventLabel() {
+	SetSelectedEventLabelOpacity(0.5);
+}
+
+main() {
+	declare Integer P_SelectedEdition for Page = -1;
+	declare Integer SelectedCampaign = -1;
+
+	declare Integer P_SelectedItem for Page = -1;
+
+	declare Integer P_EventsUpdate for Page = -1;
+	declare Integer EventsUpdate = -1;
+
+	wait(P_SelectedEdition != -1);
+
+	while (True) {
+		if (SelectedCampaign != P_SelectedEdition) {
+			SelectedCampaign = P_SelectedEdition;
+			UpdateList();
+		}
+
+		if (EventsUpdate != P_EventsUpdate) {
+			EventsUpdate = P_EventsUpdate;
+			UpdateList();
+		}
+
+		foreach (Event in PendingEvents) {
+			{{{Styles::GetEventLoopActiveItem()}}}
+
+			switch (Event.Type) {
+				case CMlScriptEvent::Type::MouseOver: {
+					switch (Event.ControlId) {
+						case "Label_CampaignEdition": {
+							declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
+							Label_Edition.TextColor = CL::HexToRgb("FFFFFF");
+						}
+						case "Quad_GoBack": {
+							HighlightSelectedEventLabel();
+						}
+						case "Label_SelectedEvent": {
+							HighlightSelectedEventLabel();
+						}
+					}
+				}
+				case CMlScriptEvent::Type::MouseOut: {
+					switch (Event.ControlId) {
+						case "Label_CampaignEdition": {
+							declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
+							declare Integer Idx = TL::ToInteger(Event.Control.DataAttributeGet("idx"));
+							if (Idx == P_SelectedItem) continue;
+
+							Label_Edition.TextColor = CL::HexToRgb("B4B4B4");
+						}
+						case "Quad_GoBack": {
+							LowlightSelectedEventLabel();
+						}
+						case "Label_SelectedEvent": {
+							LowlightSelectedEventLabel();
+						}
+					}
+				}
+				case CMlScriptEvent::Type::MouseClick: {
+					switch (Event.ControlId) {
+						case "Label_CampaignEdition": {
+							declare Text Idx = Event.Control.DataAttributeGet("idx");
+							SendCustomEvent("select_item", [Idx]);
+						}
+						case "Quad_Refresh": {
+							SendCustomEvent("refresh", []);
+						}
+						case "Quad_GoBack": {
+							SendCustomEvent("goback", []);
+						}
+						case "Label_SelectedEvent": {
+							SendCustomEvent("goback", []);
+						}
+					}
+				}
+			}
+		}
+
+		yield;
+	}
+}
+
+]]></script>
+</manialink>
+    """;
+}
+
+Void Private_UpdateList() {
+	declare CMlPage SideBarPage <=> Windows::GetPageOfSubLayer(GetName(), GetSideBarName());
+
+	declare Text[] P_Items for SideBarPage = [];
+	P_Items.clear();
+
+	if (G_IsEventSelected) {
+		// List all editions
+		declare Integer I = 0;
+		declare Integer SelectedIdx = -1;
+		foreach (EditionId => Edition in G_Events[G_CurrentEventHandle].Editions) {
+			P_Items.add(Edition.name);
+			if (Campaign::GetSelectedEditionId(GetName()) == EditionId) {
+				SelectedIdx = I;
+			}
+			I += 1;
+		}
+
+		// Show "go previous" button
+		declare Text P_SelectedEvent for SideBarPage = "";
+		P_SelectedEvent = TL::Replace(G_CurrentEventHandle, "_", " ");
+
+		// Update selected item
+		declare Integer P_SelectedItem for SideBarPage = -1;
+		if (Campaign::GetSelectedEventHandle(GetName()) == G_CurrentEventHandle) {
+			P_SelectedItem = SelectedIdx;
+		} else {
+			P_SelectedItem = -1;
+		}
+	} else {
+		// List all events
+		declare Integer I = 0;
+		declare Integer SelectedIdx = -1;
+		foreach (Handle => Event in G_Events) {
+			if (Handle == "campaign") continue;
+			if (Campaign::GetSelectedEventHandle(GetName()) == Handle) {
+				SelectedIdx = I;
+			}
+			P_Items.add(TL::Replace(Handle, "_", " "));
+			I += 1;
+		}
+
+		declare Text P_SelectedEvent for SideBarPage = "";
+		P_SelectedEvent = "";
+
+		declare Integer P_SelectedItem for SideBarPage = -1;
+		P_SelectedItem = SelectedIdx;
+	}
+
+	declare Integer P_EventsUpdate for SideBarPage = -1;
+	P_EventsUpdate = Now;
+}
+
+/**
+ * Save the given event to the persistent data of the user, to automatically select it
+ * on the next session.
+ * @param _SelectedHandle the event handle.
+ * @param _SelectedEdition the event edition ID. It can be -1 if no edition is selected.
+ */
+Void Private_SaveSelectedEventEdition(Text _SelectedHandle, Integer _SelectedEdition) {
+	declare persistent Text ObsStore_LastSelectedEventHandle for LocalUser = "";
+	declare persistent Integer ObsStore_LastSelectedEventEditionId for LocalUser = -1;
+	ObsStore_LastSelectedEventHandle = _SelectedHandle;
+	ObsStore_LastSelectedEventEditionId = _SelectedEdition;
+}
+
+Text Private_GetSavedSelectedEventHandle() {
+	declare persistent Text ObsStore_LastSelectedEventHandle for LocalUser = "";
+	return ObsStore_LastSelectedEventHandle;
+}
+
+Integer Private_GetSavedSelectedEditionId() {
+	declare persistent Integer ObsStore_LastSelectedEventEditionId for LocalUser = -1;
+	return ObsStore_LastSelectedEventEditionId;
+}
+
+Void Private_UpdateEvents() {
+	// Here, we consider that the editions in the array are properly initialized,
+	// meaning the last edition ID is loaded in the `Editions` array AND in the `EditionsDetails` array.
+	declare EventAPITypes::K_Event[Text] Events = EventAPI::GetEvents();
+
+	declare Text LastSelectedHandle = Private_GetSavedSelectedEventHandle();
+	declare Integer LastSelectedEditionId = Private_GetSavedSelectedEditionId();
+
+	declare Text MaxDate = "";
+	declare Text LatestHandle = "";
+	declare Integer LatestEdition = -1;
+
+	declare Integer SelectedIdx = -1;
+	declare Integer Idx = 0;
+
+	foreach (Handle => Event in Events) {
+		if (Handle == "campaign") continue;
+
+		if (LastSelectedHandle == Handle) {
+			if (LastSelectedEditionId != -1 && Event.Editions.existskey(LastSelectedEditionId)) {
+				LatestEdition = LastSelectedEditionId;
+			} else {
+				LatestEdition = Event.Event.last_edition_id;
+			}
+			LatestHandle = Handle;
+			SelectedIdx = Idx;
+			break;
+		} else if (Event.Editions[Event.Event.last_edition_id].start_date > MaxDate) {
+			MaxDate = Event.Editions[Event.Event.last_edition_id].start_date;
+			LatestHandle = Handle;
+			LatestEdition = Event.Event.last_edition_id;
+			SelectedIdx = Idx;
+		}
+
+		Idx += 1;
+	}
+
+	// Unlikely
+	if (LatestHandle == "" || LatestEdition == -1) {
+		return;
+	}
+
+	declare Integer P_SelectedItem for Windows::GetPageOfSubLayer(GetName(), GetSideBarName()) = -1;
+	P_SelectedItem = SelectedIdx;
+
+	Campaign::SelectEdition(GetName(), LatestHandle, LatestEdition);
+	Private_SaveSelectedEventEdition(LatestHandle, LatestEdition);
+	G_IsEventSelected = True;
+	G_CurrentEventHandle = LatestHandle;
+	G_Events = Events;
+	Private_UpdateList();
+}
+
+Void Load() {
+	G_WaitingEventReq = True;
+
+    Campaign::Load(GetName(), [GetSideBarName() => BuildSideBar()]);
+}
+
+Void Loop() {
+	declare CMlPage SideBarPage <=> Windows::GetPageOfSubLayer(GetName(), GetSideBarName());
+
+    Campaign::Loop(GetName(), SideBarPage);
+
+	// TODO: this will select the latest event each time a new event is loaded which isn't intended
+	// it should be executed only once
+	if (G_WaitingEventReq && !EventAPI::HasAnyEventLoading()) {
+		G_WaitingEventReq = False;
+		Private_UpdateEvents();
+	}
+
+	if (!G_WaitingEventReq && EventAPI::HasAnyUpdate()) {
+		// TODO: update side bar
+	}
+
+	foreach (Event in PendingEvents) {
+		if (Event.Type != CManiaAppEvent::EType::LayerCustomEvent
+			|| Event.CustomEventLayer.AttachId != GetSideBarName())
+		{
+			continue;
+		}
+
+		switch (Event.CustomEventType) {
+			case "goback": {
+				G_IsEventSelected = False;
+				Private_UpdateList();
+			}
+			case "select_item": {
+				declare Integer Idx = TL::ToInteger(Event.CustomEventData[0]);
+
+				// If event selected, select edition.
+				// Otherwise, list all editions of this event.
+				if (G_IsEventSelected) {
+					// Get which edition was selected
+					declare EventAPITypes::K_Event CurrentEvent = G_Events[G_CurrentEventHandle];
+					declare Integer SelectedEditionId = -1;
+					declare Integer I = 0;
+					foreach (EditionId => _Unused in CurrentEvent.Editions) {
+						if (I == Idx) {
+							SelectedEditionId = EditionId;
+							break;
+						}
+						I += 1;
+					}
+
+					// Unlikely
+					if (SelectedEditionId != -1) {
+						Campaign::SelectEdition(GetName(), G_CurrentEventHandle, SelectedEditionId);
+						Private_UpdateList();
+						Private_SaveSelectedEventEdition(G_CurrentEventHandle, SelectedEditionId);
+					}
+				} else {
+					// Get which event was selected
+					declare Integer I = 0;
+					declare Text SelectedHandle = "";
+					foreach (Handle => _Unused in G_Events) {
+						if (Handle == "campaign") continue;
+						if (I == Idx) {
+							SelectedHandle = Handle;
+							break;
+						}
+						I += 1;
+					}
+
+					// Unlikely
+					if (SelectedHandle != "") {
+						G_CurrentEventHandle = SelectedHandle;
+						G_IsEventSelected = True;
+						Private_UpdateList();
+						Private_SaveSelectedEventEdition(G_CurrentEventHandle, -1);
+					}
+				}
+			}
+			case "refresh": {
+				Campaign::Refresh(GetName());
+			}
+		}
+	}
+}
