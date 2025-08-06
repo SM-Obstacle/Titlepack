@@ -4,7 +4,7 @@
 #Const  Version     "2023-29-06"
 #Const  ScriptName  "EndScreen.Script.txt"
 
-Text GetLayer(Boolean _WithNextMapButton, Boolean _LastMap) {
+Text GetLayer(Boolean _WithNextMapButton, Boolean _LastMap, Text _LayerNameUsedInTp) {
 	declare Text CampaignTitle;
 	declare Text CampaignSubtitle;
 	declare Text BannerImgUrl;
@@ -40,8 +40,8 @@ Text GetLayer(Boolean _WithNextMapButton, Boolean _LastMap) {
 			NotifyNextMapToTP = """
 			// We notify the TP that we're about to unload the map
 			if (Name == "next_map") {
-				declare Integer ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser;
-				ObsCampaignEvent_PendingPlayingMapsUpdate = Now;
+				declare Integer[Text] ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser;
+				ObsCampaignEvent_PendingPlayingMapsUpdate[{{{dump(_LayerNameUsedInTp)}}}] = Now;
 			}
 			""";
 		}
