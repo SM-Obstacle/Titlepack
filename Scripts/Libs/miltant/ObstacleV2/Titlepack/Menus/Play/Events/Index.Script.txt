@@ -52,13 +52,13 @@ Text BuildSideBar() {
 {{{Styles::GetStyleSheet()}}}
 <frame id="Frame_EventsSideBar" pos="92.16 53.5">
 	<framemodel id="CampaignEditionItem">
-		<label id="Label_CampaignEdition" halign="center" textprefix="$t" class="lato"
+		<label id="Label_CampaignEdition" halign="left" textprefix="$t" class="lato"
 			textsize="3.5" focusareacolor1="0000" focusareacolor2="0000" size="56 5.4"
 			scriptevents="1" />
 	</framemodel>
 
 	<frame>
-		<frame pos="31 -24">
+		<frame pos="5 -24">
 			<frameinstance modelid="CampaignEditionItem" id="CampaignEditionItem_1"/>
 			<frameinstance modelid="CampaignEditionItem" pos="0 -7.2" id="CampaignEditionItem_2"/>
 			<frameinstance modelid="CampaignEditionItem" pos="0 -14.4" id="CampaignEditionItem_3"/>
@@ -75,8 +75,8 @@ Text BuildSideBar() {
 
 		<!-- Selected event -->
 		<frame id="Frame_SelectedEvent" hidden="1">
-			<quad id="Quad_GoBack" pos="1 -12" size="5 5" style="Icons128x128_1" substyle="Back" opacity="0.5" scriptevents="1" />
-			<label id="Label_SelectedEvent" textprefix="$t" class="lato" pos="6 -12.25" opacity="0.5" scriptevents="1" />
+			<label id="Label_SelectedEventIcon" pos="2 -12.25" size="6 5" textalign="center" text=" " opacity="0.5" scriptevents="1" />
+			<label id="Label_SelectedEvent" textprefix="$t" class="lato" pos="8 -12.25" opacity="0.5" scriptevents="1" />
 		</frame>
 
 		<quad size="62 123.83" image="file://Media/Images/Obstacle/Campaign/Aside.png"/>
@@ -110,18 +110,16 @@ Void UpdateList() {
 		declare CMlLabel Label_CampaignEdition = (Frame_CampaignEdition.GetFirstChild("Label_CampaignEdition") as CMlLabel);
 
 		Frame_CampaignEdition.Show();
-		if (P_SelectedEvent == "") {
-			Label_CampaignEdition.SetText(" " ^ Item);
-		} else {
-			Label_CampaignEdition.SetText(Item);
-		}
 		Label_CampaignEdition.DataAttributeSet("idx", TL::ToText(I));
 
+		declare Text TextValue = Item;
 		declare Vec3 TextColor = CL::HexToRgb("B4B4B4");
 		if (P_SelectedItem == I) {
 			TextColor = CL::HexToRgb("FFFFFF");
+			TextValue = "  " ^ TextValue;
 		}
-
+	
+		Label_CampaignEdition.SetText(TextValue);
 		Label_CampaignEdition.TextColor = TextColor;
 	}
 
@@ -139,19 +137,20 @@ Void UpdateList() {
 	}
 }
 
-Void SetSelectedEventLabelOpacity(Real _Opacity) {
-	declare CMlQuad Quad_GoBack <=> (Page.GetFirstChild("Quad_GoBack") as CMlQuad);
+Void SetSelectedEventLabelAppearance(Real _Opacity, Text _Icon) {
+	declare CMlLabel Label_SelectedEventIcon <=> (Page.GetFirstChild("Label_SelectedEventIcon") as CMlLabel);
 	declare CMlLabel Label_SelectedEvent <=> (Page.GetFirstChild("Label_SelectedEvent") as CMlLabel);
 	Label_SelectedEvent.Opacity = _Opacity;
-	Quad_GoBack.Opacity = _Opacity;
+	Label_SelectedEventIcon.Opacity = _Opacity;
+	Label_SelectedEventIcon.SetText(_Icon);
 }
 
 Void HighlightSelectedEventLabel() {
-	SetSelectedEventLabelOpacity(1.);
+	SetSelectedEventLabelAppearance(1., " ");
 }
 
 Void LowlightSelectedEventLabel() {
-	SetSelectedEventLabelOpacity(0.5);
+	SetSelectedEventLabelAppearance(0.5, " ");
 }
 
 main() {
@@ -184,9 +183,16 @@ main() {
 					switch (Event.ControlId) {
 						case "Label_CampaignEdition": {
 							declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
+							declare Text P_SelectedEvent for Page = "";
+
+							UpdateList();
+							Label_Edition.SetText(TL::Replace(Label_Edition.Value, "", ""));
+							if (!TL::StartsWith("", Label_Edition.Value)) {
+								Label_Edition.SetText("  " ^ Label_Edition.Value);
+							}
 							Label_Edition.TextColor = CL::HexToRgb("FFFFFF");
 						}
-						case "Quad_GoBack": {
+						case "Label_SelectedEventIcon": {
 							HighlightSelectedEventLabel();
 						}
 						case "Label_SelectedEvent": {
@@ -197,13 +203,9 @@ main() {
 				case CMlScriptEvent::Type::MouseOut: {
 					switch (Event.ControlId) {
 						case "Label_CampaignEdition": {
-							declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
-							declare Integer Idx = TL::ToInteger(Event.Control.DataAttributeGet("idx"));
-							if (Idx == P_SelectedItem) continue;
-
-							Label_Edition.TextColor = CL::HexToRgb("B4B4B4");
+							UpdateList();
 						}
-						case "Quad_GoBack": {
+						case "Label_SelectedEventIcon": {
 							LowlightSelectedEventLabel();
 						}
 						case "Label_SelectedEvent": {
@@ -220,7 +222,7 @@ main() {
 						case "Quad_Refresh": {
 							SendCustomEvent("refresh", []);
 						}
-						case "Quad_GoBack": {
+						case "Label_SelectedEventIcon": {
 							SendCustomEvent("goback", []);
 						}
 						case "Label_SelectedEvent": {
