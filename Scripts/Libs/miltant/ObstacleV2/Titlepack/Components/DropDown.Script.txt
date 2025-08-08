@@ -47,7 +47,7 @@ Text BuildMainLoop(Text[Text] _Values, Lib::K_Options _Options) {
 		if (Event.Type == CMlEvent::Type::MouseClick) {
 			switch (Event.ControlId) {
 				case "Component__DropDown_Trigger": {
-					declare Component <=> (Event.Control.Parent as CMlFrame);
+					declare Component <=> Event.Control.Parent;
 					declare List <=> (Component.GetFirstChild("Component__DropDown_List") as CMlFrame);
 					declare DropDown_Icon <=> Component.GetFirstChild("Component__DropDown_Icon");
 
@@ -74,7 +74,7 @@ Text BuildMainLoop(Text[Text] _Values, Lib::K_Options _Options) {
 				case "Component__DropDown_Option": {
 					if (Event.Control.DataAttributeExists("key")) {
 						declare Option <=> (Event.Control as CMlLabel);
-						declare Component <=> (Option.Parent.Parent as CMlFrame);
+						declare Component <=> Option.Parent.Parent;
 						declare Label <=> (Component.GetFirstChild("Component__DropDown_Text") as CMlLabel);
 
 						declare Key = Option.DataAttributeGet("key");

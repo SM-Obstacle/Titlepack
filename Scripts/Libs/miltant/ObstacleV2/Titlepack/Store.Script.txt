@@ -443,7 +443,7 @@ Void Loop() {
     Loop_Skins();
 
     declare Text[][Text] ObsStore_Requests for LocalUser;
-    declare Text[] Requests_Keys for LocalUser;
+    declare Text[] Requests_Keys;
 
     foreach (Req => Args in ObsStore_Requests) {
         switch (Req) {

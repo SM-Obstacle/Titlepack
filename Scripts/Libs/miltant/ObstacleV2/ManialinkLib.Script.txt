@@ -18,7 +18,7 @@ Text GetDeclareGlobals() {
 		declare Targets = TL::Split(" ", _Quad.DataAttributeGet("target"));
 		if (Targets.count > 0) {
 			declare Cursor = _Quad.DataAttributeGet("anim-cursor");
-			declare ParentFrame = (_Quad.Parent as CMlFrame);
+			declare ParentFrame = _Quad.Parent;
 			if (ParentFrame.Parent.ControlId == "Frame_Menus") {
 				declare Target = (ParentFrame.GetFirstChild(Targets[0]) as CMlLabel);
 				ManialinkLib_CurrentAnims["pos"] = [Cursor, AnimEnd, "" ^ ParentFrame.RelativePosition_V3.X];
@@ -40,7 +40,7 @@ Text GetDeclareGlobals() {
 	}
 	Void ManialinkLib_MouseEvent(CMlScriptEvent _Event) {
 		if (!_Event.Control.DataAttributeExists("target")) return;
-		declare Frame_MenuItem = (_Event.Control.Parent as CMlFrame);
+		declare Frame_MenuItem = _Event.Control.Parent;
 
 		declare Duration = 200;
 		if (_Event.Control.DataAttributeExists("anim-length")) {
@@ -84,7 +84,7 @@ Text GetDeclareGlobals() {
 		}
 
 		if (!_Event.Control.DataAttributeExists(AttributeAnim)) return;
-		
+
 		declare Targets = TL::Split(" ", _Event.Control.DataAttributeGet("target"));
 		declare States = TL::RegexFind("<[^!>][^>]*>", _Event.Control.DataAttributeGet(AttributeAnim), "g");
 
@@ -166,7 +166,7 @@ Text GetEventLoopActiveItem(Text _EventName) {
 		}
 """;
 	}
-	
+
 	ML ^=  """//!
 		case CMlScriptEvent::Type::MouseOver: {
 			ManialinkLib_MouseEvent(Event);

@@ -110,7 +110,7 @@ Text Build() {
 	Void UpdateServers(Integer TopServerIndex) {
 		declare K_ServerInfo[] ObsStore_TopServers for LocalUser;
 		G_Frame_VisibleContent.RelativePosition_V3.Y = TopServerIndex * -10.;
-		
+
 		for (I, 0, 11) {
 			declare FrameInstance = (G_Frame_VisibleContent.Controls[I] as CMlFrame);
 			declare Integer ServerIndex = TopServerIndex + I - 1;
@@ -138,13 +138,13 @@ Text Build() {
 			// Label_Ping.SetText(Server.server_ping);
 		}
 	}
-	
+
 	main() {
 		{{{Styles::GetInitFrameMenus()}}}
 		G_Frame_VisibleContent = (Page.GetFirstChild("Frame_Menus") as CMlFrame);
 
 		declare Text[][Text] ObsStore_Requests for LocalUser;
-		
+
 		declare Entry_Search = (Page.GetFirstChild("Entry_Search") as CMlEntry);
 
 		declare Server_List = (Page.GetFirstChild("Server_List") as CMlFrame);
@@ -162,7 +162,7 @@ Text Build() {
 		declare K_ServerInfo[Text] ServersCache;
 
 		{{{Scroll::GetInitFrames()}}}
-		
+
 		while(True) {
 			yield;
 
@@ -173,7 +173,7 @@ Text Build() {
 			if (Server_List.ScrollOffset != ScrollOffset) {
 				ScrollOffset = Server_List.ScrollOffset;
 				TopServerIndex = ML::FloorInteger(ScrollOffset.Y / 10.);
-				
+
 				UpdateServers(TopServerIndex);
 			}
 
@@ -181,7 +181,7 @@ Text Build() {
 				LastUpdate = ObsStore_LastUpdate_TopServers;
 				Server_List.ScrollMax.Y = ML::Max(0., ObsStore_TopServers.count * 10. - 100.) + 5.;
 				Quad_ScrollTrigger.Size.Y = ML::Max(100., ObsStore_TopServers.count * 10.) + 5.;
-				
+
 				UpdateServers(ML::Min(TopServerIndex, ObsStore_TopServers.count - 11));
 			}
 
@@ -195,7 +195,7 @@ Text Build() {
 							case "Quad_Trigger": {
 								declare Frame = Event.Control.Parent;
 								declare Integer ServerIndex = TopServerIndex + TL::ToInteger(Frame.DataAttributeGet("index")) - 1;
-								
+
 								if (Frame.DataAttributeExists("index")) {
 									if (Now - LastClick < 500 && ServerIndex == SelectedServerIndex) {
 										SendCustomEvent("join_server", [Frame.DataAttributeGet("login")]);
@@ -245,7 +245,7 @@ Text Build() {
 				// 	if (ObsStore_TopServers[ServerIndex].server_ping == 0) {
 				// 		if (!ObsStore_Requests.existskey("Lookup_ServerInfo"))
 				// 			ObsStore_Requests["Lookup_ServerInfo"] = [];
-							
+
 				// 		ObsStore_Requests["Lookup_ServerInfo"].add(ObsStore_TopServers[ServerIndex].server_login);
 				// 	} else {
 				// 		declare Label_Ping = (FrameInstance.GetFirstChild("Label_Ping") as CMlLabel);

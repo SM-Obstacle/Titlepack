@@ -555,7 +555,7 @@ Text Build(Text _FileType, Boolean _New) {
 						}
 					}
 					case CMlEvent::Type::MouseOver: {
-						declare Frame_Thumbnail = (Event.Control.Parent as CMlFrame);
+						declare Frame_Thumbnail = Event.Control.Parent;
 						declare Frame_Banner = (Frame_Thumbnail.GetFirstChild("Frame_Banner") as CMlFrame);
 						if (Frame_Banner != Null && Frame_Thumbnail.ControlId != "Frame_Content") {
 							declare Label_Name <=> (Frame_Banner.GetFirstChild("Label_Name") as CMlLabel);
@@ -580,7 +580,7 @@ Text Build(Text _FileType, Boolean _New) {
 						}
 					}
 					case CMlEvent::Type::MouseOut: {
-						declare Frame_Thumbnail = (Event.Control.Parent as CMlFrame);
+						declare Frame_Thumbnail = Event.Control.Parent;
 						declare Frame_Banner <=> (Frame_Thumbnail.GetFirstChild("Frame_Banner") as CMlFrame);
 						if (Frame_Banner != Null && Frame_Thumbnail.ControlId != "Frame_Content") {
 							declare Label_Author <=> (Frame_Banner.GetFirstChild("Label_Author") as CMlLabel);
