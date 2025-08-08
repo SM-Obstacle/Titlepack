@@ -219,6 +219,8 @@ Text GetLayer() {
     declare CMlFrame G_Frame_Records;
     declare CMlQuad G_Quad_Background;
 
+    declare K_Response G_PlayersRanks;
+
     /**
      * @param _Medal The index of the medal.
      *  0 is bronze; 1 is silver; 2 is gold; 3 is author.
@@ -265,10 +267,31 @@ Text GetLayer() {
         return -1;
     }
 
-    Void UpdateUI(K_Response _Response) {
+    Void ShowRank(Text _ID, Real _Pos, Text _Rank, Text _Name, Text _Time) {
+        declare Frame <=> (G_Frame_Records.GetFirstChild(_ID) as CMlFrame);
+        Frame.RelativePosition_V3.Y = _Pos;
+        Frame.Show();
+
+        declare RankLabel <=> (Frame.GetFirstChild("rank") as CMlLabel);
+        declare NameLabel <=> (Frame.GetFirstChild("name") as CMlLabel);
+        declare TimeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
+
+        if (RankLabel != Null) {
+            RankLabel.SetText(_Rank);
+        }
+        if (NameLabel != Null) {
+            NameLabel.SetText(_Name);
+        }
+
+        if (TimeLabel != Null) {
+            TimeLabel.SetText(_Time);
+        }
+    }
+
+    Void UpdateUI() {
         declare PlayerRank = -1;
         declare Integer LocalPlayerTime = -1;
-        foreach (I => Record in _Response.response) {
+        foreach (I => Record in G_PlayersRanks.response) {
             if (Record.login == G_LocalPlayer.User.Login) {
                 G_CampaignRecords[Map.MapInfo.MapUid] = Record.time;
                 G_CurrentPlayerRank = I + 1;
@@ -286,7 +309,7 @@ Text GetLayer() {
 
         if (PlayerRank == -1) {
             G_CampaignRecords[Map.MapInfo.MapUid] = 0;
-            G_CurrentPlayerRank = _Response.response.count + 2;
+            G_CurrentPlayerRank = G_PlayersRanks.response.count + 2;
         }
 
         // medals to display
@@ -298,21 +321,17 @@ Text GetLayer() {
 
         declare Integer AmountOfInsertedMedals = 0;
 
-        foreach (I => Rank in _Response.response) {
+        foreach (I => Rank in G_PlayersRanks.response) {
             CurrentTime = Rank.time;
-            
+
             // displays medals before the current rank
             while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
-                declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
-                declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
-
                 if (Medals[CurrentMedal] == -1) {
+                    declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_"^CurrentMedal) as CMlFrame);
                     Frame.Hide();
                 } else {
-                    Frame.Show();
+                    ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
                     AmountOfInsertedMedals += 1;
-                    Frame.RelativePosition_V3.Y = CurrentHeight;
-                    timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
                     CurrentHeight -= 4.;
                 }
 
@@ -320,30 +339,17 @@ Text GetLayer() {
             }
 
             // displays the current rank
-            declare frame <=> (G_Frame_Records.GetFirstChild("record" ^ I) as CMlFrame);
-            declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
-            declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
-            declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
-
-            frame.RelativePosition_V3.Y = CurrentHeight;
+            ShowRank("record"^I, CurrentHeight, ""^Rank.rank, Rank.nickname, TL::TimeToText(Rank.time, True));
             CurrentHeight -= 4.;
-            rankLabel.SetText(""^Rank.rank);
-            nameLabel.SetText(Rank.nickname);
-            timeLabel.SetText(TL::TimeToText(Rank.time, True));
-            frame.Show();
         }
 
         // Display medals after the last rank
         while (CurrentMedal >= 0) {
-            declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_" ^ CurrentMedal) as CMlFrame);
-            declare timeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
-
             if (CurrentHeight <= -15 * 4 || Medals[CurrentMedal] == -1) {
+                declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_"^CurrentMedal) as CMlFrame);
                 Frame.Hide();
             } else {
-                Frame.Show();
-                Frame.RelativePosition_V3.Y = CurrentHeight;
-                timeLabel.SetText(TL::TimeToText(Medals[CurrentMedal], True));
+                ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
                 CurrentHeight -= 4.;
             }
 
@@ -354,23 +360,12 @@ Text GetLayer() {
 
         // Update height of main frames
         AddedHeight = 4. * AmountOfInsertedMedals;
-        G_Frame_Widget.Size.Y = 15 * 4 + AddedHeight;
-        G_Frame_Records.Size.Y = 15 * 4 + AddedHeight;
+        G_Frame_Widget.Size.Y = 15. * 4 + AddedHeight;
+        G_Frame_Records.Size.Y = 15. * 4 + AddedHeight;
         G_Quad_Background.Size.Y = G_OriginalBackgroundHeight + AddedHeight;
 
-        // Current player doesn't have any record on the map so we show the last empty line
         if (PlayerRank == -1) {
-            declare frame <=> (G_Frame_Records.GetFirstChild("record14") as CMlFrame);
-            declare rankLabel <=> (frame.GetFirstChild("rank") as CMlLabel);
-            declare nameLabel <=> (frame.GetFirstChild("name") as CMlLabel);
-            declare timeLabel <=> (frame.GetFirstChild("time") as CMlLabel);
-
-            frame.RelativePosition_V3.Y = -4. * 14 - AddedHeight;
-
-            frame.Show();
-            rankLabel.SetText("---");
-            nameLabel.SetText(InputPlayer.User.Name);
-            timeLabel.SetText("--:--:--");
+            ShowRank("record14", -4. * 14 - AddedHeight, "---", InputPlayer.User.Name, "--:--:--");
         }
     }
 
@@ -403,9 +398,8 @@ Text GetLayer() {
         G_ReqId = ReqMgr_NullGetReq();
 
         if (Req.StatusCode == 200) {
-            declare K_Response Res;
-            Res.fromjson(Req.Result);
-            UpdateUI(Res);
+            G_PlayersRanks.fromjson(Req.Result);
+            UpdateUI();
         } else {
             declare ErrMgr_K_Error Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
             if (Err.Err.type != ErrMgr_C_Err_Maintenance) {
@@ -447,12 +441,13 @@ Text GetLayer() {
         declare Running = False;
 
         declare LastPlayerLogin = InputPlayer.User.Login;
-        declare UpdateUI = False;
 
         G_Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
         G_Frame_Records <=> (G_Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
         G_Quad_Background <=> (Page.GetFirstChild("Quad_Background") as CMlQuad);
         G_OriginalBackgroundHeight = G_Quad_Background.Size.Y;
+
+        UpdateUI();
 
         while (True) {
             yield;
@@ -470,6 +465,7 @@ Text GetLayer() {
                 G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
                 MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
                 IsMedalInitDone = True;
+                UpdateUI();
             }
 
             if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
