@@ -357,17 +357,15 @@ Text GetLayer() {
 			CurrentMedal -= 1;
 		}
 
+		// Update height of main frames
 		declare Real AddedHeight = 4. * AmountOfInsertedMedals;
+		G_Frame_Widget.Size.Y = 15. * 4 + AddedHeight;
+		G_Frame_Records.Size.Y = 15. * 4 + AddedHeight;
+		G_Quad_Background.Size.Y = G_OriginalBackgroundHeight + AddedHeight;
 
 		if (PlayerRank == -1) {
 			ShowRank("record14", -4. * 14 - AddedHeight, "---", InputPlayer.User.Name, "--:--:--");
-			CurrentHeight -= 4.;
 		}
-
-		// Update height of main frames
-		G_Frame_Widget.Size.Y = 15. * 4 + AddedHeight;
-		G_Frame_Records.Size.Y = 15. * 4 + AddedHeight;
-		G_Quad_Background.Size.Y = ML::Max(CurrentHeight, G_OriginalBackgroundHeight + AddedHeight);
 	}
 
 	Void UpdateRecords(Text _Login) {
