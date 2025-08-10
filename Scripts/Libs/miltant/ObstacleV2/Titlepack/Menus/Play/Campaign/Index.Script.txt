@@ -5,6 +5,7 @@
 #Include "Libs/smokegun/Constants.Script.txt"									as Constants
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Index.Script.txt"			as Dialogs
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/UI.Script.txt"   			as UI
+#Include "Libs/miltant/ObstacleV2/String.Script.txt"							as StringLib
 
 #Include "TextLib" as TL
 #Include "MathLib" as ML
@@ -176,6 +177,7 @@ Text Build() {
 	#Const C_Alignment {{{dump(C_Alignment)}}}
 
 	{{{Styles::GetDeclareGlobals()}}}
+	{{{StringLib::ExportContrast()}}}
 
 	declare K_Event G_Event;
 
@@ -236,18 +238,16 @@ Text Build() {
 	}
 
 	Text GetAuthorListText(Text[] _Authors) {
-		if (_Authors.count == 0) {
-			return "";
-		}
+		declare Text AuthorsTxt = "";
 
-		declare Text AuthorsTxt = "$<" ^ _Authors[0] ^ "$>";
+		foreach (I => Author in _Authors) {
+			if (I == _Authors.count - 1) {
+				AuthorsTxt ^= "  and ";
+			} else if (I != 0) {
+				AuthorsTxt ^= ", ";
+			}
 
-        foreach (Author in _Authors.slice(1, _Authors.count - 2)) {
-			AuthorsTxt ^= ", $<" ^ Author ^ "$>";
-        }
-
-		if (_Authors.count > 1) {
-			AuthorsTxt ^= " and $<" ^ _Authors[_Authors.count - 1] ^ "$>";
+			AuthorsTxt ^= "$<" ^ Author ^ "$>";
 		}
 
 		return AuthorsTxt;
@@ -353,8 +353,8 @@ Text Build() {
 			ThumbnailPath = "https://sm.mania.exchange/maps/thumbnail/" ^ SelectedMap.mx_id ^ "?.jpg";
 		}
 		Quad_Thumbnail.ChangeImageUrl(ThumbnailPath);
-		Label_Map.SetText("   " ^ MapLink ^ MapName);
-		Label_Mapper.SetText("   " ^ AuthorLink ^ AuthorName);
+		Label_Map.SetText("   " ^ MapLink ^ ContrastString(MapName));
+		Label_Mapper.SetText("   " ^ AuthorLink ^ ContrastString(AuthorName));
 
 		if (SelectedMap.personal_best < 0) {
 			Label_PB.TextColor = CL::HexToRgb("FFFFFF");
@@ -388,7 +388,7 @@ Text Build() {
 				}
 				Quad_NextOppMedal.ChangeImageUrl(NextMedalImg);
 			} else if (SelectedMap.next_opponent.time != -1) {
-				NextOppTxt = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.next_opponent.login ^ "]$z" ^ SelectedMap.next_opponent.name ^ "";
+				NextOppTxt = "$l[{{{Constants::C_WebsiteUrl}}}/player/" ^ SelectedMap.next_opponent.login ^ "]$z" ^ ContrastString(SelectedMap.next_opponent.name) ^ "";
 				NextOppTime = SelectedMap.next_opponent.time;
 			}
 
@@ -422,7 +422,7 @@ Text Build() {
 				} else {
 					declare Vec3 Color = CL::HexToRgb(Category.hex_color);
 					Label_CategoryName.TextColor = Color;
-					if (1./3. * (Color.X + Color.Y + Color.Z) < 0.1) {
+					if (Color.X + Color.Y + Color.Z < 0.3) {
 						declare CMlQuad Quad_CategoryNameBackground = (Frame_Category.GetFirstChild("Quad_CategoryNameBackground") as CMlQuad);
 						Quad_CategoryNameBackground.Show();
 					}
