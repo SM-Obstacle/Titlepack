@@ -22,7 +22,7 @@
   CONSTANTS
  *********************************************/
 
-#Const Version "2025-06-11"
+#Const Version "2025-08-10"
 #Const ScriptName "Scripts/Libs/ahmad3/UI/LeaderboardWidget.Script.txt"
 
 #Const C_Ev_NotifyTimeInLb "LbWidget:NotifyLocalTime"
@@ -36,88 +36,88 @@
 ////////////////////
 
 Text Private_GetSmallRecords() {
-    declare Real QuadHeight = 67.;
-    declare Text LabelEvent;
-    declare Real RecordsFrameY = -8.;
+	declare Real QuadHeight = 67.;
+	declare Text LabelEvent;
+	declare Real RecordsFrameY = -8.;
 
-    if (ObsEvents::HasEventLoaded()) {
-        declare CurrentEdition = ObsEvents::CurrentEdition();
-        declare Text EventName = CurrentEdition.name;
-        if (TL::Length(CurrentEdition.subtitle) > 0) {
-            EventName ^= " " ^ CurrentEdition.subtitle;
-        }
+	if (ObsEvents::HasEventLoaded()) {
+		declare CurrentEdition = ObsEvents::CurrentEdition();
+		declare Text EventName = CurrentEdition.name;
+		if (TL::Length(CurrentEdition.subtitle) > 0) {
+			EventName ^= " " ^ CurrentEdition.subtitle;
+		}
 
-        QuadHeight = 71.;
-        LabelEvent = """
+		QuadHeight = 71.;
+		LabelEvent = """
 <label pos="0 -7.25" size="80 5" text="on {{{EventName}}}" style="TextValueSmall" textsize="1" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
 """;
-        RecordsFrameY = -12.;
-    }
+		RecordsFrameY = -12.;
+	}
 
-    // HACK: we add 4 more pixels so that the UI helper stays bigger than our frame to be able to move it.
-    // Maybe it would be better to improve the custom UI helper module to add a small handle to each helper.
-    CustomUI::Add("Frame_Small_Records", <139., 75.>, <44., QuadHeight + 4 * 5>, "top", "");
-    return """
+	// We set the helper's height to the maximum possible one to help players
+	// organize their interface in the worst case
+	CustomUI::Add("Frame_Small_Records", <139., 75.>, <44., 71. + 4 * 4>, "top", "");
+	return """
 <frame id="Frame_Small_Records" class="LibCustomUI_Module">
-    <framemodel id="small_record">
-        <label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" textfont="light"/>
-        <label id="name" pos="-13 0" size="20 4" halign="left" valign="center2" textsize="1" />
-        <label id="time" pos="20 0" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-    </framemodel>
+	<framemodel id="small_record">
+		<label id="rank" pos="-20 0" size="6 4" halign="left" valign="center2" style="TextCardSmallScores2" textsize="1" textfont="light"/>
+		<label id="name" pos="-13 0" size="20 4" halign="left" valign="center2" textsize="1" />
+		<label id="time" pos="20 0" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+	</framemodel>
 
-    <frame pos="139 75">
-        <frame id="Frame_Background" halign="center" valign="center2" z-index="-1">
-            <quad z-index="-1" id="Quad_Background" size="44 {{{QuadHeight}}}" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="top" scriptevents="1"/>
-            <label pos="0 -1" size="40 5" text="Records" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
-            {{{LabelEvent}}}
-        </frame>
-        <frame id="Frame_Records" pos="0 {{{RecordsFrameY}}}">
-            <frameinstance modelid="small_record" pos="0 0" id="record0" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -4" id="record1" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -8" id="record2" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -12" id="record3" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -16" id="record4" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -20" id="record5" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -24" id="record6" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -28" id="record7" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -32" id="record8" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -36" id="record9" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -40" id="record10" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -44" id="record11" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -48" id="record12" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -52" id="record13" hidden="1"/>
-            <frameinstance modelid="small_record" pos="0 -56" id="record14" hidden="1"/>
+	<frame pos="139 75">
+		<frame id="Frame_Background" halign="center" valign="center2" z-index="-1">
+			<quad z-index="-1" id="Quad_Background" size="44 {{{QuadHeight}}}" style="BgRaceScore2" substyle="BgCardPlayer" halign="center" valign="top" scriptevents="1"/>
+			<label pos="0 -1" size="40 5" text="Records" style="TextTitle3" textsize="4" halign="center" textfont="OswaldMono" maxline="1" valign="top" textemboss="1"/>
+			{{{LabelEvent}}}
+		</frame>
+		<frame id="Frame_Records" pos="0 {{{RecordsFrameY}}}">
+			<frameinstance modelid="small_record" pos="0 0" id="record0" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -4" id="record1" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -8" id="record2" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -12" id="record3" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -16" id="record4" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -20" id="record5" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -24" id="record6" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -28" id="record7" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -32" id="record8" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -36" id="record9" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -40" id="record10" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -44" id="record11" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -48" id="record12" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -52" id="record13" hidden="1"/>
+			<frameinstance modelid="small_record" pos="0 -56" id="record14" hidden="1"/>
 
 			<frame pos="-20 -13" id="Frame_Medal_3">
 				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/champion.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Master Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+				<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Master Time" textfont="light"/>
+				<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
 			</frame>
 
 			<frame pos="-20 -18" id="Frame_Medal_2">
 				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/gold.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Gold Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+				<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Gold Time" textfont="light"/>
+				<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
 			</frame>
 
 			<frame pos="-20 -23" id="Frame_Medal_1">
 				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/silver.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Silver Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+				<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Silver Time" textfont="light"/>
+				<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
 			</frame>
 
 			<frame pos="-20 -28" id="Frame_Medal_0">
 				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/bronze.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Bronze Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+				<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Bronze Time" textfont="light"/>
+				<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
 			</frame>
-        </frame>
-        <frame id="Frame_Error" hidden="1" pos="0 -{{{QuadHeight / 2}}}">
-            <label text="Error" textcolor="f20" halign="center" valign="center2" />
-        </frame>
-    </frame>
+		</frame>
+		<frame id="Frame_Error" hidden="1" pos="0 -{{{QuadHeight / 2}}}">
+			<label text="Error" textcolor="f20" halign="center" valign="center2" />
+		</frame>
+	</frame>
 </frame>
-    """;
+	""";
 }
 
 ////////////////////
@@ -128,377 +128,384 @@ Text Private_GetSmallRecords() {
  * Returns the version of the script module.
  */
 Text GetVersion() {
-    return Version;
+	return Version;
 }
 
 /**
  * Returns the name of the script module.
  */
 Text GetScriptName() {
-    return ScriptName;
+	return ScriptName;
 }
 
 Void Init() {
-    if (ObsEvents::HasFailed() || !ObsEvents::HasEventLoaded()) return;
+	if (ObsEvents::HasFailed() || !ObsEvents::HasEventLoaded()) return;
 
-    declare netwrite Integer[][Text] Net_MedalsTimesPerMap for Teams[0] = [];
-    declare netwrite Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
+	declare netwrite Integer[][Text] Net_MedalsTimesPerMap for Teams[0] = [];
+	declare netwrite Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
 
-    Net_MedalsTimesPerMap.clear();
+	Net_MedalsTimesPerMap.clear();
 
-    foreach (Category in ObsEvents::CurrentEdition().categories) {
-        foreach (Map in Category.maps) {
-            declare Integer[] MedalTimes = [Map.bronze_time, Map.silver_time, Map.gold_time, Map.champion_time];
-            Net_MedalsTimesPerMap[Map.map_uid] = MedalTimes;
-            if (Map.original_map.mx_id != 0) {
-                Net_MedalsTimesPerMap[Map.original_map.map_uid] = MedalTimes;
-            }
-        }
-    }
+	foreach (Category in ObsEvents::CurrentEdition().categories) {
+		foreach (Map in Category.maps) {
+			declare Integer[] MedalTimes = [Map.bronze_time, Map.silver_time, Map.gold_time, Map.champion_time];
+			Net_MedalsTimesPerMap[Map.map_uid] = MedalTimes;
+			if (Map.original_map.mx_id != 0) {
+				Net_MedalsTimesPerMap[Map.original_map.map_uid] = MedalTimes;
+			}
+		}
+	}
 
-    Net_MedalsTimesPerMapUpdated = Now;
+	Net_MedalsTimesPerMapUpdated = Now;
 }
 
 Void Yield() {
-    foreach (Event in UIManager.PendingEvents) {
-        if (
-            Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent
-            || Event.CustomEventType != C_Ev_NotifyTimeInLb
-        ) {
-            continue;
-        }
+	foreach (Event in UIManager.PendingEvents) {
+		if (
+			Event.Type != CUIConfigEvent::EType::OnLayerCustomEvent
+			|| Event.CustomEventType != C_Ev_NotifyTimeInLb
+		) {
+			continue;
+		}
 
-        declare Integer TimeInLb = TL::ToInteger(Event.CustomEventData[0]);
+		declare Integer TimeInLb = TL::ToInteger(Event.CustomEventData[0]);
 
-        declare CSmPlayer Player <=> GetPlayer(Event.UI);
-        Player::setTimeInLb(Player, TimeInLb);
-    }
+		declare CSmPlayer Player <=> GetPlayer(Event.UI);
+		Player::setTimeInLb(Player, TimeInLb);
+	}
 }
 
 Text GetLayer() {
-    return """
+	return """
 <manialink version="3" name="Obstacle:RecordsWidget">
 <frame>
-    {{{Private_GetSmallRecords()}}}
+	{{{Private_GetSmallRecords()}}}
 </frame>
 <script><!--
-    #Include "TextLib" as TL
+#Include "TextLib" as TL
+#Include "MathLib" as ML
 
-    #Struct K_RankedRecord {
-        Integer rank;
-        Text login;
-        Text nickname;
-        Integer time;
-    }
+	#Struct K_RankedRecord {
+		Integer rank;
+		Text login;
+		Text nickname;
+		Integer time;
+	}
 
-    #Struct K_Response {
-        K_RankedRecord[] response;
-    }
+	#Struct K_Response {
+		K_RankedRecord[] response;
+	}
 
-    {{{ReqMgr::ML_Preproc("ReqMgr")}}}
-    {{{Ban::ML_Preproc("BanMgr")}}}
-    {{{ErrMgr::ML_Preproc("ErrMgr", "BanMgr")}}}
+	{{{ReqMgr::ML_Preproc("ReqMgr")}}}
+	{{{Ban::ML_Preproc("BanMgr")}}}
+	{{{ErrMgr::ML_Preproc("ErrMgr", "BanMgr")}}}
 
-    {{{ReqMgr::ML_Content("ReqMgr")}}}
-    {{{Ban::ML_Content("BanMgr")}}}
-    {{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
-    {{{ErrReport::ML_Content("ErrReport")}}}
+	{{{ReqMgr::ML_Content("ReqMgr")}}}
+	{{{Ban::ML_Content("BanMgr")}}}
+	{{{ErrMgr::ML_Content("ErrMgr", "TL", "BanMgr")}}}
+	{{{ErrReport::ML_Content("ErrReport")}}}
 
-    declare Real G_OriginalBackgroundHeight;
+	declare Real G_OriginalBackgroundHeight;
 
-    declare Integer[][Text] G_MedalsTimesPerMap;
+	declare Integer[][Text] G_MedalsTimesPerMap;
 
-    declare ReqMgr_K_GetReqId G_ReqId;
-    declare ReqMgr_K_GetRequest G_Req;
+	declare ReqMgr_K_GetReqId G_ReqId;
+	declare ReqMgr_K_GetRequest G_Req;
 
-    declare CSmPlayer G_LocalPlayer;
-    declare Integer[Text] G_CampaignRecords;
-    declare Integer G_CurrentPlayerRank;
+	declare CSmPlayer G_LocalPlayer;
+	declare Integer[Text] G_CampaignRecords;
+	declare Integer G_CurrentPlayerRank;
 
-    declare CMlFrame G_Frame_Widget;
-    declare CMlFrame G_Frame_Records;
-    declare CMlQuad G_Quad_Background;
+	declare CMlFrame G_Frame_Widget;
+	declare CMlFrame G_Frame_Records;
+	declare CMlQuad G_Quad_Background;
 
-    declare K_Response G_PlayersRanks;
+	declare K_Response G_PlayersRanks;
 
-    /**
-     * @param _Medal The index of the medal.
-     *  0 is bronze; 1 is silver; 2 is gold; 3 is author.
-     * @return The time of the corresponding medal in milliseconds, or -1 if missing or wrong index.
-     */
-    Integer GetMedal(Integer _Medal) {
-        if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
-            return G_MedalsTimesPerMap[Map.MapInfo.MapUid][_Medal];
-        }
+	/**
+	 * @param _Medal The index of the medal.
+	 *  0 is bronze; 1 is silver; 2 is gold; 3 is author.
+	 * @return The time of the corresponding medal in milliseconds, or -1 if missing or wrong index.
+	 */
+	Integer GetMedal(Integer _Medal) {
+		if (G_MedalsTimesPerMap.existskey(Map.MapInfo.MapUid)) {
+			return G_MedalsTimesPerMap[Map.MapInfo.MapUid][_Medal];
+		}
 
-        declare metadata Boolean Meta_IsMedalSet for Map = False;
+		declare metadata Boolean Meta_IsMedalSet for Map = False;
 
-        declare metadata Integer Meta_Bronze_Medal for Map = -1;
-        declare metadata Integer Meta_Silver_Medal for Map = -1;
-        declare metadata Integer Meta_Gold_Medal for Map = -1;
-        declare metadata Integer Meta_Champion_Medal for Map = -1;
+		declare metadata Integer Meta_Bronze_Medal for Map = -1;
+		declare metadata Integer Meta_Silver_Medal for Map = -1;
+		declare metadata Integer Meta_Gold_Medal for Map = -1;
+		declare metadata Integer Meta_Champion_Medal for Map = -1;
 
-        if (Meta_IsMedalSet) {
-            // They're meta variables so we treat them carefully :P
-            switch (_Medal) {
-                case 0: {
-                    if (Meta_Bronze_Medal > 0 && Meta_Bronze_Medal > Meta_Silver_Medal) {
-                        return Meta_Bronze_Medal;
-                    }
-                }
-                case 1: {
-                    if (Meta_Silver_Medal > 0 && Meta_Silver_Medal > Meta_Gold_Medal) {
-                        return Meta_Silver_Medal;
-                    }
-                }
-                case 2: {
-                    if (Meta_Gold_Medal > 0 && Meta_Gold_Medal > Meta_Champion_Medal) {
-                        return Meta_Gold_Medal;
-                    }
-                }
-                case 3: {
-                    if (Meta_Champion_Medal > 0) {
-                        return Meta_Champion_Medal;
-                    }
-                }
-            }
-        }
+		if (Meta_IsMedalSet) {
+			// They're meta variables so we treat them carefully :P
+			switch (_Medal) {
+				case 0: {
+					if (Meta_Bronze_Medal > 0 && Meta_Bronze_Medal > Meta_Silver_Medal) {
+						return Meta_Bronze_Medal;
+					}
+				}
+				case 1: {
+					if (Meta_Silver_Medal > 0 && Meta_Silver_Medal > Meta_Gold_Medal) {
+						return Meta_Silver_Medal;
+					}
+				}
+				case 2: {
+					if (Meta_Gold_Medal > 0 && Meta_Gold_Medal > Meta_Champion_Medal) {
+						return Meta_Gold_Medal;
+					}
+				}
+				case 3: {
+					if (Meta_Champion_Medal > 0) {
+						return Meta_Champion_Medal;
+					}
+				}
+			}
+		}
 
-        return -1;
-    }
+		return -1;
+	}
 
-    Void ShowRank(Text _ID, Real _Pos, Text _Rank, Text _Name, Text _Time) {
-        declare Frame <=> (G_Frame_Records.GetFirstChild(_ID) as CMlFrame);
-        Frame.RelativePosition_V3.Y = _Pos;
-        Frame.Show();
+	Void ShowRank(Text _ID, Real _Pos, Text _Rank, Text _Name, Text _Time) {
+		declare Frame <=> (G_Frame_Records.GetFirstChild(_ID) as CMlFrame);
+		Frame.RelativePosition_V3.Y = _Pos;
+		Frame.Show();
 
-        declare RankLabel <=> (Frame.GetFirstChild("rank") as CMlLabel);
-        declare NameLabel <=> (Frame.GetFirstChild("name") as CMlLabel);
-        declare TimeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
+		declare RankLabel <=> (Frame.GetFirstChild("rank") as CMlLabel);
+		declare NameLabel <=> (Frame.GetFirstChild("name") as CMlLabel);
+		declare TimeLabel <=> (Frame.GetFirstChild("time") as CMlLabel);
 
-        if (RankLabel != Null) {
-            RankLabel.SetText(_Rank);
-        }
-        if (NameLabel != Null) {
-            NameLabel.SetText(_Name);
-        }
+		if (RankLabel != Null) {
+			RankLabel.SetText(_Rank);
+		}
+		if (NameLabel != Null) {
+			NameLabel.SetText(_Name);
+		}
 
-        if (TimeLabel != Null) {
-            TimeLabel.SetText(_Time);
-        }
-    }
+		if (TimeLabel != Null) {
+			TimeLabel.SetText(_Time);
+		}
+	}
 
-    Void UpdateUI() {
-        declare PlayerRank = -1;
-        declare Integer LocalPlayerTime = -1;
-        foreach (I => Record in G_PlayersRanks.response) {
-            if (Record.login == G_LocalPlayer.User.Login) {
-                G_CampaignRecords[Map.MapInfo.MapUid] = Record.time;
-                G_CurrentPlayerRank = I + 1;
-                PlayerRank = I;
+	Void UpdateUI() {
+		declare PlayerRank = -1;
+		declare Integer LocalPlayerTime = -1;
+		foreach (I => Record in G_PlayersRanks.response) {
+			if (Record.login == G_LocalPlayer.User.Login) {
+				G_CampaignRecords[Map.MapInfo.MapUid] = Record.time;
+				G_CurrentPlayerRank = I + 1;
+				PlayerRank = I;
 
-                LocalPlayerTime = Record.time;
+				LocalPlayerTime = Record.time;
 
-                break;
-            }
-        }
+				break;
+			}
+		}
 
-        if (LocalPlayerTime != -1 && G_LocalPlayer == InputPlayer) {
-            SendCustomEvent({{{dump(C_Ev_NotifyTimeInLb)}}}, [LocalPlayerTime ^ ""]);
-        }
+		if (LocalPlayerTime != -1 && G_LocalPlayer == InputPlayer) {
+			SendCustomEvent({{{dump(C_Ev_NotifyTimeInLb)}}}, [LocalPlayerTime ^ ""]);
+		}
 
-        if (PlayerRank == -1) {
-            G_CampaignRecords[Map.MapInfo.MapUid] = 0;
-            G_CurrentPlayerRank = G_PlayersRanks.response.count + 2;
-        }
+		if (PlayerRank == -1) {
+			G_CampaignRecords[Map.MapInfo.MapUid] = 0;
+			G_CurrentPlayerRank = G_PlayersRanks.response.count + 2;
+		}
 
-        // medals to display
-        declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
+		// medals to display
+		declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
 
-        declare CurrentHeight = 0.;
-        declare CurrentMedal = Medals.count - 1;
-        declare CurrentTime = Medals[0] + 1;
+		declare CurrentHeight = 0.;
+		declare CurrentMedal = Medals.count - 1;
+		declare CurrentTime = Medals[0] + 1;
 
-        declare Integer AmountOfInsertedMedals = 0;
+		declare Integer AmountOfInsertedMedals = 0;
 
-        foreach (I => Rank in G_PlayersRanks.response) {
-            CurrentTime = Rank.time;
+		foreach (I => Rank in G_PlayersRanks.response) {
+			CurrentTime = Rank.time;
 
-            // displays medals before the current rank
-            while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
-                if (Medals[CurrentMedal] == -1) {
-                    declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_"^CurrentMedal) as CMlFrame);
-                    Frame.Hide();
-                } else {
-                    ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
-                    AmountOfInsertedMedals += 1;
-                    CurrentHeight -= 4.;
-                }
+			// displays medals before the current rank
+			while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
+				if (Medals[CurrentMedal] == -1) {
+					declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_"^CurrentMedal) as CMlFrame);
+					Frame.Hide();
+				} else {
+					ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
+					AmountOfInsertedMedals += 1;
+					CurrentHeight -= 4.;
+				}
 
-                CurrentMedal -= 1;
-            }
+				CurrentMedal -= 1;
+			}
 
-            // displays the current rank
-            ShowRank("record"^I, CurrentHeight, ""^Rank.rank, Rank.nickname, TL::TimeToText(Rank.time, True));
-            CurrentHeight -= 4.;
-        }
+			// displays the current rank
+			ShowRank("record"^I, CurrentHeight, ""^Rank.rank, Rank.nickname, TL::TimeToText(Rank.time, True));
+			CurrentHeight -= 4.;
+		}
 
-        // Display medals after the last rank
-        while (CurrentMedal >= 0) {
-            if (CurrentHeight <= -15 * 4 || Medals[CurrentMedal] == -1) {
-                declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_"^CurrentMedal) as CMlFrame);
-                Frame.Hide();
-            } else {
-                ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
-                CurrentHeight -= 4.;
-            }
+		// Display medals after the last rank
+		while (CurrentMedal >= 0) {
+			if (CurrentHeight <= -15 * 4 || Medals[CurrentMedal] == -1) {
+				declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_"^CurrentMedal) as CMlFrame);
+				Frame.Hide();
+			} else {
+				ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
+				CurrentHeight -= 4.;
+			}
 
-            CurrentMedal -= 1;
-        }
+			CurrentMedal -= 1;
+		}
 
-        declare Real AddedHeight = 0.;
+		declare Real AddedHeight = 4. * AmountOfInsertedMedals;
 
-        // Update height of main frames
-        AddedHeight = 4. * AmountOfInsertedMedals;
-        G_Frame_Widget.Size.Y = 15. * 4 + AddedHeight;
-        G_Frame_Records.Size.Y = 15. * 4 + AddedHeight;
-        G_Quad_Background.Size.Y = G_OriginalBackgroundHeight + AddedHeight;
+		if (PlayerRank == -1) {
+			ShowRank("record14", -4. * 14 - AddedHeight, "---", InputPlayer.User.Name, "--:--:--");
+			CurrentHeight -= 4.;
+		}
 
-        if (PlayerRank == -1) {
-            ShowRank("record14", -4. * 14 - AddedHeight, "---", InputPlayer.User.Name, "--:--:--");
-        }
-    }
+		// Update height of main frames
+		G_Frame_Widget.Size.Y = 15. * 4 + AddedHeight;
+		G_Frame_Records.Size.Y = 15. * 4 + AddedHeight;
+		G_Quad_Background.Size.Y = ML::Max(CurrentHeight, G_OriginalBackgroundHeight + AddedHeight);
+	}
 
-    Void UpdateRecords(Text _Login) {
-        if (ReqMgr_IsPending(G_ReqId) && !ReqMgr_IsWaiting(G_ReqId)) {
-            Http.Destroy(ReqMgr_GetReq(G_ReqId));
-        }
+	Void UpdateRecords(Text _Login) {
+		if (ReqMgr_IsPending(G_ReqId) && !ReqMgr_IsWaiting(G_ReqId)) {
+			Http.Destroy(ReqMgr_GetReq(G_ReqId));
+		}
 
-        declare Text Params = "?mapId="^Map.Id^"&playerId=" ^ _Login;
-        declare Text Route = {{{dump(ObsEvents::PrefixRoute("overview"))}}} ^ Params;
-        G_Req = ReqMgr_K_GetRequest {
-            Route = Route,
-            UseCache = False,
-            Headers = ReqMgr_DefaultHeaders()
-        };
+		declare Text Params = "?mapId="^Map.Id^"&playerId=" ^ _Login;
+		declare Text Route = {{{dump(ObsEvents::PrefixRoute("overview"))}}} ^ Params;
+		G_Req = ReqMgr_K_GetRequest {
+			Route = Route,
+			UseCache = False,
+			Headers = ReqMgr_DefaultHeaders()
+		};
 
-        G_ReqId = ReqMgr_Make(G_Req);
-    }
+		G_ReqId = ReqMgr_Make(G_Req);
+	}
 
-    Void LoopUpdateRecords() {
-        if (!ReqMgr_IsPending(G_ReqId)) return;
+	Void LoopUpdateRecords() {
+		if (!ReqMgr_IsPending(G_ReqId)) return;
 
-        if (ReqMgr_IsWaiting(G_ReqId)) {
-            G_ReqId = ReqMgr_MakePending(G_ReqId);
-            if (ReqMgr_IsWaiting(G_ReqId)) return;
-        }
+		if (ReqMgr_IsWaiting(G_ReqId)) {
+			G_ReqId = ReqMgr_MakePending(G_ReqId);
+			if (ReqMgr_IsWaiting(G_ReqId)) return;
+		}
 
-        declare CHttpRequest Req <=> ReqMgr_GetReq(G_ReqId);
-        if (!Req.IsCompleted) return;
-        G_ReqId = ReqMgr_NullGetReq();
+		declare CHttpRequest Req <=> ReqMgr_GetReq(G_ReqId);
+		if (!Req.IsCompleted) return;
+		G_ReqId = ReqMgr_NullGetReq();
 
-        if (Req.StatusCode == 200) {
-            G_PlayersRanks.fromjson(Req.Result);
-            UpdateUI();
-        } else {
-            declare ErrMgr_K_Error Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
-            if (Err.Err.type != ErrMgr_C_Err_Maintenance) {
-                ErrReport_ReportGet(G_Req.Route, Req.StatusCode, Req.Result);
-            }
-        }
+		if (Req.StatusCode == 200) {
+			G_PlayersRanks.fromjson(Req.Result);
+			UpdateUI();
+		} else {
+			declare ErrMgr_K_Error Err = ErrMgr_Handle(Req.StatusCode, Req.Result);
+			if (Err.Err.type != ErrMgr_C_Err_Maintenance) {
+				ErrReport_ReportGet(G_Req.Route, Req.StatusCode, Req.Result);
+			}
+		}
 
-        Http.Destroy(Req);
-    }
+		Http.Destroy(Req);
+	}
 
-    {{{CachReqs::ML_CacheUpdatedFunc("InitCacheUpdater", "CachedReqsSent")}}}
+	{{{CachReqs::ML_CacheUpdatedFunc("InitCacheUpdater", "CachedReqsSent")}}}
 
-    main() {
-        {{{CustomUI::InjectMLInit()}}}
-        wait(InputPlayer != Null);
+	main() {
+		{{{CustomUI::InjectMLInit()}}}
+		wait(InputPlayer != Null);
 
-        InitCacheUpdater();
+		InitCacheUpdater();
 
-        G_ReqId = ReqMgr_NullGetReq();
+		G_ReqId = ReqMgr_NullGetReq();
 
 		declare Integer[Text] CampaignRecords for LocalUser;
-        G_CampaignRecords = CampaignRecords;
+		G_CampaignRecords = CampaignRecords;
 
-        declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
-        declare netread Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
-        declare Integer MedalsTimesPerMapUpdated = -1;
-        // Makes sure the first request begins after having initialized the medal times,
-        // to avoid the latter from being randomly defined in the leaderboard.
-        declare Boolean IsMedalInitDone = False;
+		declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
+		declare netread Integer Net_MedalsTimesPerMapUpdated for Teams[0] = -1;
+		declare Integer MedalsTimesPerMapUpdated = -1;
+		// Makes sure the first request begins after having initialized the medal times,
+		// to avoid the latter from being randomly defined in the leaderboard.
+		declare Boolean IsMedalInitDone = False;
 
-        declare netread Net_StartTime for InputPlayer = -1;
-        declare netread Net_CheckpointsTotal for Teams[0] = -1;
-        declare netread Net_CpProgress for InputPlayer = -1;
-        declare netread Net_Time1 for InputPlayer = 0;
-        declare Integer CurrentPlayerRank for LocalUser = 0;
-        G_CurrentPlayerRank = CurrentPlayerRank;
-        declare netread Net_RecordsUpdated for Teams[0] = -1;
-        declare LastUpdate = -1;
-        declare Running = False;
+		declare netread Net_StartTime for InputPlayer = -1;
+		declare netread Net_CheckpointsTotal for Teams[0] = -1;
+		declare netread Net_CpProgress for InputPlayer = -1;
+		declare netread Net_Time1 for InputPlayer = 0;
+		declare Integer CurrentPlayerRank for LocalUser = 0;
+		G_CurrentPlayerRank = CurrentPlayerRank;
+		declare netread Net_RecordsUpdated for Teams[0] = -1;
+		declare LastUpdate = -1;
+		declare Running = False;
 
-        declare LastPlayerLogin = InputPlayer.User.Login;
+		declare LastPlayerLogin = InputPlayer.User.Login;
 
-        G_Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
-        G_Frame_Records <=> (G_Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
-        G_Quad_Background <=> (Page.GetFirstChild("Quad_Background") as CMlQuad);
-        G_OriginalBackgroundHeight = G_Quad_Background.Size.Y;
+		G_Frame_Widget <=> (Page.GetFirstChild("Frame_Small_Records") as CMlFrame);
+		G_Frame_Records <=> (G_Frame_Widget.GetFirstChild("Frame_Records") as CMlFrame);
+		G_Quad_Background <=> (Page.GetFirstChild("Quad_Background") as CMlQuad);
+		G_OriginalBackgroundHeight = G_Quad_Background.Size.Y;
 
-        UpdateUI();
+		UpdateUI();
 
-        while (True) {
-            yield;
+		while (True) {
+			yield;
 
-            G_LocalPlayer <=> InputPlayer;
-            if (GUIPlayer != Null) G_LocalPlayer <=> GUIPlayer;
-            if (G_LocalPlayer == Null) continue;
+			G_LocalPlayer <=> InputPlayer;
+			if (GUIPlayer != Null) G_LocalPlayer <=> GUIPlayer;
+			if (G_LocalPlayer == Null) continue;
 
-            if (G_LocalPlayer.User.Login != LastPlayerLogin) {
-                LastUpdate = -1;
-                LastPlayerLogin = G_LocalPlayer.User.Login;
-            }
+			if (G_LocalPlayer.User.Login != LastPlayerLogin) {
+				LastUpdate = -1;
+				LastPlayerLogin = G_LocalPlayer.User.Login;
+			}
 
-            if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
-                G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
-                MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
-                IsMedalInitDone = True;
-                UpdateUI();
-            }
+			if (Net_MedalsTimesPerMapUpdated != MedalsTimesPerMapUpdated) {
+				G_MedalsTimesPerMap = Net_MedalsTimesPerMap;
+				MedalsTimesPerMapUpdated = Net_MedalsTimesPerMapUpdated;
+				IsMedalInitDone = True;
+				UpdateUI();
+			}
 
-            if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
-                if (G_Frame_Widget.Visible)
-                    G_Frame_Widget.Hide();
-            } else if (!G_Frame_Widget.Visible) {
-                G_Frame_Widget.Show();
-            }
+			if (Net_CpProgress < 0 || Net_CheckpointsTotal < 0 || Net_StartTime < 0) {
+				if (G_Frame_Widget.Visible)
+					G_Frame_Widget.Hide();
+			} else if (!G_Frame_Widget.Visible) {
+				G_Frame_Widget.Show();
+			}
 
-            if ((Net_RecordsUpdated != LastUpdate || CachedReqsSent()) && IsMedalInitDone) {
-                log("Records updated " ^ LastUpdate ^ " -> " ^ Net_RecordsUpdated ^ " (running: " ^ Running ^ ")");
-                LastUpdate = Net_RecordsUpdated;
-                UpdateRecords(G_LocalPlayer.User.Login);
-                Running = False;
-            }
+			if ((Net_RecordsUpdated != LastUpdate || CachedReqsSent()) && IsMedalInitDone) {
+				log("Records updated " ^ LastUpdate ^ " -> " ^ Net_RecordsUpdated ^ " (running: " ^ Running ^ ")");
+				LastUpdate = Net_RecordsUpdated;
+				UpdateRecords(G_LocalPlayer.User.Login);
+				Running = False;
+			}
 
-            if (Net_CpProgress > -1) {
-                Running = True;
-            }
+			if (Net_CpProgress > -1) {
+				Running = True;
+			}
 
-            LoopUpdateRecords();
+			LoopUpdateRecords();
 
-            foreach (Event in PendingEvents) {
-               switch (Event.Type) {
-                    case CMlScriptEvent::Type::MouseClick: {
-                        OpenLink({{{dump(Constants::C_WebsiteUrl ^ "/" ^ ObsEvents::PrefixRoute("map/"))}}} ^ Map.Id,  CMlScript::LinkType::ExternalBrowser);
-                    }
-                }
-            }
-            {{{CustomUI::InjectMLLoop()}}}
-        }
-    }
+			foreach (Event in PendingEvents) {
+			   switch (Event.Type) {
+					case CMlScriptEvent::Type::MouseClick: {
+						OpenLink({{{dump(Constants::C_WebsiteUrl ^ "/" ^ ObsEvents::PrefixRoute("map/"))}}} ^ Map.Id,  CMlScript::LinkType::ExternalBrowser);
+					}
+				}
+			}
+
+			{{{CustomUI::InjectMLLoop()}}}
+			if (LibCustomUI_IsVisible) {
+				G_Quad_Background.Hide();
+			} else {
+				G_Quad_Background.Show();
+			}
+		}
+	}
 --></script>
 </manialink>
-    """;
+	""";
 }
