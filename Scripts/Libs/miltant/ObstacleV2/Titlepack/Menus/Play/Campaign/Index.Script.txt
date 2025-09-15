@@ -284,6 +284,8 @@ Text Build() {
 		Label_ExpiredEdition.Hide();
 		for (I, 1, C_MaxCategoriesPerPage) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ I) as CMlFrame);
+			declare CMlLabel Label_Category = (Frame_Category.GetFirstChild("Label_CategoryName") as CMlLabel);
+			declare CMlQuad Quad_Category = (Frame_Category.GetFirstChild("Category") as CMlQuad);
 			declare CMlQuad Quad_CategoryNameBackground = (Frame_Category.GetFirstChild("Quad_CategoryNameBackground") as CMlQuad);
 
 			// We first hide the sub-frames for the maps cards
@@ -302,6 +304,8 @@ Text Build() {
 				Quad_MedalC.Hide();
 			}
 
+			Quad_Category.Hide();
+			Label_Category.Hide();
 			Quad_CategoryNameBackground.Hide();
 
 			// Then we hide the category frame itself
@@ -416,6 +420,7 @@ Text Build() {
 
 			if (Category.banner_img_url == "") {
 				declare CMlLabel Label_CategoryName = (Frame_Category.GetFirstChild("Label_CategoryName") as CMlLabel);
+				Label_CategoryName.Show();
 				Label_CategoryName.SetText(Category.name);
 				if (Category.hex_color == "") {
 					Label_CategoryName.TextColor = CL::HexToRgb("FFFFFF");
@@ -430,6 +435,7 @@ Text Build() {
 			} else {
 				declare CMlQuad Quad_Category = (Frame_Category.GetFirstChild("Category") as CMlQuad);
 				Quad_Category.ChangeImageUrl(Category.banner_img_url);
+				Quad_Category.Show();
 			}
 
 			declare Integer MapsSliceStart = C_MaxMapsPerCategoryPage * (G_CategoriesPages[CategoriesSliceStartIdx + I].CurrentPage - 1);

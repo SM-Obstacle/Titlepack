@@ -276,7 +276,6 @@ Void Private_UpdateList() {
 		declare Integer I = 0;
 		declare Integer SelectedIdx = -1;
 		foreach (Handle => Event in G_Events) {
-			if (Handle == "campaign") continue;
 			if (Campaign::GetSelectedEventHandle(GetName()) == Handle) {
 				SelectedIdx = I;
 			}
@@ -334,8 +333,6 @@ Void Private_UpdateEvents() {
 	declare Integer Idx = 0;
 
 	foreach (Handle => Event in Events) {
-		if (Handle == "campaign") continue;
-
 		if (LastSelectedHandle == Handle) {
 			if (LastSelectedEditionId != -1 && Event.Editions.existskey(LastSelectedEditionId)) {
 				LatestEdition = LastSelectedEditionId;
@@ -434,7 +431,6 @@ Void Loop() {
 					declare Integer I = 0;
 					declare Text SelectedHandle = "";
 					foreach (Handle => _Unused in G_Events) {
-						if (Handle == "campaign") continue;
 						if (I == Idx) {
 							SelectedHandle = Handle;
 							break;

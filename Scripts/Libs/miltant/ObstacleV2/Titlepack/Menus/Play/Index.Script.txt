@@ -1,6 +1,5 @@
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"					as Windows
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"				as SubMenu
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Campaign.Script.txt"	as Campaign
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Servers/Index.Script.txt"		as Servers
 #Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Events/Index.Script.txt"			as Events
 #Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"			as ExplorerDialog
@@ -49,23 +48,17 @@ Text[] BuildLanguageDropDown() {
 Void Load() {
 	declare SubMenu::K_SubMenu[] SubMenus;
 
-	declare SubMenu::K_SubMenu Campaign;
-	Campaign.Name = Campaign::GetName();
-	Campaign.Image = "campaign";
-	SubMenus.add(Campaign);
-	Campaign::Load();
+	declare SubMenu::K_SubMenu Events;
+	Events.Name = "events";
+	Events.Image = "event";
+	SubMenus.add(Events);
+	Events::Load();
 
 	declare SubMenu::K_SubMenu Online;
 	Online.Name = "online";
 	Online.Image = "online";
 	SubMenus.add(Online);
 	Servers::Load();
-
-	declare SubMenu::K_SubMenu Events;
-	Events.Name = "events";
-	Events.Image = "event";
-	SubMenus.add(Events);
-	Events::Load();
 
 	declare SubMenu::K_SubMenu Local;
 	Local.Name = "local";
@@ -93,7 +86,6 @@ Void Load() {
 }
 
 Void Loop() {
-	Campaign::Loop();
 	Servers::Loop();
 	Events::Loop();
 
