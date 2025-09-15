@@ -52,9 +52,12 @@ Text BuildSideBar() {
 {{{Styles::GetStyleSheet()}}}
 <frame id="Frame_EventsSideBar" pos="92.16 53.5">
 	<framemodel id="CampaignEditionItem">
+		<label id="Label_Selector" halign="center" textprefix="$t" class="lato"
+			textsize="3.5" focusareacolor1="0000" focusareacolor2="0000" size="6 5.4"
+			scripevents="1" />
 		<label id="Label_CampaignEdition" halign="left" textprefix="$t" class="lato"
-			textsize="3.5" focusareacolor1="0000" focusareacolor2="0000" size="56 5.4"
-			scriptevents="1" />
+			textsize="3.5" focusareacolor1="0000" focusareacolor2="0000" size="50 5.4"
+			scriptevents="1" pos="3 0" />
 	</framemodel>
 
 	<frame>
@@ -108,18 +111,20 @@ Void UpdateList() {
 	foreach (I => Item in P_Items) {
 		declare CMlFrame Frame_CampaignEdition = (Page.GetFirstChild("CampaignEditionItem_" ^ I + 1) as CMlFrame);
 		declare CMlLabel Label_CampaignEdition = (Frame_CampaignEdition.GetFirstChild("Label_CampaignEdition") as CMlLabel);
+		declare CMlLabel Label_Selector = (Frame_CampaignEdition.GetFirstChild("Label_Selector") as CMlLabel);
 
 		Frame_CampaignEdition.Show();
 		Label_CampaignEdition.DataAttributeSet("idx", TL::ToText(I));
 
-		declare Text TextValue = Item;
+		declare Text SelectorText = "";
 		declare Vec3 TextColor = CL::HexToRgb("B4B4B4");
 		if (P_SelectedItem == I) {
 			TextColor = CL::HexToRgb("FFFFFF");
-			TextValue = "  " ^ TextValue;
+			SelectorText = "";
 		}
 	
-		Label_CampaignEdition.SetText(TextValue);
+		Label_Selector.SetText(SelectorText);
+		Label_CampaignEdition.SetText(Item);
 		Label_CampaignEdition.TextColor = TextColor;
 	}
 
@@ -182,14 +187,13 @@ main() {
 				case CMlScriptEvent::Type::MouseOver: {
 					switch (Event.ControlId) {
 						case "Label_CampaignEdition": {
+							declare CMlFrame Frame_Edition = (Event.Control.Parent as CMlFrame);
+							declare CMlLabel Label_Selector = (Frame_Edition.GetFirstChild("Label_Selector") as CMlLabel);
 							declare CMlLabel Label_Edition = (Event.Control as CMlLabel);
-							declare Text P_SelectedEvent for Page = "";
 
 							UpdateList();
-							Label_Edition.SetText(TL::Replace(Label_Edition.Value, "", ""));
-							if (!TL::StartsWith("", Label_Edition.Value)) {
-								Label_Edition.SetText("  " ^ Label_Edition.Value);
-							}
+							Label_Selector.SetText("");
+							Label_Selector.TextColor = CL::HexToRgb("FFFFFF");
 							Label_Edition.TextColor = CL::HexToRgb("FFFFFF");
 						}
 						case "Label_SelectedEventIcon": {
