@@ -117,9 +117,9 @@ Text Build() {
 			<label pos="-.17 5" text="next objective" textprefix="$t" textsize="2.05" textcolor="fff"/>
 
 			<quad z-index="1" pos="5 -3.25" size="5 5" id="Quad_NextOppMedal" hidden="1" />
-			<label pos="26.5 -5.92" size="52 11.83" text="Finish" textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_NextOpponent" />
+			<label pos="26.5 -5.92" size="52 11.83" text="$iFinish the map" textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_NextOpponent" />
 			<label pos="26.5 -12" size="52 11.83" text="--:--:--" textsize="2" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_NextOppTime" />
-			<label pos="45 -12" size="52 11.83" textsize="2" class="lator" halign="center" valign="center2" textcolor="4E6D8C" id="Label_NextOppTimeDiff" hidden="1" />
+			<label pos="45 -12" size="52 11.83" textsize="2" class="lato" halign="center" valign="center2" textcolor="4E6D8C" id="Label_NextOppTimeDiff" hidden="1" />
 
 			<quad size="53 15" bgcolor="0009" scriptevents="1" />
 		</frame>
@@ -184,6 +184,10 @@ Text Build() {
 	declare Integer G_CurrentPage_Categories;
 	declare Integer G_LastPage_Categories;
 	declare K_CategoryPageState[] G_CategoriesPages;
+
+	// Flag to know if the current event doesn't have any category, in which case we show the maps
+	// in lines, instead of in columns.
+	declare Boolean G_IsUnnamedCategory;
 
 	Void UpdatePageButtons() {
 		declare Quad_PreviousPage_Categories <=> (Page.GetFirstChild("Quad_PreviousPage") as CMlQuad);
@@ -278,7 +282,7 @@ Text Build() {
 		Quad_NextOppMedal.Hide();
 		Label_NextOppTime.SetText("--:--:--");
 		Label_NextOppTimeDiff.Hide();
-		Label_NextOpponent.SetText("Finish");
+		Label_NextOpponent.SetText("$iFinish the map");
 		Label_Authors.Hide();
 		Label_LeaderboardsLink.Hide();
 		Label_ExpiredEdition.Hide();
@@ -413,6 +417,13 @@ Text Build() {
 		declare K_EventEditionContentCategory[] Categories = G_Event.EditionsDetails[P_SelectedEdition].categories
 			.slice(CategoriesSliceStartIdx, C_MaxCategoriesPerPage);
 
+		declare Integer MapsAmount = 0;
+		foreach (Category in Categories) {
+			MapsAmount += Category.maps.count;
+		}
+		// Used to put 0 left padding in the map indexes
+		declare Integer DigitNum = ML::Max(NumberOfDigits(MapsAmount), 2);
+
 		// Iterate over the sliced categories (indexes correspond to P_SelectedMapI + CategoriesSliceStartIdx)
 		foreach (I => Category in Categories) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ (I+1)) as CMlFrame);
@@ -443,9 +454,6 @@ Text Build() {
 			declare K_EventEditionContentMap[] Maps = Category.maps
 				.slice(MapsSliceStart, C_MaxMapsPerCategoryPage);
 
-			// Used to put 0 left padding in the map indexes
-			declare Integer DigitNum = ML::Max(NumberOfDigits(Category.maps.count), 2);
-
 			// Iterate over the sliced maps (indexes correspond to P_SelectedMapJ + MapsSliceStart)
 			foreach (MapI => Map in Maps) {
 				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ (MapI+1)) as CMlFrame);
@@ -461,13 +469,18 @@ Text Build() {
 				declare CMlQuad Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
 
 				// Number shown on the card
-				declare Integer TotalCount = 1;
-				declare Integer CategoryIdx = CategoriesSliceStartIdx + I - 1;
-				for (J, 0, CategoriesSliceStartIdx + I - 1) {
-					TotalCount += G_Event.EditionsDetails[P_SelectedEdition].categories[J].maps.count;
+				declare Integer MapNumber;
+				if (G_IsUnnamedCategory) {
+					declare Integer CategoryIdx = CategoriesSliceStartIdx + I - 1;
+					MapNumber = 5 * MapI + CategoryIdx / 5 + CategoryIdx % 5 + 2;
+				} else {
+					declare Integer TotalCount = 1;
+					declare Integer CategoryIdx = CategoriesSliceStartIdx + I - 1;
+					for (J, 0, CategoriesSliceStartIdx + I - 1) {
+						TotalCount += G_Event.EditionsDetails[P_SelectedEdition].categories[J].maps.count;
+					}
+					MapNumber = MapsSliceStart + MapI + TotalCount;
 				}
-
-				declare Integer MapNumber = MapsSliceStart + MapI + TotalCount;
 
 				// Put left padding with 0
 				declare Text Label_Num_Text = "";
@@ -550,24 +563,27 @@ Text Build() {
 			|| G_Event.EditionsDetails[P_SelectedEdition].categories.count != 1
 			|| G_Event.EditionsDetails[P_SelectedEdition].categories[0].name != "")
 		{
+			G_IsUnnamedCategory = False;
 			return;
 		}
+
+		G_IsUnnamedCategory = True;
 
 		declare K_EventEditionDetails Event = G_Event.EditionsDetails[P_SelectedEdition];
 		declare Integer LastCategoryMapsCount = Event.categories[Event.categories.count - 1].maps.count;
 
-		while (LastCategoryMapsCount > C_MaxMapsPerCategoryPage) {
-			declare K_EventEditionContentMap[] Maps = Event.categories[Event.categories.count - 1].maps.slice(5, LastCategoryMapsCount);
-			for (I, C_MaxMapsPerCategoryPage, LastCategoryMapsCount - 1) {
-				Event.categories[Event.categories.count - 1].maps.removekey(C_MaxMapsPerCategoryPage + LastCategoryMapsCount - I - 1);
-			}
-			Event.categories.add(K_EventEditionContentCategory { maps = Maps });
+		declare K_EventEditionContentCategory[] Categories = [];
+		declare K_EventEditionContentMap[] Maps = Event.categories[0].maps;
 
-			LastCategoryMapsCount = Maps.count;
-			yield;
+		for (I, 0, Maps.count - 1) {
+			declare Integer CategoryIndex = I % 5 + 5 * (I / 25);
+			if (CategoryIndex + 1 > Categories.count) {
+				Categories.add(K_EventEditionContentCategory { maps = [] });
+			}
+			Categories[CategoryIndex].maps.add(Maps[I]);
 		}
 
-		G_Event.EditionsDetails[P_SelectedEdition] = Event;
+		G_Event.EditionsDetails[P_SelectedEdition].categories = Categories;
 	}
 
 	CMlControl::AlignHorizontal ApiAlignToControlAlign(Text _Align) {
@@ -1122,7 +1138,7 @@ Void Private_LoopCheckEvents(Text _LayerName) {
 
 				// Flatten the indexes if the event doesn't have categories
 				if (CampaignCategories.count == 1 && CampaignCategories[0].handle == "") {
-					SelectedMapJ = P_SelectedMapI * 5 + P_SelectedMapJ;
+					SelectedMapJ = P_SelectedMapJ * 5 + P_SelectedMapI;
 					SelectedMapI = 0;
 				}
 
