@@ -1,10 +1,6 @@
 #Include "Libs/ahmad3/EventAPI/Impl.Script.txt" as Impl
 #Include "Libs/ahmad3/EventAPI/Types.Script.txt" as Types
 
-#Include "Libs/ahmad3/AuthUtils.Script.txt" as AuthUtils
-
-declare Boolean G_AuthHeadersPending;
-
 Boolean EventHasContent(Text _EventHandle) {
     return Impl::EventHasContent(_EventHandle);
 }
@@ -21,17 +17,7 @@ Boolean LoadEdition(Text _EventHandle, Integer _EventEdition) {
     return Impl::LoadEdition(_EventHandle, _EventEdition);
 }
 
-Void Private_UpdateAuthHeaders() {
-    declare Text Token = AuthUtils::GetUserToken(LocalUser);
-    if (G_AuthHeadersPending && Token != "") {
-        Impl::SetAuthHeaders("\nPlayerLogin: " ^ LocalUser.Login ^ "\nAuthorization: " ^ Token);
-        G_AuthHeadersPending = False;
-    }
-}
-
 Void Load(Boolean _IncludeExpired) {
-    G_AuthHeadersPending = True;
-    Private_UpdateAuthHeaders();
     Impl::Init(_IncludeExpired);
 }
 
@@ -48,6 +34,5 @@ Boolean HasAnyUpdate() {
 }
 
 Void Loop() {
-    Private_UpdateAuthHeaders();
     Impl::Loop();
 }
