@@ -41,6 +41,9 @@
     Integer personal_best;
     K_NextOpponent next_opponent;
     K_EventEditionContentOriginalMap original_map;
+    Text source;
+    Text thumbnail_source;
+    Boolean is_available;
 }
 
 #Struct K_EventEditionContentCategory {
@@ -136,6 +139,9 @@ Text ML_Preproc(Text _Prefix) {
     Integer personal_best;
     {{{_Prefix}}}K_NextOpponent next_opponent;
     {{{_Prefix}}}K_EventEditionContentOriginalMap original_map;
+    Text source;
+    Text thumbnail_source;
+    Boolean is_available;
 }
 
 #Struct {{{_Prefix}}}K_EventEditionContentCategory {

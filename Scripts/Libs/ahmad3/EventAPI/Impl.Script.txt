@@ -17,6 +17,8 @@
     Types::K_EventEdition[] EventEditions;
 }
 
+declare CUser G_LocalUser;
+
 declare Integer G_LastReqId;
 
 declare Text[] G_PendingEvents;
@@ -73,12 +75,19 @@ Boolean Private_CheckErr(CHttpRequest _Req) {
     return True;
 }
 
+Text[Text] Private_Headers() {
+    if (G_LocalUser == Null) {
+        return ReqMgr::DefaultHeaders();
+    }
+    return ReqMgr::DefaultHeadersWith(ReqMgr::AuthHeaders(G_LocalUser));
+}
+
 Void Private_InitRequest(Text _Route, Integer _Type) {
     G_LastReqId += 1;
     G_PendingRequests[G_LastReqId] = K_RequestAttr {
         Request = ReqMgr::Make(ReqMgr::K_GetRequest {
             Route = _Route,
-            Headers = ReqMgr::DefaultHeadersWith(ReqMgr::AuthHeaders(LocalUser))
+            Headers = Private_Headers()
         }),
         Route = _Route,
         Type = _Type
@@ -147,6 +156,7 @@ Text Private_IncludeExpiredToQueryParam(Boolean _IncludeExpired) {
 }
 
 Void Init(Boolean _IncludeExpired) {
+    G_LocalUser = Null;
     G_HasFailed = False;
     G_Events = [];
     G_PendingEvents = [];
@@ -158,6 +168,10 @@ Void Init(Boolean _IncludeExpired) {
 
 Void Init() {
     Init(False);
+}
+
+Void SetLocalUser(CUser _User) {
+    G_LocalUser <=> _User;
 }
 
 /**

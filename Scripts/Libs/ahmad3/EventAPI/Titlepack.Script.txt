@@ -19,6 +19,7 @@ Boolean LoadEdition(Text _EventHandle, Integer _EventEdition) {
 
 Void Load(Boolean _IncludeExpired) {
     Impl::Init(_IncludeExpired);
+    Impl::SetLocalUser(LocalUser);
 }
 
 Types::K_Event[Text] GetEvents() {

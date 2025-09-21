@@ -60,11 +60,14 @@ Text Build() {
 {{{Styles::GetStyleSheet()}}}
 <frame id="Frame_Campaign">
 	<framemodel id="MapCard">
-		<label pos="1 -4.83" valign="center2" textsize="5" textcolor="fff" class="lato" id="Label_Num"/>
+		<label pos="1 -4.83" halign="left" valign="center2" textsize="5" textcolor="fff" class="lato" id="Label_Num"/>
+		<label pos="27.67 -4.83" halign="right" valign="center2" textsize="5" textcolor="f90" text="✖" class="lato" id="Label_Unavailable" hidden="1"/>
+
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_MedalC" hidden="1" z-index="4"/>
 		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1" z-index="3"/>
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/silver.png" id="Quad_MedalS" hidden="1" z-index="2"/>
 		<quad pos="18.67 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/bronze.png" id="Quad_MedalB" hidden="1" z-index="1"/>
+
 		<quad pos="14.75 -8.67" size="10.33 1.67" image="file://Media/Images/Obstacle/Campaign/LCompleted.png" id="Quad_CompletedIndicator" halign="center" valign="center" hidden="0"/>
 		<quad pos="14.75 -4.17" size="30.83 9.67" image="file://Media/Images/Obstacle/Campaign/OutlineMapCampaign.png" id="Outline_Map" halign="center" valign="center" hidden="1" z-index="-1"/>
 		<quad pos="14.75 -4.17" size="29.67 8.5" image="file://Media/Images/Obstacle/Campaign/BMapCampaign.png" id="Button_Map" scriptevents="1" halign="center" valign="center"
@@ -101,12 +104,15 @@ Text Build() {
 		</frame>
 
 		<frame pos="0 15.67">
-			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" class="lato" halign="center" valign="center2" textcolor="fff" id="Label_Map"/>
 			<quad size="53 11.83" bgcolor="0009"/>
 		</frame>
 		<frame pos="0 2">
-			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
+			<label pos="26.5 -5.92" size="52 11.83" text=". . ." textsize="4" class="lato" halign="center" valign="center2" textcolor="fff" id="Label_Mapper"/>
 			<quad size="53 11.83" image="file://Media/Images/Obstacle/Campaign/FMapperCampaign.png"/>
+		</frame>
+		<frame pos="0 -4.835">
+			<label pos="0 -7.92" size="52 11.83" textsize="1.5" class="lato" halign="left" valign="center2" textcolor="fff" text="$iThis map cannot be played." id="Label_MapInfoIsUnavailable" hidden="1"/>
 		</frame>
 		<frame pos="0 -25">
 			<label pos="-.17 5" text="personal best" textprefix="$t" textsize="2.05" textcolor="fff"/>
@@ -270,6 +276,7 @@ Text Build() {
 		declare Label_Authors = (Page.GetFirstChild("Label_Authors") as CMlLabel);
 		declare Label_LeaderboardsLink = (Page.GetFirstChild("Label_LeaderboardsLink") as CMlLabel);
 		declare Label_ExpiredEdition = (Page.GetFirstChild("Label_ExpiredEdition") as CMlLabel);
+		declare Label_MapIsUnavailable = (Page.GetFirstChild("Label_MapInfoIsUnavailable") as CMlLabel);
 
 		declare Integer P_SelectedEdition for Page;
 		declare Integer P_SelectedMapI for Page;
@@ -286,6 +293,7 @@ Text Build() {
 		Label_Authors.Hide();
 		Label_LeaderboardsLink.Hide();
 		Label_ExpiredEdition.Hide();
+		Label_MapIsUnavailable.Hide();
 		for (I, 1, C_MaxCategoriesPerPage) {
 			declare CMlFrame Frame_Category = (Page.GetFirstChild("F_Category_" ^ I) as CMlFrame);
 			declare CMlLabel Label_Category = (Frame_Category.GetFirstChild("Label_CategoryName") as CMlLabel);
@@ -297,11 +305,13 @@ Text Build() {
 				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ J) as CMlFrame);
 				Frame_Card.Hide();
 
+				declare CMlLabel Label_Unavailable = (Frame_Card.GetFirstChild("Label_Unavailable") as CMlLabel);
 				declare CMlQuad Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
 				declare CMlQuad Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
 				declare CMlQuad Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
 				declare CMlQuad Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
 
+				Label_Unavailable.Hide();
 				Quad_MedalB.Hide();
 				Quad_MedalS.Hide();
 				Quad_MedalG.Hide();
@@ -357,8 +367,10 @@ Text Build() {
 		declare Text ThumbnailPath;
 		if (P_MapsWithThumbnails.existskey(SelectedMap.map_uid)) {
 			ThumbnailPath = P_MapsWithThumbnails[SelectedMap.map_uid];
-		} else {
+		} else if (SelectedMap.thumbnail_source == "") {
 			ThumbnailPath = "https://sm.mania.exchange/maps/thumbnail/" ^ SelectedMap.mx_id ^ "?.jpg";
+		} else {
+			ThumbnailPath = SelectedMap.thumbnail_source;
 		}
 		Quad_Thumbnail.ChangeImageUrl(ThumbnailPath);
 		Label_Map.SetText("   " ^ MapLink ^ ContrastString(MapName));
@@ -406,6 +418,10 @@ Text Build() {
 				Label_NextOppTimeDiff.SetText(TL::TimeToText(NextOppTime - SelectedMap.personal_best, True));
 				Label_NextOppTimeDiff.Show();
 			}
+		}
+
+		if (!SelectedMap.is_available) {
+			Label_MapIsUnavailable.Show();
 		}
 
 		Frame_Infos.Show();
@@ -463,6 +479,7 @@ Text Build() {
 				declare CMlQuad Outline_Map = (Frame_Card.GetFirstChild("Outline_Map") as CMlQuad);
 				declare CMlQuad Button_Map = (Frame_Card.GetFirstChild("Button_Map") as CMlQuad);
 				declare CMlLabel Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
+				declare CMlLabel Label_Unavailable = (Frame_Card.GetFirstChild("Label_Unavailable") as CMlLabel);
 				declare CMlQuad Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
 				declare CMlQuad Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
 				declare CMlQuad Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
@@ -518,6 +535,10 @@ Text Build() {
 					}
 				} else {
 					CompletedIndicator.Hide();
+				}
+
+				if (!Map.is_available) {
+					Label_Unavailable.Show();
 				}
 			}
 		}
@@ -861,7 +882,7 @@ Void Private_LoadingMapDialogLoop(Text _LayerName) {
 	// FIXME: we allow to close the dialog after 10 seconds, in case the loading failed,
 	// but we should probably handle the loading failure more gracefully, e.g. with TitleControl.LatestResult.
 	declare Dialogs::K_Result Result = UI::Prompt(G_LoadingMapDialog[_LayerName], True);
-	if (Result.Over && Now - G_LoadingMap[_LayerName] > 10000) {
+	if (Result.Over || Now - G_LoadingMap[_LayerName] > 10000) {
 		G_LoadingMap[_LayerName] = 0;
 		UI::CloseDialog(G_LoadingMapDialog[_LayerName]);
 		return;
@@ -1096,7 +1117,13 @@ K_PendingPlayingMap Private_GetPendingPlayingMapType(
 		MxId = _Map.original_map.mx_id;
 		Name = _Map.original_map.name;
 	}
-	declare Text Path = "https://sm.mania-exchange.com/maps/download/" ^ MxId;
+
+	declare Text Path;
+	if (_Map.source == "") {
+		Path = "https://sm.mania-exchange.com/maps/download/" ^ MxId;
+	} else {
+		Path = _Map.source;
+	}
 
 	if (G_CampaignLocalMapsUids[_LayerName].existskey(_SelectedEdition)) {
 		foreach (FileMap in G_CampaignLocalMapsUids[_LayerName][_SelectedEdition]) {
@@ -1142,26 +1169,53 @@ Void Private_LoopCheckEvents(Text _LayerName) {
 					SelectedMapI = 0;
 				}
 
-				// Initialize with the current category maps
-				declare K_PendingPlayingMap[][] MapList = [[]];
+				declare EventAPITypes::K_EventEditionContentMap SelectedMap = CampaignCategories[SelectedMapI].maps[SelectedMapJ];
 
-				foreach (Map in CampaignCategories[SelectedMapI].maps.slice(SelectedMapJ, CampaignCategories[SelectedMapI].maps.count)) {
-					MapList[0].add(Private_GetPendingPlayingMapType(_LayerName, Map, P_SelectedEdition));
-				}
+				if (!SelectedMap.is_available) {
+					declare Integer ErrorDialog = UI::NewDialog(
+						"Cannot play the map",
+						UI::K_Message {
+							Label = "Cannot play the map $<" ^ SelectedMap.name ^ "$>, because it is hidden on Mania Exchange."
+							^ "\n\nThe map author may still allow later to play it in the Obstacle Titlepack anyway, while keeping it hidden from MX."
+							^ "\n\nFor more information, you should contact the map author or the Obstacle admins (@ahmadbky and @miltant on Discord)."
+						},
+						[
+							UI::K_Button {
+								ControlId = "Btn_Ok",
+								Label = "OK",
+								Default = True
+							}
+						]
+					);
 
-				foreach (Category in CampaignCategories.slice(SelectedMapI + 1, CampaignCategories.count)) {
-					declare K_PendingPlayingMap[] CategoryMaps;
+					declare Dialogs::K_Result Result = UI::Prompt(ErrorDialog);
+					while (!Result.Over) {
+						yield;
+						Result = UI::Prompt(ErrorDialog);
+					}
+					UI::CloseDialog(ErrorDialog);
+				} else {
+					// Initialize with the current category maps
+					declare K_PendingPlayingMap[][] MapList = [[]];
 
-					foreach (Map in Category.maps) {
-						CategoryMaps.add(Private_GetPendingPlayingMapType(_LayerName, Map, P_SelectedEdition));
+					foreach (Map in CampaignCategories[SelectedMapI].maps.slice(SelectedMapJ, CampaignCategories[SelectedMapI].maps.count)) {
+						MapList[0].add(Private_GetPendingPlayingMapType(_LayerName, Map, P_SelectedEdition));
 					}
 
-					MapList.add(CategoryMaps);
-				}
+					foreach (Category in CampaignCategories.slice(SelectedMapI + 1, CampaignCategories.count)) {
+						declare K_PendingPlayingMap[] CategoryMaps;
 
-				declare Integer[Text] ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser;
-				G_PendingPlayingMaps[_LayerName] = MapList;
-				ObsCampaignEvent_PendingPlayingMapsUpdate[_LayerName] = Now;
+						foreach (Map in Category.maps) {
+							CategoryMaps.add(Private_GetPendingPlayingMapType(_LayerName, Map, P_SelectedEdition));
+						}
+
+						MapList.add(CategoryMaps);
+					}
+
+					declare Integer[Text] ObsCampaignEvent_PendingPlayingMapsUpdate for LocalUser;
+					G_PendingPlayingMaps[_LayerName] = MapList;
+					ObsCampaignEvent_PendingPlayingMapsUpdate[_LayerName] = Now;
+				}
 			}
 			case "update_map_selection": {
 				declare Integer P_SelectedMapI for CurrentPage;
