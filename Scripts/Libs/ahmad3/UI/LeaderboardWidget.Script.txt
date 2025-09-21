@@ -308,6 +308,16 @@ Text GetLayer() {
             G_CurrentPlayerRank = G_PlayersRanks.response.count + 2;
         }
 
+		// Clear all
+		for (I, 0, 14) {
+			declare CMlFrame RowFrame <=> (Page.GetFirstChild("record" ^ I) as CMlFrame);
+			RowFrame.Hide();
+		}
+		for (I, 0, 3) {
+			declare CMlFrame RowFrame <=> (Page.GetFirstChild("Frame_Medal_" ^ I) as CMlFrame);
+			RowFrame.Hide();
+		}
+
         // medals to display
         declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
 
