@@ -346,14 +346,22 @@ Boolean Private_UpdateTokenReqIsOk() {
     return G_TokenUpdateReqOk;
 }
 
+Void Private_SetSkippedToken() {
+    AuthUtils::SetUserToken("SKIPPED", LocalUser);
+}
+
 /**
  * Updates the state of the update token procedure.
  *
  * @return True if the procedure is over, False otherwise.
  */
 Boolean Private_LoopUpdateToken() {
-    if (Private_LoopUpdateTokenDialog() && Private_UpdateTokenDialogIsOk()) {
-        Private_InitUpdateTokenReq();
+    if (Private_LoopUpdateTokenDialog()) {
+        if (Private_UpdateTokenDialogIsOk()) {
+            Private_InitUpdateTokenReq();
+        } else {
+            Private_SetSkippedToken();
+        }
     }
 
     return Private_LoopUpdateTokenReq();
@@ -522,6 +530,15 @@ Boolean Private_TokenUpdateFailed() {
     return G_TokenUpdateReqFinished && !G_TokenUpdateReqOk;
 }
 
+/**
+ * Returns whether the player is new, meaning they don't have some persistent variables saved yet.
+ *
+ * @return True if the player is new, False otherwise.
+ */
+Boolean Private_PlayerIsNew() {
+    return AuthUtils::GetUserToken(LocalUser) == "";
+}
+
 ////////////////////
 //// Public
 ////////////////////
@@ -573,12 +590,17 @@ Void Unload() {
 Void Load() {
     Unload();
     Private_InitOnlineTest();
+    if (Private_PlayerIsNew()) {
+        Private_InitWelcomeDialog();
+    }
 }
 
 /**
  * Updates the state of the library.
  */
 Void Loop() {
+    // FIXME: this whole thing should be made into a state machine
+
     // Checks if the online test is over and is OK
     if (Private_LoopOnlineTest() && Private_IsOnline()) {
         Private_InitGreetPlayer();
