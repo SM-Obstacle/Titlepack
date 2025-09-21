@@ -88,29 +88,29 @@ Text Private_GetSmallRecords() {
             <frameinstance modelid="small_record" pos="0 -52" id="record13" hidden="1"/>
             <frameinstance modelid="small_record" pos="0 -56" id="record14" hidden="1"/>
 
-			<frame pos="-20 -13" id="Frame_Medal_3">
-				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/champion.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Master Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-			</frame>
+            <frame pos="-20 -13" id="Frame_Medal_3">
+                <quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/champion.png" valign="center"/>
+                <label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Master Time" textfont="light"/>
+                <label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+            </frame>
 
-			<frame pos="-20 -18" id="Frame_Medal_2">
-				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/gold.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Gold Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-			</frame>
+            <frame pos="-20 -18" id="Frame_Medal_2">
+                <quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/gold.png" valign="center"/>
+                <label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Gold Time" textfont="light"/>
+                <label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+            </frame>
 
-			<frame pos="-20 -23" id="Frame_Medal_1">
-				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/silver.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Silver Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-			</frame>
+            <frame pos="-20 -23" id="Frame_Medal_1">
+                <quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/silver.png" valign="center"/>
+                <label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Silver Time" textfont="light"/>
+                <label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+            </frame>
 
-			<frame pos="-20 -28" id="Frame_Medal_0">
-				<quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/bronze.png" valign="center"/>
-        		<label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Bronze Time" textfont="light"/>
-        		<label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
-			</frame>
+            <frame pos="-20 -28" id="Frame_Medal_0">
+                <quad pos="-1" size="3 3" image="file://Media/Images/Obstacle/Medals/bronze.png" valign="center"/>
+                <label pos="6 0" size="20 4" halign="left" valign="center2" textsize="1" text="Bronze Time" textfont="light"/>
+                <label id="time" pos="40" size="14 4" halign="right" valign="center2" style="TextTitle2" textsize="1" textfont="OswaldMono"/>
+            </frame>
         </frame>
         <frame id="Frame_Error" hidden="1" pos="0 -{{{QuadHeight / 2}}}">
             <label text="Error" textcolor="f20" halign="center" valign="center2" />
@@ -179,6 +179,7 @@ Text GetLayer() {
 </frame>
 <script><!--
     #Include "TextLib" as TL
+    #Include "MathLib" as ML
 
     #Struct K_RankedRecord {
         Integer rank;
@@ -308,15 +309,17 @@ Text GetLayer() {
             G_CurrentPlayerRank = G_PlayersRanks.response.count + 2;
         }
 
-		// Clear all
-		for (I, 0, 14) {
-			declare CMlFrame RowFrame <=> (Page.GetFirstChild("record" ^ I) as CMlFrame);
-			RowFrame.Hide();
-		}
-		for (I, 0, 3) {
-			declare CMlFrame RowFrame <=> (Page.GetFirstChild("Frame_Medal_" ^ I) as CMlFrame);
-			RowFrame.Hide();
-		}
+        // Clear all
+        for (I, 0, 3) {
+            declare CMlFrame RecordRowFrame <=> (Page.GetFirstChild("record" ^ I) as CMlFrame);
+            declare CMlFrame MedalRowFrame <=> (Page.GetFirstChild("Frame_Medal_" ^ I) as CMlFrame);
+            RecordRowFrame.Hide();
+            MedalRowFrame.Hide();
+        }
+        for (I, 4, 14) {
+            declare CMlFrame RowFrame <=> (Page.GetFirstChild("record" ^ I) as CMlFrame);
+            RowFrame.Hide();
+        }
 
         // medals to display
         declare Integer[] Medals = [GetMedal(0), GetMedal(1), GetMedal(2), GetMedal(3)];
@@ -332,10 +335,7 @@ Text GetLayer() {
 
             // displays medals before the current rank
             while (CurrentMedal >= 0 && Medals[CurrentMedal] < CurrentTime) {
-                if (Medals[CurrentMedal] == -1) {
-                    declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_"^CurrentMedal) as CMlFrame);
-                    Frame.Hide();
-                } else {
+                if (Medals[CurrentMedal] != -1) {
                     ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
                     AmountOfInsertedMedals += 1;
                     CurrentHeight -= 4.;
@@ -351,12 +351,10 @@ Text GetLayer() {
 
         // Display medals after the last rank
         while (CurrentMedal >= 0) {
-            if (CurrentHeight <= -15 * 4 || Medals[CurrentMedal] == -1) {
-                declare Frame <=> (G_Frame_Records.GetFirstChild("Frame_Medal_"^CurrentMedal) as CMlFrame);
-                Frame.Hide();
-            } else {
+            if (CurrentHeight > -15 * 4 && Medals[CurrentMedal] != 1) {
                 ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
                 CurrentHeight -= 4.;
+                AmountOfInsertedMedals += 1;
             }
 
             CurrentMedal -= 1;
@@ -365,7 +363,7 @@ Text GetLayer() {
         declare Real AddedHeight = 0.;
 
         // Update height of main frames
-        AddedHeight = 4. * AmountOfInsertedMedals;
+        AddedHeight = 4. * ML::Max(AmountOfInsertedMedals + G_PlayersRanks.response.count - 15, 0);
         G_Frame_Widget.Size.Y = 15. * 4 + AddedHeight;
         G_Frame_Records.Size.Y = 15. * 4 + AddedHeight;
         G_Quad_Background.Size.Y = G_OriginalBackgroundHeight + AddedHeight;
@@ -426,7 +424,7 @@ Text GetLayer() {
 
         G_ReqId = ReqMgr_NullGetReq();
 
-		declare Integer[Text] CampaignRecords for LocalUser;
+        declare Integer[Text] CampaignRecords for LocalUser;
         G_CampaignRecords = CampaignRecords;
 
         declare netread Integer[][Text] Net_MedalsTimesPerMap for Teams[0];
