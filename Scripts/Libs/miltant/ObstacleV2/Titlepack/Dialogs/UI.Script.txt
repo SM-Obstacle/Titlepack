@@ -114,21 +114,18 @@ Void Add(K_Image _Control, Integer _Dialog) {
 }
 
 Void Build(Integer _Dialog) {
-	declare TotalHeight = G_Dialogs[_Dialog].Height + 19.;
-	declare MessageHeight = 0.;
+	declare TotalHeight = G_Dialogs[_Dialog].Height + 19.67;
 	declare Frame_Message = "";
 	declare Frame_Buttons = "";
 
 	if (G_Dialogs[_Dialog].Message.Label != "") {
-		MessageHeight = TL::Split("\n", G_Dialogs[_Dialog].Message.Label).count * 6.5 + 3.;
-		Frame_Message = """<frame id="Frame_Message" pos="1 -19.67" size="100.5 {{{MessageHeight}}}">""";
-		Frame_Message ^= """<label textfont="light" textprefix="$fff" text="{{{G_Dialogs[_Dialog].Message.Label}}}"/>""";
+		Frame_Message = """<frame id="Frame_Message" pos="1 -19.67" size="100.5">""";
+		Frame_Message ^= """<label id="Label_Message" textfont="light" textprefix="$fff" size="100.5" text="{{{G_Dialogs[_Dialog].Message.Label}}}" autonewline="1"/>""";
 		Frame_Message ^= """</frame>""";
-		TotalHeight += MessageHeight;
 	}
 
 	if (G_Dialogs[_Dialog].Buttons.count > 0) {
-		Frame_Buttons = """<frame id="Frame_Buttons" pos="0 -{{{TotalHeight + 4.83}}}" size="102.5 8">""";
+		Frame_Buttons = """<frame id="Frame_Buttons" pos="0 -{{{TotalHeight + 4.83 - 19.67}}}" size="102.5 8">""";
 		foreach (I => Button in G_Dialogs[_Dialog].Buttons) {
 			declare Image = "image=\"file://Media/Images/Obstacle/Dialogs/BDefault21.png\" ";
 			if (Button.Default) {
@@ -147,53 +144,69 @@ Void Build(Integer _Dialog) {
 
 	declare MS_CompileInputs = "";
 	foreach (Input in G_Dialogs[_Dialog].Inputs) {
-		MS_CompileInputs ^= ""","{{{Input}}}",(Page.GetFirstChild("{{{Input}}}") as CMlEntry).Value""";	
+		MS_CompileInputs ^= """,{{{dump(Input)}}},(Page.GetFirstChild({{{dump(Input)}}}) as CMlEntry).Value""";
 	}
-	MS_CompileInputs ^= "]";
-	
+
 	declare ML_Text = """
 <manialink version="3">
-	<frame pos="-51.25 {{{TotalHeight / 2}}}" size="102.5 {{{TotalHeight}}}">
+	<frame id="Frame_Main" pos="-51.25 {{{TotalHeight / 2}}}" size="102.5 {{{TotalHeight}}}">
 		<frame id="Frame_Header">
 			<label pos="3.7 -6.83" textfont="light" textcolor="fff" textsize="3.5" id="Label_Name" text="{{{G_Dialogs[_Dialog].Title}}}"/>
 		</frame>
 
 		{{{Frame_Message}}}
 
-		<frame id="Frame_Body" pos="2 -{{{MessageHeight + 19}}}">
-			{{{G_Dialogs[_Dialog].Manialink}}}
-		</frame>
+		<frame id="Frame_Content" pos="0 -19.67">
+			<frame id="Frame_Body" pos="2">
+				{{{G_Dialogs[_Dialog].Manialink}}}
+			</frame>
 
-		{{{Frame_Buttons}}}
+			{{{Frame_Buttons}}}
+		</frame>
 	</frame>
 <script><![CDATA[
 	#Include "MathLib" as ML
 	#Include "TextLib" as TL
 	#Include "ColorLib" as CL
-	
+
 	{{{Styles::GetDeclareGlobals()}}}
-	
 
 	main() {
+		{{{/* Adapt the frame height depending on the text */ ""}}}
+		declare Real MessageHeight = 0.;
+		declare CMlLabel Label_Message <=> (Page.GetFirstChild("Label_Message") as CMlLabel);
+		if (Label_Message != Null) {
+			MessageHeight = Label_Message.ComputeHeight(Label_Message.Value) + 3.;
+		}
+		declare CMlFrame Frame_Main <=> (Page.GetFirstChild("Frame_Main") as CMlFrame);
+		Frame_Main.Size.Y += MessageHeight;
+		Frame_Main.RelativePosition_V3.Y += MessageHeight / 2;
+		declare CMlFrame Frame_Message <=> (Page.GetFirstChild("Frame_Message") as CMlFrame);
+		if (Frame_Message != Null) {
+			Frame_Message.Size.Y = MessageHeight;
+		}
+		declare CMlFrame Frame_Content <=> (Page.GetFirstChild("Frame_Content") as CMlFrame);
+		Frame_Content.RelativePosition_V3.Y -= MessageHeight;
+
 		Page.GetClassChildren("Entry_Autofocus", Page.MainFrame, True);
 		if (Page.GetClassChildren_Result.count > 0)
 			Page.GetClassChildren_Result[0].Focus();
 
 		while (True) {
-
 			foreach (Event in PendingEvents) {
 				{{{Styles::GetEventLoopActiveItem()}}}
 				if (Event.Type == CMlScriptEvent::Type::MouseClick) {
 					if (Event.Control.Parent.ControlId == "Frame_Buttons") {
-						SendCustomEvent("{{{C_Dialog_Close ^ _Dialog}}}", [Event.ControlId{{{MS_CompileInputs}}});
+						SendCustomEvent("{{{C_Dialog_Close ^ _Dialog}}}", [Event.ControlId{{{MS_CompileInputs}}}]);
 					}
 					else if (Event.ControlId == "Quad_LazyLoad"){
-						log(Event.Control.DataAttributeGet("image"));
-						(Event.Control as CMlQuad).ChangeImageUrl(Event.Control.DataAttributeGet("image"));
+						declare CMlQuad Quad = (Event.Control as CMlQuad);
+						Quad.ChangeImageUrl(Quad.DataAttributeGet("image"));
 					}
 					else if (Event.Control.DataAttributeExists("focus")) {
-						(Event.Control.Parent.GetFirstChild(Event.Control.DataAttributeGet("focus")) as CMlEntry)
-							.Focus();
+						declare Text EntryID = Event.Control.DataAttributeGet("focus");
+						declare CMlEntry Entry = (Event.Control.Parent.GetFirstChild(EntryID) as CMlEntry);
+						Entry.Focus();
 					}
 				}
 			}

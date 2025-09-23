@@ -1056,7 +1056,7 @@ Void UpdateEventList() {
     declare netread K_EventRow[] Net_EventsUI_Events for Teams[0];
     G_Events = Net_EventsUI_Events;
 
-    foreach (Idx => Event in G_Events.slice(0, ML::Max(G_Events.count, {{{C_ML_ActiveEventAmount}}}))) {
+    foreach (Idx => Event in G_Events.slice(0, ML::Min(G_Events.count, {{{C_ML_ActiveEventAmount}}}))) {
         declare CMlFrame RowFrame <=> (Page.GetFirstChild({{{dump(C_ML_ActiveEventRowX)}}} ^ Idx) as CMlFrame);
         declare CMlLabel LabelHandle <=> (RowFrame.GetFirstChild({{{dump(C_ML_ActiveEventRowHandle)}}}) as CMlLabel);
         declare CMlLabel LabelEdition <=> (RowFrame.GetFirstChild({{{dump(C_ML_ActiveEventRowEdition)}}}) as CMlLabel);
@@ -1068,7 +1068,7 @@ Void UpdateEventList() {
         RowFrame.Show();
     }
 
-    for (Idx, ML::Max(G_Events.count, 0), {{{C_ML_ActiveEventAmount - 1}}}) {
+    for (Idx, ML::Min(G_Events.count, 0), {{{C_ML_ActiveEventAmount - 1}}}) {
         declare CMlFrame RowFrame <=> (Page.GetFirstChild({{{dump(C_ML_ActiveEventRowX)}}} ^ Idx) as CMlFrame);
         RowFrame.Hide();
     }

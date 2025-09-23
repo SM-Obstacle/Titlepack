@@ -22,6 +22,12 @@
     Integer time;
 }
 
+#Struct K_EventEditionContentOriginalMap {
+    Integer mx_id;
+    Text name;
+    Text map_uid;
+}
+
 #Struct K_EventEditionContentMap {
     Integer mx_id;
     K_EventEditionContentMapAuthor main_author;
@@ -34,13 +40,31 @@
     Integer champion_time;
     Integer personal_best;
     K_NextOpponent next_opponent;
+    K_EventEditionContentOriginalMap original_map;
+    Text source;
+    Text thumbnail_source;
+    Boolean is_available;
 }
 
 #Struct K_EventEditionContentCategory {
     Text handle;
     Text name;
     Text banner_img_url;
+    Text hex_color;
     K_EventEditionContentMap[] maps;
+}
+
+#Struct K_EventEditionInGameParams {
+    Text titles_align;
+    Text lb_link_align;
+    Text authors_align;
+    Boolean put_subtitle_on_newline;
+    Real titles_pos_x;
+    Real titles_pos_y;
+    Real lb_link_pos_x;
+    Real lb_link_pos_y;
+    Real authors_pos_x;
+    Real authors_pos_y;
 }
 
 #Struct K_EventEditionDetails {
@@ -50,6 +74,7 @@
     Text[] authors;
     Integer start_date;
     Integer end_date;
+    K_EventEditionInGameParams ingame_params;
     Text banner_img_url;
     Text banner2_img_url;
     Integer mx_id;
@@ -95,9 +120,15 @@ Text ML_Preproc(Text _Prefix) {
     Integer time;
 }
 
+#Struct {{{_Prefix}}}K_EventEditionContentOriginalMap {
+    Integer mx_id;
+    Text name;
+    Text map_uid;
+}
+
 #Struct {{{_Prefix}}}K_EventEditionContentMap {
     Integer mx_id;
-    K_EventEditionContentMapAuthor main_author;
+    {{{_Prefix}}}K_EventEditionContentMapAuthor main_author;
     Text name;
     Text map_uid;
     Text map_thumbnail;
@@ -106,14 +137,32 @@ Text ML_Preproc(Text _Prefix) {
     Integer gold_time;
     Integer champion_time;
     Integer personal_best;
-    K_NextOpponent next_opponent;
+    {{{_Prefix}}}K_NextOpponent next_opponent;
+    {{{_Prefix}}}K_EventEditionContentOriginalMap original_map;
+    Text source;
+    Text thumbnail_source;
+    Boolean is_available;
 }
 
 #Struct {{{_Prefix}}}K_EventEditionContentCategory {
     Text handle;
     Text name;
     Text banner_img_url;
-    K_EventEditionContentMap[] maps;
+    Text hex_color;
+    {{{_Prefix}}}K_EventEditionContentMap[] maps;
+}
+
+#Struct {{{_Prefix}}}K_EventEditionInGameParams {
+    Text titles_align;
+    Text lb_link_align;
+    Text authors_align;
+    Boolean put_subtitle_on_newline;
+    Real titles_pos_x;
+    Real titles_pos_y;
+    Real lb_link_pos_x;
+    Real lb_link_pos_y;
+    Real authors_pos_x;
+    Real authors_pos_y;
 }
 
 #Struct {{{_Prefix}}}K_EventEditionDetails {
@@ -123,18 +172,19 @@ Text ML_Preproc(Text _Prefix) {
     Text[] authors;
     Integer start_date;
     Integer end_date;
+    {{{_Prefix}}}K_EventEditionInGameParams ingame_params;
     Text banner_img_url;
     Text banner2_img_url;
     Integer mx_id;
     Boolean expired;
     Text[] original_map_uids;
-    K_EventEditionContentCategory[] categories;
+    {{{_Prefix}}}K_EventEditionContentCategory[] categories;
 }
 
 #Struct {{{_Prefix}}}K_Event {
-    K_EventResponse Event;
-    K_EventEdition[Integer] Editions;
-    K_EventEditionDetails[Integer] EditionsDetails;
+    {{{_Prefix}}}K_EventResponse Event;
+    {{{_Prefix}}}K_EventEdition[Integer] Editions;
+    {{{_Prefix}}}K_EventEditionDetails[Integer] EditionsDetails;
 }
 """;
 }

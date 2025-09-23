@@ -1,11 +1,11 @@
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"				as Windows
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"			as SubMenu
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Campaign/Index.Script.txt"	as Campaign
-#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Servers/Index.Script.txt"	as Servers
-#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"		as ExplorerDialog
-#Include "Libs/miltant/ObstacleV2/Titlepack/Components/Index.Script.txt"			as Components
-#Include "Libs/miltant/ObstacleV2/Titlepack/Components/DropDown.Script.txt"			as DropDown
-#Include "Libs/miltant/ObstacleV2/Internationalization.Script.txt"					as Internationalization
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Windows.Script.txt"					as Windows
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/SubMenu/Index.Script.txt"				as SubMenu
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Servers/Index.Script.txt"		as Servers
+#Include "Libs/miltant/ObstacleV2/Titlepack/Menus/Play/Events/Index.Script.txt"			as Events
+#Include "Libs/miltant/ObstacleV2/Titlepack/Dialogs/Explorer/Index.Script.txt"			as ExplorerDialog
+#Include "Libs/miltant/ObstacleV2/Titlepack/Components/Index.Script.txt"				as Components
+#Include "Libs/miltant/ObstacleV2/Titlepack/Components/DropDown.Script.txt"				as DropDown
+#Include "Libs/miltant/ObstacleV2/Internationalization.Script.txt"						as Internationalization
 #Include "TextLib" as TL
 
 
@@ -48,11 +48,11 @@ Text[] BuildLanguageDropDown() {
 Void Load() {
 	declare SubMenu::K_SubMenu[] SubMenus;
 
-	declare SubMenu::K_SubMenu Campaign;
-	Campaign.Name = "campaign";
-	Campaign.Image = "campaign";
-	SubMenus.add(Campaign);
-	Campaign::Load();
+	declare SubMenu::K_SubMenu Events;
+	Events.Name = "events";
+	Events.Image = "event";
+	SubMenus.add(Events);
+	Events::Load();
 
 	declare SubMenu::K_SubMenu Online;
 	Online.Name = "online";
@@ -86,8 +86,8 @@ Void Load() {
 }
 
 Void Loop() {
-	Campaign::Loop();
 	Servers::Loop();
+	Events::Loop();
 
 	foreach(Event in PendingEvents) {
 		if (Event.Type == CManiaAppEvent::EType::LayerCustomEvent) {

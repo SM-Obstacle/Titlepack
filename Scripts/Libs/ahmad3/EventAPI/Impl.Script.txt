@@ -1,5 +1,6 @@
 #Include "TextLib" as TL
 
+#Include "Libs/ahmad3/RequestManager.Script.txt" as ReqMgr
 #Include "Libs/smokegun/Constants.Script.txt" as C
 #Include "Libs/ahmad3/EventAPI/Types.Script.txt" as Types
 #Include "Libs/ahmad3/ErrMgr.Script.txt" as Err
@@ -7,6 +8,7 @@
 #Struct K_RequestAttr {
     Integer Type;
     Text Route;
+    ReqMgr::K_GetReqId Request;
 }
 
 #Struct K_PendingEventHandleReq {
@@ -15,15 +17,17 @@
     Types::K_EventEdition[] EventEditions;
 }
 
+declare CUser G_LocalUser;
+
+declare Integer G_LastReqId;
+
 declare Text[] G_PendingEvents;
 declare Integer[Text] G_PendingLoadingEditions;
-declare K_RequestAttr[Ident] G_PendingRequests;
+declare K_RequestAttr[Integer] G_PendingRequests;
 declare Types::K_Event[Text] G_Events;
 
 declare Boolean G_HasFailed;
 declare Err::K_Error G_Failure;
-
-declare Text G_AuthHeaders;
 
 declare Boolean G_EventRequestLoaded;
 declare K_PendingEventHandleReq[] G_PendingEventHandleReqs;
@@ -71,11 +75,22 @@ Boolean Private_CheckErr(CHttpRequest _Req) {
     return True;
 }
 
+Text[Text] Private_Headers() {
+    if (G_LocalUser == Null) {
+        return ReqMgr::DefaultHeaders();
+    }
+    return ReqMgr::DefaultHeadersWith(ReqMgr::AuthHeaders(G_LocalUser));
+}
+
 Void Private_InitRequest(Text _Route, Integer _Type) {
-    declare CHttpRequest Req = Http.CreateGet(C::C_HostUrl ^ _Route, False, "Accept: application/json" ^ G_AuthHeaders);
-    G_PendingRequests[Req.Id] = K_RequestAttr {
-        Type = _Type,
-        Route = _Route
+    G_LastReqId += 1;
+    G_PendingRequests[G_LastReqId] = K_RequestAttr {
+        Request = ReqMgr::Make(ReqMgr::K_GetRequest {
+            Route = _Route,
+            Headers = Private_Headers()
+        }),
+        Route = _Route,
+        Type = _Type
     };
 }
 
@@ -129,77 +144,93 @@ Void Private_InitEventEditions(Types::K_EventResponse[] _Events) {
     }
 }
 
-Void SetAuthHeaders(Text _AuthHeaders) {
-    G_AuthHeaders = _AuthHeaders;
+Boolean HasAnyEventLoading() {
+    return !G_EventRequestLoaded || G_PendingEvents.count > 0;
 }
 
-Void Init() {
+Text Private_IncludeExpiredToQueryParam(Boolean _IncludeExpired) {
+    if (_IncludeExpired) {
+        return "include_expired=true";
+    }
+    return "include_expired=false";
+}
+
+Void Init(Boolean _IncludeExpired) {
+    G_LocalUser = Null;
     G_HasFailed = False;
     G_Events = [];
     G_PendingEvents = [];
     G_PendingLoadingEditions = [];
     G_PendingRequests = [];
     G_EventRequestLoaded = False;
-    Private_InitRequest("event", C::C_Request_Event);
+    Private_InitRequest("event?" ^ Private_IncludeExpiredToQueryParam(_IncludeExpired), C::C_Request_Event);
+}
+
+Void Init() {
+    Init(False);
+}
+
+Void SetLocalUser(CUser _User) {
+    G_LocalUser <=> _User;
 }
 
 /**
  * Returns True if a new event edition was loaded with its details, False otherwise.
  */
 Boolean Loop() {
-    declare Ident[] ReqToDelete;
+    declare Integer[] ReqToDelete;
     declare Text[] PendingEventsToDelete;
     declare Boolean EventEditionLoaded = False;
 
-    foreach (ReqId => ReqAttr in G_PendingRequests) {
-        declare CHttpRequest Request <=> Http.Requests[ReqId];
+    foreach (Idx => ReqAttr in G_PendingRequests) {
+        if (ReqMgr::IsWaiting(ReqAttr.Request)) {
+            G_PendingRequests[Idx].Request = ReqMgr::MakePending(ReqAttr.Request);
+        } else {
+            declare CHttpRequest Request <=> ReqMgr::GetReq(ReqAttr.Request);
+            if (Request.IsCompleted) {
+                ReqToDelete.add(Idx);
 
-        if (!Request.IsCompleted) {
-            continue;
-        } else if (Private_CheckErr(Request)) {
-            ReqToDelete.add(ReqId);
-            continue;
+                if (!Private_CheckErr(Request)) {
+                    switch (ReqAttr.Type) {
+                        // The /event request
+                        case C::C_Request_Event: {
+                            declare Types::K_EventResponse[] Events;
+                            Events.fromjson(Request.Result);
+                            Private_InitEventEditions(Events);
+                            G_EventRequestLoaded = True;
+                        }
+
+                        // The /event/<handle> request
+                        case C::C_Request_EventHandle: {
+                            declare Types::K_EventEdition[] EventEditions;
+                            EventEditions.fromjson(Request.Result);
+
+                            declare Text Handle = TL::Split("/", ReqAttr.Route)[1];
+
+                            G_PendingEventHandleReqs.add(K_PendingEventHandleReq {
+                                ReqId = Request.Id,
+                                Handle = Handle,
+                                EventEditions = EventEditions
+                            });
+                        }
+
+                        // The /event/<handle>/<edition> request
+                        case C::C_Request_EventHandleEdition: {
+                            declare Types::K_EventEditionDetails EventEditionDetails;
+                            EventEditionDetails.fromjson(Request.Result);
+
+                            declare Text[] Splits = TL::Split("/", ReqAttr.Route);
+                            declare Text Handle = Splits[1];
+                            declare Integer EditionId = TL::ToInteger(Splits[2]);
+                            G_Events[Handle].EditionsDetails[EditionId] = EventEditionDetails;
+                            PendingEventsToDelete.add(Handle);
+
+                            EventEditionLoaded = True;
+                        }
+                    }
+                }
+            }
         }
-
-        switch (ReqAttr.Type) {
-            // The /event request
-            case C::C_Request_Event: {
-                declare Types::K_EventResponse[] Events;
-                Events.fromjson(Request.Result);
-                Private_InitEventEditions(Events);
-                G_EventRequestLoaded = True;
-            }
-
-            // The /event/<handle> request
-            case C::C_Request_EventHandle: {
-                declare Types::K_EventEdition[] EventEditions;
-                EventEditions.fromjson(Request.Result);
-
-                declare Text Handle = TL::Split("/", ReqAttr.Route)[1];
-
-                G_PendingEventHandleReqs.add(K_PendingEventHandleReq {
-                    ReqId = ReqId,
-                    Handle = Handle,
-                    EventEditions = EventEditions
-                });
-            }
-
-            // The /event/<handle>/<edition> request
-            case C::C_Request_EventHandleEdition: {
-                declare Types::K_EventEditionDetails EventEditionDetails;
-                EventEditionDetails.fromjson(Request.Result);
-
-                declare Text[] Splits = TL::Split("/", ReqAttr.Route);
-                declare Text Handle = Splits[1];
-                declare Integer EditionId = TL::ToInteger(Splits[2]);
-                G_Events[Handle].EditionsDetails[EditionId] = EventEditionDetails;
-                PendingEventsToDelete.add(Handle);
-
-                EventEditionLoaded = True;
-            }
-        }
-
-        ReqToDelete.add(ReqId);
     }
 
     if (G_EventRequestLoaded) {
@@ -224,10 +255,10 @@ Boolean Loop() {
     }
 
     foreach (ReqId in ReqToDelete) {
-        if (!Http.Requests.existskey(ReqId)) continue;
-        declare CHttpRequest Request <=> Http.Requests[ReqId];
+        if (!ReqMgr::IsWaiting(G_PendingRequests[ReqId].Request)) {
+            Http.Destroy(ReqMgr::GetReq(G_PendingRequests[ReqId].Request));
+        }
         G_PendingRequests.removekey(ReqId);
-        Http.Destroy(Request);
     }
 
     foreach (PendingEventToDel in PendingEventsToDelete) {

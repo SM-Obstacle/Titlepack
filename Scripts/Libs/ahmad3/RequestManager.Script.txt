@@ -216,7 +216,7 @@ K_PostReqId Make(K_PostRequest _Request) {
 }
 
 K_GetReqId Make(K_GetRequest _Request, Text _Host) {
-    if (Http.SlotsAvailable > 0) {
+    if (Http.SlotsAvailable > 10) {
         return K_GetReqId {
             PendingReqId = -1,
             ReqId = Private_MakeGetImpl(_Request, _Host)
@@ -246,7 +246,7 @@ K_PostReqId MakePending(K_PostReqId _PendingReqId) {
     );
 
     declare K_PostRequestWithHost PendingReq = G_PendingPostReqs[_PendingReqId.PendingReqId];
-    if (Http.SlotsAvailable > 0) {
+    if (Http.SlotsAvailable > 10) {
         G_PendingPostReqs.removekey(_PendingReqId.PendingReqId);
         return K_PostReqId {
             ReqId = Private_MakePostImpl(PendingReq.Req, PendingReq.Host),
@@ -264,7 +264,7 @@ K_GetReqId MakePending(K_GetReqId _PendingReqId) {
     );
 
     declare K_GetRequestWithHost PendingReq = G_PendingGetReqs[_PendingReqId.PendingReqId];
-    if (Http.SlotsAvailable > 0) {
+    if (Http.SlotsAvailable > 10) {
         G_PendingGetReqs.removekey(_PendingReqId.PendingReqId);
         return K_GetReqId {
             ReqId = Private_MakeGetImpl(PendingReq.Req, PendingReq.Host),
@@ -422,7 +422,7 @@ Text[Text] {{{_ModName}}}_DefaultHeadersWith(Text[Text] _Others) {
 }
 
 {{{_ModName}}}_K_PostReqId {{{_ModName}}}_Make({{{_ModName}}}_K_PostRequest _Request, Text _Host) {
-    if (Http.SlotsAvailable > 0) {
+    if (Http.SlotsAvailable > 10) {
         return {{{_ModName}}}_K_PostReqId {
             ReqId = {{{_ModName}}}_Private_MakePostImpl(_Request, _Host),
             PendingReqId = -1
@@ -446,7 +446,7 @@ Text[Text] {{{_ModName}}}_DefaultHeadersWith(Text[Text] _Others) {
 }
 
 {{{_ModName}}}_K_GetReqId {{{_ModName}}}_Make({{{_ModName}}}_K_GetRequest _Request, Text _Host) {
-    if (Http.SlotsAvailable > 0) {
+    if (Http.SlotsAvailable > 10) {
         return {{{_ModName}}}_K_GetReqId {
             ReqId = {{{_ModName}}}_Private_MakeGetImpl(_Request, _Host),
             PendingReqId = -1
@@ -477,7 +477,7 @@ Text[Text] {{{_ModName}}}_DefaultHeadersWith(Text[Text] _Others) {
 
     declare {{{_ModName}}}_K_PostRequestWithHost PendingReq =
         {{{_ModName}}}_Private_G_PendingPostReqs[_PendingReqId.PendingReqId];
-    if (Http.SlotsAvailable > 0) {
+    if (Http.SlotsAvailable > 10) {
         {{{_ModName}}}_Private_G_PendingPostReqs.removekey(_PendingReqId.PendingReqId);
         return {{{_ModName}}}_K_PostReqId {
             ReqId = {{{_ModName}}}_Private_MakePostImpl(PendingReq.Req, PendingReq.Host),
@@ -496,7 +496,7 @@ Text[Text] {{{_ModName}}}_DefaultHeadersWith(Text[Text] _Others) {
 
     declare {{{_ModName}}}_K_GetRequestWithHost PendingReq =
         {{{_ModName}}}_Private_G_PendingGetReqs[_PendingReqId.PendingReqId];
-    if (Http.SlotsAvailable > 0) {
+    if (Http.SlotsAvailable > 10) {
         {{{_ModName}}}_Private_G_PendingGetReqs.removekey(_PendingReqId.PendingReqId);
         return {{{_ModName}}}_K_GetReqId {
             ReqId = {{{_ModName}}}_Private_MakeGetImpl(PendingReq.Req, PendingReq.Host),

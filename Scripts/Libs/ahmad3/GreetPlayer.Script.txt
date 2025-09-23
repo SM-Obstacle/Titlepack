@@ -164,15 +164,12 @@ Boolean Private_IsOnline() {
 Void Private_InitWelcomeDialog() {
     G_WelcomeDialogId = DialogsUI::NewDialog("Welcome to Obstacle!",
         DialogsUI::K_Message {
-            Label = """Before we race on, let's take a quick pit stop: We're
-upgrading our system to include browser-based
-authentication via Maniaplanet services.
-
-This quick step ensures that only you can set
-records under your name.
-
-We appreciate your understanding and support.
-Let's race on!"""
+            Label = "Before we race on, let's take a quick pit stop: We're "
+                ^ "upgrading our system to include browser-based "
+                ^ "authentication via Maniaplanet services.\n\n"
+                ^ "This quick step ensures that only you can set "
+                ^ "records under your name.\n\n"
+                ^ "We appreciate your understanding and support. Let's race on!"
         }, [
             DialogsUI::K_Button {
                 ControlId = "OK_Button",
@@ -206,12 +203,11 @@ Void Private_InitUpdateToken() {
     G_TokenUpdateDialogId = DialogsUI::NewDialog(
         "Authentication",
         DialogsUI::K_Message {
-            Label = """We are about to refresh your personal tokens.
-
-This procedure will open your browser to the
-ManiaPlanet's login page. You will only have to
-authenticate with the same account as the
-one you use in game."""
+            Label = "We are about to refresh your personal tokens.\n\n"
+                ^ "This procedure will open your browser to the "
+                ^ "ManiaPlanet's login page. You will only have to "
+                ^ "authenticate with the same account as the "
+                ^ "one you use in game."
         }, [
             DialogsUI::K_Button {
                 ControlId = C_UpdateTokenDialogOk,
@@ -286,8 +282,7 @@ Void Private_InitUpdateTokenReq() {
     G_TokenUpdateReqDialogId = DialogsUI::NewDialog(
         "Authentication procedure",
         DialogsUI::K_Message {
-            Label = """Please follow the instructions in your browser,
-or scan the QR code bellow:"""
+            Label = "Please follow the instructions in your browser, or scan the QR code bellow:"
         },
         []
     );
@@ -351,14 +346,22 @@ Boolean Private_UpdateTokenReqIsOk() {
     return G_TokenUpdateReqOk;
 }
 
+Void Private_SetSkippedToken() {
+    AuthUtils::SetUserToken("SKIPPED", LocalUser);
+}
+
 /**
  * Updates the state of the update token procedure.
  *
  * @return True if the procedure is over, False otherwise.
  */
 Boolean Private_LoopUpdateToken() {
-    if (Private_LoopUpdateTokenDialog() && Private_UpdateTokenDialogIsOk()) {
-        Private_InitUpdateTokenReq();
+    if (Private_LoopUpdateTokenDialog()) {
+        if (Private_UpdateTokenDialogIsOk()) {
+            Private_InitUpdateTokenReq();
+        } else {
+            Private_SetSkippedToken();
+        }
     }
 
     return Private_LoopUpdateTokenReq();
@@ -477,15 +480,13 @@ Void Private_InitBanDialog() {
     G_BanDialogId = DialogsUI::NewDialog(
         "Account banned",
         DialogsUI::K_Message {
-            Label = """We're sorry, but it appears that your account
-has been banned from Obstacle.
-
-This may be due to violation of our community
-standards, like cheating or offensive behavior.
-
-If you believe this is a mistake or if you'd like
-to appeal the decision, please contact our
-support team on Discord."""
+            Label = "We're sorry, but it appears that your account "
+                ^ "has been banned from Obstacle.\n\n"
+                ^ "This may be due to violation of our community "
+                ^ "standards, like cheating or offensive behavior.\n\n"
+                ^ "If you believe this is a mistake or if you'd like "
+                ^ "to appeal the decision, please contact our "
+                ^ "support team on Discord."
         },
         [
             DialogsUI::K_Button {
@@ -527,6 +528,15 @@ Void Private_InitGreetPlayer() {
  */
 Boolean Private_TokenUpdateFailed() {
     return G_TokenUpdateReqFinished && !G_TokenUpdateReqOk;
+}
+
+/**
+ * Returns whether the player is new, meaning they don't have some persistent variables saved yet.
+ *
+ * @return True if the player is new, False otherwise.
+ */
+Boolean Private_PlayerIsNew() {
+    return AuthUtils::GetUserToken(LocalUser) == "";
 }
 
 ////////////////////
@@ -580,12 +590,17 @@ Void Unload() {
 Void Load() {
     Unload();
     Private_InitOnlineTest();
+    if (Private_PlayerIsNew()) {
+        Private_InitWelcomeDialog();
+    }
 }
 
 /**
  * Updates the state of the library.
  */
 Void Loop() {
+    // FIXME: this whole thing should be made into a state machine
+
     // Checks if the online test is over and is OK
     if (Private_LoopOnlineTest() && Private_IsOnline()) {
         Private_InitGreetPlayer();
