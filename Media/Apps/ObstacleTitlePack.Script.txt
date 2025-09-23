@@ -16,7 +16,7 @@
 #Include "Libs/miltant/Nadeo_Fork/Json2.Script.txt" as Json
 #Include "Libs/smokegun/Constants.Script.Txt" as Constants
 
-#Const Version "2.7.4"
+#Const Version "2.8"
 
 main() {
 	log("Obstacle Titlepack loaded!");
