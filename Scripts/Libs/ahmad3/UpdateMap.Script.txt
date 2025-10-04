@@ -28,11 +28,19 @@
     Text zone_path;
 }
 
+#Struct K_MedalTimes {
+    Integer bronze_time;
+    Integer silver_time;
+    Integer gold_time;
+    Integer author_time;
+}
+
 #Struct K_UpdateMapBody {
     Text name;
     Text map_uid;
     Integer cps_number;
     K_UpdatePlayerBody author;
+    K_MedalTimes medal_times;
 }
 
 /*********************************************
@@ -43,6 +51,31 @@
 //// Private
 ////////////////////
 
+K_MedalTimes Private_GetMedalTimesBody() {
+    declare K_MedalTimes Ret = K_MedalTimes {};
+
+    declare metadata Boolean Meta_IsMedalSet for Map = False;
+    if (Meta_IsMedalSet) {
+        declare metadata Integer Meta_Bronze_Medal for Map = -1;
+        declare metadata Integer Meta_Silver_Medal for Map = -1;
+        declare metadata Integer Meta_Gold_Medal for Map = -1;
+        declare metadata Integer Meta_Champion_Medal for Map = -1;
+
+        if (Meta_Champion_Medal > 0
+            && Meta_Bronze_Medal > Meta_Silver_Medal
+            && Meta_Silver_Medal > Meta_Gold_Medal
+            && Meta_Gold_Medal > Meta_Champion_Medal
+        ) {
+            Ret.bronze_time = Meta_Bronze_Medal;
+            Ret.silver_time = Meta_Silver_Medal;
+            Ret.gold_time = Meta_Gold_Medal;
+            Ret.author_time = Meta_Champion_Medal;
+        }
+    }
+
+    return Ret;
+}
+
 Void Private_UpdateMap(Integer _CpsNumber) {
     declare K_UpdateMapBody Body = K_UpdateMapBody {
         name = Map.MapName,
@@ -52,7 +85,8 @@ Void Private_UpdateMap(Integer _CpsNumber) {
             login = Map.AuthorLogin,
             name = Map.AuthorNickName,
             zone_path = Map.AuthorZonePath
-        }
+        },
+        medal_times = Private_GetMedalTimesBody()
     };
 
     declare Text JsonBody = Body.tojson();
