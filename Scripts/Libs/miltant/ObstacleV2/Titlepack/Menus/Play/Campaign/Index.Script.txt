@@ -61,7 +61,10 @@ Text Build() {
 <frame id="Frame_Campaign">
 	<framemodel id="MapCard">
 		<label pos="1 -4.83" halign="left" valign="center2" textsize="5" textcolor="fff" class="lato" id="Label_Num"/>
-		<label pos="27.67 -4.83" halign="right" valign="center2" textsize="5" textcolor="f90" text="✖" class="lato" id="Label_Unavailable" hidden="1"/>
+		<frame id="Frame_IsUnavailable" hidden="1" pos="27.67 -4.83">
+			<label halign="right" valign="center2" textsize="5" textcolor="f20" text="✖" class="lato" />
+			<quad style="Bgs1" substyle="BgTitle3_3" size="11 11" halign="right" valign="center" pos="2.9 0.5" />
+		</frame>
 
 		<quad pos="20 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/champion.png" id="Quad_MedalC" hidden="1" z-index="4"/>
 		<quad pos="21.33 .67" size="10 10" image="file://Media/Images/Obstacle/Medals/gold.png" id="Quad_MedalG" hidden="1" z-index="3"/>
@@ -305,13 +308,13 @@ Text Build() {
 				declare CMlFrame Frame_Card = (Frame_Category.GetFirstChild("Card_" ^ J) as CMlFrame);
 				Frame_Card.Hide();
 
-				declare CMlLabel Label_Unavailable = (Frame_Card.GetFirstChild("Label_Unavailable") as CMlLabel);
+				declare CMlFrame Frame_IsUnavailable = (Frame_Card.GetFirstChild("Frame_IsUnavailable") as CMlFrame);
 				declare CMlQuad Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
 				declare CMlQuad Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
 				declare CMlQuad Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
 				declare CMlQuad Quad_MedalC = (Frame_Card.GetFirstChild("Quad_MedalC") as CMlQuad);
 
-				Label_Unavailable.Hide();
+				Frame_IsUnavailable.Hide();
 				Quad_MedalB.Hide();
 				Quad_MedalS.Hide();
 				Quad_MedalG.Hide();
@@ -479,7 +482,7 @@ Text Build() {
 				declare CMlQuad Outline_Map = (Frame_Card.GetFirstChild("Outline_Map") as CMlQuad);
 				declare CMlQuad Button_Map = (Frame_Card.GetFirstChild("Button_Map") as CMlQuad);
 				declare CMlLabel Label_Num = (Frame_Card.GetFirstChild("Label_Num") as CMlLabel);
-				declare CMlLabel Label_Unavailable = (Frame_Card.GetFirstChild("Label_Unavailable") as CMlLabel);
+				declare CMlFrame Frame_IsUnavailable = (Frame_Card.GetFirstChild("Frame_IsUnavailable") as CMlFrame);
 				declare CMlQuad Quad_MedalB = (Frame_Card.GetFirstChild("Quad_MedalB") as CMlQuad);
 				declare CMlQuad Quad_MedalS = (Frame_Card.GetFirstChild("Quad_MedalS") as CMlQuad);
 				declare CMlQuad Quad_MedalG = (Frame_Card.GetFirstChild("Quad_MedalG") as CMlQuad);
@@ -538,7 +541,7 @@ Text Build() {
 				}
 
 				if (!Map.is_available) {
-					Label_Unavailable.Show();
+					Frame_IsUnavailable.Show();
 				}
 			}
 		}
@@ -1176,8 +1179,8 @@ Void Private_LoopCheckEvents(Text _LayerName) {
 						"Cannot play the map",
 						UI::K_Message {
 							Label = "Cannot play the map $<" ^ SelectedMap.name ^ "$>, because it is hidden on Mania Exchange."
-							^ "\n\nThe map author may still allow later to play it in the Obstacle Titlepack anyway, while keeping it hidden from MX."
-							^ "\n\nFor more information, you should contact the map author or the Obstacle admins (@ahmadbky and @miltant on Discord)."
+							^ "\n\nThe map author may still allow later to play it in the Obstacle Titlepack anyway, while keeping it hidden in MX."
+							^ "\n\nFor more information, you may contact the map author or the Obstacle admins (@ahmadbky and @miltant on Discord)."
 						},
 						[
 							UI::K_Button {
