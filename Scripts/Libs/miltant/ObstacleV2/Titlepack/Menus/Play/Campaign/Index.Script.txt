@@ -126,7 +126,7 @@ Text Build() {
 			<label pos="-.17 5" text="next objective" textprefix="$t" textsize="2.05" textcolor="fff"/>
 
 			<quad z-index="1" pos="5 -3.25" size="5 5" id="Quad_NextOppMedal" hidden="1" />
-			<label pos="26.5 -5.92" size="52 11.83" text="$iFinish the map" textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_NextOpponent" />
+			<label pos="26.5 -5.92" size="52 11.83" textsize="4" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_NextOpponent" />
 			<label pos="26.5 -12" size="52 11.83" text="--:--:--" textsize="2" class="lator" halign="center" valign="center2" textcolor="fff" id="Label_NextOppTime" />
 			<label pos="45 -12" size="52 11.83" textsize="2" class="lato" halign="center" valign="center2" textcolor="4E6D8C" id="Label_NextOppTimeDiff" hidden="1" />
 
@@ -292,7 +292,7 @@ Text Build() {
 		Quad_NextOppMedal.Hide();
 		Label_NextOppTime.SetText("--:--:--");
 		Label_NextOppTimeDiff.Hide();
-		Label_NextOpponent.SetText("$iFinish the map");
+		Label_NextOpponent.SetText("$i$aaaFinish the map");
 		Label_Authors.Hide();
 		Label_LeaderboardsLink.Hide();
 		Label_ExpiredEdition.Hide();
