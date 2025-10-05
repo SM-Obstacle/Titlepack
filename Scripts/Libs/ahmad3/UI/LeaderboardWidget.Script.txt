@@ -370,7 +370,9 @@ Text GetLayer() {
         AddedHeight = 4. * ML::Max(AmountOfInsertedMedals + G_PlayersRanks.response.count - 15, 0);
 
         if (PlayerRank == -1) {
-            AddedHeight += 4;
+            if (AmountOfInsertedMedals > 0) {
+                AddedHeight += 4;
+            }
             ShowRank("record14", -4. * 14 - AddedHeight, "---", InputPlayer.User.Name, "--:--:--");
         }
 
