@@ -34,9 +34,11 @@ Boolean EventHasCurrentMap(Text _EventHandle, Integer _EventEdition, Boolean _In
         }
     }
 
-    foreach (MapUid in ThisEvent.original_map_uids) {
-        if (MapUid == Map.Id ^ "") {
-            return True;
+    if (_IncludeOriginals) {
+        foreach (MapUid in ThisEvent.original_map_uids) {
+            if (MapUid == Map.Id ^ "") {
+                return True;
+            }
         }
     }
 
@@ -63,7 +65,7 @@ Void LoadEdition() {
     while (True) {
         yield;
         EventAPI::Loop();
-        if (EventAPI::EventHasContent(G_EventHandle) || EventAPI::HasFailed()) {
+        if (EventAPI::IsEventEditionLoaded(G_EventHandle, G_EventEdition) || EventAPI::HasFailed()) {
             break;
         }
     }

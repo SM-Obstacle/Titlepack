@@ -355,7 +355,7 @@ Text GetLayer() {
 
         // Display medals after the last rank
         while (CurrentMedal >= 0) {
-            if (CurrentHeight > -15 * 4 && Medals[CurrentMedal] != 1) {
+            if (CurrentHeight > -15 * 4 && Medals[CurrentMedal] != -1) {
                 ShowRank("Frame_Medal_"^CurrentMedal, CurrentHeight, "", "", TL::TimeToText(Medals[CurrentMedal], True));
                 CurrentHeight -= 4.;
                 AmountOfInsertedMedals += 1;
@@ -368,13 +368,15 @@ Text GetLayer() {
 
         // Update height of main frames
         AddedHeight = 4. * ML::Max(AmountOfInsertedMedals + G_PlayersRanks.response.count - 15, 0);
+
+        if (PlayerRank == -1) {
+            AddedHeight += 4;
+            ShowRank("record14", -4. * 14 - AddedHeight, "---", InputPlayer.User.Name, "--:--:--");
+        }
+
         G_Frame_Widget.Size.Y = 15. * 4 + AddedHeight;
         G_Frame_Records.Size.Y = 15. * 4 + AddedHeight;
         G_Quad_Background.Size.Y = G_OriginalBackgroundHeight + AddedHeight;
-
-        if (PlayerRank == -1) {
-            ShowRank("record14", -4. * 14 - AddedHeight, "---", InputPlayer.User.Name, "--:--:--");
-        }
     }
 
     Void UpdateRecords(Text _Login) {

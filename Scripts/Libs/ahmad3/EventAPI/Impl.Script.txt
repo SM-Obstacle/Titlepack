@@ -50,6 +50,10 @@ Boolean EventEditionIsLoading(Text _EventHandle, Integer _EventEdition) {
             && G_PendingLoadingEditions[_EventHandle] == _EventEdition;
 }
 
+Boolean IsEventEditionLoaded(Text _EventHandle, Integer _EditionId) {
+    return G_Events.existskey(_EventHandle) && G_Events[_EventHandle].EditionsDetails.existskey(_EditionId);
+}
+
 Boolean EventHasContent(Text _EventHandle) {
     if (!G_Events.existskey(_EventHandle) || G_PendingEvents.exists(_EventHandle)) return False;
     declare Types::K_Event Event = G_Events[_EventHandle];
