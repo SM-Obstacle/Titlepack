@@ -1068,7 +1068,7 @@ Void UpdateEventList() {
         RowFrame.Show();
     }
 
-    for (Idx, ML::Min(G_Events.count, 0), {{{C_ML_ActiveEventAmount - 1}}}) {
+    for (Idx, ML::Max(G_Events.count, 0), {{{C_ML_ActiveEventAmount - 1}}}) {
         declare CMlFrame RowFrame <=> (Page.GetFirstChild({{{dump(C_ML_ActiveEventRowX)}}} ^ Idx) as CMlFrame);
         RowFrame.Hide();
     }
