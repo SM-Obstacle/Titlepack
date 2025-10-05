@@ -17,7 +17,7 @@ declare Text G_LastEventHandle;
 declare Integer G_LastEventEdition;
 
 Boolean EventHasCurrentMap(Text _EventHandle, Integer _EventEdition, Boolean _IncludeOriginals) {
-    if (!EventAPI::EventHasContent(_EventHandle)
+    if (!EventAPI::IsEventEditionLoaded(_EventHandle, _EventEdition)
         || !EventAPI::GetEvent(_EventHandle).EditionsDetails.existskey(_EventEdition))
     {
         return False;
@@ -75,7 +75,7 @@ Void LoadEdition() {
     if (EventAPI::HasFailed()) {
         G_Failed = True;
         G_FailReason = EventAPI::GetFailReason();
-    } else if (!EventHasCurrentMap(G_EventHandle, G_EventEdition, False)) {
+    } else if (!EventHasCurrentMap(G_EventHandle, G_EventEdition)) {
         G_Failed = True;
         G_FailReason = "The map isn't in the event";
     } else {
